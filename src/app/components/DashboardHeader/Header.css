@@ -1,0 +1,104 @@
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: transparent;
+  padding: 16px 64px;
+  width: 100%;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  position: relative;
+}
+.dashboard-header .left {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+.dashboard-header .left .logo-circle {
+  display: flex;
+  position: absolute;
+  top: 50%;
+  left: -18px;
+  cursor: pointer;
+  transform: translateY(-50%);
+  justify-content: center;
+  align-items: center;
+}
+.dashboard-header .left .logo-circle img {
+  width: 36px;
+  height: 36px;
+}
+.dashboard-header .left .search-bar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 360px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  transition: background 0.2s ease;
+}
+.dashboard-header .left .search-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 16px 12px;
+  outline: none;
+  color: #FFF0FF;
+  font-family: "Montserrat", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-transform: uppercase;
+}
+.dashboard-header .left .search-bar button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 12px;
+  transition: transform 0.2s ease;
+}
+.dashboard-header .left .search-bar button img {
+  width: 24px;
+  height: 24px;
+}
+.dashboard-header .left .search-bar button:hover {
+  transform: scale(1.1);
+}
+.dashboard-header .right-icons {
+  display: flex;
+  gap: 12px;
+}
+.dashboard-header .right-icons .icon-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-image: url("../../../images/header-icon-bg.png");
+  background-size: contain;
+  background-position: center;
+  border: none;
+  background-repeat: no-repeat;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+.dashboard-header .right-icons .icon-btn img {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.2s ease;
+}
+.dashboard-header .right-icons .icon-btn:hover {
+  transform: scale(1.05);
+  filter: brightness(1.2);
+}
+.dashboard-header .right-icons .icon-btn:hover img {
+  transform: scale(1.1);
+}
+@media (max-width: 992px) {
+  .dashboard-header {
+    display: none;
+  }
+}/*# sourceMappingURL=Header.css.map */

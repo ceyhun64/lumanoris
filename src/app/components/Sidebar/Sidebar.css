@@ -1,0 +1,291 @@
+.page-sidebar {
+  width: 280px;
+  height: 100vh;
+  background-color: #07060E;
+  position: sticky;
+  top: 0;
+  display: flex;
+  border-right: 1px solid rgba(255, 244, 244, 0.04);
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 40px 24px;
+  padding-bottom: 20px;
+  overflow: scroll;
+  transition: transform 0.3s ease;
+}
+.page-sidebar .logo {
+  gap: 12px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.page-sidebar .logo .icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.page-sidebar .logo .icon img {
+  width: 40px;
+  height: auto;
+}
+.page-sidebar .logo span {
+  color: #fff0ff;
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22px;
+}
+.page-sidebar .create-button {
+  width: 100%;
+  background-image: url("../../../images/create-button-border.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  padding: 16px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.page-sidebar .create-button:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+.page-sidebar .create-button p {
+  color: #fff0ff;
+  font-family: "Montserrat", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-transform: uppercase;
+}
+.page-sidebar .create-button span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.page-sidebar .create-button span svg {
+  width: 14px;
+  height: 14px;
+}
+.page-sidebar .seperator {
+  width: 100%;
+  height: 1px;
+  margin: 12px 0;
+  background: linear-gradient(90deg, #07060e 24.57%, #ff66c4 49.62%, #07060e 81.03%);
+}
+.page-sidebar .menu {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px 0;
+  gap: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+.page-sidebar .menu li {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+.page-sidebar .menu li.active {
+  border-left: 1px solid #ff66c4;
+  background: rgba(250, 159, 252, 0.12);
+}
+.page-sidebar .menu li.active a {
+  font-weight: 600;
+}
+.page-sidebar .menu li:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  transform: translateX(2px);
+}
+.page-sidebar .menu li a {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+  border-radius: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  color: #fff;
+  font-family: "Public Sans", sans-serif;
+  font-size: 14px;
+  line-height: 22px;
+  text-decoration: none;
+  transition: color 0.25s ease;
+}
+.page-sidebar .menu li img {
+  width: 25px;
+  height: 25px;
+  transition: transform 0.25s ease;
+}
+.page-sidebar .menu li:hover img {
+  transform: scale(1.05);
+}
+.page-sidebar .bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+.page-sidebar .bottom .settings {
+  border-radius: 12px;
+  width: 100%;
+  border: 1px solid rgba(255, 241, 250, 0.13);
+  background: #0f0e16;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.page-sidebar .bottom .settings .top-left-icc {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+}
+.page-sidebar .bottom .settings a {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  color: #fff;
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+  line-height: 22px;
+  text-decoration: none;
+  transition: background 0.25s ease;
+}
+.page-sidebar .bottom .settings a:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+.page-sidebar .bottom .settings a img {
+  width: 25px;
+  height: 25px;
+}
+.page-sidebar .bottom .upgrade {
+  width: 100%;
+  border-radius: 12px;
+  background-image: url("../../../images/upgrade-btn.png");
+  padding: 16px 12px;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  border: none;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  font-family: "Montserrat", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 18px;
+  transition: transform 0.2s ease;
+}
+.page-sidebar .bottom .upgrade:hover {
+  transform: scale(1.02);
+}
+
+.page-sidebar.mobile-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  background-color: #0b0b0d;
+  padding: 32px 20px;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out;
+}
+
+.mobile-sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.close-sidebar {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.navbar-mobile {
+  display: none;
+}
+
+@media screen and (max-width: 992px) {
+  .navbar-mobile {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin: 17px 15px;
+    border-radius: 12px;
+    border: 1px dashed var(--Secondary80, #C39);
+    background: #000;
+  }
+  .navbar-mobile .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .navbar-mobile .logo span {
+    color: white;
+    font-weight: bold;
+    font-size: 9px;
+  }
+  .navbar-mobile .logo img {
+    width: 22px;
+  }
+  .menu-toggle {
+    border-radius: 8px;
+    background: var(--gra, linear-gradient(323deg, #1B1A22 -16.98%, #993D76 108.66%));
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+  }
+  .menu-toggle svg {
+    width: 24px;
+    height: 24px;
+  }
+  .page-sidebar.mobile-fullscreen {
+    display: block;
+  }
+  .page-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    transform: translateX(-100%);
+  }
+  .page-sidebar.mobile-visible {
+    transform: translateX(0);
+  }
+  .page-sidebar.mobile-hidden {
+    transform: translateX(-100%);
+  }
+}/*# sourceMappingURL=Sidebar.css.map */
