@@ -1,12 +1,13 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Splide, SplideSlide, SplideTrack } from '@splidejs/react-splide';
 import '@splidejs/splide/dist/css/splide.min.css';
 
 const categories = ['Tümü', 'Resmi', 'Eğitim', 'Çeviri', 'Öne Çıkanlar', 'Teknoloji', 'Sağlık', 'Yazılım', 'Sanat'];
 
-export default function CategoryFilter({ onSelect }) {
-    const [selected, setSelected] = useState('Tümü');
+export default function CategoryFilter({ onSelect, selected: externalSelected }) {
+    const [selected, setSelected] = useState(externalSelected || 'Tümü');
+
     const splideRef = useRef(null);
 
     const handleClick = (cat) => {
@@ -39,6 +40,11 @@ export default function CategoryFilter({ onSelect }) {
             </svg>
         </button>
     );
+
+
+    useEffect(() => {
+        if (externalSelected) setSelected(externalSelected);
+    }, [externalSelected]);
 
     return (
         <div className="category-filter">
@@ -77,7 +83,7 @@ export default function CategoryFilter({ onSelect }) {
             </Splide>
             <div className='arw-ct'>
 
-            <RightArrow />
+                <RightArrow />
             </div>
         </div>
     );

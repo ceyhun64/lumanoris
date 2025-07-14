@@ -1,14 +1,25 @@
 "use client";
+import WithdrawalModal from "@/app/components/WithdrawalModal/WithdrawalModal";
 import React, { useState } from "react";
 
 export default function Wallet() {
     const [activeTab, setActiveTab] = useState("bakiye");
-    const transactions = [
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const bakiyeIslemleri = [
         { amount: +126, description: "Satışlarınızdan elde ettiğiniz gelir bakiyenize aktarıldı. §2345" },
         { amount: -33 },
         { amount: -13 },
         { amount: +126, description: "Satışlarınızdan elde ettiğiniz gelir bakiyenize aktarıldı." },
     ];
+
+    const odemeler = [
+        { amount: -249, description: "Pro Plan satın alındı - 06/2025" },
+        { amount: -75, description: "Yıllık destek ücreti ödendi" },
+        { amount: -499, description: "API kullanım limiti aşıldı, ekstra ücret yansıtıldı." },
+    ];
+
+    const transactions = activeTab === "bakiye" ? bakiyeIslemleri : odemeler;
 
     return (
         <div className="balance-wrapper">
@@ -36,11 +47,14 @@ export default function Wallet() {
                         </defs>
                     </svg>
                 </div>
-                <div className="balance-info">
-                    <span className="balance-label">Toplam bakiye kutusu</span>
-                    <p className="balance-amount">1200 ₺</p>
+                <div className="inner">
+                    <div className="balance-info">
+                        <span className="balance-label">Toplam bakiye kutusu</span>
+                        <p className="balance-amount">1200 ₺</p>
+                    </div>
+
+                    <button className="withdraw-button" onClick={() => setIsModalOpen(true)}>PARA ÇEK</button>
                 </div>
-                <button className="withdraw-button">PARA ÇEK</button>
             </div>
 
             <div className="balance-tabs">
@@ -72,6 +86,8 @@ export default function Wallet() {
                     </div>
                 ))}
             </div>
+            <WithdrawalModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
         </div>
     );
 }
