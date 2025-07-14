@@ -12,9 +12,9 @@ export default function CreateChatbot() {
             desc: "Talimat Vererek Bir Bot Oluştur.",
             icon: (
                 <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 8.5125V7.5625C20 5.6765 20 4.7345 19.414 4.1485C18.828 3.5625 17.886 3.5625 16 3.5625H8C6.114 3.5625 5.172 3.5625 4.586 4.1485C4 4.7345 4 5.6765 4 7.5625V8.5125" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                    <path opacity="0.5" d="M12 3.5625V21.5625" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M7 21.5625H17" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M20 8.5125V7.5625C20 5.6765 20 4.7345 19.414 4.1485C18.828 3.5625 17.886 3.5625 16 3.5625H8C6.114 3.5625 5.172 3.5625 4.586 4.1485C4 4.7345 4 5.6765 4 7.5625V8.5125" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path opacity="0.5" d="M12 3.5625V21.5625" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M7 21.5625H17" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
 
             ),
@@ -39,9 +39,9 @@ export default function CreateChatbot() {
             icon: (
                 <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <mask id="mask0_7772_9231" style={{ maskType: 'luminance' }} maskUnits="userSpaceOnUse" x="1" y="3" width="22" height="19">
-                        <path d="M2 5.5625C2 5.29728 2.10536 5.04293 2.29289 4.85539C2.48043 4.66786 2.73478 4.5625 3 4.5625H21C21.2652 4.5625 21.5196 4.66786 21.7071 4.85539C21.8946 5.04293 22 5.29728 22 5.5625V19.5625C22 19.8277 21.8946 20.0821 21.7071 20.2696C21.5196 20.4571 21.2652 20.5625 21 20.5625H3C2.73478 20.5625 2.48043 20.4571 2.29289 20.2696C2.10536 20.0821 2 19.8277 2 19.5625V5.5625Z" fill="#555555" stroke="white" stroke-width="2" stroke-linejoin="round" />
-                        <path d="M18 4.5625V20.5625M6 4.5625V20.5625M19 9.5625H22M19 15.5625H22M2 9.5625H5M2 8.5625V10.5625M4.5 4.5625H7.5M4.5 20.5625H7.5M16.5 4.5625H19.5M16.5 20.5625H19.5M2 15.5625H5M2 14.5625V16.5625M22 14.5625V16.5625M22 8.5625V10.5625" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M10.5 10.0625L14.5 12.5625L10.5 15.0625V10.0625Z" fill="#555555" stroke="white" stroke-width="2" stroke-linejoin="round" />
+                        <path d="M2 5.5625C2 5.29728 2.10536 5.04293 2.29289 4.85539C2.48043 4.66786 2.73478 4.5625 3 4.5625H21C21.2652 4.5625 21.5196 4.66786 21.7071 4.85539C21.8946 5.04293 22 5.29728 22 5.5625V19.5625C22 19.8277 21.8946 20.0821 21.7071 20.2696C21.5196 20.4571 21.2652 20.5625 21 20.5625H3C2.73478 20.5625 2.48043 20.4571 2.29289 20.2696C2.10536 20.0821 2 19.8277 2 19.5625V5.5625Z" fill="#555555" stroke="white" strokeWidth="2" strokeLinejoin="round" />
+                        <path d="M18 4.5625V20.5625M6 4.5625V20.5625M19 9.5625H22M19 15.5625H22M2 9.5625H5M2 8.5625V10.5625M4.5 4.5625H7.5M4.5 20.5625H7.5M16.5 4.5625H19.5M16.5 20.5625H19.5M2 15.5625H5M2 14.5625V16.5625M22 14.5625V16.5625M22 8.5625V10.5625" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M10.5 10.0625L14.5 12.5625L10.5 15.0625V10.0625Z" fill="#555555" stroke="white" strokeWidth="2" strokeLinejoin="round" />
                     </mask>
                     <g mask="url(#mask0_7772_9231)">
                         <path d="M0 0.5625H24V24.5625H0V0.5625Z" fill="black" />
@@ -67,8 +67,8 @@ export default function CreateChatbot() {
             desc: "Sohbet Edilebilir Karakter Tanımla.",
             icon: (
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
-                    <path opacity="0.5" d="M21 12.5621V7.28114C21 5.09114 21 3.99614 20.293 3.39714C19.586 2.79714 18.505 2.97714 16.343 3.33814L15.288 3.51414C13.648 3.78714 12.828 3.92414 12 3.92414C11.172 3.92414 10.352 3.78714 8.712 3.51414L7.658 3.33814C5.496 2.97814 4.415 2.79814 3.708 3.39714C3.001 3.99614 3 5.09114 3 7.28114V12.5621C3 18.0521 7.239 20.7171 9.899 21.8481C10.62 22.1551 10.981 22.3081 12 22.3081C13.02 22.3081 13.38 22.1551 14.101 21.8481C16.761 20.7171 21 18.0521 21 12.5621Z" stroke="black" stroke-width="1.5" />
-                    <path d="M6.5 9.5625C6.791 8.9795 7.577 8.5625 8.5 8.5625C9.423 8.5625 10.209 8.9795 10.5 9.5625M13.5 9.5625C13.791 8.9795 14.577 8.5625 15.5 8.5625C16.423 8.5625 17.209 8.9795 17.5 9.5625M8.5 15.5625C8.5 15.5625 9.55 14.5625 12 14.5625C14.45 14.5625 15.5 15.5625 15.5 15.5625" stroke="black" stroke-width="1.5" stroke-linecap="round" />
+                    <path opacity="0.5" d="M21 12.5621V7.28114C21 5.09114 21 3.99614 20.293 3.39714C19.586 2.79714 18.505 2.97714 16.343 3.33814L15.288 3.51414C13.648 3.78714 12.828 3.92414 12 3.92414C11.172 3.92414 10.352 3.78714 8.712 3.51414L7.658 3.33814C5.496 2.97814 4.415 2.79814 3.708 3.39714C3.001 3.99614 3 5.09114 3 7.28114V12.5621C3 18.0521 7.239 20.7171 9.899 21.8481C10.62 22.1551 10.981 22.3081 12 22.3081C13.02 22.3081 13.38 22.1551 14.101 21.8481C16.761 20.7171 21 18.0521 21 12.5621Z" stroke="black" strokeWidth="1.5" />
+                    <path d="M6.5 9.5625C6.791 8.9795 7.577 8.5625 8.5 8.5625C9.423 8.5625 10.209 8.9795 10.5 9.5625M13.5 9.5625C13.791 8.9795 14.577 8.5625 15.5 8.5625C16.423 8.5625 17.209 8.9795 17.5 9.5625M8.5 15.5625C8.5 15.5625 9.55 14.5625 12 14.5625C14.45 14.5625 15.5 15.5625 15.5 15.5625" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
             ),
             bgColor: "#C8FFD4"
@@ -78,8 +78,8 @@ export default function CreateChatbot() {
             desc: "Sadece Sohbetten Daha Fazlasını Sunan Web Tabanlı Uygulama Oluştur.",
             icon: (
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
-                    <path d="M3 17.5625H21M4 8.5625C4 5.7345 4 4.3195 5.004 3.4415C6.008 2.5635 7.624 2.5625 10.857 2.5625H13.143C16.375 2.5625 17.992 2.5625 18.996 3.4415C20 4.3195 20 5.7345 20 8.5625V17.5625H4V8.5625Z" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M10.699 6.12828C11.929 5.95228 13.967 6.02228 12.28 7.71528C10.172 9.83028 7.008 14.5913 10.699 13.0053C14.389 11.4173 15.971 12.4753 14.389 14.0623M12 17.5623V21.5623M5 22.5623L8 17.5623M19 22.5623L16 17.5623" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M3 17.5625H21M4 8.5625C4 5.7345 4 4.3195 5.004 3.4415C6.008 2.5635 7.624 2.5625 10.857 2.5625H13.143C16.375 2.5625 17.992 2.5625 18.996 3.4415C20 4.3195 20 5.7345 20 8.5625V17.5625H4V8.5625Z" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M10.699 6.12828C11.929 5.95228 13.967 6.02228 12.28 7.71528C10.172 9.83028 7.008 14.5913 10.699 13.0053C14.389 11.4173 15.971 12.4753 14.389 14.0623M12 17.5623V21.5623M5 22.5623L8 17.5623M19 22.5623L16 17.5623" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
             ),
             bgColor: "#FFB1BA"

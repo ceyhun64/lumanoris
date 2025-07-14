@@ -1,7 +1,7 @@
 import Header from "../components/DashboardHeader/DashboardHeader";
 import NavbarMobile from "../components/Navbar/Navbar";
 import Sidebar from "../components/Sidebar/Sidebar";
-
+import '../../font/stylesheet.css';
 export const metadata = {
     title: "Dashboard | Lumanoris",
 };

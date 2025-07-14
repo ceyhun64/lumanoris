@@ -78,7 +78,7 @@ export default function BotCard({ bot }) {
                             <div className="popup-menu">
                                 <ul>
                                     <li onClick={() => setModalVisible(true)}><span><svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M16 3.5H8C7.46957 3.5 6.96086 3.71071 6.58579 4.08579C6.21071 4.46086 6 4.96957 6 5.5V21.5L12 18.5L18 21.5V5.5C18 4.96957 17.7893 4.46086 17.4142 4.08579C17.0391 3.71071 16.5304 3.5 16 3.5Z" stroke="#FF99D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        <path d="M16 3.5H8C7.46957 3.5 6.96086 3.71071 6.58579 4.08579C6.21071 4.46086 6 4.96957 6 5.5V21.5L12 18.5L18 21.5V5.5C18 4.96957 17.7893 4.46086 17.4142 4.08579C17.0391 3.71071 16.5304 3.5 16 3.5Z" stroke="#FF99D6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
 
                                     </span> Listeye Kaydet</li>

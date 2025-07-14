@@ -10,6 +10,7 @@
   justify-content: space-between;
   padding: 40px 24px;
   padding-bottom: 20px;
+  z-index: 9;
   transition: 0.3s all ease;
 }
 .page-sidebar .logo-circle {
@@ -172,8 +173,13 @@
   top: -20px;
   left: -20px;
 }
-.page-sidebar .bottom .settings a {
+.page-sidebar .bottom .settings a,
+.page-sidebar .bottom .settings .logout-btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
   display: flex;
+  z-index: 1;
   justify-content: flex-start;
   align-items: center;
   gap: 16px;
@@ -185,10 +191,12 @@
   text-decoration: none;
   transition: background 0.25s ease;
 }
-.page-sidebar .bottom .settings a:hover {
+.page-sidebar .bottom .settings a:hover,
+.page-sidebar .bottom .settings .logout-btn:hover {
   background-color: rgba(255, 255, 255, 0.04);
 }
-.page-sidebar .bottom .settings a img {
+.page-sidebar .bottom .settings a img,
+.page-sidebar .bottom .settings .logout-btn img {
   width: 25px;
   height: 25px;
 }

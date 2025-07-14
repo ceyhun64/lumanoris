@@ -76,8 +76,8 @@ export default function ChatbotCard() {
                 <div className="actions">
                     <button className="edit-btn">
                         <div className="icc"><svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M15.8335 3.16732C15.511 2.87064 15.0839 2.71403 14.6461 2.73184C14.2082 2.74965 13.7953 2.94043 13.498 3.26232L8.05144 8.70924L7.125 11.8758L10.2915 10.9497L15.7385 5.54232C15.9037 5.39449 16.0375 5.21499 16.132 5.01445C16.2265 4.81392 16.2798 4.59644 16.2886 4.37493C16.2975 4.15341 16.2618 3.93238 16.1836 3.72494C16.1054 3.51749 15.9863 3.32787 15.8335 3.16732Z" stroke="white" stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M9.5 2.375H3.16654C2.95661 2.375 2.75528 2.45839 2.60684 2.60684C2.45839 2.75528 2.375 2.95661 2.375 3.16654V15.8335C2.375 16.0434 2.45839 16.2447 2.60684 16.3932C2.75528 16.5416 2.95661 16.625 3.16654 16.625H15.8335C16.0434 16.625 16.2447 16.5416 16.3932 16.3932C16.5416 16.2447 16.625 16.0434 16.625 15.8335V9.5" stroke="url(#paint0_linear_7772_6155)" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M15.8335 3.16732C15.511 2.87064 15.0839 2.71403 14.6461 2.73184C14.2082 2.74965 13.7953 2.94043 13.498 3.26232L8.05144 8.70924L7.125 11.8758L10.2915 10.9497L15.7385 5.54232C15.9037 5.39449 16.0375 5.21499 16.132 5.01445C16.2265 4.81392 16.2798 4.59644 16.2886 4.37493C16.2975 4.15341 16.2618 3.93238 16.1836 3.72494C16.1054 3.51749 15.9863 3.32787 15.8335 3.16732Z" stroke="white" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M9.5 2.375H3.16654C2.95661 2.375 2.75528 2.45839 2.60684 2.60684C2.45839 2.75528 2.375 2.95661 2.375 3.16654V15.8335C2.375 16.0434 2.45839 16.2447 2.60684 16.3932C2.75528 16.5416 2.95661 16.625 3.16654 16.625H15.8335C16.0434 16.625 16.2447 16.5416 16.3932 16.3932C16.5416 16.2447 16.625 16.0434 16.625 15.8335V9.5" stroke="url(#paint0_linear_7772_6155)" strokeLinecap="round" strokeLinejoin="round" />
                             <defs>
                                 <linearGradient id="paint0_linear_7772_6155" x1="17.8437" y1="19.9659" x2="2.56565" y2="0.0473143" gradientUnits="userSpaceOnUse">
                                     <stop offset="0.211538" stop-color="#FF66C4" />
@@ -94,7 +94,7 @@ export default function ChatbotCard() {
                         <div className="icc">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <g clip-path="url(#clip0_7772_6146)">
-                                    <path d="M7 0.5V13.5M0.5 6.96H13.5" stroke="#FF66C4" stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M7 0.5V13.5M0.5 6.96H13.5" stroke="#FF66C4" strokeLinecap="round" strokeLinejoin="round" />
                                 </g>
                                 <defs>
                                     <clipPath id="clip0_7772_6146">

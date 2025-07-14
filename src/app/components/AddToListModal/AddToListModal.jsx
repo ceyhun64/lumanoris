@@ -76,7 +76,7 @@ export default function AddToListModal({ isOpen, onClose, lists = [], header = "
                         />
                         <button onClick={handleAddNewList}>
                             <svg width="25" height="26" viewBox="0 0 25 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12.5 5.70898V20.292M5.2085 13.0005H19.7915" stroke="#FF66C4" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M12.5 5.70898V20.292M5.2085 13.0005H19.7915" stroke="#FF66C4" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </button>
                     </div>

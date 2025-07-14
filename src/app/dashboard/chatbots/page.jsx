@@ -77,7 +77,7 @@ export default function Chatbotlarim() {
 
             <Link href="/dashboard/chatbots/create" className="create-button">
                 <span><svg xmlns="http://www.w3.org/2000/svg" width="26" height="25" viewBox="0 0 26 25" fill="none">
-                    <path d="M13 5.20117V19.7842M5.7085 12.4927H20.2915" stroke="#FF66C4" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M13 5.20117V19.7842M5.7085 12.4927H20.2915" stroke="#FF66C4" strokeLinecap="round" strokeLinejoin="round" />
                 </svg></span> İlk Sohbet Botunuzu Oluşturun
             </Link>
         </div>)

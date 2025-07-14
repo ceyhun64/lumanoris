@@ -103,7 +103,6 @@ export default function PricingPlans() {
             </div>
 
             <div className="pricing-container">
-                {/* Toggle */}
                 <div className="pricing-toggle">
                     <span className={!isYearly ? "active" : ""}>Aylık</span>
                     <div className="toggle-switch" onClick={() => setIsYearly(!isYearly)}>
@@ -115,7 +114,6 @@ export default function PricingPlans() {
                     <span className={isYearly ? "active" : ""}>Yıllık</span>
                 </div>
 
-                {/* Plan Cards */}
                 <div className="plan-grid">
                     {plansToRender.map((plan, index) => (
                         <div
@@ -142,7 +140,7 @@ export default function PricingPlans() {
                             </span>
                             <ul className="plan-features">
                                 {plan.features.map((feature, i) => (
-                                    <li key={i}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m2.75 8.75l3.5 3.5l7-7.5" /></svg> {feature}</li>
+                                    <li key={i}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="m2.75 8.75l3.5 3.5l7-7.5" /></svg> {feature}</li>
                                 ))}
                             </ul>
                         </div>

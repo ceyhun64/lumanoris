@@ -13,7 +13,7 @@ import settingsIcon from '../../../images/ayarlar-icon.svg';
 import logoutIcon from '../../../images/logout-icon.svg';
 import Link from 'next/link';
 import logoIcon from '../../../images/header-dashboard-left.png';
-
+import QuitModal from '../QuitModal/QuitModal';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -23,6 +23,7 @@ export default function Sidebar({ isMobileOpen = false }) {
   const pathname = usePathname();
   const router = useRouter();
   const [logoClicked, setLogoClicked] = useState(false); // <- class kontrolü
+  const [isQuitModalOpen, setIsQuitModalOpen] = useState(false);
 
   const isActive = (route) => pathname.startsWith(route);
 
@@ -152,19 +153,26 @@ export default function Sidebar({ isMobileOpen = false }) {
             </span>
           </Link>
 
-          <Link href="/logout">
+          <button className="logout-btn" onClick={() => setIsQuitModalOpen(true)}>
             <img src={logoutIcon.src} alt="çıkış" style={{ marginRight: 8 }} />
             <span>Çıkış</span>
-          </Link>
+          </button>
         </div>
         <Link href="/dashboard/upgrade" className="upgrade">
           <span>
             Hesabınızı Yükseltin
           </span>
 
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M22 8.5C22 12.09 19.09 15 15.5 15C15.33 15 15.15 14.99 14.98 14.98C14.73 11.81 12.19 9.26999 9.01999 9.01999C9.00999 8.84999 9 8.67 9 8.5C9 4.91 11.91 2 15.5 2C19.09 2 22 4.91 22 8.5Z" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15 15.5C15 19.09 12.09 22 8.5 22C4.91 22 2 19.09 2 15.5C2 11.91 4.91 9 8.5 9C8.67 9 8.84999 9.00999 9.01999 9.01999C12.19 9.26999 14.73 11.81 14.98 14.98C14.99 15.15 15 15.33 15 15.5Z" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M7.62 14.62L8.5 13L9.38 14.62L11 15.5L9.38 16.38L8.5 18L7.62 16.38L6 15.5L7.62 14.62Z" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></g></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M22 8.5C22 12.09 19.09 15 15.5 15C15.33 15 15.15 14.99 14.98 14.98C14.73 11.81 12.19 9.26999 9.01999 9.01999C9.00999 8.84999 9 8.67 9 8.5C9 4.91 11.91 2 15.5 2C19.09 2 22 4.91 22 8.5Z" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path><path d="M15 15.5C15 19.09 12.09 22 8.5 22C4.91 22 2 19.09 2 15.5C2 11.91 4.91 9 8.5 9C8.67 9 8.84999 9.00999 9.01999 9.01999C12.19 9.26999 14.73 11.81 14.98 14.98C14.99 15.15 15 15.33 15 15.5Z" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path><path d="M7.62 14.62L8.5 13L9.38 14.62L11 15.5L9.38 16.38L8.5 18L7.62 16.38L6 15.5L7.62 14.62Z" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></g></svg>
         </Link>
       </div>
+      <QuitModal
+        isOpen={isQuitModalOpen}
+        onClose={() => setIsQuitModalOpen(false)}
+        onConfirm={() => {
+          router.push('/login'); 
+        }}
+      />
     </div>
   );
 }
