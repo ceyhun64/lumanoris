@@ -10,8 +10,29 @@
     justify-content: space-between;
     padding: 40px 24px;
     padding-bottom: 20px;
-    overflow: scroll;
-    transition: transform 0.3s ease;
+    transition: .3s all ease;
+
+
+    .logo-circle {
+        display: flex;
+        position: absolute;
+        top: 42.5px;
+        right: -18px;
+        z-index: 9;
+        cursor: pointer;
+        transform: translateY(-50%);
+        justify-content: center;
+        align-items: center;
+
+        img {
+            width: 36px;
+            height: 36px;
+        }
+
+        @media(max-width:991px){
+            display: none;
+        }
+    }
 
     .logo {
         gap: 12px;
@@ -216,8 +237,83 @@
             line-height: 18px;
             transition: transform 0.2s ease;
 
+            svg {
+                display: none;
+            }
+
             &:hover {
                 transform: scale(1.02);
+            }
+        }
+    }
+
+    &.logo-clicked {
+        width: 90px;
+        padding: 12px;
+
+        a{
+            display: flex;
+            justify-content: center !important;
+            align-items: center !important;
+        }
+
+        .settings{
+
+            justify-content: center;
+            align-items: center;
+            span{
+                display: none;
+            }
+
+            img{
+                margin: 0 !important;
+            }
+        }
+
+        .menu {
+            li {
+                span {
+                    display: none;
+                }
+            }
+        }
+
+        .logo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            span {
+                display: none;
+            }
+        }
+
+        .create-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: none;
+            border: 2px dashed var(--liner, #54103A);
+            border-radius: 5px;
+
+            p {
+                display: none;
+            }
+        }
+
+        .bottom {
+            justify-content: center;
+            align-items: center;
+        }
+
+        .upgrade {
+            height: 40px;
+            width: 40px;
+            padding: 0;
+            background-size: cover;
+
+            span {
+                display: none;
             }
         }
     }
@@ -326,4 +422,3 @@
         transform: translateX(-100%);
     }
 }
-

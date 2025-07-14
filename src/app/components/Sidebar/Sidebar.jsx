@@ -12,16 +12,33 @@ import noteIcon from '../../../images/diyalog-defteri-icon.svg';
 import settingsIcon from '../../../images/ayarlar-icon.svg';
 import logoutIcon from '../../../images/logout-icon.svg';
 import Link from 'next/link';
+import logoIcon from '../../../images/header-dashboard-left.png';
+
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Sidebar({ isMobileOpen = false }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [logoClicked, setLogoClicked] = useState(false); // <- class kontrolü
 
   const isActive = (route) => pathname.startsWith(route);
-  return (
-    <div className={`page-sidebar ${isMobileOpen ? 'mobile-visible' : 'mobile-hidden'}`}>
 
+  const handleLogoClick = () => {
+    setLogoClicked((prev) => !prev); // toggle et
+  };
+
+  return (
+    <div className={`page-sidebar ${isMobileOpen ? 'mobile-visible' : 'mobile-hidden'} ${logoClicked ? 'logo-clicked' : ''}`}>
+
+      <div className="logo-circle" onClick={handleLogoClick}>
+        <Image src={logoIcon} alt="logo" />
+      </div>
       <div>
+
+
         <div className="logo">
           <div className="icon">
             <img src={headerLogo.src} alt="" />
@@ -49,7 +66,8 @@ export default function Sidebar({ isMobileOpen = false }) {
         <div className="seperator"></div>
 
         <ul className="menu">
-          <li className={isActive('/dashboard') && !isActive('/dashboard/chat') ? 'active' : ''}>
+          <li className={router.pathname === '/dashboard' ? 'active' : ''}>
+
             <Link href="/dashboard">
               <img src={homeIcon.src} alt="anasayfa" />
               <span>Anasayfa</span>
@@ -129,16 +147,22 @@ export default function Sidebar({ isMobileOpen = false }) {
           </div>
           <Link href="/dashboard/settings">
             <img src={settingsIcon.src} alt="ayarlar" style={{ marginRight: 8 }} />
-            Ayarlar
+            <span>
+              Ayarlar
+            </span>
           </Link>
 
           <Link href="/logout">
             <img src={logoutIcon.src} alt="çıkış" style={{ marginRight: 8 }} />
-            Çıkış
+            <span>Çıkış</span>
           </Link>
         </div>
         <Link href="/dashboard/upgrade" className="upgrade">
-          Hesabınızı Yükseltin
+          <span>
+            Hesabınızı Yükseltin
+          </span>
+
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M22 8.5C22 12.09 19.09 15 15.5 15C15.33 15 15.15 14.99 14.98 14.98C14.73 11.81 12.19 9.26999 9.01999 9.01999C9.00999 8.84999 9 8.67 9 8.5C9 4.91 11.91 2 15.5 2C19.09 2 22 4.91 22 8.5Z" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15 15.5C15 19.09 12.09 22 8.5 22C4.91 22 2 19.09 2 15.5C2 11.91 4.91 9 8.5 9C8.67 9 8.84999 9.00999 9.01999 9.01999C12.19 9.26999 14.73 11.81 14.98 14.98C14.99 15.15 15 15.33 15 15.5Z" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M7.62 14.62L8.5 13L9.38 14.62L11 15.5L9.38 16.38L8.5 18L7.62 16.38L6 15.5L7.62 14.62Z" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></g></svg>
         </Link>
       </div>
     </div>

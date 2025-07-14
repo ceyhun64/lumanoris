@@ -5,6 +5,7 @@ export default function ReportModal({ isOpen, onClose }) {
     const [step, setStep] = useState(1);
     const [selectedReasons, setSelectedReasons] = useState([]);
     const [extraDetail, setExtraDetail] = useState('');
+    const [showFeedback, setShowFeedback] = useState(false);
 
     useEffect(() => {
         const closeOnEsc = (e) => e.key === 'Escape' && onClose();
@@ -26,16 +27,27 @@ export default function ReportModal({ isOpen, onClose }) {
 
     const handleSubmit = () => {
         console.log("Bildiriliyor:", { selectedReasons, extraDetail });
-        onClose();
-        setStep(1);
-        setSelectedReasons([]);
-        setExtraDetail('');
+
+        setShowFeedback(true); // geribildirim göster
+
+        setTimeout(() => {
+            setShowFeedback(false); // 2 saniye sonra gizle
+            onClose(); // modalı kapat
+            setStep(1);
+            setSelectedReasons([]);
+            setExtraDetail('');
+        }, 2000);
     };
 
     if (!isOpen) return null;
 
     return (
         <div className="share-overlay" onClick={onClose}>
+            {showFeedback && (
+                <div className="copy-badge">
+                    Bildiriminiz alındı 🎉
+                </div>
+            )}
             <div className="share-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                     <h3>Neler Oluyor?</h3>

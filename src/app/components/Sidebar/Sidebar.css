@@ -10,8 +10,27 @@
   justify-content: space-between;
   padding: 40px 24px;
   padding-bottom: 20px;
-  overflow: scroll;
-  transition: transform 0.3s ease;
+  transition: 0.3s all ease;
+}
+.page-sidebar .logo-circle {
+  display: flex;
+  position: absolute;
+  top: 42.5px;
+  right: -18px;
+  z-index: 9;
+  cursor: pointer;
+  transform: translateY(-50%);
+  justify-content: center;
+  align-items: center;
+}
+.page-sidebar .logo-circle img {
+  width: 36px;
+  height: 36px;
+}
+@media (max-width: 991px) {
+  .page-sidebar .logo-circle {
+    display: none;
+  }
 }
 .page-sidebar .logo {
   gap: 12px;
@@ -193,8 +212,65 @@
   line-height: 18px;
   transition: transform 0.2s ease;
 }
+.page-sidebar .bottom .upgrade svg {
+  display: none;
+}
 .page-sidebar .bottom .upgrade:hover {
   transform: scale(1.02);
+}
+.page-sidebar.logo-clicked {
+  width: 90px;
+  padding: 12px;
+}
+.page-sidebar.logo-clicked a {
+  display: flex;
+  justify-content: center !important;
+  align-items: center !important;
+}
+.page-sidebar.logo-clicked .settings {
+  justify-content: center;
+  align-items: center;
+}
+.page-sidebar.logo-clicked .settings span {
+  display: none;
+}
+.page-sidebar.logo-clicked .settings img {
+  margin: 0 !important;
+}
+.page-sidebar.logo-clicked .menu li span {
+  display: none;
+}
+.page-sidebar.logo-clicked .logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.page-sidebar.logo-clicked .logo span {
+  display: none;
+}
+.page-sidebar.logo-clicked .create-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: none;
+  border: 2px dashed var(--liner, #54103A);
+  border-radius: 5px;
+}
+.page-sidebar.logo-clicked .create-button p {
+  display: none;
+}
+.page-sidebar.logo-clicked .bottom {
+  justify-content: center;
+  align-items: center;
+}
+.page-sidebar.logo-clicked .upgrade {
+  height: 40px;
+  width: 40px;
+  padding: 0;
+  background-size: cover;
+}
+.page-sidebar.logo-clicked .upgrade span {
+  display: none;
 }
 
 .page-sidebar.mobile-fullscreen {
