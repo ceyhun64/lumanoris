@@ -15,6 +15,9 @@ export default function Header() {
     const handleProfileClick = () => {
         router.push('/register');
     };
+    const handleCheckoutCLick = () => {
+        router.push('/dashboard/checkout');
+    };
     return (
         <header className="dashboard-header">
             <div className="left">
@@ -33,7 +36,7 @@ export default function Header() {
                 <button className="icon-btn">
                     <Image src={bellIcon} alt="bildirim" />
                 </button>
-                <button className="icon-btn">
+                <button className="icon-btn" onClick={handleCheckoutCLick}>
                     <Image src={cartIcon} alt="sepet" />
                 </button>
                 <button className="icon-btn" onClick={handleProfileClick}>

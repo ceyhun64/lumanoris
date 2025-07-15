@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
 import ubeyazlogo from "../../images/ubeyaz.png";
+import { useRouter } from "next/navigation";
 
 export default function ForgotPassword() {
     const [step, setStep] = useState(1);
+    const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [showPasswordRepeat, setShowPasswordRepeat] = useState(false);
     const [code, setCode] = useState(["", "", "", ""]);
@@ -121,7 +123,9 @@ export default function ForgotPassword() {
                             </svg>
                             </span>
                         </div>
-                        <button className="button">KAYDET</button>
+                        <button className="button" onClick={() => router.push("/dashboard")}>
+                            KAYDET
+                        </button>
                     </>
                 )}
             </div>
