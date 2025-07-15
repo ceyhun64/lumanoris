@@ -3066,6 +3066,468 @@ body {
   }
 }
 
+.market-wrapper {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  padding: 24px 64px;
+  color: #fff;
+}
+@media (max-width: 1100px) {
+  .market-wrapper {
+    padding: 32px 15px;
+  }
+}
+.market-wrapper .market-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+.market-wrapper .market-header h2 {
+  font-family: "Montserrat", sans-serif;
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 56px;
+  background: var(--Linear, linear-gradient(323deg, #FF66C4 9.6%, #4699FF 108.66%));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+@media (max-width: 1100px) {
+  .market-wrapper .market-header h2 {
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 24px;
+  }
+}
+.market-wrapper .category-filter {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 43px;
+}
+@media (min-width: 992px) {
+  .market-wrapper .category-filter {
+    justify-content: space-between;
+  }
+}
+.market-wrapper .category-filter .arw-ct {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.market-wrapper .category-filter .splide {
+  width: calc(100% - 88px);
+}
+@media (max-width: 992px) {
+  .market-wrapper .category-filter .splide {
+    width: 100%;
+  }
+}
+.market-wrapper .category-filter .cat-btn {
+  padding: 16px;
+  border-radius: 12px;
+  background-color: #0f0e16;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  color: #FFF;
+  text-align: center;
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 22px;
+}
+@media (max-width: 992px) {
+  .market-wrapper .category-filter .cat-btn {
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 12px;
+  }
+}
+.market-wrapper .category-filter .cat-btn:hover {
+  background-color: #18161f;
+}
+.market-wrapper .category-filter .cat-btn.active {
+  background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
+  color: #ffffff;
+}
+.market-wrapper .category-filter .custom-arrow {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.32);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+.market-wrapper .category-filter .custom-arrow:hover {
+  background-color: #26242f;
+}
+.market-wrapper .category-filter .custom-arrow svg {
+  width: 16px;
+  height: 16px;
+}
+@media (max-width: 992px) {
+  .market-wrapper .category-filter .custom-arrow {
+    display: none;
+  }
+}
+.market-wrapper .market-content {
+  display: grid;
+  grid-template-columns: 2.5fr 1.5fr;
+  gap: 32px;
+}
+@media (max-width: 992px) {
+  .market-wrapper .market-content {
+    grid-template-columns: 1fr;
+  }
+}
+.market-wrapper .market-content .left-cards {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+@media (max-width: 1200px) {
+  .market-wrapper .market-content .left-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 992px) {
+  .market-wrapper .market-content .left-cards {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+@media (max-width: 576px) {
+  .market-wrapper .market-content .left-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 400px) {
+  .market-wrapper .market-content .left-cards {
+    grid-template-columns: 1fr;
+  }
+}
+.market-wrapper .market-content .left-cards .bot-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border-radius: 8.34px;
+  border: 1.043px solid rgba(255, 241, 250, 0.2);
+  background: #0F0E16;
+  position: relative;
+  gap: 12px;
+}
+.market-wrapper .market-content .left-cards .bot-card .card-top {
+  overflow: hidden;
+  z-index: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+}
+.market-wrapper .market-content .left-cards .bot-card:hover {
+  box-shadow: 0 0 12px rgba(255, 102, 196, 0.25);
+}
+.market-wrapper .market-content .left-cards .bot-card .shadow {
+  position: absolute;
+  left: 50%;
+  width: 100%;
+  top: 0;
+  transform: translateX(-50%);
+}
+.market-wrapper .market-content .left-cards .bot-card .shadow svg {
+  width: 100%;
+}
+.market-wrapper .market-content .left-cards .bot-card .image-wrapper {
+  position: relative;
+  width: 100%;
+}
+.market-wrapper .market-content .left-cards .bot-card .image-wrapper img {
+  width: 100%;
+  height: 120px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 8.34px 8.34px 0px 0px;
+  outline: 1px solid rgba(255, 255, 255, 0.15);
+  outline-offset: -1px;
+  z-index: 1;
+  position: relative;
+}
+.market-wrapper .market-content .left-cards .bot-card .image-wrapper .badge {
+  position: absolute;
+  top: 7px;
+  right: 5px;
+  font-family: "Montserrat", sans-serif;
+  font-size: 8.34px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 12.51px;
+  padding: 0 3px;
+  border-radius: 4px;
+  z-index: 2;
+}
+.market-wrapper .market-content .left-cards .bot-card .image-wrapper .badge.sold {
+  background-color: #FFB1B1;
+  color: #FF3116;
+}
+.market-wrapper .market-content .left-cards .bot-card .image-wrapper .badge.produced {
+  background-color: #C8FFD4;
+  color: #2ABC49;
+}
+.market-wrapper .market-content .left-cards .bot-card .image-wrapper .badge.rented {
+  background-color: #FFF2C8;
+  color: #F59B00;
+}
+.market-wrapper .market-content .left-cards .bot-card .info {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 2;
+}
+.market-wrapper .market-content .left-cards .bot-card .info .top {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.market-wrapper .market-content .left-cards .bot-card .info .top .title-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 4px;
+}
+.market-wrapper .market-content .left-cards .bot-card .info .top .title-row .icc {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.market-wrapper .market-content .left-cards .bot-card .info .top .title-row .icc img {
+  border-radius: 50%;
+  border: 1.043px solid rgba(255, 230, 242, 0.12);
+  width: 25px;
+  height: 25px;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.market-wrapper .market-content .left-cards .bot-card .info .top .title-row .title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-direction: column;
+}
+.market-wrapper .market-content .left-cards .bot-card .info .top .title-row .title .name {
+  color: #FFF;
+  text-align: center;
+  font-family: "Montserrat", sans-serif;
+  font-size: 12.51px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 16.681px;
+}
+.market-wrapper .market-content .left-cards .bot-card .info .top .title-row .title .author {
+  color: #8C8C8C;
+  font-family: "Montserrat", sans-serif;
+  font-size: 8.34px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 12.51px;
+}
+.market-wrapper .market-content .left-cards .bot-card .info .top .menu-icon {
+  cursor: pointer;
+}
+.market-wrapper .market-content .left-cards .bot-card .info .top .menu-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.market-wrapper .market-content .left-cards .bot-card .info .bot-card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.market-wrapper .market-content .left-cards .bot-card .info .bot-card-actions .action-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
+.market-wrapper .market-content .left-cards .bot-card .info .bot-card-actions .action-item svg {
+  width: 16px;
+  height: 16px;
+}
+.market-wrapper .market-content .left-cards .bot-card .info .bot-card-actions .action-item span {
+  color: #FFF;
+  text-align: center;
+  font-family: "Montserrat", sans-serif;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 12px;
+}
+.market-wrapper .market-content .left-cards .bot-card .info .bot-card-actions .buy-button {
+  display: flex;
+  padding: 2px 12px;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+  color: #FFF;
+  text-align: center;
+  font-family: "Montserrat", sans-serif;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 12px;
+  background: #1B1A22;
+}
+.market-wrapper .market-content .left-cards .bot-card .popup-menu {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  width: 280px;
+  z-index: 99999;
+  border-radius: 24px;
+  background: #14181B;
+}
+@media (max-width: 992px) {
+  .market-wrapper .market-content .left-cards .bot-card .popup-menu {
+    zoom: 0.8;
+  }
+}
+.market-wrapper .market-content .left-cards .bot-card .popup-menu ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.market-wrapper .market-content .left-cards .bot-card .popup-menu ul li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  cursor: pointer;
+  transition: 0.2s;
+  color: #FFF;
+  font-family: "Montserrat", sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+}
+.market-wrapper .market-content .left-cards .bot-card .popup-menu ul li span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.market-wrapper .market-content .left-cards .bot-card .popup-menu ul li span svg {
+  width: 24px;
+  height: 24px;
+}
+.market-wrapper .market-content .left-cards .bot-card .popup-menu ul li:hover {
+  transform: translateX(4px);
+  color: #ff66c4;
+}
+.market-wrapper .market-content .left-cards .bot-card .popup-menu ul hr {
+  border: none;
+  border-top: 1px solid rgb(255, 255, 255);
+}
+.market-wrapper .market-content .right-sorts h3 {
+  color: var(--white, #FFF);
+  font-family: "Montserrat", sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+  margin-bottom: 12px;
+}
+.market-wrapper .market-content .right-sorts .sort-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.market-wrapper .market-content .right-sorts .sort-buttons .sort-btn {
+  padding: 8px 0;
+  border-radius: 6px;
+  background: #19181F;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: "Montserrat", sans-serif;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 18px;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.market-wrapper .market-content .right-sorts .sort-buttons .sort-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.market-wrapper .market-content .right-sorts .sort-buttons .sort-btn.active {
+  background: #ff66c4;
+  color: #fff;
+  font-weight: 600;
+}
+.market-wrapper .market-content .right-sorts .sort-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.market-wrapper .market-content .right-sorts .sort-list .sort-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 248, 248, 0.12);
+}
+.market-wrapper .market-content .right-sorts .sort-list .sort-item .avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.market-wrapper .market-content .right-sorts .sort-list .sort-item span {
+  color: #FFF;
+  text-align: center;
+  font-family: "Montserrat", sans-serif;
+  font-size: 12.51px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 16.681px;
+}
+
 .settings-wrapper {
   display: flex;
   width: 100%;
