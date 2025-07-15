@@ -21,6 +21,11 @@ import { useRouter } from 'next/navigation';
 
 export default function Sidebar({ isMobileOpen = false }) {
   const pathname = usePathname();
+
+  const handleCreateClick = () => {
+    router.push('/dashboard/chatbots/create');
+  };
+
   const router = useRouter();
   const [logoClicked, setLogoClicked] = useState(false); // <- class kontrolü
   const [isQuitModalOpen, setIsQuitModalOpen] = useState(false);
@@ -49,7 +54,7 @@ export default function Sidebar({ isMobileOpen = false }) {
           </span>
         </div>
 
-        <button className="create-button">
+        <button className="create-button" onClick={handleCreateClick}>
           <p>OLUŞTUR</p>
           <span>
             <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -170,7 +175,7 @@ export default function Sidebar({ isMobileOpen = false }) {
         isOpen={isQuitModalOpen}
         onClose={() => setIsQuitModalOpen(false)}
         onConfirm={() => {
-          router.push('/login'); 
+          router.push('/login');
         }}
       />
     </div>
