@@ -6,12 +6,19 @@ import searchIcon from '../../../images/search-icon.svg';
 import bellIcon from '../../../images/bell-icon.svg';
 import cartIcon from '../../../images/cart-icon.svg';
 import userIcon from '../../../images/user-icon.svg';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
+
+    const router = useRouter();
+
+    const handleProfileClick = () => {
+        router.push('/register');
+    };
     return (
         <header className="dashboard-header">
             <div className="left">
-                
+
                 <div className="search-bar">
                     <input type="text" placeholder="KEŞFET" />
                     <button>
@@ -29,7 +36,7 @@ export default function Header() {
                 <button className="icon-btn">
                     <Image src={cartIcon} alt="sepet" />
                 </button>
-                <button className="icon-btn">
+                <button className="icon-btn" onClick={handleProfileClick}>
                     <Image src={userIcon} alt="profil" />
                 </button>
             </div>
