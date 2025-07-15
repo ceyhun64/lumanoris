@@ -6,6 +6,29 @@
     padding: 0;
 }
 
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #FF66C4 #14181B;
+}
+
+*::-webkit-scrollbar {
+    width: 8px;
+}
+
+*::-webkit-scrollbar-track {
+    background: #14181B;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #FF66C4, #4699FF);
+    border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #FF80D5, #5FB0FF);
+}
+
 html {
     font-size: 10px;
 }
@@ -592,6 +615,122 @@ body {
 
     100% {
         filter: drop-shadow(0 0 0px #ff66c4);
+    }
+}
+
+
+
+.policy-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: flex;
+    justify-content: flex-end;
+    align-items: stretch;
+
+
+    .policy-panel {
+        background: #14181B;
+        width: 700px;
+        max-width: 90%;
+        padding: 32px 48px;
+        overflow-y: auto;
+        animation: slideIn 0.3s ease forwards;
+        display: flex;
+        flex-direction: column;
+        color: white;
+
+        @media(max-width:992px) {
+            padding: 30px 20px;
+        }
+
+        .policy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+
+            @media(max-width:992px) {
+                margin-bottom: 30px;
+            }
+
+            h3 {
+                color: #FFF;
+                font-family: "Montserrat", sans-serif;
+                font-size: 24px;
+                font-style: normal;
+                font-weight: 600;
+                line-height: 38px;
+
+                @media(max-width:992px) {
+                    font-size: 16px;
+                }
+            }
+
+            button {
+                background: none;
+                border: none;
+                color: #fff;
+                font-size: 24px;
+                cursor: pointer;
+
+                &:hover {
+                    color: #FF66C4;
+                }
+            }
+        }
+
+        .policy-content {
+            max-height: 80vh;
+            overflow-y: auto;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 44px 12px;
+            color: #ccc;
+
+            a {
+                color: #FF66C4;
+                text-decoration: underline;
+                font-family: "Montserrat", sans-serif;
+                font-size: 14px;
+                font-style: normal;
+                font-weight: 600;
+                line-height: 28px;
+
+                @media(max-width:992px) {
+                    font-size: 12px;
+                    font-weight: 400;
+                    line-height: 18px;
+                }
+            }
+
+            p {
+                color: var(--white, #FFF);
+                font-family: "Montserrat", sans-serif;
+                font-size: 14px;
+                font-style: normal;
+                font-weight: 600;
+                line-height: 28px;
+
+                @media(max-width:992px) {
+                    font-size: 12px;
+                    font-weight: 400;
+                    line-height: 18px;
+                }
+            }
+        }
+    }
+}
+
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(0);
     }
 }
 
