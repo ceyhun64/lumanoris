@@ -146,7 +146,7 @@ export default function ProfileCard() {
             <AddToListModal
                 isOpen={modalVisible}
                 onClose={() => setModalVisible(false)}
-                lists={["Favorilerim listesi", "Ai liste"]}
+                lists={["Favorilerim", "Sık Kullanılanlar"]}
             />
         </div>
     )

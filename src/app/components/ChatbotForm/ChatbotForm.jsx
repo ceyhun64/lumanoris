@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 export default function ChatbotForm() {
 
@@ -19,6 +19,7 @@ export default function ChatbotForm() {
     const [isDragging, setIsDragging] = useState(false);
     const [coverImage, setCoverImage] = useState(null);
     const [profileImage, setProfileImage] = useState(null);
+    const generalFileInputRef = useRef(null);
 
 
     const handleGeneralFileDrop = (e) => {
@@ -169,7 +170,25 @@ export default function ChatbotForm() {
                     onDrop={handleGeneralFileDrop}
                     onDragOver={handleGeneralDragOver}
                     onDragLeave={handleGeneralDragLeave}
+                    onClick={() => generalFileInputRef.current?.click()} // 🔥 burası yeni
                 >
+                    <input
+  type="file"
+  ref={generalFileInputRef}
+  accept="image/*,application/pdf"
+  style={{ display: 'none' }}
+  onChange={(e) => {
+    const file = e.target.files[0];
+    if (file && (file.type.startsWith("image/") || file.type === "application/pdf")) {
+      setUploadedFile({
+        file,
+        url: URL.createObjectURL(file),
+        type: file.type
+      });
+    }
+  }}
+/>
+
                     <div className="upload-icon">
                         <svg width="37" height="33" viewBox="0 0 37 33" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path fill-rule="evenodd" clip-rule="evenodd" d="M6.37682 20.0022H30.3724C31.9634 20.0022 33.4892 19.3702 34.6142 18.2452C35.7392 17.1202 36.3713 15.5943 36.3713 14.0033C36.3713 12.4123 35.7392 10.8865 34.6142 9.76148C33.4892 8.63647 31.9634 8.00445 30.3724 8.00445C29.8125 8.00445 29.5325 8.00445 29.3386 7.96445C28.7427 7.84448 28.4587 7.66251 28.1068 7.1666C27.9908 7.00663 27.8268 6.6427 27.5009 5.91483C26.7128 4.15334 25.4317 2.65757 23.8123 1.60802C22.1929 0.55847 20.3044 0 18.3746 0C16.4448 0 14.5563 0.55847 12.9369 1.60802C11.3175 2.65757 10.0364 4.15334 9.24829 5.91483C8.92235 6.6427 8.75838 7.00463 8.6424 7.1666C8.29046 7.66251 8.00652 7.84648 7.41063 7.96645C7.21466 8.00445 6.93671 8.00445 6.37682 8.00445C4.78581 8.00445 3.25997 8.63647 2.13496 9.76148C1.00995 10.8865 0.37793 12.4123 0.37793 14.0033C0.37793 15.5943 1.00995 17.1202 2.13496 18.2452C3.25997 19.3702 4.78581 20.0022 6.37682 20.0022Z" fill="#FF66C4" fill-opacity="0.37" />

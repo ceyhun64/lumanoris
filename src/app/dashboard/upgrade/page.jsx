@@ -105,7 +105,13 @@ export default function PricingPlans() {
             <div className="pricing-container">
                 <div className="pricing-toggle">
                     <span className={!isYearly ? "active" : ""}>Aylık</span>
-                    <div className="toggle-switch" onClick={() => setIsYearly(!isYearly)}>
+                    <div
+                        className="toggle-switch"
+                        onClick={() => setIsYearly(!isYearly)}
+                        style={{
+                            background: isYearly ? '#ff66c4' : '#6c47ff'  // 🎨 dinamik renk geçişi
+                        }}
+                    >
                         <div
                             className="circle"
                             style={{ transform: isYearly ? "translateX(26px)" : "translateX(2px)" }}
@@ -113,6 +119,7 @@ export default function PricingPlans() {
                     </div>
                     <span className={isYearly ? "active" : ""}>Yıllık</span>
                 </div>
+
 
                 <div className="plan-grid">
                     {plansToRender.map((plan, index) => (
@@ -128,7 +135,9 @@ export default function PricingPlans() {
                                 </div>
                                 {plan.badge && <span className="badge">{plan.badge}</span>}
                             </h3>
-                            <p className="plan-price">{plan.price}{!plan.price.includes("Plan") && <span>/yıllık</span>}</p>
+                            <p className="plan-price">{plan.price}{!plan.price.includes("Plan") && <span>
+                                {isYearly ? "/Yıllık" : '/Aylık'}
+                            </span>}</p>
                             <p className="plan-description">{plan.description}</p>
                             <button
                                 className={plan.buttonType === "primary" ? "plan-button" : "schedule-button"}

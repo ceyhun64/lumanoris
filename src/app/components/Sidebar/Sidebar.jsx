@@ -45,14 +45,14 @@ export default function Sidebar({ isMobileOpen = false }) {
       <div>
 
 
-        <div className="logo">
+        <Link href="/dashboard" className="logo">
           <div className="icon">
             <img src={headerLogo.src} alt="" />
           </div>
           <span>
             LUMANORIS
           </span>
-        </div>
+        </Link>
 
         <button className="create-button" onClick={handleCreateClick}>
           <p>OLUŞTUR</p>
@@ -72,7 +72,7 @@ export default function Sidebar({ isMobileOpen = false }) {
         <div className="seperator"></div>
 
         <ul className="menu">
-          <li className={router.pathname === '/dashboard' ? 'active' : ''}>
+          <li className={pathname === '/dashboard' ? 'active' : ''}>
 
             <Link href="/dashboard">
               <img src={homeIcon.src} alt="anasayfa" />

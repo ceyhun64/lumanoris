@@ -40,6 +40,8 @@
   justify-content: flex-start;
   align-items: center;
   margin-bottom: 12px;
+  cursor: pointer;
+  text-decoration: none;
 }
 .page-sidebar .logo .icon {
   display: flex;
@@ -102,6 +104,7 @@
 .page-sidebar .menu {
   list-style: none;
   padding: 0;
+  zoom: 0.9;
   margin: 0 0 12px 0;
   gap: 4px;
   display: flex;
