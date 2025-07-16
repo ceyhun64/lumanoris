@@ -224,7 +224,7 @@
   transition: transform 0.2s ease;
 }
 .page-sidebar .bottom .upgrade svg {
-  display: none;
+  margin-left: 5px;
 }
 .page-sidebar .bottom .upgrade:hover {
   transform: scale(1.02);
