@@ -275,6 +275,10 @@ body {
 }
 .marketplace-page .category-filter .cat-btn.active {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: #ffffff;
 }
 .marketplace-page .category-filter .custom-arrow {
@@ -999,6 +1003,10 @@ body {
 }
 .share-overlay .share-modal .modal-actions .save-btn {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .withdrawal-overlay {
@@ -1217,6 +1225,10 @@ body {
 }
 .withdrawal-overlay .withdrawal-modal .modal-actions .save-btn {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .quit-overlay {
@@ -1792,8 +1804,12 @@ body {
   font-weight: bold;
   text-transform: uppercase;
   border-radius: 12px;
-  border: 1px solid var(--liner, #54103A);
+  border: 1px solid var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: #fff;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -2105,8 +2121,12 @@ body {
   width: 100%;
   padding: 14px;
   border-radius: 12px;
-  border: 1px solid var(--liner, #54103A);
+  border: 1px solid var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   text-transform: uppercase;
   color: #FFF;
   font-family: "Montserrat", sans-serif;
@@ -2394,8 +2414,12 @@ body {
   width: 100%;
   padding: 14px;
   border-radius: 12px;
-  border: 1px solid var(--liner, #54103A);
+  border: 1px solid var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   text-transform: uppercase;
   color: #FFF;
   font-family: "Montserrat", sans-serif;
@@ -2597,6 +2621,7 @@ body {
 .chatbots-list-wrapper .chatbots-grid .chatbot-card {
   display: flex;
   color: #fff;
+  cursor: pointer;
   gap: 16px;
   padding: 8px;
   justify-content: space-between;
@@ -2855,7 +2880,7 @@ body {
 }
 .chatbots-list-wrapper .chatbots-grid .chatbot-card .card-right .actions .edit-btn {
   border-radius: 8px;
-  border: 2px dashed var(--liner, rgba(84, 16, 58, 0.3137254902));
+  border: 2px dashed var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: linear-gradient(329deg, rgba(84, 16, 58, 0) -2.05%, rgba(70, 153, 255, 0) 178.12%);
   cursor: pointer;
   padding: 12px 25px;
@@ -2889,8 +2914,12 @@ body {
 .chatbots-list-wrapper .chatbots-grid .chatbot-card .card-right .actions .add-btn {
   border-radius: 8px;
   overflow: hidden;
-  border: 2px dashed var(--liner, rgba(84, 16, 58, 0.5019607843));
+  border: 2px dashed var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.3647058824) 1%, rgba(70, 153, 255, 0.3647058824) 90%);
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   cursor: pointer;
   padding: 12px 25px;
   display: flex;
@@ -3139,6 +3168,10 @@ body {
 }
 .dialogue-wrapper .category-filter .cat-btn.active {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: #ffffff;
 }
 .dialogue-wrapper .category-filter .custom-arrow {
@@ -4136,9 +4169,13 @@ body {
 }
 .balance-wrapper .balance-tabs button.active {
   border-radius: 12px;
-  border-bottom: 1px dashed var(--liner, rgba(84, 16, 58, 0.3137254902));
+  border-bottom: 1px dashed var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.06);
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 .balance-wrapper .transaction-list {
   display: flex;
@@ -4383,7 +4420,7 @@ body {
 }
 .chat-wrapper .chat-bottom .profile-card .profile-top .profile-actions .btn-follow {
   border-radius: 8px;
-  border: 3px solid var(--liner, #54103A);
+  border: 3px solid var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: rgba(255, 255, 255, 0.04);
   padding: 16px;
   display: flex;
@@ -4632,6 +4669,10 @@ body {
 }
 .market-wrapper .category-filter .cat-btn.active {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: #ffffff;
 }
 .market-wrapper .category-filter .custom-arrow {
@@ -5067,7 +5108,7 @@ body {
   align-items: center;
   padding: 12px 24px;
   border-radius: 12px;
-  border-bottom: 1px dashed var(--liner, rgba(84, 16, 58, 0.5647058824));
+  border-bottom: 1px dashed var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: rgba(255, 255, 255, 0.06);
   transition: background 0.3s ease;
 }
@@ -5100,6 +5141,11 @@ body {
   border: 1px solid rgba(255, 241, 250, 0.23);
   padding: 12px;
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  cursor: pointer;
   color: #FFF;
   font-family: "Montserrat", sans-serif;
   font-size: 15px;
@@ -5342,8 +5388,12 @@ body {
   padding: 12px 24px;
   border-radius: 12px;
   border: none;
-  border-bottom: 1px dashed var(--liner, #54103A);
+  border-bottom: 1px dashed var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: var(--white, #FFF);
   font-family: "Montserrat", sans-serif;
   min-width: 125px;
@@ -5487,6 +5537,10 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(255, 241, 250, 0.73);
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: #fff;
   font-family: "Montserrat", sans-serif;
   font-size: 14px;
@@ -5549,6 +5603,10 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(255, 241, 250, 0.73);
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: #fff;
   font-family: "Montserrat", sans-serif;
   font-size: 14px;
@@ -5628,6 +5686,10 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(255, 241, 250, 0.73);
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: #fff;
   font-family: "Montserrat", sans-serif;
   font-size: 14px;
@@ -5793,6 +5855,10 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(255, 241, 250, 0.23);
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: var(--white, #FFF);
   font-family: "Montserrat", sans-serif;
   min-width: 280px;
@@ -5929,7 +5995,10 @@ body {
   transform: translateY(-2px);
 }
 .explore-wrapper .category-buttons .category-button.active {
-  background: linear-gradient(330deg, rgba(84, 16, 58, 0.36) 1%, rgba(70, 153, 255, 0.36) 90%);
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 .explore-wrapper .bot-list {
   display: flex;
@@ -6678,6 +6747,10 @@ body {
   border: none;
   outline: none;
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   transition: all 0.3s ease;
 }
 .auth-layout .register-content .register-box .register-form .register-btn:hover {
@@ -6925,6 +6998,10 @@ body {
   border: none;
   outline: none;
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   transition: all 0.3s ease;
 }
 .auth-layout .login-content .login-box .login-form .login-btn:hover {
@@ -7159,8 +7236,12 @@ body {
   padding: 17px;
   color: #fff;
   border-radius: 12px;
-  border: 1px solid var(--liner, #54103A);
+  border: 1px solid var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("../../images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   cursor: pointer;
   color: #FFF;
   font-family: "Montserrat", sans-serif;

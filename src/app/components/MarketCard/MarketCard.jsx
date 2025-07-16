@@ -3,14 +3,18 @@ import { useEffect, useState, useRef } from 'react';
 import ShareModal from '../ShareModal/ShareModal';
 import ReportModal from '../ReportModal/ReportModal';
 import AddToListModal from '../AddToListModal/AddToListModal';
+import { useRouter } from 'next/navigation';
+import CommentModal from '../CommentModal/CommentModal';
 
 export default function MarketCard({ bot }) {
+    const router = useRouter();
     const { image, title, author, dialogues, time, badge, avatar, likes, comments } = bot;
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef();
     const [shareOpen, setShareOpen] = useState(false);
     const [reportOpen, setReportOpen] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
+    const [commentOpen, setCommentOpen] = useState(false);
 
 
     const toggleMenu = () => setMenuOpen(prev => !prev);
@@ -32,7 +36,7 @@ export default function MarketCard({ bot }) {
     }, [menuOpen]);
 
     return (
-        <div className="bot-card">
+        <div className="bot-card" onClick={() => router.push('/dashboard/chat')}>
             <div className="card-top">
                 <div className="shadow">
                     <svg xmlns="http://www.w3.org/2000/svg" width="200" height="161" viewBox="0 0 200 161" fill="none">
@@ -69,7 +73,7 @@ export default function MarketCard({ bot }) {
                         </div>
                     </div>
                     <div className="menu-wrapper" ref={menuRef}>
-                        <div className="menu-icon" onClick={toggleMenu}>
+                        <div className="menu-icon" onClick={(e) => { e.stopPropagation(); toggleMenu() }}>
                             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M9.02286 12.367C9.39152 12.367 9.74508 12.5135 10.0058 12.7742C10.2664 13.0348 10.4129 13.3884 10.4129 13.7571C10.4129 14.1257 10.2664 14.4793 10.0058 14.74C9.74508 15.0007 9.39152 15.1471 9.02286 15.1471C8.65419 15.1471 8.30063 15.0007 8.03995 14.74C7.77926 14.4793 7.63281 14.1257 7.63281 13.7571C7.63281 13.3884 7.77926 13.0348 8.03995 12.7742C8.30063 12.5135 8.65419 12.367 9.02286 12.367ZM9.02286 7.50187C9.39152 7.50187 9.74508 7.64832 10.0058 7.909C10.2664 8.16969 10.4129 8.52325 10.4129 8.89191C10.4129 9.26057 10.2664 9.61413 10.0058 9.87482C9.74508 10.1355 9.39152 10.282 9.02286 10.282C8.65419 10.282 8.30063 10.1355 8.03995 9.87482C7.77926 9.61413 7.63281 9.26057 7.63281 8.89191C7.63281 8.52325 7.77926 8.16969 8.03995 7.909C8.30063 7.64832 8.65419 7.50187 9.02286 7.50187ZM9.02286 2.63672C9.39152 2.63672 9.74508 2.78317 10.0058 3.04385C10.2664 3.30454 10.4129 3.6581 10.4129 4.02676C10.4129 4.39542 10.2664 4.74899 10.0058 5.00967C9.74508 5.27035 9.39152 5.4168 9.02286 5.4168C8.65419 5.4168 8.30063 5.27035 8.03995 5.00967C7.77926 4.74899 7.63281 4.39542 7.63281 4.02676C7.63281 3.6581 7.77926 3.30454 8.03995 3.04385C8.30063 2.78317 8.65419 2.63672 9.02286 2.63672Z" fill="#8C8C8C" />
                             </svg>
@@ -77,12 +81,12 @@ export default function MarketCard({ bot }) {
                         {menuOpen && (
                             <div className="popup-menu">
                                 <ul>
-                                    <li onClick={() => setModalVisible(true)}><span><svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <li onClick={(e) => { e.stopPropagation(); setModalVisible(true) }}><span><svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M16 3.5H8C7.46957 3.5 6.96086 3.71071 6.58579 4.08579C6.21071 4.46086 6 4.96957 6 5.5V21.5L12 18.5L18 21.5V5.5C18 4.96957 17.7893 4.46086 17.4142 4.08579C17.0391 3.71071 16.5304 3.5 16 3.5Z" stroke="#FF99D6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
 
                                     </span> Listeye Kaydet</li>
-                                    <li onClick={() => setShareOpen(true)}><span><svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <li onClick={(e) => { e.stopPropagation(); setShareOpen(true) }}><span><svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path opacity="0.3" d="M18 6.5C18.5523 6.5 19 6.05228 19 5.5C19 4.94772 18.5523 4.5 18 4.5C17.4477 4.5 17 4.94772 17 5.5C17 6.05228 17.4477 6.5 18 6.5Z" fill="#FF99D6" />
                                         <path opacity="0.3" d="M6 13.5C6.55228 13.5 7 13.0523 7 12.5C7 11.9477 6.55228 11.5 6 11.5C5.44772 11.5 5 11.9477 5 12.5C5 13.0523 5.44772 13.5 6 13.5Z" fill="#FF99D6" />
                                         <path opacity="0.3" d="M18 20.5195C18.5523 20.5195 19 20.0718 19 19.5195C19 18.9672 18.5523 18.5195 18 18.5195C17.4477 18.5195 17 18.9672 17 19.5195C17 20.0718 17.4477 20.5195 18 20.5195Z" fill="#FF99D6" />
@@ -100,7 +104,7 @@ export default function MarketCard({ bot }) {
                                         <path d="M21 12.5C21 12.6989 20.921 12.8897 20.7803 13.0303C20.6397 13.171 20.4489 13.25 20.25 13.25H3.75C3.55109 13.25 3.36032 13.171 3.21967 13.0303C3.07902 12.8897 3 12.6989 3 12.5C3 12.3011 3.07902 12.1103 3.21967 11.9697C3.36032 11.829 3.55109 11.75 3.75 11.75H20.25C20.4489 11.75 20.6397 11.829 20.7803 11.9697C20.921 12.1103 21 12.3011 21 12.5Z" fill="#FF99D6" />
                                     </svg>
                                     </span> Bu Profili Önermeyin</li>
-                                    <li onClick={() => setReportOpen(true)} ><span><svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <li onClick={(e) => { e.stopPropagation(); setReportOpen(true) }} ><span><svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path opacity="0.3" d="M9.1 5.5L5 9.6V15.4L9.1 19.5H14.9L19 15.4V9.6L14.9 5.5H9.1ZM12 17.5C11.45 17.5 11 17.05 11 16.5C11 15.95 11.45 15.5 12 15.5C12.55 15.5 13 15.95 13 16.5C13 17.05 12.55 17.5 12 17.5ZM13 14.5H11V7.5H13V14.5Z" fill="#FF99D6" />
                                         <path d="M15.73 3.5H8.27L3 8.77V16.23L8.27 21.5H15.73L21 16.23V8.77L15.73 3.5ZM19 15.4L14.9 19.5H9.1L5 15.4V9.6L9.1 5.5H14.9L19 9.6V15.4Z" fill="#FF99D6" />
                                         <path d="M12 17.5C12.5523 17.5 13 17.0523 13 16.5C13 15.9477 12.5523 15.5 12 15.5C11.4477 15.5 11 15.9477 11 16.5C11 17.0523 11.4477 17.5 12 17.5Z" fill="#FF99D6" />
@@ -121,14 +125,13 @@ export default function MarketCard({ bot }) {
 
                         <span>{likes}</span>
                     </div>
-                    <div class="action-item">
+                    <div class="action-item" onClick={(e) => { e.stopPropagation(); setCommentOpen(true) }}>
                         <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path opacity="0.2" d="M14.0137 4.59766V12.5977C14.0137 12.7303 13.961 12.8574 13.8672 12.9512C13.7735 13.045 13.6463 13.0977 13.5137 13.0977H5.01367L2.83555 14.9795C2.76272 15.0408 2.67392 15.08 2.57959 15.0926C2.48525 15.1051 2.38929 15.0905 2.30298 15.0504C2.21668 15.0103 2.14361 14.9464 2.09236 14.8662C2.04111 14.786 2.01381 14.6928 2.01367 14.5977V4.59766C2.01367 4.46505 2.06635 4.33787 2.16012 4.2441C2.25389 4.15033 2.38106 4.09766 2.51367 4.09766H13.5137C13.6463 4.09766 13.7735 4.15033 13.8672 4.2441C13.961 4.33787 14.0137 4.46505 14.0137 4.59766Z" fill="#FFE6F2" />
                             <path d="M13.5137 3.59766H2.51369C2.24847 3.59766 1.99412 3.70301 1.80658 3.89055C1.61905 4.07809 1.51369 4.33244 1.51369 4.59766V14.5977C1.51254 14.7883 1.56648 14.9753 1.66904 15.1361C1.7716 15.2968 1.91841 15.4246 2.09181 15.5039C2.22396 15.5654 2.36792 15.5974 2.51369 15.5977C2.74843 15.597 2.97538 15.5133 3.15431 15.3614L3.15994 15.357L5.20119 13.5977H13.5137C13.7789 13.5977 14.0333 13.4923 14.2208 13.3048C14.4083 13.1172 14.5137 12.8629 14.5137 12.5977V4.59766C14.5137 4.33244 14.4083 4.07809 14.2208 3.89055C14.0333 3.70301 13.7789 3.59766 13.5137 3.59766ZM13.5137 12.5977H5.01369C4.89363 12.5977 4.77761 12.641 4.68681 12.7195L2.51369 14.5977V4.59766H13.5137V12.5977Z" fill="#FFE6F2" />
                         </svg>
 
                         <span>{comments}</span>
-
                     </div>
                     <div class="action-item">
                         <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -151,6 +154,19 @@ export default function MarketCard({ bot }) {
                 onClose={() => setModalVisible(false)}
                 lists={["Favorilerim", "Sık Kullanılanlar"]}
             />
+
+            <CommentModal
+                            isOpen={commentOpen}
+                            onClose={() => setCommentOpen(false)}
+                            comments={[
+                                { text: "Harika bir model olmuş", author: "adnankocak", date: "2 gün önce" },
+                                { text: "Gerçekten faydalı bir model", author: "ahmetyasin", date: "2 gün önce" },
+                                { text: "Harika bir model olmuş", author: "adnankocak", date: "2 gün önce" },
+                                { text: "Gerçekten faydalı bir model", author: "ahmetyasin", date: "2 gün önce" },
+                                { text: "Harika bir model olmuş", author: "adnankocak", date: "2 gün önce" },
+                            ]}
+                            onSend={(comment) => console.log("Yeni yorum:", comment)}
+                        />
 
         </div>
     );

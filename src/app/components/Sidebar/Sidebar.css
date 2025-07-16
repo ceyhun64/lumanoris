@@ -348,6 +348,10 @@
   .menu-toggle {
     border-radius: 8px;
     background: var(--gra, linear-gradient(323deg, #1B1A22 -16.98%, #993D76 108.66%));
+    background-image: url("../../../images/btn-bg.png");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
     width: 32px;
     height: 32px;
     border-radius: 8px;

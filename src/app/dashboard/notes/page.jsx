@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Masonry from 'react-masonry-css';
 import avatar from "../../../images/avatar-bot.jpg";
 import CategoryFilter from '@/app/components/CategoryFilter/CategoryFilter';
+import { useRouter } from 'next/navigation';
 
 const allCards = [
     {
@@ -59,12 +60,11 @@ const allCards = [
 
 
 export default function DialoguePage() {
+    const router = useRouter();
     const [filtered, setFiltered] = useState('Tümü');
-
     const filteredCards = filtered === 'Tümü'
         ? allCards
         : allCards.filter(card => card.tag === filtered);
-
     const breakpoints = {
         default: 5,
         1200: 4,
@@ -93,7 +93,7 @@ export default function DialoguePage() {
                     <div
                         className="dialogue-card"
                         key={index}
-                        onClick={() => console.log(`Card clicked: ${card.title}`)}
+                        onClick={() => router.push('/dashboard/chat')}
                         style={{ cursor: 'pointer' }}
                     >
                         <div className="shadow">

@@ -296,6 +296,10 @@ body {
 
             &.active {
                 background: linear-gradient(330deg, #54103A90 1%, #4699FF90 90%);
+                background-image: url("../../images/btn-bg.png");
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
                 color: #ffffff;
             }
 
@@ -1123,6 +1127,10 @@ body {
 
             .save-btn {
                 background: linear-gradient(330deg, #54103A90 1%, #4699FF90 90%);
+                background-image: url("../../images/btn-bg.png");
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
 
             }
         }
@@ -1374,6 +1382,10 @@ body {
 
             .save-btn {
                 background: linear-gradient(330deg, #54103A90 1%, #4699FF90 90%);
+                background-image: url("../../images/btn-bg.png");
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
 
             }
         }
@@ -2045,8 +2057,13 @@ body {
         font-weight: bold;
         text-transform: uppercase;
         border-radius: 12px;
-        border: 1px solid var(--liner, #54103A);
+        border: 1px solid var(--liner, #FFFFFF20);
         background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
+
+        background-image: url("../../images/btn-bg.png");
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
         color: #fff;
         cursor: pointer;
         transition: all 0.3s ease;
@@ -2397,8 +2414,13 @@ body {
             width: 100%;
             padding: 14px;
             border-radius: 12px;
-            border: 1px solid var(--liner, #54103A);
+            border: 1px solid var(--liner, #FFFFFF20);
             background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
+
+            background-image: url("../../images/btn-bg.png");
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
             text-transform: uppercase;
             color: #FFF;
             font-family: "Montserrat", sans-serif;
@@ -2719,8 +2741,12 @@ body {
                 width: 100%;
                 padding: 14px;
                 border-radius: 12px;
-                border: 1px solid var(--liner, #54103A);
+                border: 1px solid var(--liner, #FFFFFF20);
                 background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
+                background-image: url("../../images/btn-bg.png");
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
                 text-transform: uppercase;
                 color: #FFF;
                 font-family: "Montserrat", sans-serif;
@@ -2945,6 +2971,7 @@ body {
         .chatbot-card {
             display: flex;
             color: #fff;
+            cursor: pointer;
             gap: 16px;
             padding: 8px;
             justify-content: space-between;
@@ -3228,7 +3255,7 @@ body {
 
                     .edit-btn {
                         border-radius: 8px;
-                        border: 2px dashed var(--liner, #54103A50);
+                        border: 2px dashed var(--liner, #FFFFFF20);
                         background: linear-gradient(329deg, rgba(84, 16, 58, 0.00) -2.05%, rgba(70, 153, 255, 0.00) 178.12%);
                         cursor: pointer;
                         padding: 12px 25px;
@@ -3267,8 +3294,12 @@ body {
                     .add-btn {
                         border-radius: 8px;
                         overflow: hidden;
-                        border: 2px dashed var(--liner, #54103A80);
+                        border: 2px dashed var(--liner, #FFFFFF20);
                         background: linear-gradient(330deg, rgba(84, 16, 58, 0.3647058824) 1%, rgba(70, 153, 255, 0.3647058824) 90%);
+                        background-image: url("../../images/btn-bg.png");
+                        background-position: center;
+                        background-repeat: no-repeat;
+                        background-size: cover;
                         cursor: pointer;
                         padding: 12px 25px;
                         display: flex;
@@ -3537,6 +3568,10 @@ body {
 
             &.active {
                 background: linear-gradient(330deg, #54103A90 1%, #4699FF90 90%);
+                background-image: url("../../images/btn-bg.png");
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
                 color: #ffffff;
             }
 
@@ -4657,9 +4692,13 @@ body {
 
             &.active {
                 border-radius: 12px;
-                border-bottom: 1px dashed var(--liner, #54103A50);
+                border-bottom: 1px dashed var(--liner, #FFFFFF20);
                 background: linear-gradient(330deg, #54103A90 1%, #4699FF90 90%);
                 box-shadow: 0 0 12px rgba(255, 255, 255, 0.06);
+                background-image: url("../../images/btn-bg.png");
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
             }
         }
     }
@@ -4928,7 +4967,7 @@ body {
 
                     .btn-follow {
                         border-radius: 8px;
-                        border: 3px solid var(--liner, #54103A);
+                        border: 3px solid var(--liner, #FFFFFF20);
                         background: rgba(255, 255, 255, 0.04);
                         padding: 16px;
                         display: flex;
@@ -5205,6 +5244,10 @@ body {
 
             &.active {
                 background: linear-gradient(330deg, #54103A90 1%, #4699FF90 90%);
+                background-image: url("../../images/btn-bg.png");
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
                 color: #ffffff;
             }
 
@@ -5707,7 +5750,7 @@ body {
             align-items: center;
             padding: 12px 24px;
             border-radius: 12px;
-            border-bottom: 1px dashed var(--liner, #54103A90);
+            border-bottom: 1px dashed var(--liner, #FFFFFF20);
             background: rgba(255, 255, 255, 0.06);
             transition: background 0.3s ease;
 
@@ -5744,6 +5787,11 @@ body {
                 border: 1px solid rgba(255, 241, 250, 0.23);
                 padding: 12px;
                 background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
+                background-image: url("../../images/btn-bg.png");
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
+                cursor: pointer;
                 color: #FFF;
                 font-family: "Montserrat", sans-serif;
                 font-size: 15px;
@@ -6010,8 +6058,12 @@ body {
                 padding: 12px 24px;
                 border-radius: 12px;
                 border: none;
-                border-bottom: 1px dashed var(--liner, #54103A);
+                border-bottom: 1px dashed var(--liner, #FFFFFF20);
                 background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
+                background-image: url("../../images/btn-bg.png");
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
                 color: var(--white, #FFF);
                 font-family: "Montserrat", sans-serif;
                 min-width: 125px;
@@ -6172,6 +6224,10 @@ body {
             border-radius: 12px;
             border: 1px solid rgba(255, 241, 250, 0.73);
             background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
+            background-image: url("../../images/btn-bg.png");
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
             color: #fff;
             font-family: "Montserrat", sans-serif;
             font-size: 14px;
@@ -6238,6 +6294,10 @@ body {
             border-radius: 12px;
             border: 1px solid rgba(255, 241, 250, 0.73);
             background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
+            background-image: url("../../images/btn-bg.png");
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
             color: #fff;
             font-family: "Montserrat", sans-serif;
             font-size: 14px;
@@ -6325,6 +6385,10 @@ body {
             border-radius: 12px;
             border: 1px solid rgba(255, 241, 250, 0.73);
             background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
+            background-image: url("../../images/btn-bg.png");
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
             color: #fff;
             font-family: "Montserrat", sans-serif;
             font-size: 14px;
@@ -6505,6 +6569,10 @@ body {
                     border-radius: 12px;
                     border: 1px solid rgba(255, 241, 250, 0.23);
                     background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
+                    background-image: url("../../images/btn-bg.png");
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    background-size: cover;
                     color: var(--white, #FFF);
                     font-family: "Montserrat", sans-serif;
                     min-width: 280px;
@@ -6667,9 +6735,10 @@ body {
             }
 
             &.active {
-                background: linear-gradient(330deg,
-                        rgba(84, 16, 58, 0.36) 1%,
-                        rgba(70, 153, 255, 0.36) 90%);
+                background-image: url("../../images/btn-bg.png");
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
             }
         }
     }
@@ -7507,6 +7576,10 @@ body {
                     border: none;
                     outline: none;
                     background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
+                    background-image: url("../../images/btn-bg.png");
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    background-size: cover;
 
                     transition: all 0.3s ease;
 
@@ -7784,6 +7857,10 @@ body {
                     border: none;
                     outline: none;
                     background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
+                    background-image: url("../../images/btn-bg.png");
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    background-size: cover;
 
                     transition: all 0.3s ease;
 
@@ -8046,8 +8123,12 @@ body {
             padding: 17px;
             color: #fff;
             border-radius: 12px;
-            border: 1px solid var(--liner, #54103A);
+            border: 1px solid var(--liner, #FFFFFF20);
             background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
+            background-image: url("../../images/btn-bg.png");
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
             cursor: pointer;
             color: #FFF;
             font-family: "Montserrat", sans-serif;
