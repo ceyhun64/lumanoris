@@ -231,7 +231,6 @@
 }
 .page-sidebar.logo-clicked {
   width: 90px;
-  padding: 12px;
 }
 .page-sidebar.logo-clicked a {
   display: flex;
