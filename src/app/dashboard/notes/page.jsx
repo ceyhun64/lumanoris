@@ -4,6 +4,7 @@ import Masonry from 'react-masonry-css';
 import avatar from "../../../images/avatar-bot.jpg";
 import CategoryFilter from '@/app/components/CategoryFilter/CategoryFilter';
 import { useRouter } from 'next/navigation';
+import DialogueModal from '@/app/components/DialogueModal';
 
 const allCards = [
     {
@@ -61,6 +62,7 @@ const allCards = [
 
 export default function DialoguePage() {
     const router = useRouter();
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [filtered, setFiltered] = useState('Tümü');
     const filteredCards = filtered === 'Tümü'
         ? allCards
@@ -71,6 +73,10 @@ export default function DialoguePage() {
         900: 3,
         600: 2,
         350: 1,
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
     };
 
     return (
@@ -93,9 +99,10 @@ export default function DialoguePage() {
                     <div
                         className="dialogue-card"
                         key={index}
-                        onClick={() => router.push('/dashboard/chat')}
+                        onClick={() => setIsModalOpen(true)}
                         style={{ cursor: 'pointer' }}
                     >
+
                         <div className="shadow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="198" height="143" viewBox="0 0 198 143" fill="none">
                                 <g filter="url(#filter0_f_7772_8789)">
@@ -145,6 +152,12 @@ export default function DialoguePage() {
                     </div>
                 ))}
             </Masonry>
+
+            <DialogueModal
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+            />
+
         </div>
     );
 }

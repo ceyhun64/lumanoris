@@ -8,9 +8,11 @@ import cartIcon from '../../../images/cart-icon.svg';
 import userIcon from '../../../images/user-icon.svg';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import NotificationPopup from '../NotificationPopup';
 
 export default function Header() {
     const router = useRouter();
+    const [showNotification, setShowNotification] = useState();
     const [searchQuery, setSearchQuery] = useState('');
 
     const handleSearchKey = (e) => {
@@ -27,42 +29,49 @@ export default function Header() {
         router.push('/dashboard/checkout');
     };
     return (
-        <header className="dashboard-header">
-            <div className="left">
+        <>
+            {showNotification && <NotificationPopup onClose={() => {
+                setShowNotification(false);
+            }} />}
+            <header className="dashboard-header">
+                <div className="left">
 
-                <div className="search-bar">
-                    <input
-                        type="text"
-                        placeholder="KEŞFET"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={handleSearchKey}
-                    />
-                    <button
-                        onClick={() => {
-                            if (searchQuery.trim() !== '') {
-                                router.push(`/dashboard/explore?search=${encodeURIComponent(searchQuery.trim())}`);
-                            }
-                        }}
-                    >
-                        <Image src={searchIcon} alt="ara" />
+                    <div className="search-bar">
+                        <input
+                            type="text"
+                            placeholder="KEŞFET"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={handleSearchKey}
+                        />
+                        <button
+                            onClick={() => {
+                                if (searchQuery.trim() !== '') {
+                                    router.push(`/dashboard/explore?search=${encodeURIComponent(searchQuery.trim())}`);
+                                }
+                            }}
+                        >
+                            <Image src={searchIcon} alt="ara" />
+                        </button>
+                    </div>
+                </div>
+
+
+
+                <div className="right-icons">
+                    <button className="icon-btn" onClick={() => {
+                        setShowNotification(true);
+                    }}>
+                        <Image src={bellIcon} alt="bildirim" />
+                    </button>
+                    <button className="icon-btn" onClick={handleCheckoutClick}>
+                        <Image src={cartIcon} alt="sepet" />
+                    </button>
+                    <button className="icon-btn" onClick={handleProfileClick}>
+                        <Image src={userIcon} alt="profil" />
                     </button>
                 </div>
-            </div>
-
-
-
-            <div className="right-icons">
-                <button className="icon-btn">
-                    <Image src={bellIcon} alt="bildirim" />
-                </button>
-                <button className="icon-btn" onClick={handleCheckoutClick}>
-                    <Image src={cartIcon} alt="sepet" />
-                </button>
-                <button className="icon-btn" onClick={handleProfileClick}>
-                    <Image src={userIcon} alt="profil" />
-                </button>
-            </div>
-        </header>
+            </header>
+        </>
     );
 }

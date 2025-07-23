@@ -23,6 +23,10 @@
   transform: translateY(-50%);
   justify-content: center;
   align-items: center;
+  transition: transform 0.3s ease;
+}
+.page-sidebar .logo-circle.rotated {
+  transform: translateY(-50%) rotate(180deg);
 }
 .page-sidebar .logo-circle img {
   width: 36px;

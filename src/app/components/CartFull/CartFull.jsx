@@ -5,10 +5,11 @@ import { useState } from "react";
 import SuggestedCard from "../SuggestedCard/SuggestedCard";
 import avatarBot from "../../../images/avatar-bot.jpg";
 import botImage from "../../../images/bot-image.png";
+import DeleteConfirmModal from "../DeleteConfirmModal";
 
-export default function CartFull({ cartItems, onConfirm }) {
+export default function CartFull({ cartItems, onRemove, onConfirm }) {
     const router = useRouter();
-
+    const [deleteTarget, setDeleteTarget] = useState(null);
 
     const [selectedItems, setSelectedItems] = useState(
         cartItems.map((item) => item.id)
@@ -119,7 +120,7 @@ export default function CartFull({ cartItems, onConfirm }) {
                                 </div>
                                 <div className="right">
                                     <div className="cart-price">{item.price}₺</div>
-                                    <button className="remove-btn">
+                                    <button className="remove-btn" onClick={() => setDeleteTarget(item.id)}>
                                         <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M0 5.375C0 5.08 -5.58794e-08 4.9325 0.0912499 4.84125C0.1825 4.75 0.33 4.75 0.625 4.75H19.375C19.67 4.75 19.8175 4.75 19.9088 4.84125C20 4.9325 20 5.08 20 5.375V5.69C20 5.8025 20 5.86 19.9825 5.91C19.9674 5.95308 19.9431 5.99233 19.9113 6.025C19.8738 6.0625 19.8237 6.0875 19.7225 6.13875C18.9088 6.545 18.5025 6.74875 18.2063 7.05375C17.9532 7.3144 17.7599 7.62707 17.64 7.97C17.5 8.37 17.5 8.825 17.5 9.735V16C17.5 18.3575 17.5 19.535 16.7675 20.2675C16.035 21 14.8575 21 12.5 21H7.5C5.1425 21 3.965 21 3.2325 20.2675C2.5 19.535 2.5 18.3575 2.5 16V9.735C2.5 8.825 2.5 8.37 2.36 7.97C2.24007 7.62707 2.04683 7.3144 1.79375 7.05375C1.4975 6.74875 1.09125 6.545 0.2775 6.13875C0.209326 6.11033 0.145723 6.072 0.0887501 6.025C0.0568881 5.99233 0.0325681 5.95308 0.0174999 5.91C-7.68341e-08 5.86 0 5.8025 0 5.69V5.375Z" fill="#FFE4E4" />
                                             <path d="M7.58594 1.4627C7.72844 1.3302 8.04219 1.2127 8.47969 1.12895C8.98179 1.0398 9.49099 0.996708 10.0009 1.0002C10.5509 1.0002 11.0859 1.0452 11.5222 1.12895C11.9584 1.2127 12.2722 1.3302 12.4159 1.46395" stroke="#DB1F35" stroke-linecap="round" />
@@ -201,6 +202,18 @@ export default function CartFull({ cartItems, onConfirm }) {
 
                 </div>
             </div>
+            <DeleteConfirmModal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={() => {
+                    onRemove(deleteTarget);
+                    setSelectedItems(prev => prev.filter(id => id !== deleteTarget));
+                    setDeleteTarget(null);
+                }}
+            />
+
+
         </div>
+
     );
 }

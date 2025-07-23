@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react';
 import VoiceModal from '../VoiceModal/VoiceModal';
 
-export default function MessageInput() {
+export default function MessageInput({ onSend }) {
     const fileInputRef = useRef(null);
     const [selectedFileName, setSelectedFileName] = useState('');
     const [voiceModalOpen, setVoiceModalOpen] = useState(false);
@@ -11,6 +11,15 @@ export default function MessageInput() {
     const [recordedAudioUrl, setRecordedAudioUrl] = useState('');
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
+
+    const handleSend = () => {
+        if (message.trim() && onSend) {
+            onSend(message);
+            setMessage('');
+            setSelectedFileName('');
+            setRecordedAudioUrl('');
+        }
+    };
 
     const handleFileSelect = (e) => {
         const file = e.target.files?.[0];
@@ -73,7 +82,11 @@ export default function MessageInput() {
                         placeholder="Mesaj yaz"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSend();
+                        }}
                     />
+
 
                     {selectedFileName && (
                         <div className="file-badge">

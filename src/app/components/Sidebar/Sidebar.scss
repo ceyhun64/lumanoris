@@ -24,6 +24,12 @@
         transform: translateY(-50%);
         justify-content: center;
         align-items: center;
+        transition: transform 0.3s ease;
+
+        &.rotated {
+            transform: translateY(-50%) rotate(180deg);
+        }
+
 
         img {
             width: 36px;

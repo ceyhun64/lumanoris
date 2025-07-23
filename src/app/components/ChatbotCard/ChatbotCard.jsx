@@ -6,11 +6,13 @@ import { useRouter } from 'next/navigation';
 import ShareModal from "../ShareModal/ShareModal";
 import { useState } from "react";
 import CommentModal from "../CommentModal/CommentModal";
+import AddToSaleListModal from "../AddToSaleListModal";
 
 export default function ChatbotCard() {
     const router = useRouter();
     const [shareOpen, setShareOpen] = useState(false);
     const [commentOpen, setCommentOpen] = useState(false);
+    const [addOpen, setAddOpen] = useState(false);
 
 
     return (
@@ -100,7 +102,7 @@ export default function ChatbotCard() {
                                 DÜZENLE
                             </span>
                         </button>
-                        <button className="add-btn">
+                        <button className="add-btn" onClick={(e) => { e.stopPropagation(); setAddOpen(true) }}>
                             <div className="icc">
                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <g clip-path="url(#clip0_7772_6146)">
@@ -139,6 +141,10 @@ export default function ChatbotCard() {
                     { text: "Harika bir model olmuş", author: "adnankocak", date: "2 gün önce" },
                 ]}
                 onSend={(comment) => console.log("Yeni yorum:", comment)}
+            />
+            <AddToSaleListModal
+                isOpen={addOpen}
+                onClose={() => setAddOpen(false)}
             />
         </>
 

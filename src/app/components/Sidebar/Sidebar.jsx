@@ -39,7 +39,7 @@ export default function Sidebar({ isMobileOpen = false }) {
   return (
     <div className={`page-sidebar ${isMobileOpen ? 'mobile-visible' : 'mobile-hidden'} ${logoClicked ? 'logo-clicked' : ''}`}>
 
-      <div className="logo-circle" onClick={handleLogoClick}>
+      <div className={`logo-circle ${logoClicked ? 'rotated' : ''}`} onClick={handleLogoClick}>
         <Image src={logoIcon} alt="logo" />
       </div>
       <div>
@@ -168,7 +168,7 @@ export default function Sidebar({ isMobileOpen = false }) {
             Hesabınızı Yükseltin
           </span>
 
-         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 18h14M5 14h14l1-9l-4 3l-4-5l-4 5l-4-3z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 18h14M5 14h14l1-9l-4 3l-4-5l-4 5l-4-3z" /></svg>
         </Link>
       </div>
       <QuitModal

@@ -28,6 +28,11 @@ export default function Checkout() {
         },
     ]);
 
+
+    const handleRemove = (id) => {
+        setCartItems(prev => prev.filter(item => item.id !== id));
+    };
+
     const [step, setStep] = useState(1);
 
     const handleConfirm = () => {
@@ -44,7 +49,11 @@ export default function Checkout() {
             {cartItems.length === 0 ? (
                 <EmptyCart />
             ) : step === 1 ? (
-                <CartFull cartItems={cartItems} onConfirm={handleConfirm} />
+                <CartFull
+                    cartItems={cartItems}
+                    onConfirm={handleConfirm}
+                    onRemove={handleRemove}
+                />
             ) : (
                 <CartConfirm cartItems={cartItems} />
             )}
