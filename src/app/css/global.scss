@@ -296,7 +296,7 @@ body {
 
             &.active {
                 background: linear-gradient(330deg, #54103A90 1%, #4699FF90 90%);
-                background-image: url("../../images/btn-bg.png");
+                background-image: url("../../../public/images/btn-bg.png");
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;
@@ -1127,7 +1127,7 @@ body {
 
             .save-btn {
                 background: linear-gradient(330deg, #54103A90 1%, #4699FF90 90%);
-                background-image: url("../../images/btn-bg.png");
+                background-image: url("../../../public/images/btn-bg.png");
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;
@@ -1382,7 +1382,7 @@ body {
 
             .save-btn {
                 background: linear-gradient(330deg, #54103A90 1%, #4699FF90 90%);
-                background-image: url("../../images/btn-bg.png");
+                background-image: url("../../../public/images/btn-bg.png");
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;
@@ -2292,7 +2292,7 @@ body {
         border: 1px solid var(--liner, #FFFFFF20);
         background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
 
-        background-image: url("../../images/btn-bg.png");
+        background-image: url("../../../public/images/btn-bg.png");
         background-position: center;
         background-repeat: no-repeat;
         background-size: cover;
@@ -2649,7 +2649,7 @@ body {
             border: 1px solid var(--liner, #FFFFFF20);
             background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
 
-            background-image: url("../../images/btn-bg.png");
+            background-image: url("../../../public/images/btn-bg.png");
             background-position: center;
             background-repeat: no-repeat;
             background-size: cover;
@@ -2975,7 +2975,7 @@ body {
                 border-radius: 12px;
                 border: 1px solid var(--liner, #FFFFFF20);
                 background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
-                background-image: url("../../images/btn-bg.png");
+                background-image: url("../../../public/images/btn-bg.png");
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;
@@ -3528,7 +3528,7 @@ body {
                         overflow: hidden;
                         border: 2px dashed var(--liner, #FFFFFF20);
                         background: linear-gradient(330deg, rgba(84, 16, 58, 0.3647058824) 1%, rgba(70, 153, 255, 0.3647058824) 90%);
-                        background-image: url("../../images/btn-bg.png");
+                        background-image: url("../../../public/images/btn-bg.png");
                         background-position: center;
                         background-repeat: no-repeat;
                         background-size: cover;
@@ -3800,7 +3800,7 @@ body {
 
             &.active {
                 background: linear-gradient(330deg, #54103A90 1%, #4699FF90 90%);
-                background-image: url("../../images/btn-bg.png");
+                background-image: url("../../../public/images/btn-bg.png");
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;
@@ -4986,7 +4986,7 @@ body {
                 border-bottom: 1px dashed var(--liner, #FFFFFF20);
                 background: linear-gradient(330deg, #54103A90 1%, #4699FF90 90%);
                 box-shadow: 0 0 12px rgba(255, 255, 255, 0.06);
-                background-image: url("../../images/btn-bg.png");
+                background-image: url("../../../public/images/btn-bg.png");
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;
@@ -5280,15 +5280,12 @@ body {
                         }
 
                         .profile-subtext {
+                            color: #8C8C8C;
                             font-family: "Montserrat", sans-serif;
                             font-size: 14px;
                             font-style: normal;
                             font-weight: 500;
                             line-height: 21px;
-                            background: var(--gra, linear-gradient(323deg, #1B1A22 -16.98%, #993D76 108.66%));
-                            background-clip: text;
-                            -webkit-background-clip: text;
-                            -webkit-text-fill-color: transparent;
                         }
                     }
                 }
@@ -5302,8 +5299,10 @@ body {
 
                     .btn-follow {
                         border-radius: 8px;
-                        border: 3px solid var(--liner, #FFFFFF20);
                         background: rgba(255, 255, 255, 0.04);
+                        background: linear-gradient(#18171F, #18171F) padding-box,
+                            linear-gradient(150deg, #0a4184a8, #54103aa8) border-box;
+                        border: 3px solid transparent;
                         padding: 16px;
                         display: flex;
                         justify-content: center;
@@ -5466,7 +5465,6 @@ body {
 
 
             .profile-description {
-                min-height: 90px;
                 color: #FFF;
                 font-family: "Montserrat", sans-serif;
                 font-size: 16px;
@@ -5719,7 +5717,7 @@ body {
 
             &.active {
                 background: linear-gradient(330deg, #54103A90 1%, #4699FF90 90%);
-                background-image: url("../../images/btn-bg.png");
+                background-image: url("../../../public/images/btn-bg.png");
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;
@@ -6262,7 +6260,7 @@ body {
                 border: 1px solid rgba(255, 241, 250, 0.23);
                 padding: 12px;
                 background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
-                background-image: url("../../images/btn-bg.png");
+                background-image: url("../../../public/images/btn-bg.png");
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;
@@ -6535,7 +6533,7 @@ body {
                 border: none;
                 border-bottom: 1px dashed var(--liner, #FFFFFF20);
                 background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
-                background-image: url("../../images/btn-bg.png");
+                background-image: url("../../../public/images/btn-bg.png");
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;
@@ -6699,7 +6697,7 @@ body {
             border-radius: 12px;
             border: 1px solid rgba(255, 241, 250, 0.73);
             background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
-            background-image: url("../../images/btn-bg.png");
+            background-image: url("../../../public/images/btn-bg.png");
             background-position: center;
             background-repeat: no-repeat;
             background-size: cover;
@@ -6769,7 +6767,7 @@ body {
             border-radius: 12px;
             border: 1px solid rgba(255, 241, 250, 0.73);
             background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
-            background-image: url("../../images/btn-bg.png");
+            background-image: url("../../../public/images/btn-bg.png");
             background-position: center;
             background-repeat: no-repeat;
             background-size: cover;
@@ -6860,7 +6858,7 @@ body {
             border-radius: 12px;
             border: 1px solid rgba(255, 241, 250, 0.73);
             background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
-            background-image: url("../../images/btn-bg.png");
+            background-image: url("../../../public/images/btn-bg.png");
             background-position: center;
             background-repeat: no-repeat;
             background-size: cover;
@@ -7044,7 +7042,7 @@ body {
                     border-radius: 12px;
                     border: 1px solid rgba(255, 241, 250, 0.23);
                     background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
-                    background-image: url("../../images/btn-bg.png");
+                    background-image: url("../../../public/images/btn-bg.png");
                     background-position: center;
                     background-repeat: no-repeat;
                     background-size: cover;
@@ -7210,7 +7208,7 @@ body {
             }
 
             &.active {
-                background-image: url("../../images/btn-bg.png");
+                background-image: url("../../../public/images/btn-bg.png");
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;
@@ -7906,7 +7904,7 @@ body {
         padding: 60px 90px;
         background-position: center;
         background-size: cover;
-        background-image: url("../../images/register-bg-2.jpg");
+        background-image: url("../../../public/images/register-bg-2.jpg");
         min-height: 100vh;
 
         @media(max-width:992px) {
@@ -8051,7 +8049,7 @@ body {
                     border: none;
                     outline: none;
                     background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
-                    background-image: url("../../images/btn-bg.png");
+                    background-image: url("../../../public/images/btn-bg.png");
                     background-position: center;
                     background-repeat: no-repeat;
                     background-size: cover;
@@ -8172,7 +8170,7 @@ body {
         padding: 60px 90px;
         background-position: center;
         background-size: cover;
-        background-image: url("../../images/register-bg-2.jpg");
+        background-image: url("../../../public/images/register-bg-2.jpg");
         min-height: 100vh;
 
         @media(max-width:992px) {
@@ -8332,7 +8330,7 @@ body {
                     border: none;
                     outline: none;
                     background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
-                    background-image: url("../../images/btn-bg.png");
+                    background-image: url("../../../public/images/btn-bg.png");
                     background-position: center;
                     background-repeat: no-repeat;
                     background-size: cover;
@@ -8456,7 +8454,7 @@ body {
     align-items: center;
     padding: 60px 90px;
     min-height: 100vh;
-    background-image: url("../../images/register-bg-2.jpg");
+    background-image: url("../../../public/images/register-bg-2.jpg");
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
@@ -8600,7 +8598,7 @@ body {
             border-radius: 12px;
             border: 1px solid var(--liner, #FFFFFF20);
             background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
-            background-image: url("../../images/btn-bg.png");
+            background-image: url("../../../public/images/btn-bg.png");
             background-position: center;
             background-repeat: no-repeat;
             background-size: cover;

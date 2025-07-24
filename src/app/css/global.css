@@ -275,7 +275,7 @@ body {
 }
 .marketplace-page .category-filter .cat-btn.active {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -1003,7 +1003,7 @@ body {
 }
 .share-overlay .share-modal .modal-actions .save-btn {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -1225,7 +1225,7 @@ body {
 }
 .withdrawal-overlay .withdrawal-modal .modal-actions .save-btn {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -2013,7 +2013,7 @@ body {
   border-radius: 12px;
   border: 1px solid var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -2330,7 +2330,7 @@ body {
   border-radius: 12px;
   border: 1px solid var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -2623,7 +2623,7 @@ body {
   border-radius: 12px;
   border: 1px solid var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -3123,7 +3123,7 @@ body {
   overflow: hidden;
   border: 2px dashed var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.3647058824) 1%, rgba(70, 153, 255, 0.3647058824) 90%);
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -3375,7 +3375,7 @@ body {
 }
 .dialogue-wrapper .category-filter .cat-btn.active {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -4428,7 +4428,7 @@ body {
   border-bottom: 1px dashed var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.06);
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -4694,15 +4694,12 @@ body {
   line-height: 21px;
 }
 .chat-wrapper .chat-bottom .profile-card .profile-top .profile-info .profile-cont .profile-subtext {
+  color: #8C8C8C;
   font-family: "Montserrat", sans-serif;
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 21px;
-  background: var(--gra, linear-gradient(323deg, #1B1A22 -16.98%, #993D76 108.66%));
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 .chat-wrapper .chat-bottom .profile-card .profile-top .profile-actions {
   display: flex;
@@ -4713,8 +4710,9 @@ body {
 }
 .chat-wrapper .chat-bottom .profile-card .profile-top .profile-actions .btn-follow {
   border-radius: 8px;
-  border: 3px solid var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: rgba(255, 255, 255, 0.04);
+  background: linear-gradient(#18171F, #18171F) padding-box, linear-gradient(150deg, rgba(10, 65, 132, 0.6588235294), rgba(84, 16, 58, 0.6588235294)) border-box;
+  border: 3px solid transparent;
   padding: 16px;
   display: flex;
   justify-content: center;
@@ -4856,7 +4854,6 @@ body {
   border-top: 1px solid #333;
 }
 .chat-wrapper .chat-bottom .profile-card .profile-description {
-  min-height: 90px;
   color: #FFF;
   font-family: "Montserrat", sans-serif;
   font-size: 16px;
@@ -5086,7 +5083,7 @@ body {
 }
 .market-wrapper .category-filter .cat-btn.active {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -5558,7 +5555,7 @@ body {
   border: 1px solid rgba(255, 241, 250, 0.23);
   padding: 12px;
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -5807,7 +5804,7 @@ body {
   border: none;
   border-bottom: 1px dashed var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -5954,7 +5951,7 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(255, 241, 250, 0.73);
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -6020,7 +6017,7 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(255, 241, 250, 0.73);
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -6103,7 +6100,7 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(255, 241, 250, 0.73);
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -6272,7 +6269,7 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(255, 241, 250, 0.23);
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -6412,7 +6409,7 @@ body {
   transform: translateY(-2px);
 }
 .explore-wrapper .category-buttons .category-button.active {
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -7030,7 +7027,7 @@ body {
   padding: 60px 90px;
   background-position: center;
   background-size: cover;
-  background-image: url("../../images/register-bg-2.jpg");
+  background-image: url("../../../public/images/register-bg-2.jpg");
   min-height: 100vh;
 }
 @media (max-width: 992px) {
@@ -7164,7 +7161,7 @@ body {
   border: none;
   outline: none;
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -7268,7 +7265,7 @@ body {
   padding: 60px 90px;
   background-position: center;
   background-size: cover;
-  background-image: url("../../images/register-bg-2.jpg");
+  background-image: url("../../../public/images/register-bg-2.jpg");
   min-height: 100vh;
 }
 @media (max-width: 992px) {
@@ -7415,7 +7412,7 @@ body {
   border: none;
   outline: none;
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -7519,7 +7516,7 @@ body {
   align-items: center;
   padding: 60px 90px;
   min-height: 100vh;
-  background-image: url("../../images/register-bg-2.jpg");
+  background-image: url("../../../public/images/register-bg-2.jpg");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -7655,7 +7652,7 @@ body {
   border-radius: 12px;
   border: 1px solid var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("../../images/btn-bg.png");
+  background-image: url("../../../public/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
