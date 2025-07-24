@@ -42,7 +42,12 @@ const mockData = [
 const mockData = []; */
 export default function List() {
     const [modalVisible, setModalVisible] = useState(false);
+    const [listData, setListData] = useState(mockData);
 
+
+    const handleDelete = (indexToRemove) => {
+        setListData(prev => prev.filter((_, index) => index !== indexToRemove));
+    };
 
     const isEmpty = mockData.length === 0;
 
@@ -103,7 +108,7 @@ export default function List() {
             </div>
 
             <div className="list-inner">
-                {mockData.map((item, index) => (
+                {listData.map((item, index) => (
                     <div className="list-card" key={index}>
                         <div className="shadow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="205" height="121" viewBox="0 0 205 121" fill="none">
@@ -141,7 +146,7 @@ export default function List() {
                             </div>
                         </div>
 
-                        <div className="list-delete">
+                        <div className="list-delete" onClick={() => handleDelete(index)} style={{ cursor: "pointer" }}>
                             <svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M5 9.875C5 9.58 5 9.4325 5.09125 9.34125C5.1825 9.25 5.33 9.25 5.625 9.25H24.375C24.67 9.25 24.8175 9.25 24.9088 9.34125C25 9.4325 25 9.58 25 9.875V10.19C25 10.3025 25 10.36 24.9825 10.41C24.9674 10.4531 24.9431 10.4923 24.9113 10.525C24.8738 10.5625 24.8237 10.5875 24.7225 10.6388C23.9088 11.045 23.5025 11.2488 23.2063 11.5538C22.9532 11.8144 22.7599 12.1271 22.64 12.47C22.5 12.87 22.5 13.325 22.5 14.235V20.5C22.5 22.8575 22.5 24.035 21.7675 24.7675C21.035 25.5 19.8575 25.5 17.5 25.5H12.5C10.1425 25.5 8.965 25.5 8.2325 24.7675C7.5 24.035 7.5 22.8575 7.5 20.5V14.235C7.5 13.325 7.5 12.87 7.36 12.47C7.24007 12.1271 7.04683 11.8144 6.79375 11.5538C6.4975 11.2488 6.09125 11.045 5.2775 10.6388C5.20933 10.6103 5.14572 10.572 5.08875 10.525C5.05689 10.4923 5.03257 10.4531 5.0175 10.41C5 10.36 5 10.3025 5 10.19V9.875Z" fill="#FFE4E4" />
                                 <path d="M12.585 5.9627C12.7275 5.8302 13.0412 5.7127 13.4787 5.62895C13.9808 5.5398 14.49 5.49671 15 5.5002C15.55 5.5002 16.085 5.5452 16.5212 5.62895C16.9575 5.7127 17.2712 5.8302 17.415 5.96395" stroke="#DB1F35" strokeLinecap="round" />
