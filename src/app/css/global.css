@@ -275,7 +275,7 @@ body {
 }
 .marketplace-page .category-filter .cat-btn.active {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -1003,7 +1003,7 @@ body {
 }
 .share-overlay .share-modal .modal-actions .save-btn {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -1225,7 +1225,7 @@ body {
 }
 .withdrawal-overlay .withdrawal-modal .modal-actions .save-btn {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -2013,7 +2013,7 @@ body {
   border-radius: 12px;
   border: 1px solid var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -2330,7 +2330,7 @@ body {
   border-radius: 12px;
   border: 1px solid var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -2623,7 +2623,7 @@ body {
   border-radius: 12px;
   border: 1px solid var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -3123,7 +3123,7 @@ body {
   overflow: hidden;
   border: 2px dashed var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.3647058824) 1%, rgba(70, 153, 255, 0.3647058824) 90%);
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -3375,7 +3375,7 @@ body {
 }
 .dialogue-wrapper .category-filter .cat-btn.active {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -4428,7 +4428,7 @@ body {
   border-bottom: 1px dashed var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.06);
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -5083,7 +5083,7 @@ body {
 }
 .market-wrapper .category-filter .cat-btn.active {
   background: linear-gradient(330deg, rgba(84, 16, 58, 0.5647058824) 1%, rgba(70, 153, 255, 0.5647058824) 90%);
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -5555,7 +5555,7 @@ body {
   border: 1px solid rgba(255, 241, 250, 0.23);
   padding: 12px;
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -5804,7 +5804,7 @@ body {
   border: none;
   border-bottom: 1px dashed var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -5951,7 +5951,7 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(255, 241, 250, 0.73);
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -6017,7 +6017,7 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(255, 241, 250, 0.73);
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -6100,7 +6100,7 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(255, 241, 250, 0.73);
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -6269,7 +6269,7 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(255, 241, 250, 0.23);
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -6409,7 +6409,7 @@ body {
   transform: translateY(-2px);
 }
 .explore-wrapper .category-buttons .category-button.active {
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -7027,7 +7027,7 @@ body {
   padding: 60px 90px;
   background-position: center;
   background-size: cover;
-  background-image: url("images/register-bg-2.jpg");
+  background-image: url("/images/register-bg-2.jpg");
   min-height: 100vh;
 }
 @media (max-width: 992px) {
@@ -7161,7 +7161,7 @@ body {
   border: none;
   outline: none;
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -7265,7 +7265,7 @@ body {
   padding: 60px 90px;
   background-position: center;
   background-size: cover;
-  background-image: url("images/register-bg-2.jpg");
+  background-image: url("/images/register-bg-2.jpg");
   min-height: 100vh;
 }
 @media (max-width: 992px) {
@@ -7412,7 +7412,7 @@ body {
   border: none;
   outline: none;
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -7516,7 +7516,7 @@ body {
   align-items: center;
   padding: 60px 90px;
   min-height: 100vh;
-  background-image: url("images/register-bg-2.jpg");
+  background-image: url("/images/register-bg-2.jpg");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -7652,7 +7652,7 @@ body {
   border-radius: 12px;
   border: 1px solid var(--liner, rgba(255, 255, 255, 0.1254901961));
   background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("images/btn-bg.png");
+  background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
