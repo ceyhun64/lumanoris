@@ -4,9 +4,10 @@ import CategoryFilter from "../components/CategoryFilter/CategoryFilter";
 import MarketplaceHeader from "../components/MarketPlaceHeader/MarketPlaceHeader";
 import avatarBot from "../../images/avatar-bot.jpg";
 import botImage from "../../images/bot-image.png";
+import { useState } from "react";
 
 
-const bots = [
+const initialBots = [
     {
         title: "Travel Planner AI",
         author: "WanderBot",
@@ -32,7 +33,7 @@ const bots = [
         time: "3 Gün",
         avatar: avatarBot,
         image: botImage,
-        badge: { type: "rented", label: "3 kez kiralandı" }
+        badge: { type: "rented", label: "Üretildi" }
     }, {
         title: "Travel Planner AI",
         author: "WanderBot",
@@ -58,7 +59,7 @@ const bots = [
         time: "3 Gün",
         avatar: avatarBot,
         image: botImage,
-        badge: { type: "rented", label: "3 kez kiralandı" }
+        badge: { type: "rented", label: "Üretildi" }
     }, {
         title: "Travel Planner AI",
         author: "WanderBot",
@@ -84,7 +85,7 @@ const bots = [
         time: "3 Gün",
         avatar: avatarBot,
         image: botImage,
-        badge: { type: "rented", label: "3 kez kiralandı" }
+        badge: { type: "rented", label: "Üretildi" }
     },
     {
         title: "Travel Planner AI",
@@ -93,12 +94,18 @@ const bots = [
         time: "3 Gün",
         avatar: avatarBot,
         image: botImage,
-        badge: { type: "rented", label: "3 kez kiralandı" }
+        badge: { type: "rented", label: "Üretildi" }
     },
 ];
 
 
 export default function Dashboard() {
+
+    const [bots, setBots] = useState(initialBots);
+
+    const handleRemoveBot = (index) => {
+        setBots((prev) => prev.filter((_, i) => i !== index));
+    };
     return (
         <div className="marketplace-page">
             <div className="mobile-header">
@@ -106,7 +113,7 @@ export default function Dashboard() {
             </div>
             <MarketplaceHeader />
             <CategoryFilter onSelect={(category) => console.log(category)} />
-            <BotGrid bots={bots} />
+            <BotGrid bots={bots} onRemove={handleRemoveBot} />
         </div>
     );
 }

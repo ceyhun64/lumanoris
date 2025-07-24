@@ -4,6 +4,7 @@ import iconSrc from "../../../images/ubeyaz.png";
 import Image from "next/image";
 import sampleImage from "../../../images/sample-bot-page.png";
 import ChatbotCard from "@/app/components/ChatbotCard/ChatbotCard";
+import { useState } from "react";
 
 const mockChatbots = [
     {
@@ -29,8 +30,8 @@ const mockChatbots = [
 ];
 
 export default function Chatbotlarim() {
+    const [chatbots, setChatbots] = useState(mockChatbots);
 
-    const chatbots = mockChatbots;
 
     const isEmpty = chatbots.length === 0;
 
@@ -94,7 +95,7 @@ export default function Chatbotlarim() {
             <div className="chatbots-grid">
                 {chatbots.map((bot) => (
                     <ChatbotCard
-                        key={bot.id} 
+                        key={bot.id}
                         title={bot.title}
                         image={bot.image}
                         likes={bot.likes}
@@ -102,6 +103,9 @@ export default function Chatbotlarim() {
                         comments={bot.comments}
                         dialogs={bot.dialogs}
                         status={bot.status}
+                        onDelete={() => {
+                            setChatbots(prev => prev.filter(b => b.id !== bot.id));
+                        }}
                     />
                 ))}
 

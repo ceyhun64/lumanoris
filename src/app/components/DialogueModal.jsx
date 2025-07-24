@@ -6,11 +6,13 @@ import ShareModal from "./ShareModal/ShareModal";
 import ReportModal from "./ReportModal/ReportModal";
 import AddToListModal from "./AddToListModal/AddToListModal";
 import CommentModal from "./CommentModal/CommentModal";
+import { useRouter } from 'next/navigation';
 
 
 export default function DialogueModal({ isOpen, onClose }) {
     const inputRef = useRef(null);
     const outputRef = useRef(null);
+    const router = useRouter();
     const [shareOpen, setShareOpen] = useState(false);
     const [reportOpen, setReportOpen] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
@@ -185,7 +187,23 @@ export default function DialogueModal({ isOpen, onClose }) {
                         </div>
                     </div>
 
-                    <div className="profile-info">
+                    <div
+                        className="profile-info"
+                        onClick={() => {
+                            const username = "leonardo.ai";
+                            const role = "Yazılım Geliştirici";
+                            const avatarUrl = avatarBot.src;
+
+                            const params = new URLSearchParams({
+                                username,
+                                role,
+                                avatar: avatarUrl,
+                            });
+
+                            router.push(`/dashboard/chat?${params.toString()}`);
+                        }}
+                        style={{ cursor: 'pointer' }}
+                    >
                         <div className="avatar">
                             <Image src={avatarBot.src} alt="avatar" width={48} height={48} />
                         </div>

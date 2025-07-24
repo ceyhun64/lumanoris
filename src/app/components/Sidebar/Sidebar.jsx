@@ -151,12 +151,14 @@ export default function Sidebar({ isMobileOpen = false }) {
               </defs>
             </svg>
           </div>
-          <Link href="/dashboard/settings">
+          <Link
+            href="/dashboard/settings"
+            className={pathname === '/dashboard/settings' ? 'active' : ''}
+          >
             <img src={settingsIcon.src} alt="ayarlar" style={{ marginRight: 8 }} />
-            <span>
-              Ayarlar
-            </span>
+            <span>Ayarlar</span>
           </Link>
+
 
           <button className="logout-btn" onClick={() => setIsQuitModalOpen(true)}>
             <img src={logoutIcon.src} alt="çıkış" style={{ marginRight: 8 }} />

@@ -7,11 +7,12 @@ import LanguageSelector from "@/app/components/LanguageSelector/LanguageSelector
 import PhoneEditor from "@/app/components/PhoneEditor/PhoneEditor";
 import PrivacyPolicy from "@/app/components/PrivacyPolicy";
 import TermsOfUse from "@/app/components/TermsOfUse";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState("accountPoints");
-
+    const router = useRouter();
     const tabs = [
         { key: "accountPoints", label: "Hesap Puanı" },
         { key: "security", label: "Banka ve güvenlik" },
@@ -40,7 +41,9 @@ export default function Settings() {
                     </span>
                 </div>
                 <div className="right">
-                    <button>
+                    <button onClick={() => {
+                        router.push("/dashboard/upgrade")
+                    }}>
                         Abonelik seçeneklerini görüntüle
                     </button>
                 </div>

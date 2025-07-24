@@ -8,8 +8,6 @@ import MarketCard from "@/app/components/MarketCard/MarketCard";
 export default function Market() {
     const [sortType, setSortType] = useState("populer");
     const [selectedCategory, setSelectedCategory] = useState("Tümü");
-
-
     const bots = [
         {
             title: "Travel Planner AI",
@@ -45,7 +43,7 @@ export default function Market() {
             category: "Sağlık",
             avatar: avatarBot,
             image: botImage,
-            badge: { type: "rented", label: "3 kez kiralandı" },
+            badge: { type: "rented", label: "Üretildi" },
         },
         {
             title: "Travel Planner AI",
@@ -105,7 +103,7 @@ export default function Market() {
             category: "Sağlık",
             avatar: avatarBot,
             image: botImage,
-            badge: { type: "rented", label: "3 kez kiralandı" },
+            badge: { type: "rented", label: "Üretildi" },
         },
         {
             title: "Travel Planner AI",
@@ -165,7 +163,7 @@ export default function Market() {
             category: "Sağlık",
             avatar: avatarBot,
             image: botImage,
-            badge: { type: "rented", label: "3 kez kiralandı" },
+            badge: { type: "rented", label: "Üretildi" },
         },
         {
             title: "Travel Planner AI",
@@ -192,19 +190,21 @@ export default function Market() {
             badge: { type: "produced", label: "Üretildi" },
         },
     ];
+    const [marketBots, setMarketBots] = useState(bots);
+
+    const handleRemoveBot = (targetBot) => {
+        setMarketBots(prev => prev.filter(bot => bot !== targetBot));
+    };
 
     const filteredBots = selectedCategory === "Tümü"
-        ? bots
-        : bots.filter(bot => bot.category === selectedCategory);
+        ? marketBots
+        : marketBots.filter(bot => bot.category === selectedCategory);
 
     const sortedBots = [...filteredBots].sort((a, b) => {
         switch (sortType) {
-            case "diyalog":
-                return b.dialogues - a.dialogues;
-            case "begeni":
-                return b.likes - a.likes;
-            default:
-                return 0;
+            case "diyalog": return b.dialogues - a.dialogues;
+            case "begeni": return b.likes - a.likes;
+            default: return 0;
         }
     });
 
@@ -221,7 +221,7 @@ export default function Market() {
             <div className="market-content">
                 <div className="left-cards">
                     {sortedBots.map((bot, idx) => (
-                        <MarketCard key={idx} bot={bot} />
+                        <MarketCard key={idx} bot={bot} onRemove={() => handleRemoveBot(bot)} />
                     ))}
                 </div>
 

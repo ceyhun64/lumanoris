@@ -1,7 +1,9 @@
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import avatarImg from "../../../images/avatar-bot.jpg";
 import btnbell from "../../../images/btn-bell.svg";
+import btnbellclosed from "../../../images/bell-closed.png";
+
 import ShareModal from '../ShareModal/ShareModal';
 import ReportModal from '../ReportModal/ReportModal';
 import AddToListModal from '../AddToListModal/AddToListModal';
@@ -12,7 +14,8 @@ export default function ProfileCard() {
     const [isFollowing, setIsFollowing] = useState(false);
     const [showNotificationMenu, setShowNotificationMenu] = useState(false);
     const [notificationsEnabled, setNotificationsEnabled] = useState(true); // opsiyonel, isterseniz mantık da ekleyebiliriz
-
+    const notificationRef = useRef(null);
+    const menuRef = useRef(null);
     const [showMenu, setShowMenu] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
     const [blockOpen, setBlockOpen] = useState(false);
@@ -20,6 +23,29 @@ export default function ProfileCard() {
     const [modalVisible, setModalVisible] = useState(false);
     const [commentOpen, setCommentOpen] = useState(false);
 
+
+
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (
+                notificationRef.current &&
+                !notificationRef.current.contains(e.target)
+            ) {
+                setShowNotificationMenu(false);
+            }
+            if (
+                menuRef.current &&
+                !menuRef.current.contains(e.target)
+            ) {
+                setShowMenu(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     return (
         <div className="profile-card">
@@ -42,39 +68,51 @@ export default function ProfileCard() {
                     >
                         {isFollowing ? 'Takipten Çık' : 'Takip Et'}
                     </button>
-                    <button
-                        className="btn-bell"
-                        onClick={() => setShowNotificationMenu(!showNotificationMenu)}
-                    >
-                        <img src={btnbell.src} alt="" />
-                    </button>
-                    {showNotificationMenu &&
-                        <div className="context-menu">
-                            <button className="menu-item" onClick={() => {
-                                setNotificationsEnabled(true);
-                                setShowNotificationMenu(false); // menüyü kapat
-                            }}>
-                                <svg width="18" height="20" viewBox="0 0 18 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 16H6C6 16.7956 6.31607 17.5587 6.87868 18.1213C7.44129 18.6839 8.20435 19 9 19C9.79565 19 10.5587 18.6839 11.1213 18.1213C11.6839 17.5587 12 16.7956 12 16Z" stroke="#FF66C4" stroke-width="0.96" stroke-linecap="round" stroke-linejoin="round" />
-                                    <path d="M16.3802 12.3798C16.7775 12.7779 17.0006 13.3174 17.0003 13.8798C17.0003 14.1583 16.9455 14.434 16.8389 14.6912C16.7324 14.9484 16.5762 15.1821 16.3793 15.379C16.1825 15.5759 15.9487 15.7321 15.6915 15.8386C15.4343 15.9452 15.1586 16 14.8802 16H3.12016C2.84172 16.0001 2.56599 15.9453 2.30874 15.8387C2.05148 15.7322 1.81773 15.576 1.62084 15.3792C1.42395 15.1823 1.26779 14.9485 1.16126 14.6913C1.05473 14.434 0.999937 14.1583 1 13.8798C0.999723 13.3174 1.22279 12.7779 1.62016 12.3798L3.00016 10.9998V7C3.00016 5.4087 3.6323 3.88258 4.75752 2.75736C5.88274 1.63214 7.40886 1 9.00016 1C10.5915 1 12.1176 1.63214 13.2428 2.75736C14.368 3.88258 15.0002 5.4087 15.0002 7V10.9998L16.3802 12.3798Z" stroke="white" stroke-width="0.96" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
+                    {/* Bildirim Butonu ve Menü Kapsayıcı */}
+                    <div className="notification-wrapper" ref={notificationRef}>
+                        <button
+                            className={`btn-bell ${notificationsEnabled ? "active" : ""}`}
+                            onClick={() => setShowNotificationMenu(prev => !prev)}
+                        >
+                            <img src={btnbell.src} alt="" className="acc" />
+                            <img src={btnbellclosed.src} alt="" className="disabled" />
+                        </button>
 
-                                Tümünü Aç
-                            </button>
-                            <div className="seperator"></div>
-                            <button className="menu-item" onClick={() => {
-                                setNotificationsEnabled(false);
-                                setShowNotificationMenu(false);
-                            }}>
-                                <svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12.3359 16.6152H6.33594C6.33594 17.4109 6.65201 18.1739 7.21462 18.7366C7.77723 19.2992 8.54029 19.6152 9.33594 19.6152C10.1316 19.6152 10.8946 19.2992 11.4573 18.7366C12.0199 18.1739 12.3359 17.4109 12.3359 16.6152Z" stroke="#FF66C4" stroke-width="0.96" stroke-linecap="round" stroke-linejoin="round" />
-                                    <path d="M16.7161 12.9951C17.1135 13.3931 17.3365 13.9326 17.3363 14.4951C17.3363 14.7735 17.2814 15.0492 17.1749 15.3064C17.0683 15.5637 16.9122 15.7974 16.7153 15.9943C16.5184 16.1911 16.2847 16.3473 16.0274 16.4538C15.7702 16.5604 15.4945 16.6152 15.2161 16.6152H3.4561C3.17766 16.6153 2.90193 16.5605 2.64467 16.454C2.38741 16.3474 2.15367 16.1913 1.95678 15.9944C1.75989 15.7975 1.60372 15.5638 1.4972 15.3065C1.39067 15.0492 1.33587 14.7735 1.33594 14.4951C1.33566 13.9326 1.55872 13.3931 1.9561 12.9951L3.3361 11.6151V7.61523C3.3361 6.02394 3.96824 4.49781 5.09346 3.37259C6.21867 2.24738 7.7448 1.61523 9.3361 1.61523C10.9274 1.61523 12.4535 2.24738 13.5787 3.37259C14.704 4.49781 15.3361 6.02394 15.3361 7.61523V11.6151L16.7161 12.9951Z" stroke="white" stroke-width="0.96" stroke-linecap="round" stroke-linejoin="round" />
-                                    <rect y="19.2012" width="25.3315" height="1.16141" rx="0.580705" transform="rotate(-49.2843 0 19.2012)" fill="white" />
-                                </svg>
+                        {showNotificationMenu && (
+                            <div className="context-menu">
+                                <button
+                                    className="menu-item"
+                                    onClick={() => {
+                                        setNotificationsEnabled(true);
+                                        setShowNotificationMenu(false);
+                                    }}
+                                >
+                                    <svg width="18" height="20" viewBox="0 0 18 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 16H6C6 16.7956 6.31607 17.5587 6.87868 18.1213C7.44129 18.6839 8.20435 19 9 19C9.79565 19 10.5587 18.6839 11.1213 18.1213C11.6839 17.5587 12 16.7956 12 16Z" stroke="#FF66C4" stroke-width="0.96" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16.3802 12.3798C16.7775 12.7779 17.0006 13.3174 17.0003 13.8798C17.0003 14.1583 16.9455 14.434 16.8389 14.6912C16.7324 14.9484 16.5762 15.1821 16.3793 15.379C16.1825 15.5759 15.9487 15.7321 15.6915 15.8386C15.4343 15.9452 15.1586 16 14.8802 16H3.12016C2.84172 16.0001 2.56599 15.9453 2.30874 15.8387C2.05148 15.7322 1.81773 15.576 1.62084 15.3792C1.42395 15.1823 1.26779 14.9485 1.16126 14.6913C1.05473 14.434 0.999937 14.1583 1 13.8798C0.999723 13.3174 1.22279 12.7779 1.62016 12.3798L3.00016 10.9998V7C3.00016 5.4087 3.6323 3.88258 4.75752 2.75736C5.88274 1.63214 7.40886 1 9.00016 1C10.5915 1 12.1176 1.63214 13.2428 2.75736C14.368 3.88258 15.0002 5.4087 15.0002 7V10.9998L16.3802 12.3798Z" stroke="white" stroke-width="0.96" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
 
-                                Tümünü Kapat
-                            </button>
-                        </div>}
+                                    Tümünü Aç
+                                </button>
+                                <div className="seperator"></div>
+                                <button
+                                    className="menu-item"
+                                    onClick={() => {
+                                        setNotificationsEnabled(false);
+                                        setShowNotificationMenu(false);
+                                    }}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="21" viewBox="0 0 18 21" fill="none">
+  <path d="M12.3359 16.6133H6.33594C6.33594 17.4089 6.65201 18.172 7.21462 18.7346C7.77723 19.2972 8.54029 19.6133 9.33594 19.6133C10.1316 19.6133 10.8946 19.2972 11.4573 18.7346C12.0199 18.172 12.3359 17.4089 12.3359 16.6133Z" stroke="#FF66C4" stroke-width="0.96" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M16.7161 12.9931C17.1135 13.3912 17.3365 13.9307 17.3363 14.4931C17.3363 14.7715 17.2814 15.0472 17.1749 15.3045C17.0683 15.5617 16.9122 15.7954 16.7153 15.9923C16.5184 16.1892 16.2847 16.3453 16.0274 16.4519C15.7702 16.5584 15.4945 16.6133 15.2161 16.6133H3.4561C3.17766 16.6133 2.90193 16.5585 2.64467 16.452C2.38741 16.3455 2.15367 16.1893 1.95678 15.9924C1.75989 15.7956 1.60372 15.5618 1.4972 15.3045C1.39067 15.0473 1.33587 14.7716 1.33594 14.4931C1.33566 13.9307 1.55872 13.3912 1.9561 12.9931L3.3361 11.6131V7.61328C3.3361 6.02198 3.96824 4.49586 5.09346 3.37064C6.21867 2.24542 7.7448 1.61328 9.3361 1.61328C10.9274 1.61328 12.4535 2.24542 13.5787 3.37064C14.704 4.49586 15.3361 6.02198 15.3361 7.61328V11.6131L16.7161 12.9931Z" stroke="white" stroke-width="0.96" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect y="19.1992" width="25.3315" height="1.16141" rx="0.580705" transform="rotate(-49.2843 0 19.1992)" fill="white"/>
+</svg>
+                                    Tümünü Kapat
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
 
                 </div>
             </div>
@@ -124,8 +162,8 @@ export default function ProfileCard() {
                     Listeye Ekle
                 </button>
 
-                <div className="dropdown-wrapper">
-                    <button className='button-ctr' onClick={() => setShowMenu(!showMenu)}>
+                <div className="dropdown-wrapper" ref={menuRef}>
+                    <button className="button-ctr" onClick={() => setShowMenu(prev => !prev)}>
                         <span><svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path opacity="0.3" d="M12 2.56055C17.524 2.56055 22.002 7.03855 22.002 12.5625C22.002 18.0855 17.524 22.5635 12 22.5635C6.476 22.5635 2 18.0855 2 12.5625C1.999 7.03855 6.476 2.56055 12 2.56055Z" fill="white" />
                             <path d="M12.0012 7.06297C11.8339 7.05838 11.6673 7.08738 11.5114 7.14828C11.3555 7.20917 11.2134 7.30071 11.0934 7.41748C10.9735 7.53426 10.8782 7.6739 10.8132 7.82814C10.7481 7.98239 10.7147 8.14811 10.7148 8.3155C10.715 8.48289 10.7487 8.64856 10.8139 8.8027C10.8792 8.95684 10.9747 9.09633 11.0949 9.21291C11.215 9.3295 11.3573 9.42081 11.5133 9.48145C11.6693 9.54209 11.8359 9.57083 12.0032 9.56597C12.329 9.55638 12.6382 9.42012 12.8651 9.18615C13.092 8.95218 13.2188 8.63894 13.2184 8.31301C13.218 7.98708 13.0905 7.67415 12.863 7.44073C12.6356 7.2073 12.326 7.07178 12.0002 7.06297H12.0012ZM11.9962 10.812C11.7511 10.8123 11.5147 10.9026 11.3319 11.0658C11.149 11.2289 11.0324 11.4535 11.0042 11.697L10.9972 11.813L11.0012 17.315L11.0072 17.432C11.0354 17.6759 11.1523 17.9008 11.3357 18.0641C11.5191 18.2273 11.7561 18.3174 12.0016 18.3171C12.2471 18.3169 12.4839 18.2263 12.667 18.0627C12.85 17.8991 12.9665 17.6739 12.9942 17.43L13.0002 17.313L12.9962 11.812L12.9892 11.695C12.9603 11.4517 12.8431 11.2276 12.6599 11.065C12.4767 10.9024 12.2402 10.8127 11.9952 10.813L11.9962 10.812Z" fill="white" />

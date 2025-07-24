@@ -1943,23 +1943,6 @@ body {
   z-index: 100;
 }
 
-@keyframes fadeInOut {
-  0% {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  10% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-}
 .cart-box {
   padding: 15px;
   display: flex;
@@ -2877,16 +2860,53 @@ body {
     height: 170px;
   }
 }
-.chatbots-list-wrapper .chatbots-grid .chatbot-card .card-end-b {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
+.chatbots-list-wrapper .chatbots-grid .chatbot-card .menu-trigger {
+  height: 100%;
+  margin-left: 10px;
 }
-@media (max-width: 1100px) {
-  .chatbots-list-wrapper .chatbots-grid .chatbot-card .card-end-b {
-    display: none;
-  }
+.chatbots-list-wrapper .chatbots-grid .chatbot-card .menu-trigger .dot-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+.chatbots-list-wrapper .chatbots-grid .chatbot-card .menu-trigger .dot-btn svg {
+  display: block;
+}
+.chatbots-list-wrapper .chatbots-grid .chatbot-card .menu-trigger .context-menu {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  border-radius: 8.34px;
+  background: #1A1920;
+  box-shadow: -6px 2px 14px 0px rgba(0, 0, 0, 0.25);
+  z-index: 10;
+  padding: 13px;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+}
+.chatbots-list-wrapper .chatbots-grid .chatbot-card .menu-trigger .context-menu .seperator {
+  width: 100%;
+  display: block;
+  height: 1px;
+  background-color: #484244;
+}
+.chatbots-list-wrapper .chatbots-grid .chatbot-card .menu-trigger .context-menu .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: white;
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+.chatbots-list-wrapper .chatbots-grid .chatbot-card .menu-trigger .context-menu .menu-item svg {
+  flex-shrink: 0;
 }
 .chatbots-list-wrapper .chatbots-grid .chatbot-card .card-right {
   z-index: 3;
@@ -3424,7 +3444,7 @@ body {
   justify-content: space-between;
   color: #fff;
   position: relative;
-  overflow: hidden;
+  z-index: 0;
   opacity: 0;
   transform: translateY(20px);
   animation: fadeInUp 0.4s ease-out forwards;
@@ -3438,6 +3458,7 @@ body {
 .dialogue-wrapper .dialogue-card .shadow {
   position: absolute;
   top: -40px;
+  z-index: -2;
   left: 50%;
   transform: translateX(-50%);
 }
@@ -3469,6 +3490,60 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+.dialogue-wrapper .dialogue-card .card-footer .popup-menu {
+  position: absolute;
+  bottom: 80px;
+  zoom: 0.6;
+  right: 5px;
+  z-index: 999999;
+  padding: 12px 24px;
+  width: 280px;
+  z-index: 99999;
+  border-radius: 24px;
+  background: #14181B;
+}
+@media (max-width: 992px) {
+  .dialogue-wrapper .dialogue-card .card-footer .popup-menu {
+    zoom: 0.8;
+  }
+}
+.dialogue-wrapper .dialogue-card .card-footer .popup-menu ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dialogue-wrapper .dialogue-card .card-footer .popup-menu ul li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  cursor: pointer;
+  transition: 0.2s;
+  color: #FFF;
+  font-family: "Montserrat", sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+}
+.dialogue-wrapper .dialogue-card .card-footer .popup-menu ul li span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.dialogue-wrapper .dialogue-card .card-footer .popup-menu ul li span svg {
+  width: 24px;
+  height: 24px;
+}
+.dialogue-wrapper .dialogue-card .card-footer .popup-menu ul li:hover {
+  transform: translateX(4px);
+  color: #ff66c4;
+}
+.dialogue-wrapper .dialogue-card .card-footer .popup-menu ul hr {
+  border: none;
+  border-top: 1px solid rgb(255, 255, 255);
 }
 .dialogue-wrapper .dialogue-card .card-footer .left {
   display: flex;
@@ -3509,18 +3584,6 @@ body {
   font-size: 7.444px;
   font-weight: 400;
   line-height: 11.166px;
-}
-.dialogue-wrapper .dialogue-card .card-footer .card-menu {
-  background: none;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.dialogue-wrapper .dialogue-card .card-footer .card-menu svg {
-  width: 15px;
-  height: 15px;
 }
 
 .history-wrapper {
@@ -3628,6 +3691,7 @@ body {
   background: #0F0E16;
   position: relative;
   overflow: visible;
+  transition: 0.3s all ease;
 }
 @media (max-width: 992px) {
   .history-wrapper .history-list .history-card {
@@ -3645,6 +3709,10 @@ body {
 .history-wrapper .history-list .history-card .shadow svg {
   fill: linear-gradient(90deg, #4699FF 21.15%, #FF66C4 79.33%);
   filter: blur(59.3487968445px);
+}
+.history-wrapper .history-list .history-card:hover {
+  background: #22212c;
+  border-color: rgba(255, 102, 196, 0.15);
 }
 .history-wrapper .history-list .history-card .icon {
   overflow: hidden;
@@ -3683,6 +3751,17 @@ body {
   .history-wrapper .history-list .history-card .details .top-card {
     margin-top: 16px;
   }
+}
+.history-wrapper .history-list .history-card .details .top-card .editable-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #888;
+  color: white;
+  font-size: 16px;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 600;
+  width: 100%;
+  outline: none;
 }
 .history-wrapper .history-list .history-card .details .top-card h4,
 .history-wrapper .history-list .history-card .details .top-card p {
@@ -4013,6 +4092,21 @@ body {
 }
 .list-wrapper .list-inner .list-card .list-delete svg {
   width: 30px;
+}
+.list-wrapper .list-inner .list-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.list-wrapper .list-inner .list-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(255, 102, 196, 0.3);
+  border-color: rgba(255, 102, 196, 0.25);
+}
+.list-wrapper .list-inner .list-card .list-left img {
+  transition: transform 0.3s ease;
+}
+.list-wrapper .list-inner .list-card:hover .list-left img {
+  transform: scale(1.1);
 }
 
 .pricing-wrapper {
@@ -4746,6 +4840,18 @@ body {
 }
 .chat-wrapper .chat-bottom .profile-card .profile-top .profile-actions .btn-bell img:hover {
   transform: scale(1.1);
+}
+.chat-wrapper .chat-bottom .profile-card .profile-top .profile-actions .btn-bell .acc {
+  display: none;
+}
+.chat-wrapper .chat-bottom .profile-card .profile-top .profile-actions .btn-bell .disabled {
+  display: block;
+}
+.chat-wrapper .chat-bottom .profile-card .profile-top .profile-actions .btn-bell.active .acc {
+  display: block;
+}
+.chat-wrapper .chat-bottom .profile-card .profile-top .profile-actions .btn-bell.active .disabled {
+  display: none;
 }
 .chat-wrapper .chat-bottom .profile-card .profile-buttons {
   display: flex;
@@ -7809,6 +7915,22 @@ body {
   flex-direction: column;
   gap: 12px;
   z-index: 2;
+  /* .meta {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      color: #FFF;
+      text-align: center;
+      font-family: "Montserrat", sans-serif;
+      font-size: 10.425px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: 16.681px;
+
+      svg {
+          margin-right: 8px;
+      }
+  } */
 }
 .suggested-bots .suggested-bots-grid .bot-card .info .top {
   display: flex;
@@ -7867,19 +7989,13 @@ body {
   height: 16px;
 }
 .suggested-bots .suggested-bots-grid .bot-card .info .meta {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  color: #FFF;
+  color: #8C8C8C;
   text-align: center;
   font-family: "Montserrat", sans-serif;
-  font-size: 10.425px;
+  font-size: 8.34px;
   font-style: normal;
   font-weight: 500;
   line-height: 16.681px;
-}
-.suggested-bots .suggested-bots-grid .bot-card .info .meta svg {
-  margin-right: 8px;
 }
 .suggested-bots .suggested-bots-grid .bot-card .popup-menu {
   position: absolute;
@@ -8102,4 +8218,37 @@ body {
   font-style: normal;
   font-weight: 700;
   line-height: 11.96px;
+}
+
+.profile-feedback-badge {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  background-color: #FF66C4;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 14px;
+  border-radius: 20px;
+  z-index: 10;
+  box-shadow: 0 0 10px rgba(255, 102, 196, 0.4);
+  animation: fadeInOut 3s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
 }/*# sourceMappingURL=global.css.map */

@@ -202,6 +202,23 @@
 .page-sidebar .bottom .settings .logout-btn:hover {
   background-color: rgba(255, 255, 255, 0.04);
 }
+.page-sidebar .bottom .settings a.active,
+.page-sidebar .bottom .settings .logout-btn.active {
+  background: linear-gradient(90deg, rgba(255, 102, 196, 0.08), rgba(255, 102, 196, 0.04));
+  border-left: 2px solid #ff66c4;
+  font-weight: 600;
+  color: #ff66c4;
+}
+.page-sidebar .bottom .settings a.active img,
+.page-sidebar .bottom .settings .logout-btn.active img {
+  filter: drop-shadow(0 0 6px rgba(255, 102, 196, 0.6));
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
+.page-sidebar .bottom .settings a.active span,
+.page-sidebar .bottom .settings .logout-btn.active span {
+  color: #ff66c4;
+}
 .page-sidebar .bottom .settings a img,
 .page-sidebar .bottom .settings .logout-btn img {
   width: 25px;

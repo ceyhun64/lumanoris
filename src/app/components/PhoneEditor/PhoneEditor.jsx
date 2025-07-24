@@ -2,12 +2,15 @@
 import React, { useState } from "react";
 
 export default function PhoneEditor() {
-    const [phone, setPhone] = useState("");
+    const [currentPhone, setCurrentPhone] = useState("+90 532 123 45 67"); // Varsayılan mevcut telefon
+    const [newPhone, setNewPhone] = useState("");
 
-    const handleSubmit = () => {
-        if (!phone.trim()) return;
-        console.log("Telefon eklendi:", phone);
-        setPhone(""); // temizle
+    const handleAddPhone = () => {
+        if (!newPhone.trim()) return;
+
+        setCurrentPhone(newPhone.trim()); // Yeni telefon, mevcut telefon olur
+        setNewPhone(""); // Input temizlenir
+        console.log("Telefon eklendi:", newPhone);
     };
 
     return (
@@ -15,11 +18,18 @@ export default function PhoneEditor() {
             <input
                 type="text"
                 className="phone-input"
-                placeholder="TELEFON NUMARASI"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={currentPhone}
+                disabled
+                placeholder="MEVCUT TELEFON"
             />
-            <button className="phone-submit-btn" onClick={handleSubmit}>
+            <input
+                type="text"
+                className="phone-input"
+                value={newPhone}
+                onChange={(e) => setNewPhone(e.target.value)}
+                placeholder="TELEFON NUMARASI EKLE"
+            />
+            <button className="phone-submit-btn" onClick={handleAddPhone}>
                 Ekle
             </button>
         </div>

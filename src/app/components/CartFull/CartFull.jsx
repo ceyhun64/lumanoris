@@ -6,24 +6,15 @@ import SuggestedCard from "../SuggestedCard/SuggestedCard";
 import avatarBot from "../../../images/avatar-bot.jpg";
 import botImage from "../../../images/bot-image.png";
 import DeleteConfirmModal from "../DeleteConfirmModal";
+import BotCard from "../BotCard/BotCard";
 
 export default function CartFull({ cartItems, onRemove, onConfirm }) {
     const router = useRouter();
     const [deleteTarget, setDeleteTarget] = useState(null);
-
     const [selectedItems, setSelectedItems] = useState(
         cartItems.map((item) => item.id)
     );
-
-    const handleCheckboxChange = (id) => {
-        setSelectedItems((prev) =>
-            prev.includes(id)
-                ? prev.filter((itemId) => itemId !== id)
-                : [...prev, id]
-        );
-    };
-
-    const bots = [
+    const [suggestedBots, setSuggestedBots] = useState([
         {
             title: "Travel Planner AI",
             author: "WanderBot",
@@ -49,14 +40,28 @@ export default function CartFull({ cartItems, onRemove, onConfirm }) {
             time: "3 Gün",
             avatar: avatarBot,
             image: botImage,
-            badge: { type: "rented", label: "3 kez kiralandı" }
+            badge: { type: "rented", label: "Üretildi" }
         }
-    ];
-
+    ]);
     const selectedProducts = cartItems.filter((item) => selectedItems.includes(item.id));
     const subtotal = selectedProducts.reduce((sum, item) => sum + item.price, 0);
     const serviceFee = selectedProducts.length > 0 ? 5 : 0;
     const total = subtotal + serviceFee;
+
+
+
+    const handleCheckboxChange = (id) => {
+        setSelectedItems((prev) =>
+            prev.includes(id)
+                ? prev.filter((itemId) => itemId !== id)
+                : [...prev, id]
+        );
+    };
+
+    const handleRemoveSuggestedBot = (index) => {
+        setSuggestedBots(prev => prev.filter((_, i) => i !== index));
+    };
+
 
     return (
         <div className="cart-full-wrapper">
@@ -145,8 +150,8 @@ export default function CartFull({ cartItems, onRemove, onConfirm }) {
                         </div>
 
                         <div className="suggested-bots-grid">
-                            {bots.map((bot, i) => (
-                                <SuggestedCard key={i} bot={bot} />
+                            {suggestedBots.map((bot, i) => (
+                                <BotCard key={i} bot={bot} onRemove={() => handleRemoveSuggestedBot(i)} />
                             ))}
                         </div>
 

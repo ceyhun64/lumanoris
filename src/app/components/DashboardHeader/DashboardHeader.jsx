@@ -22,7 +22,7 @@ export default function Header() {
     };
 
     const handleProfileClick = () => {
-        router.push('/register');
+        router.push('/login');
     };
 
     const handleCheckoutClick = () => {
