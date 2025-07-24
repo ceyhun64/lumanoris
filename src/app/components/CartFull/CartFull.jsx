@@ -145,7 +145,6 @@ export default function CartFull({ cartItems, onRemove, onConfirm }) {
                         </div>
 
                         <div className="suggested-bots-grid">
-
                             {bots.map((bot, i) => (
                                 <SuggestedCard key={i} bot={bot} />
                             ))}

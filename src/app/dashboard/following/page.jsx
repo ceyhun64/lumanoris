@@ -4,6 +4,7 @@ import React from "react";
 import smartHelper from "../../../images/smarthelper.png";
 import imageGenBot from "@/images/image-generation-bot.png";
 import assistantBot from "@/images/assistanr.png";
+import { useRouter } from "next/navigation";
 
 const followedBots = [
     {
@@ -30,6 +31,8 @@ const followedBots = [
 ];
 
 export default function Following() {
+    const router = useRouter();
+
     return (
         <div className="followed-bots-wrapper">
             <div className="followed-bots-header">
@@ -38,7 +41,12 @@ export default function Following() {
 
             <div className="followed-bots-list">
                 {followedBots.map((bot) => (
-                    <div key={bot.id} className="followed-bot-card">
+                    <div
+                        key={bot.id}
+                        className="followed-bot-card"
+                        onClick={() => router.push("/dashboard/chat")}
+                        style={{ cursor: "pointer" }}
+                    >
                         <div className="shadow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="201" height="132" viewBox="0 0 201 132" fill="none">
                                 <g filter="url(#filter0_f_7772_7135)">

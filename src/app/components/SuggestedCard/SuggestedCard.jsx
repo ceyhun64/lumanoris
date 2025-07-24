@@ -3,11 +3,13 @@ import { useEffect, useState, useRef } from 'react';
 import ShareModal from '../ShareModal/ShareModal';
 import ReportModal from '../ReportModal/ReportModal';
 import AddToListModal from '../AddToListModal/AddToListModal';
+import { useRouter } from "next/navigation";
 
 export default function SuggestedCard({ bot }) {
     const { image, title, author, dialogues, time, badge, avatar } = bot;
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef();
+    const router = useRouter();
     const [shareOpen, setShareOpen] = useState(false);
     const [reportOpen, setReportOpen] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
@@ -32,7 +34,11 @@ export default function SuggestedCard({ bot }) {
     }, [menuOpen]);
 
     return (
-        <div className="bot-card">
+        <div className="bot-card"
+            onClick={(e) => {
+                if (menuRef.current && menuRef.current.contains(e.target)) return;
+                router.push(`/dashboard/chat`);
+            }}>
             <div className="card-top">
                 <div className="shadow">
                     <svg xmlns="http://www.w3.org/2000/svg" width="200" height="161" viewBox="0 0 200 161" fill="none">
@@ -69,7 +75,10 @@ export default function SuggestedCard({ bot }) {
                         </div>
                     </div>
                     <div className="menu-wrapper" ref={menuRef}>
-                        <div className="menu-icon" onClick={toggleMenu}>
+                        <div className="menu-icon" onClick={(e) => {
+                            e.stopPropagation(); 
+                            toggleMenu();
+                        }}>
                             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M9.02286 12.367C9.39152 12.367 9.74508 12.5135 10.0058 12.7742C10.2664 13.0348 10.4129 13.3884 10.4129 13.7571C10.4129 14.1257 10.2664 14.4793 10.0058 14.74C9.74508 15.0007 9.39152 15.1471 9.02286 15.1471C8.65419 15.1471 8.30063 15.0007 8.03995 14.74C7.77926 14.4793 7.63281 14.1257 7.63281 13.7571C7.63281 13.3884 7.77926 13.0348 8.03995 12.7742C8.30063 12.5135 8.65419 12.367 9.02286 12.367ZM9.02286 7.50187C9.39152 7.50187 9.74508 7.64832 10.0058 7.909C10.2664 8.16969 10.4129 8.52325 10.4129 8.89191C10.4129 9.26057 10.2664 9.61413 10.0058 9.87482C9.74508 10.1355 9.39152 10.282 9.02286 10.282C8.65419 10.282 8.30063 10.1355 8.03995 9.87482C7.77926 9.61413 7.63281 9.26057 7.63281 8.89191C7.63281 8.52325 7.77926 8.16969 8.03995 7.909C8.30063 7.64832 8.65419 7.50187 9.02286 7.50187ZM9.02286 2.63672C9.39152 2.63672 9.74508 2.78317 10.0058 3.04385C10.2664 3.30454 10.4129 3.6581 10.4129 4.02676C10.4129 4.39542 10.2664 4.74899 10.0058 5.00967C9.74508 5.27035 9.39152 5.4168 9.02286 5.4168C8.65419 5.4168 8.30063 5.27035 8.03995 5.00967C7.77926 4.74899 7.63281 4.39542 7.63281 4.02676C7.63281 3.6581 7.77926 3.30454 8.03995 3.04385C8.30063 2.78317 8.65419 2.63672 9.02286 2.63672Z" fill="#8C8C8C" />
                             </svg>
