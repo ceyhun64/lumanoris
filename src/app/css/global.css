@@ -4541,6 +4541,7 @@ body {
   display: flex;
   width: 100%;
   flex-direction: column;
+  justify-content: space-between;
   padding: 24px 64px;
   color: #fff;
 }
@@ -4553,7 +4554,6 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 40px;
 }
 .chat-wrapper .chat-header h2 {
   font-family: "Montserrat", sans-serif;
@@ -4578,7 +4578,6 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  align-items: center;
   height: 100%;
 }
 .chat-wrapper .chat-bottom .profile-card {

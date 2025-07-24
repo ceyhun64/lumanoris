@@ -5118,6 +5118,7 @@ body {
     display: flex;
     width: 100%;
     flex-direction: column;
+    justify-content: space-between;
     padding: 24px 64px;
     color: #fff;
 
@@ -5129,7 +5130,6 @@ body {
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-bottom: 40px;
 
         h2 {
             font-family: "Montserrat", sans-serif;
@@ -5156,7 +5156,6 @@ body {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        align-items: center;
         height: 100%;
 
 
@@ -7746,19 +7745,19 @@ body {
     align-items: stretch;
 
     .icon-plus,
-.send,
-.icon-button {
-    transition: transform 0.2s ease, opacity 0.2s ease;
-    
-    &:hover {
-        transform: scale(1.1);
-        opacity: 0.9;
-    }
+    .send,
+    .icon-button {
+        transition: transform 0.2s ease, opacity 0.2s ease;
 
-    &:active {
-        transform: scale(0.95);
+        &:hover {
+            transform: scale(1.1);
+            opacity: 0.9;
+        }
+
+        &:active {
+            transform: scale(0.95);
+        }
     }
-}
 
 
     .left {
