@@ -4,5 +4,6 @@ export default function Home() {
     <div >
       HOME SAYFASI
     </div>
+    
   );
 }
