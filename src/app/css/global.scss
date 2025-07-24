@@ -5497,7 +5497,7 @@ body {
                 border-radius: 150px;
                 border: 3px solid rgba(0, 0, 0, 0.00);
                 background: #14181B;
-                padding: 10px 20px;
+                padding: 4px 20px;
                 margin-top: 20px;
                 font-weight: 700;
                 line-height: 22px;
@@ -5515,7 +5515,7 @@ body {
 
                 .message {
                     max-width: 70%;
-                    padding: 12px 16px;
+                    padding: 10px 20px;
                     border-radius: 12px;
                     font-size: 14px;
                     line-height: 1.4;
@@ -5563,7 +5563,7 @@ body {
                             .message-action {
                                 border-radius: 5px;
                                 background: #100F17;
-                                padding: 7px;
+                                padding: 2px 10px;
                                 border: none;
                                 cursor: pointer;
                                 display: flex;
@@ -5609,11 +5609,6 @@ body {
                 }
             }
 
-            .message-input-container {
-                padding: 12px 16px;
-                border-top: 1px solid #333;
-                background-color: #111;
-            }
         }
 
     }
@@ -7745,106 +7740,124 @@ body {
 
 
 
-.message-input-container {
-    padding: 12px;
+.message-input-ctr {
     width: 100%;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.04);
-    margin-top: 50px;
+    display: flex;
+    align-items: stretch;
 
-    .message-box {
+    .icon-plus,
+.send,
+.icon-button {
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    
+    &:hover {
+        transform: scale(1.1);
+        opacity: 0.9;
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+
+    .left {
+        width: 100%;
         display: flex;
-        align-items: flex-start;
-        gap: 24px;
-        flex-direction: column;
-        justify-content: flex-start;
+        align-items: stretch;
+        background-color: #100f17;
+        border-radius: 12px;
 
-        .file-badge {
-            background-color: rgba(255, 153, 214, 0.08);
-            border: 1px solid #ff99d6;
-            border-radius: 8px;
-            padding: 6px 12px;
-            font-size: 12px;
-            color: #ff99d6;
-            font-family: "Montserrat", sans-serif;
-            font-weight: 500;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+        .icon-plus {
+            background: transparent;
+            border: none;
+            padding: 0 10px;
+            padding-left: 20px;
+            cursor: pointer;
 
-        .recording-status {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #FF99D6;
-            font-weight: bold;
-            font-size: 14px;
+            svg {
+                width: 20px;
+                height: 20px;
+                stroke: #FF66C4;
+            }
 
-            button {
-                padding: 4px 10px;
-                font-size: 13px;
-                font-weight: 500;
-                background-color: #FF99D6;
-                border: none;
-                border-radius: 6px;
-                color: white;
-                cursor: pointer;
-                transition: background-color 0.2s ease;
-
-                &:hover {
-                    background-color: #ff6bc6;
-                }
+            &:hover {
+                transform: scale(1.1);
             }
         }
 
-        audio {
-            width: 100%;
-            margin-top: 8px;
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: "Montserrat", sans-serif;
+            font-size: 15px;
+            font-weight: 300;
+            border: none;
+            outline: none;
+            padding: 25px 10px;
+            padding-left: 0;
+
+            &::placeholder {
+                color: #8c8c8c;
+            }
+
+            &:focus {
+                color: #ffb3e0;
+            }
         }
 
-        .bottom {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .send {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            padding-right: 20px;
 
-            .icon-button {
-                background: none;
-                border: none;
-                padding: 0;
-                display: flex;
-                align-items: center;
-                cursor: pointer;
+            svg {
+                transform: rotate(-45deg);
+                stroke: #FF99D6;
                 transition: transform 0.2s ease;
 
                 &:hover {
-                    transform: scale(1.1);
+                    transform: rotate(-45deg) scale(1.1);
                 }
             }
         }
+    }
 
-        .message-input {
-            flex: 1;
-            width: 100%;
+    .right-actions {
+        display: flex;
+        border-radius: 12px;
+        background: #100F17;
+        margin-left: 8px;
+        align-items: center;
+        gap: 22px;
+        padding: 9px;
+        padding-left: 20px;
+        padding-right: 20px;
+
+        .icon-button {
             background: transparent;
             border: none;
-            min-height: 44px;
-            outline: none;
-            color: #FFF;
-            font-family: "Montserrat", sans-serif;
-            font-size: 14px;
-            font-style: normal;
-            font-weight: 600;
-            line-height: 22px;
+            color: #FF99D6;
+            font-size: 16px;
+            cursor: pointer;
 
-            &::placeholder {
-                color: #ccc;
+            &:hover {
+                transform: scale(1.1);
             }
+        }
+
+        .divider {
+            width: 1px;
+            height: 100%;
+            background: #2f2d38;
         }
     }
 }
+
 
 
 
