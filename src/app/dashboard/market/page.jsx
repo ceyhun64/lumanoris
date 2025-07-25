@@ -43,7 +43,7 @@ export default function Market() {
             category: "Sağlık",
             avatar: avatarBot,
             image: botImage,
-            badge: { type: "rented", label: "Üretildi" },
+            badge: { type: "produced", label: "Üretildi" },
         },
         {
             title: "Travel Planner AI",
@@ -103,7 +103,7 @@ export default function Market() {
             category: "Sağlık",
             avatar: avatarBot,
             image: botImage,
-            badge: { type: "rented", label: "Üretildi" },
+            badge: { type: "produced", label: "Üretildi" },
         },
         {
             title: "Travel Planner AI",
@@ -163,7 +163,7 @@ export default function Market() {
             category: "Sağlık",
             avatar: avatarBot,
             image: botImage,
-            badge: { type: "rented", label: "Üretildi" },
+            badge: { type: "produced", label: "Üretildi" },
         },
         {
             title: "Travel Planner AI",

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import aiPic from "../../../images/ai-pic.png";
+import { useRouter } from 'next/navigation';
 
 export default function Explore() {
 
@@ -48,7 +49,7 @@ export default function Explore() {
             category: "Çeviri"
         }
     ];
-
+    const router = useRouter();
     const [activeCategory, setActiveCategory] = useState("Tümü");
 
 
@@ -88,7 +89,12 @@ export default function Explore() {
 
             <div className="bot-list">
                 {filteredBots.map(bot => (
-                    <div className="bot-card" key={bot.id}>
+                    <div
+                        className="bot-card"
+                        key={bot.id}
+                        onClick={() => router.push(`/dashboard/chat?botId=${bot.id}`)}
+                        style={{ cursor: 'pointer' }}
+                    >
 
                         <div className="shadow">
                             <svg width="201" height="133" viewBox="0 0 201 133" fill="none" xmlns="http://www.w3.org/2000/svg">

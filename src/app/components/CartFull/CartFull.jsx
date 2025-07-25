@@ -40,7 +40,7 @@ export default function CartFull({ cartItems, onRemove, onConfirm }) {
             time: "3 Gün",
             avatar: avatarBot,
             image: botImage,
-            badge: { type: "rented", label: "Üretildi" }
+            badge: { type: "produced", label: "Üretildi" }
         }
     ]);
     const selectedProducts = cartItems.filter((item) => selectedItems.includes(item.id));

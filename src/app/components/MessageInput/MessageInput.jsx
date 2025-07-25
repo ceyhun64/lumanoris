@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react';
 import VoiceModal from '../VoiceModal/VoiceModal';
 
-export default function MessageInput({ onSend }) {
+export default function MessageInput({ onSend, onResetChat }) {
     const fileInputRef = useRef(null);
     const [selectedFileName, setSelectedFileName] = useState('');
     const [voiceModalOpen, setVoiceModalOpen] = useState(false);
@@ -25,9 +25,9 @@ export default function MessageInput({ onSend }) {
         const file = e.target.files?.[0];
         if (file) {
             setSelectedFileName(file.name);
-            setMessage(file.name);
         }
     };
+
 
     const startRecording = async () => {
         try {
@@ -66,6 +66,16 @@ export default function MessageInput({ onSend }) {
     return (
         <>
             <div className="message-input-ctr">
+                <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileSelect} />
+                {selectedFileName && (
+                    <div className="file-preview">
+                        <span>{selectedFileName}</span>
+                        <button onClick={() => {
+                            setSelectedFileName('');
+                            setMessage('');
+                        }}>×</button>
+                    </div>
+                )}
                 <div className="left">
                     <button className="icon-plus" onClick={() => fileInputRef.current.click()}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="25" height="26" viewBox="0 0 25 26" fill="none">
@@ -112,7 +122,7 @@ export default function MessageInput({ onSend }) {
 
                     </button>
                     <span className="divider" />
-                    <button className="icon-button" onClick={() => fileInputRef.current.click()}>
+                    <button className="icon-button" onClick={onResetChat}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="23" height="21" viewBox="0 0 23 21" fill="none">
                             <rect x="3.31836" y="12.1719" width="5.53293" height="6.63951" fill="#603D56" />
                             <rect x="1.10742" y="1.10742" width="19.9185" height="15.4922" rx="6" fill="#603D56" />

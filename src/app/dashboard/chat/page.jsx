@@ -32,6 +32,17 @@ export default function Chat() {
     }, [messages]);
 
 
+    const handleResetChat = () => {
+        setMessages([]);
+        setTimeout(() => {
+            if (messagesEndRef.current) {
+                messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+            }
+        }, 50);
+    };
+
+
+
 
     return (
         <div className="chat-wrapper">
@@ -85,7 +96,8 @@ export default function Chat() {
                     }
 
 
-                    <MessageInput onSend={handleSendMessage} />
+                    <MessageInput onSend={handleSendMessage} onResetChat={handleResetChat} />
+
 
                 </div>
             </div>

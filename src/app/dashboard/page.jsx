@@ -33,7 +33,7 @@ const initialBots = [
         time: "3 Gün",
         avatar: avatarBot,
         image: botImage,
-        badge: { type: "rented", label: "Üretildi" }
+        badge: { type: "produced", label: "Üretildi" }
     }, {
         title: "Travel Planner AI",
         author: "WanderBot",
@@ -59,7 +59,7 @@ const initialBots = [
         time: "3 Gün",
         avatar: avatarBot,
         image: botImage,
-        badge: { type: "rented", label: "Üretildi" }
+        badge: { type: "produced", label: "Üretildi" }
     }, {
         title: "Travel Planner AI",
         author: "WanderBot",
@@ -85,7 +85,7 @@ const initialBots = [
         time: "3 Gün",
         avatar: avatarBot,
         image: botImage,
-        badge: { type: "rented", label: "Üretildi" }
+        badge: { type: "produced", label: "Üretildi" }
     },
     {
         title: "Travel Planner AI",
@@ -94,7 +94,7 @@ const initialBots = [
         time: "3 Gün",
         avatar: avatarBot,
         image: botImage,
-        badge: { type: "rented", label: "Üretildi" }
+        badge: { type: "produced", label: "Üretildi" }
     },
 ];
 

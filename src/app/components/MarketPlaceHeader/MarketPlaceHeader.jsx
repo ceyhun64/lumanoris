@@ -1,10 +1,24 @@
 'use client';
 import Image from 'next/image';
 import logo from '../../../images/ubeyaz.png';
+import { useRef, useState } from 'react';
 
 export default function MarketplaceHeader() {
+    const fileInputRef = useRef(null);
+    const [selectedFileName, setSelectedFileName] = useState('');
+
+    const handleFileSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedFileName(file.name);
+        }
+    };
+
     return (
         <div className="marketplace-header">
+            <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileSelect} />
+
+            
             <div className="logo">
                 <Image src={logo} alt="Logo" />
                 <svg width="153" height="153" viewBox="0 0 153 153" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -25,8 +39,15 @@ export default function MarketplaceHeader() {
                 </svg>
 
             </div>
+            
             <div className='search-box'>
-                <button className='icon-plus'>
+                {selectedFileName && (
+                <div className="file-preview">
+                    <span>📎 {selectedFileName}</span>
+                    <button onClick={() => setSelectedFileName('')}>×</button>
+                </div>
+            )}
+                <button className='icon-plus' onClick={() => fileInputRef.current.click()}>
                     <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12.5 5.20117V19.7842M5.2085 12.4927H19.7915" stroke="#FF66C4" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import aiIcon from "../../../images/smarthelper.png";
 import DeleteConfirmModal from "@/app/components/DeleteConfirmModal";
 import { useRouter } from "next/navigation";
+import EmptyCart from "@/app/components/EmptyCart/EmptyHistory";
 
 const initialItems = [
     {
@@ -80,7 +81,8 @@ export default function History() {
                 <h2>Geçmişim</h2>
             </div>
 
-            <div className="history-list">
+            {historyItems.length == 0 && <EmptyCart />}
+            {historyItems.length > 0 && <div className="history-list">
                 {historyItems.map((item) => (
                     <div key={item.id}
                         className="history-card"
@@ -209,7 +211,7 @@ export default function History() {
                         </div>
                     </div>
                 ))}
-            </div>
+            </div>}
             <DeleteConfirmModal
                 isOpen={!!deleteTargetId}
                 onClose={() => setDeleteTargetId(null)}

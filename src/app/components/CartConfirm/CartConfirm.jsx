@@ -5,7 +5,7 @@ export default function CartConfirm({ cartItems }) {
     const [sendInvoice, setSendInvoice] = useState(false);
     const [use3DSecure, setUse3DSecure] = useState(false);
     const [isPolicyOpen, setPolicyOpen] = useState(false);
-    const [activePolicy, setActivePolicy] = useState(null); 
+    const [activePolicy, setActivePolicy] = useState(null);
     const [aggrementCheck, setAggrementCheck] = useState(false);
     const openPolicy = (type) => {
         setActivePolicy(type);
@@ -260,13 +260,109 @@ export default function CartConfirm({ cartItems }) {
                             </button>
                         </div>
                         <div className="policy-content">
+                            <h1>Ön Bilgilendirme Metni</h1>
+                            <p><strong>Son Güncelleme:</strong> 24 Temmuz 2025</p>
+
+                            <p>Bu metin, 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği gereğince kullanıcıların bilgilendirilmesi amacıyla hazırlanmıştır.</p>
+
+                            <h2>1. Hizmet Sağlayıcı Bilgileri</h2>
+                            <ul>
+                                <li><strong>Unvan:</strong> LUMANORIS Dijital Hizmetler Platformu</li>
+                                <li><strong>Web Adresi:</strong> <a href="https://www.lumanoris.com" target="_blank">www.lumanoris.com</a></li>
+                                <li><strong>E-Posta:</strong> <a href="mailto:info@lumanoris.com">info@lumanoris.com</a></li>
+                                <li><strong>Merkez Adres:</strong> Ankara/Altındağ</li>
+                            </ul>
+
+                            <h2>2. Sunulan Hizmetler</h2>
                             <p>
-                                Welcome <br />
-                                These Poe Terms of Service (“Terms”) are an agreement entered between you and Quora, Inc. and its affiliates (collectively “Quora,” “we,” or “us”) in connection with your use of the Poe service (“Poe”). In these Terms, "you" refers both to you as an individual and to the entity you represent. By using Poe, you consent to these Poe Terms of Service.
-                                Quora’s Quora Platform Terms of Service also apply to your use of Poe. In the event of a conflict between the Quora Platform Terms of Service and the Poe Terms of Service, the Poe Terms of Service will apply. If you purchase a subscription to Poe, then the Subscriber Terms shall apply as well. Poe is considered part of the “Quora Platform” for purposes of the Quora Platform Terms of Service. Capitalized terms used but not defined in these Poe Terms of Service have the meanings defined in the Quora Platform Terms of Service.
-                                IMPORTANT ARBITRATION NOTICE: IF YOU ARE IN THE UNITED STATES OR CANADA, YOU AGREE THAT DISPUTES BETWEEN YOU AND QUORA WILL BE RESOLVED BY BINDING, INDIVIDUAL ARBITRATION AND YOU WAIVE YOUR RIGHT TO PARTICIPATE IN A CLASS ACTION LAWSUIT OR CLASS-WIDE ARBITRATION. WE EXPLAIN THIS PROCESS, SOME EXCEPTIONS, AND HOW YOU CAN OPT OUT OF ARBITRATION IN SECTION 10 OF THE QUORA PLATFORM TERMS OF SERVICE.
-                                1. A Platform for Open Exploration (Poe).
-                                Poe is a platform that enables you to explore and interact with various bots powered by third-party Artificial Intelligence Models, including Large Language Models (“LLMs”) (collectively, “AI Models”). Poe may also allow you to create your own bots or apps powered by these third-party AI models. You can use bots for a variety of purposes, from learning, writing help, translation, programming help,
+                                LUMANORIS, kullanıcılara yapay zekâ sohbet modelleri oluşturma, yayınlama, keşfetme ve bunlar üzerinden gelir elde etme imkanı sunan dijital bir platformdur.
+                                Platform üzerinden sunulan tüm hizmetler tamamen dijital niteliktedir ve anlık olarak sunulmaktadır.
+                            </p>
+
+                            <h2>3. Fiyatlandırma ve Ödeme</h2>
+                            <ul>
+                                <li>Hizmet bedelleri, kullanıcıya platform arayüzünde açıkça belirtilir.</li>
+                                <li>Ödeme, üçüncü taraf ödeme altyapısı aracılığıyla güvenli biçimde tahsil edilir.</li>
+                                <li>İçerik üreticilerine yapılan ödemeler, kullanıcıya ait banka hesap bilgileri üzerinden gerçekleştirilir.</li>
+                            </ul>
+
+                            <h2>4. Teslimat ve İfa</h2>
+                            <ul>
+                                <li>Dijital hizmetler, ödeme sonrası anında kullanıcı hesabına tanımlanır ve kullanılabilir hale gelir.</li>
+                                <li>Abonelikler otomatik olarak tanımlanır ve belirtilen süre boyunca geçerlidir.</li>
+                            </ul>
+
+                            <h2>5. Cayma Hakkı</h2>
+                            <p>
+                                Tüketici, dijital içerik hizmetinin anında sunulması nedeniyle cayma hakkını kullanamayacağını kabul eder.
+                                Bu durum, 6502 sayılı Kanun'un 15. maddesi gereğince istisna kapsamındadır.
+                                Kullanıcı, bu bilgilendirme ile cayma hakkından feragat etmiş sayılır.
+                            </p>
+
+                            <h2>6. Uyuşmazlık Çözümü</h2>
+                            <p>Uyuşmazlık durumlarında, kullanıcı bulunduğu yerdeki Tüketici Hakem Heyetlerine veya Tüketici Mahkemelerine başvurabilir.</p>
+
+
+
+                            <h1>Hizmet Sözleşmesi (Mesafeli Satış Sözleşmesi)</h1>
+                            <p><strong>Son Güncelleme:</strong> 24 Temmuz 2025</p>
+
+                            <h2>1. Taraflar</h2>
+                            <ul>
+                                <li><strong>Hizmet Sağlayıcı:</strong> LUMANORIS</li>
+                                <li><strong>Kullanıcı:</strong> Platforma üye olan ve hizmetlerden faydalanan kişi</li>
+                            </ul>
+
+                            <h2>2. Sözleşmenin Konusu</h2>
+                            <p>
+                                İşbu sözleşme, LUMANORIS tarafından sunulan dijital hizmetlerin; kullanım koşullarını, ödeme şartlarını ve tarafların hak ve yükümlülüklerini belirler.
+                            </p>
+
+                            <h2>3. Hizmetin Özellikleri</h2>
+                            <ul>
+                                <li>Kullanıcı, platformda AI model oluşturabilir, kullanabilir ve gelir elde edebilir.</li>
+                                <li>Bazı hizmetler ücretsizdir, bazıları ise abonelik ya da kullanım bazlı ücretlendirmeye tabidir.</li>
+                                <li>Dijital içerik, fiziksel bir ürün teslimatı içermemektedir.</li>
+                            </ul>
+
+                            <h2>4. Ücretlendirme ve Ödeme</h2>
+                            <ul>
+                                <li>Hizmet bedelleri ilgili sayfalarda açıkça belirtilmiştir.</li>
+                                <li>Kullanıcı, seçtiği hizmete uygun ödeme yöntemini kullanarak işlemi tamamlar.</li>
+                                <li>Ödeme sonrası hizmet anında aktif edilir.</li>
+                            </ul>
+
+                            <h2>5. Cayma Hakkı ve İade</h2>
+                            <ul>
+                                <li>Kullanıcı, dijital içeriğin anında ifası nedeniyle, cayma hakkını kullanamayacağını kabul eder.</li>
+                                <li>Hizmetler kullanıldıktan veya indirildikten sonra iptal/iade yapılmaz.</li>
+                                <li>Aksi belirtilmedikçe abonelik iptali bir sonraki dönem için geçerli olur.</li>
+                            </ul>
+
+                            <h2>6. Kullanıcının Yükümlülükleri</h2>
+                            <ul>
+                                <li>Kullanıcı, verdiği bilgilerin doğru olduğunu beyan eder.</li>
+                                <li>Hizmeti kötüye kullanamaz, yasa dışı faaliyetlerde bulunamaz.</li>
+                                <li>AI modelleriyle elde edilen içeriklerin sorumluluğu kullanıcıya aittir.</li>
+                            </ul>
+
+                            <h2>7. Hizmet Sağlayıcının Yükümlülükleri</h2>
+                            <ul>
+                                <li>Platformun çalışmasını sağlamak ve kullanıcı desteği sunmak</li>
+                                <li>Ücretli hizmetlerde, ödeme sonrası kullanımın teknik olarak sağlanması</li>
+                                <li>Verilerin güvenliğini sağlamak</li>
+                            </ul>
+
+                            <h2>8. Fesih</h2>
+                            <ul>
+                                <li>Her iki taraf da sözleşmeyi feshedebilir.</li>
+                                <li>LUMANORIS, kurallara aykırı kullanım durumunda kullanıcı hesabını askıya alabilir veya sonlandırabilir.</li>
+                            </ul>
+
+                            <h2>9. Uyuşmazlıkların Çözümü</h2>
+                            <p>
+                                Taraflar arasında doğabilecek uyuşmazlıklarda <strong>Ankara Mahkemeleri ve İcra Daireleri</strong> yetkilidir.
+                                Kullanıcı ayrıca <strong>Tüketici Hakem Heyeti</strong>’ne başvurabilir.
                             </p>
                         </div>
                     </div>
