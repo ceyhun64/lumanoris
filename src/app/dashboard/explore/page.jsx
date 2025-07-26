@@ -1,7 +1,7 @@
 "use client";
-import React, { useState } from "react";
-import aiPic from "../../../images/ai-pic.png";
+import React, { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from 'next/navigation';
+import aiPic from "../../../images/ai-pic.png";
 
 
 const categories = [
@@ -50,25 +50,32 @@ const bots = [
 ];
 
 export default function Explore() {
-    const searchParams = useSearchParams();
     const router = useRouter();
-    const isFromList = searchParams.get("from") === "list";
-    const listName = searchParams.get("name") || '';
     const [activeCategory, setActiveCategory] = useState("Tümü");
     const [selectedBots, setSelectedBots] = useState([]);
+    const [isFromList, setIsFromList] = useState(false);
+    const [listName, setListName] = useState("");
 
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const from = params.get("from");
+            const name = params.get("name");
+
+            setIsFromList(from === "list");
+            setListName(name || '');
+        }
+    }, []);
 
     const filteredBots = activeCategory === "Tümü"
         ? bots
         : bots.filter(bot => bot.category === activeCategory);
-
 
     const toggleBotSelection = (botId) => {
         setSelectedBots((prev) =>
             prev.includes(botId) ? prev.filter(id => id !== botId) : [...prev, botId]
         );
     };
-
 
     return (
         <div className="explore-wrapper">
