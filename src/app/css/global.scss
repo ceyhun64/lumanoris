@@ -8654,10 +8654,12 @@ body {
     align-items: center;
     padding: 60px 90px;
     min-height: 100vh;
-    background-image: url("/images/register-bg-2.jpg");
+    /* background-image: url("/images/register-bg-2.jpg");
     background-position: center;
     background-repeat: no-repeat;
-    background-size: cover;
+    background-size: cover; */
+        background: linear-gradient(to right, #0e0d13, #1c1925);
+
 
     @media(max-width:992px) {
         padding: 15px;

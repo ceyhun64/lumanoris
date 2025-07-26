@@ -47,12 +47,17 @@ body {
 }
 
 .container button {
-    background: linear-gradient(329deg, #54103a, rgba(70, 153, 255, 0));
+    border-radius: 12px;
+            border: 1px solid var(--liner, #FFFFFF20);
+            background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
+
+            background-image: url("/images/btn-bg.png");
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
     color: #fff;
     font-size: 12px;
     padding: 10px 45px;
-    border: 1px solid rgba(255, 241, 250, 0.4);
-    border-radius: 8px;
     font-weight: 600;
     letter-spacing: 0.5px;
     text-transform: uppercase;

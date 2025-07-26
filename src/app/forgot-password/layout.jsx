@@ -10,14 +10,14 @@ export default function AuthLayout({ children }) {
     return (
         <>
             <div className="auth-layout">
-                <div className="navbar-auth">
+                {/* <div className="navbar-auth">
                     <div className="logo">
                         <div className="icon">
                             <img src={logo.src} alt="logo" />
                         </div>
                         <span>LUMANORIS</span>
                     </div>
-                </div>
+                </div> */}
 
                 {children}
             </div>
