@@ -2706,7 +2706,8 @@ body {
 .chatbots-empty-state .highlight {
   color: #ff66c4;
 }
-.chatbots-empty-state a {
+.chatbots-empty-state a,
+.chatbots-empty-state .create-button {
   padding: 22px 22px;
   border-radius: 12px;
   border: 1px dashed rgba(255, 102, 196, 0.1254901961);
@@ -2724,12 +2725,14 @@ body {
   gap: 10px;
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
-.chatbots-empty-state a span {
+.chatbots-empty-state a span,
+.chatbots-empty-state .create-button span {
   display: flex;
   justify-content: center;
   align-items: center;
 }
-.chatbots-empty-state a:hover {
+.chatbots-empty-state a:hover,
+.chatbots-empty-state .create-button:hover {
   background-color: #1a1722;
   border-color: #ff66c4;
 }
@@ -3475,6 +3478,8 @@ body {
   line-height: 1.6;
   margin-bottom: 8px;
   position: relative;
+  max-height: 250px;
+  overflow: hidden;
 }
 .dialogue-wrapper .dialogue-card .card-content::after {
   content: "";
@@ -6523,6 +6528,34 @@ body {
   justify-content: flex-start;
   align-items: flex-start;
   gap: 8px;
+  padding-bottom: 100px;
+}
+.explore-wrapper .bot-list .checkbox {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border: 2px solid #ff66c4;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: #ff66c4;
+  z-index: 2;
+}
+.explore-wrapper .bot-list .checkbox.checked {
+  background-color: #ff66c4;
+  color: white;
+}
+.explore-wrapper .bot-list .checkbox.checked .checkmark {
+  display: inline;
+}
+.explore-wrapper .bot-list .checkbox .checkmark {
+  display: none;
 }
 .explore-wrapper .bot-list .bot-card {
   border-radius: 8px;
@@ -7100,6 +7133,7 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
+  width: 100%;
 }
 .auth-layout .navbar-auth {
   padding: 15px 120px;
@@ -8224,17 +8258,17 @@ body {
 
 .profile-feedback-badge {
   position: fixed;
-  top: 8px;
-  right: 8px;
+  bottom: 24px;
+  right: 24px;
   background-color: #FF66C4;
-  color: white;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 14px;
-  border-radius: 20px;
-  z-index: 10;
-  box-shadow: 0 0 10px rgba(255, 102, 196, 0.4);
-  animation: fadeInOut 3s ease-in-out;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  animation: fadeInOut 2s ease forwards;
+  pointer-events: none;
+  z-index: 100;
 }
 
 @keyframes fadeInOut {
@@ -8340,4 +8374,137 @@ body {
   font-size: 12px;
   cursor: pointer;
   line-height: 1;
+}
+
+.editable-field-wrapper {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: transparent;
+  margin-bottom: 20px;
+}
+.editable-field-wrapper .editable-inputs {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.editable-field-wrapper .editable-inputs .editable-input {
+  flex: 1;
+  min-width: 120px;
+  border-radius: 8px;
+  background: #15131c;
+  border: none;
+  padding: 14px 12px;
+  color: #fff;
+  font-size: 12px;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 500;
+  outline: none;
+  transition: 0.3s all ease;
+}
+.editable-field-wrapper .editable-inputs .editable-input::-moz-placeholder {
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+}
+.editable-field-wrapper .editable-inputs .editable-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+}
+.editable-field-wrapper .editable-inputs .editable-input:focus, .editable-field-wrapper .editable-inputs .editable-input:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.editable-field-wrapper .editable-submit-btn {
+  min-width: 100px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 241, 250, 0.73);
+  background: linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%);
+  background-image: url("/images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: #fff;
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.3s all ease;
+}
+.editable-field-wrapper .editable-submit-btn:hover {
+  opacity: 0.85;
+  transform: scale(1.03);
+}
+
+.like.active svg path,
+.dislike.active svg path {
+  fill: #ff66c4;
+}
+
+.like.active path,
+.dislike.active path {
+  fill: #ff66c4;
+}
+
+.save-popup {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 16px 24px;
+  background: rgba(18, 18, 20, 0.98);
+  border-top: 1px solid #3a3a3c;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  z-index: 1000;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+  -webkit-backdrop-filter: blur(12px);
+          backdrop-filter: blur(12px);
+  animation: slideUp 0.3s ease-out;
+}
+.save-popup p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+}
+.save-popup .save-button {
+  background: #ff66c4;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  box-shadow: 0 0 10px rgba(255, 102, 196, 0.3);
+}
+.save-popup .save-button:hover {
+  background: #e055b1;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0%);
+    opacity: 1;
+  }
+}
+@media (max-width: 640px) {
+  .save-popup {
+    flex-direction: column;
+    padding: 20px;
+    text-align: center;
+  }
+  .save-popup .save-button {
+    width: 100%;
+  }
 }/*# sourceMappingURL=global.css.map */

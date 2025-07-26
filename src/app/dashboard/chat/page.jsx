@@ -4,13 +4,14 @@ import ProfileCard from "@/app/components/ProfileCard/ProfileCard";
 import WithdrawalModal from "@/app/components/WithdrawalModal/WithdrawalModal";
 import React, { useState, useRef, useEffect } from "react";
 import avatarImg from "../../../images/avatar-bot.jpg";
+import DialogNotebookModal from "@/app/components/DialogNotebookModal";
 
 export default function Chat() {
     const messagesEndRef = useRef(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [messages, setMessages] = useState([]);
+    const [isDialogModalOpen, setIsDialogModalOpen] = useState(false);
 
-    const [messages, setMessages] = useState([
-
-    ]);
 
     const handleSendMessage = (text) => {
         if (!text.trim()) return;
@@ -72,7 +73,8 @@ export default function Chat() {
                                             <div className="message-content">
                                                 <p className="sender-name">Yazılım Geliştirici</p>
                                                 <p className="message-text">{msg.text}</p>
-                                                <button className="message-action">
+                                                <button className="message-action"
+                                                    onClick={() => setIsDialogModalOpen(true)}>
                                                     <div className="icon">
                                                         <svg width="10" height="9" viewBox="0 0 10 9" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                             <path d="M0.31861 6.34404L0.455756 6.69768C0.778898 7.53102 1.32791 8.25537 2.04373 8.79244C2.22566 8.92873 2.44173 8.99912 2.66079 8.99912C2.78492 8.99912 2.90991 8.97651 3.03021 8.93065C3.36295 8.80353 3.60333 8.51921 3.67329 8.17047L3.77119 7.68352C4.94495 7.73663 6.12873 7.63574 7.25108 7.39024C7.81823 7.26483 8.27233 6.84826 8.43699 6.29924C8.63685 5.61074 8.73817 4.90559 8.73817 4.203C8.73817 4.04303 8.73305 3.88327 8.7226 3.72372C8.70681 3.48292 8.49843 3.29991 8.25804 3.31633C8.01745 3.33211 7.83508 3.54008 7.85065 3.78089C7.85982 3.92124 7.86452 4.06222 7.86452 4.203C7.86452 4.82304 7.77493 5.4465 7.59896 6.05183C7.52644 6.29413 7.32083 6.48012 7.06339 6.53686C5.94338 6.78236 4.76088 6.87045 3.5803 6.79857C3.28105 6.7783 3.02105 6.98477 2.96239 7.27336L2.81671 7.99834C2.80178 8.07236 2.74888 8.10286 2.71859 8.11437C2.6883 8.12611 2.62837 8.13848 2.5678 8.09347C1.98316 7.65473 1.53439 7.06283 1.27012 6.38157L1.13894 6.04564C0.78445 4.83733 0.785302 3.55991 1.14086 2.35416C1.21338 2.11186 1.419 1.92587 1.67559 1.86913C2.69748 1.64752 3.74582 1.55367 4.79629 1.58801C5.04328 1.59655 5.2393 1.40693 5.2474 1.16591C5.2555 0.924882 5.06653 0.722894 4.82529 0.714791C3.70571 0.676822 2.58315 0.778354 1.48874 1.01575C0.921592 1.14116 0.467489 1.55773 0.303466 2.10504C-0.100301 3.47417 -0.101153 4.92201 0.300906 6.29285C0.304318 6.30415 0.314129 6.33274 0.31861 6.34404Z" fill="#AAAAAA" />
@@ -97,6 +99,13 @@ export default function Chat() {
 
 
                     <MessageInput onSend={handleSendMessage} onResetChat={handleResetChat} />
+                    <DialogNotebookModal
+                        isOpen={isDialogModalOpen}
+                        onClose={() => setIsDialogModalOpen(false)}
+                        onPublish={(title) => {
+                            console.log("Diyalog başlığı:", title);
+                        }}
+                    />
 
 
                 </div>

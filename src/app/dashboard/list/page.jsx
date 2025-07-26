@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import DeleteConfirmModal from "@/app/components/DeleteConfirmModal";
 import { useRouter } from "next/navigation";
+import AddToListModalEmpty from "@/app/components/AddToListModalEmpty/AddToListModalEmpty";
 
 const mockData = [
     {
@@ -44,11 +45,18 @@ const mockData = [
 const mockData = []; */
 export default function List() {
     const [modalVisible, setModalVisible] = useState(false);
+    const [modalVisible2, setModalVisible2] = useState(false);
+
     const [listData, setListData] = useState(mockData);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [deleteTargetIndex, setDeleteTargetIndex] = useState(null);
     const router = useRouter();
 
+
+    const handleCreateList = (name) => {
+        setModalVisible(false);
+        router.push(`/dashboard/explore?from=list&name=${encodeURIComponent(name)}`);
+    };
 
     const handleDelete = (indexToRemove) => {
         setListData(prev => prev.filter((_, index) => index !== indexToRemove));
@@ -64,6 +72,12 @@ export default function List() {
                 header="Yeni Liste Oluştur"
                 onClose={() => setModalVisible(false)}
                 lists={[]}
+            />
+
+            <AddToListModalEmpty
+                isOpen={modalVisible2}
+                onClose={() => setModalVisible2(false)}
+                onCreate={handleCreateList}
             />
 
             <DeleteConfirmModal
@@ -115,11 +129,11 @@ export default function List() {
                     Henüz Listeniz bulunmamaktadır
                 </h2>
 
-                <Link href="/dashboard/chatbots/create" className="create-button">
+                <button onClick={() => setModalVisible2(true)} className="create-button">
                     <span><svg xmlns="http://www.w3.org/2000/svg" width="26" height="25" viewBox="0 0 26 25" fill="none">
                         <path d="M13 5.20117V19.7842M5.7085 12.4927H20.2915" stroke="#FF66C4" strokeLinecap="round" strokeLinejoin="round" />
                     </svg></span> İlk listenizi oluşturun
-                </Link>
+                </button>
             </div>}
 
             <div className="list-inner">

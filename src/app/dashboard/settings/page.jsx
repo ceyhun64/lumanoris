@@ -2,6 +2,7 @@
 import AccountPoints from "@/app/components/AccountPoints/AccountPoints";
 import BankInfo from "@/app/components/BankInfo/BankInfo";
 import ContactForm from "@/app/components/ContactForm";
+import EditableField from "@/app/components/EditableField/EditableField";
 import EmailEditor from "@/app/components/EmailEditor/EmailEditor";
 import LanguageSelector from "@/app/components/LanguageSelector/LanguageSelector";
 import PhoneEditor from "@/app/components/PhoneEditor/PhoneEditor";
@@ -14,7 +15,8 @@ export default function Settings() {
     const [activeTab, setActiveTab] = useState("accountPoints");
     const router = useRouter();
     const tabs = [
-        { key: "accountPoints", label: "Hesap Puanı" },
+        /* { key: "accountPoints", label: "Hesap Puanı" }, */
+        { key: "user", label: "Kullanıcı" },
         { key: "security", label: "Banka ve güvenlik" },
         { key: "email", label: "E-posta" },
         { key: "phone", label: "Telefon Numarası" },
@@ -61,7 +63,23 @@ export default function Settings() {
             </div>
 
             <div className="tab-content">
-                {activeTab === "accountPoints" && <AccountPoints />}
+                {/* {activeTab === "accountPoints" && <AccountPoints />} */}
+                {activeTab === "user" && <>
+                    <EditableField
+                        fields={[
+                            { name: "username", value: "kullaniciadi123", placeholder: "KULLANICI ADI" },
+                        ]}
+                        onSubmit={(data) => console.log("Username updated:", data)}
+                    />
+
+                    <EditableField
+                        fields={[
+                            { name: "firstName", value: "Ahmet", placeholder: "AD" },
+                            { name: "lastName", value: "Yılmaz", placeholder: "SOYAD" },
+                        ]}
+                        onSubmit={(data) => console.log("Name updated:", data)}
+                    />
+                </>}
                 {activeTab === "security" && <BankInfo />}
                 {activeTab === "email" && <EmailEditor />}
                 {activeTab === "phone" && <PhoneEditor />}

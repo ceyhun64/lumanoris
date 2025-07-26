@@ -11,6 +11,8 @@ export default function MarketCard({ bot, onRemove }) {
     const { image, title, author, dialogues, time, badge, avatar, likes, comments } = bot;
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef();
+    const [liked, setLiked] = useState(false);
+    const [likeCount, setLikeCount] = useState(likes || 0);
     const [shareOpen, setShareOpen] = useState(false);
     const [reportOpen, setReportOpen] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
@@ -44,9 +46,21 @@ export default function MarketCard({ bot, onRemove }) {
 
         setTimeout(() => {
             setShowFeedbackBadge(false);
-            onRemove?.(); // kaldır callback
+            onRemove?.();
         }, 2000);
     };
+
+    const handleLike = (e) => {
+        e.stopPropagation();
+        if (liked) {
+            setLiked(false);
+            setLikeCount(likeCount - 1);
+        } else {
+            setLiked(true);
+            setLikeCount(likeCount + 1);
+        }
+    };
+
 
     return (
         <div className="bot-card" onClick={() => router.push('/dashboard/chat')}>
@@ -130,13 +144,12 @@ export default function MarketCard({ bot, onRemove }) {
                     </div>
                 </div>
                 <div class="bot-card-actions">
-                    <div class="action-item">
+                    <div className={`action-item like ${liked ? "active" : ""}`} onClick={handleLike}>
                         <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M13.5278 11.4416L13.9978 8.72165C14.0254 8.56222 14.0178 8.3987 13.9756 8.24251C13.9334 8.08633 13.8575 7.94125 13.7534 7.81743C13.6493 7.69361 13.5193 7.59403 13.3727 7.52567C13.2261 7.45731 13.0663 7.4218 12.9045 7.42165H9.4498C9.36925 7.42157 9.28968 7.40396 9.21661 7.37006C9.14354 7.33615 9.07872 7.28676 9.02665 7.2253C8.97458 7.16384 8.9365 7.09179 8.91506 7.01414C8.89362 6.9365 8.88932 6.85512 8.90247 6.77565L9.34447 4.07898C9.41587 3.64112 9.39543 3.19319 9.28447 2.76365C9.23651 2.58624 9.1446 2.42379 9.01724 2.2913C8.88988 2.15882 8.73118 2.06057 8.55581 2.00565L8.45914 1.97431C8.24075 1.90456 8.00398 1.92077 7.79714 2.01965C7.57047 2.12898 7.40514 2.32831 7.34381 2.56498L7.02647 3.78765C6.92562 4.17679 6.77881 4.55254 6.58914 4.90698C6.31181 5.42498 5.88381 5.84031 5.43914 6.22365L4.47914 7.05031C4.34605 7.16532 4.24211 7.31022 4.17583 7.47315C4.10954 7.63608 4.08281 7.81239 4.09781 7.98765L4.63981 14.2496C4.66366 14.5265 4.7904 14.7843 4.99502 14.9723C5.19964 15.1602 5.46729 15.2647 5.74514 15.265H8.84447C11.1651 15.265 13.1458 13.6476 13.5271 11.4416" fill="#FFE6F2" />
                             <path opacity="0.5" fill-rule="evenodd" clip-rule="evenodd" d="M1.99239 6.9204C2.12123 6.91477 2.24726 6.95913 2.34416 7.04423C2.44106 7.12933 2.50134 7.24858 2.51239 7.37707L3.15906 14.8677C3.17001 14.9793 3.15811 15.0919 3.12409 15.1987C3.09006 15.3055 3.03462 15.4042 2.96115 15.4889C2.88769 15.5735 2.79773 15.6423 2.69679 15.691C2.59585 15.7397 2.48604 15.7674 2.37406 15.7722C2.26208 15.7771 2.15029 15.7591 2.04551 15.7193C1.94073 15.6795 1.84516 15.6187 1.76464 15.5407C1.68413 15.4628 1.62035 15.3692 1.57721 15.2658C1.53407 15.1623 1.51246 15.0511 1.51372 14.9391V7.41973C1.51378 7.29086 1.56359 7.16697 1.65278 7.07394C1.74196 6.9809 1.86363 6.9259 1.99239 6.9204Z" fill="#FFE6F2" />
                         </svg>
-
-                        <span>{likes}</span>
+                        <span>{likeCount}</span>
                     </div>
                     <div class="action-item" onClick={(e) => { e.stopPropagation(); setCommentOpen(true) }}>
                         <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
