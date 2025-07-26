@@ -5439,13 +5439,22 @@ body {
                         min-width: 220px;
                         height: 48px;
                         transition: all 0.25s ease;
-
-                        &:hover {
-                            background: rgba(255, 255, 255, 0.08);
-                            border-color: #993D76;
-                            transform: scale(1.02);
-                        }
                     }
+
+                    .btn-follow:hover {
+                        background: rgba(255, 255, 255, 0.08);
+                        border-color: #993D76;
+                        transform: scale(1.02);
+                    }
+
+                    .btn-follow.active {
+                        background: linear-gradient(#18171F, #18171F) padding-box,
+                            linear-gradient(150deg, #993D76, #c05396) border-box;
+                        border-color: transparent;
+                        color: #fff;
+                        transform: scale(1.03);
+                    }
+
 
                     .btn-bell {
                         padding: 0;
@@ -7391,7 +7400,7 @@ body {
             }
 
             .checkmark {
-                display: none; 
+                display: none;
             }
         }
 

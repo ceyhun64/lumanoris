@@ -4833,6 +4833,12 @@ body {
   border-color: #993D76;
   transform: scale(1.02);
 }
+.chat-wrapper .chat-bottom .profile-card .profile-top .profile-actions .btn-follow.active {
+  background: linear-gradient(#18171F, #18171F) padding-box, linear-gradient(150deg, #993D76, #c05396) border-box;
+  border-color: transparent;
+  color: #fff;
+  transform: scale(1.03);
+}
 .chat-wrapper .chat-bottom .profile-card .profile-top .profile-actions .btn-bell {
   padding: 0;
   border: 0;

@@ -177,7 +177,7 @@ export default function Sidebar({ isMobileOpen = false }) {
         isOpen={isQuitModalOpen}
         onClose={() => setIsQuitModalOpen(false)}
         onConfirm={() => {
-          router.push('/login');
+          router.push('/auth');
         }}
       />
     </div>

@@ -9,6 +9,7 @@ import ReportModal from '../ReportModal/ReportModal';
 import AddToListModal from '../AddToListModal/AddToListModal';
 import BlockModal from '../BlockModal/BlockModal';
 import CommentModal from '../CommentModal/CommentModal';
+import { useRouter } from 'next/navigation';
 
 export default function ProfileCard() {
     const [isFollowing, setIsFollowing] = useState(false);
@@ -26,7 +27,7 @@ export default function ProfileCard() {
     const [likeCount, setLikeCount] = useState(150);
     const [disliked, setDisliked] = useState(false);
     const [dislikeCount, setDislikeCount] = useState(12); // varsayılan değer
-
+const router = useRouter();
 
 
 
@@ -68,11 +69,12 @@ export default function ProfileCard() {
                 </div>
                 <div className="profile-actions">
                     <button
-                        className="btn-follow"
+                        className={`btn-follow ${isFollowing ? 'active' : ''}`}
                         onClick={() => setIsFollowing(!isFollowing)}
                     >
                         {isFollowing ? 'Takipten Çık' : 'Takip Et'}
                     </button>
+
                     {/* Bildirim Butonu ve Menü Kapsayıcı */}
                     <div className="notification-wrapper" ref={notificationRef}>
                         <button
@@ -209,11 +211,12 @@ export default function ProfileCard() {
                     </button>
                     {showMenu && (
                         <div className="dropdown-menu">
-                            <button onClick={() => setBlockOpen(true)}>
-                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M9 0C4.032 0 0 4.032 0 9C0 13.968 4.032 18 9 18C13.968 18 18 13.968 18 9C18 4.032 13.968 0 9 0ZM1.8 9C1.8 5.022 5.022 1.8 9 1.8C10.665 1.8 12.195 2.367 13.41 3.321L3.321 13.41C2.33247 12.1529 1.79661 10.5992 1.8 9ZM9 16.2C7.335 16.2 5.805 15.633 4.59 14.679L14.679 4.59C15.6675 5.84711 16.2034 7.40078 16.2 9C16.2 12.978 12.978 16.2 9 16.2Z" fill="#FF0F2B" />
-                                </svg>
-                                Engelle
+                            <button onClick={() => {/* setBlockOpen(true) */router.push("/dashboard")}}>
+                                <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M20.27 8.985L20.975 13.065C21.0164 13.3041 21.005 13.5494 20.9417 13.7837C20.8783 14.018 20.7646 14.2356 20.6084 14.4213C20.4522 14.6071 20.2573 14.7564 20.0373 14.859C19.8174 14.9615 19.5777 15.0148 19.335 15.015H14.153C14.0322 15.0151 13.9128 15.0415 13.8032 15.0924C13.6936 15.1432 13.5964 15.2173 13.5183 15.3095C13.4401 15.4017 13.383 15.5098 13.3509 15.6263C13.3187 15.7427 13.3123 15.8648 13.332 15.984L13.995 20.029C14.1022 20.6861 14.0716 21.3584 13.905 22.003C13.765 22.536 13.354 22.965 12.812 23.139L12.667 23.186C12.3394 23.2906 11.9842 23.2663 11.674 23.118C11.5078 23.0395 11.3609 22.9256 11.2434 22.7843C11.126 22.643 11.0408 22.4777 10.994 22.3L10.518 20.466C10.3667 19.8823 10.1465 19.3187 9.86198 18.787C9.44598 18.01 8.80398 17.387 8.13698 16.812L6.69698 15.572C6.49735 15.3995 6.34143 15.1821 6.24201 14.9377C6.14258 14.6934 6.10248 14.4289 6.12498 14.166L6.93798 4.773C6.97375 4.35776 7.16387 3.97101 7.4708 3.68907C7.77774 3.40712 8.1792 3.25046 8.59598 3.25H13.245C16.726 3.25 19.697 5.676 20.269 8.985" fill="#FF99D6" />
+                                        <path opacity="0.5" fill-rule="evenodd" clip-rule="evenodd" d="M2.96808 15.7652C3.16134 15.7737 3.35039 15.7071 3.49574 15.5795C3.64109 15.4518 3.7315 15.273 3.74808 15.0802L4.71808 3.84422C4.73451 3.6769 4.71666 3.50799 4.66562 3.3478C4.61458 3.18761 4.53142 3.0395 4.42122 2.91253C4.31102 2.78555 4.17609 2.68237 4.02468 2.6093C3.87327 2.53622 3.70855 2.49477 3.54058 2.48749C3.37261 2.48021 3.20492 2.50724 3.04775 2.56694C2.89058 2.62664 2.74723 2.71775 2.62646 2.83471C2.50568 2.95167 2.41002 3.09203 2.3453 3.2472C2.28059 3.40237 2.24819 3.56911 2.25008 3.73722V15.0162C2.2499 15.2097 2.32451 15.3958 2.45832 15.5356C2.59212 15.6753 2.77476 15.757 2.96808 15.7652Z" fill="#FF99D6" />
+                                    </svg>
+                                İlgilenmiyorum
                             </button>
                             <button onClick={() => setReportOpen(true)}>
                                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">

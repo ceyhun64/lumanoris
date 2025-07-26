@@ -22,7 +22,7 @@ export default function Header() {
     };
 
     const handleProfileClick = () => {
-        router.push('/login');
+        router.push('/auth');
     };
 
     const handleCheckoutClick = () => {
