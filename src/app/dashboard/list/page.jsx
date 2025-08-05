@@ -68,9 +68,9 @@ export default function List() {
     return (
         <div className="list-wrapper">
             <AddToListModal
-                isOpen={modalVisible2}
+                isOpen={modalVisible}
                 header="Yeni Liste Oluştur"
-                onClose={() => setModalVisible2(false)}
+                onClose={() => setModalVisible(false)}
                 lists={[]}
             />
 

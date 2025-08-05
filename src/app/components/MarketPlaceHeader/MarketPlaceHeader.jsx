@@ -2,10 +2,13 @@
 import Image from 'next/image';
 import logo from '../../../images/ubeyaz.png';
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function MarketplaceHeader() {
     const fileInputRef = useRef(null);
     const [selectedFileName, setSelectedFileName] = useState('');
+    const [promptText, setPromptText] = useState(''); // Ekle
+    const router = useRouter();
 
     const handleFileSelect = (e) => {
         const file = e.target.files?.[0];
@@ -14,11 +17,25 @@ export default function MarketplaceHeader() {
         }
     };
 
+    // Gönder tıklanınca çalışacak fonksiyon:
+    const handleSend = () => {
+        if (promptText.trim() !== '') {
+            router.push(`/dashboard/chat?prompt=${encodeURIComponent(promptText)}`);
+        }
+    };
+
+    // Enter'a basınca da göndermek istersen:
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSend();
+        }
+    };
+
     return (
         <div className="marketplace-header">
             <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileSelect} />
 
-            
             <div className="logo">
                 <Image src={logo} alt="Logo" />
                 <svg width="153" height="153" viewBox="0 0 153 153" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -39,21 +56,27 @@ export default function MarketplaceHeader() {
                 </svg>
 
             </div>
-            
+
             <div className='search-box'>
                 {selectedFileName && (
-                <div className="file-preview">
-                    <span>📎 {selectedFileName}</span>
-                    <button onClick={() => setSelectedFileName('')}>×</button>
-                </div>
-            )}
+                    <div className="file-preview">
+                        <span>📎 {selectedFileName}</span>
+                        <button onClick={() => setSelectedFileName('')}>×</button>
+                    </div>
+                )}
                 <button className='icon-plus' onClick={() => fileInputRef.current.click()}>
                     <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12.5 5.20117V19.7842M5.2085 12.4927H19.7915" stroke="#FF66C4" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                 </button>
-                <input type="text" placeholder="Yeni sohbete başla..." />
-                <button className='send'>
+                <input
+                    type="text"
+                    placeholder="Yeni sohbete başla..."
+                    value={promptText}
+                    onChange={(e) => setPromptText(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                />
+                <button className='send' onClick={handleSend}>
                     <svg width="34" height="35" viewBox="0 0 34 35" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g clipPath="url(#clip0_7772_2648)">
                             <path d="M14.6049 17.4928L10.9684 7.79529L32.7877 17.4928L10.9684 27.1902L14.6049 17.4928Z" fill="#FF66C4" fillOpacity="0.2" />

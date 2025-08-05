@@ -5,13 +5,15 @@ import WithdrawalModal from "@/app/components/WithdrawalModal/WithdrawalModal";
 import React, { useState, useRef, useEffect } from "react";
 import avatarImg from "../../../images/avatar-bot.jpg";
 import DialogNotebookModal from "@/app/components/DialogNotebookModal";
+import { useSearchParams } from "next/navigation";
 
 export default function Chat() {
     const messagesEndRef = useRef(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [messages, setMessages] = useState([]);
     const [isDialogModalOpen, setIsDialogModalOpen] = useState(false);
-
+    const searchParams = useSearchParams();
+    const prompt = searchParams.get('prompt') || '';
 
     const handleSendMessage = (text) => {
         if (!text.trim()) return;
@@ -41,6 +43,19 @@ export default function Chat() {
             }
         }, 50);
     };
+
+
+    useEffect(() => {
+        if (prompt && messages.length === 0) {
+            setMessages([{ type: 'sent', text: prompt }]);
+            setTimeout(() => {
+                setMessages(prev => [
+                    ...prev,
+                    { type: 'received', text: 'Teşekkürler, mesajınızı aldım!' }
+                ]);
+            }, 1000);
+        }
+    }, [prompt]);
 
 
 

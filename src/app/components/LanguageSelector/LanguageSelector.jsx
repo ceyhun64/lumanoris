@@ -26,7 +26,7 @@ export default function LanguageSelector() {
                 ))}
             </div>
             <button className="language-submit-btn" onClick={handleSubmit}>
-                Ekle
+                Kaydet
             </button>
         </div>
     );

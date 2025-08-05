@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export default function BankInfo() {
     const [formData, setFormData] = useState({
@@ -10,12 +10,34 @@ export default function BankInfo() {
         iban: "",
         address: ""
     });
-
     const [cards, setCards] = useState([]);
+    const [showAccountTypeOptions, setShowAccountTypeOptions] = useState(false);
+    const accountTypeRef = useRef(null);
+
+    // Dışarı tıklayınca kapanması için
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                accountTypeRef.current &&
+                !accountTypeRef.current.contains(event.target)
+            ) {
+                setShowAccountTypeOptions(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleAccountTypeSelect = (type) => {
+        setFormData((prev) => ({ ...prev, accountType: type }));
+        setShowAccountTypeOptions(false);
     };
 
     const handleSubmit = () => {
@@ -29,12 +51,39 @@ export default function BankInfo() {
         updated.splice(index, 1);
         setCards(updated);
     };
-
     return (
         <div className="bank-info-wrapper">
             <h3>Banka Bilgileri</h3>
             <div className="form-grid">
-                <input type="text" className="input" name="accountType" placeholder="HESAP TÜRÜ" value={formData.accountType} onChange={handleChange} />
+                <div className="account-type-select" ref={accountTypeRef}>
+                    <input
+                        type="text"
+                        className="input"
+                        name="accountType"
+                        placeholder="HESAP TÜRÜ"
+                        value={formData.accountType}
+                        onFocus={() => setShowAccountTypeOptions(true)}
+                        readOnly
+                        style={{ cursor: "pointer" }}
+                    />
+                    {showAccountTypeOptions && (
+                        <div className="account-type-dropdown">
+                            <div
+                                className="dropdown-option"
+                                onClick={() => handleAccountTypeSelect("Bireysel Hesap")}
+                            >
+                                Bireysel Hesap
+                            </div>
+                            <div
+                                className="dropdown-option"
+                                onClick={() => handleAccountTypeSelect("Kurumsal Hesap")}
+                            >
+                                Kurumsal Hesap
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 <input type="text" className="input" name="fullName" placeholder="AD SOYAD" value={formData.fullName} onChange={handleChange} />
                 <input type="text" className="input" name="idNumber" placeholder="KİMLİK NUMARASI" value={formData.idNumber} onChange={handleChange} />
                 <input type="text" className="input" name="phone" placeholder="TELEFON NUMARASI" value={formData.phone} onChange={handleChange} />

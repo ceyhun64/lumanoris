@@ -18,6 +18,9 @@ export default function MarketCard({ bot, onRemove }) {
     const [modalVisible, setModalVisible] = useState(false);
     const [commentOpen, setCommentOpen] = useState(false);
     const [showFeedbackBadge, setShowFeedbackBadge] = useState(false);
+    const [cartAdded, setCartAdded] = useState(false);
+    const [isInCart, setIsInCart] = useState(false);
+
 
 
     const toggleMenu = () => setMenuOpen(prev => !prev);
@@ -62,8 +65,57 @@ export default function MarketCard({ bot, onRemove }) {
     };
 
 
+    const handleAddToCart = (e) => {
+    e.stopPropagation();
+
+    const botItem = { ...bot, id: `${bot.id}-${bot.title}-${bot.author}` };
+
+    let cart = [];
+    if (typeof window !== "undefined") {
+        const cartString = localStorage.getItem('cart');
+        if (cartString) {
+            try {
+                cart = JSON.parse(cartString);
+            } catch (e) {
+                cart = [];
+            }
+        }
+
+        if (!cart.find(item => item.id === botItem.id)) {
+            cart.push(botItem);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            setCartAdded(true);
+
+            setTimeout(() => {
+                setCartAdded(false);
+                // Next.js app router:
+                router.refresh();
+                // Eski router kullanıyorsan:
+                // window.location.reload();
+            }, 2000);
+        }
+    }
+};
+
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const cartString = localStorage.getItem('cart');
+            if (cartString) {
+                try {
+                    const cart = JSON.parse(cartString);
+                    const found = cart.some(item => item.id === `${bot.id}-${bot.title}-${bot.author}`);
+                    setIsInCart(found);
+                } catch (e) {
+                    setIsInCart(false);
+                }
+            }
+        }
+    }, [bot.id, bot.title, bot.author, cartAdded]);
+
     return (
-        <div className="bot-card" onClick={() => router.push('/dashboard/chat')}>
+        <div className={`bot-card${isInCart ? ' in-cart' : ''}`}
+            onClick={() => router.push('/dashboard/chat')}>
             <div className="card-top">
                 <div className="shadow">
                     <svg xmlns="http://www.w3.org/2000/svg" width="200" height="161" viewBox="0 0 200 161" fill="none">
@@ -159,7 +211,7 @@ export default function MarketCard({ bot, onRemove }) {
 
                         <span>{comments}</span>
                     </div>
-                    <div class="action-item">
+                    <div class="action-item macrd" onClick={handleAddToCart}>
                         <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path opacity="0.2" fill-rule="evenodd" clip-rule="evenodd" d="M4.18864 2.79766H3.37344C3.21431 2.79766 3.0617 2.73444 2.94917 2.62192C2.83665 2.5094 2.77344 2.35679 2.77344 2.19766C2.77344 2.03853 2.83665 1.88591 2.94917 1.77339C3.0617 1.66087 3.21431 1.59766 3.37344 1.59766H4.65584C4.78934 1.59767 4.91902 1.64221 5.02436 1.72422C5.1297 1.80623 5.20469 1.92103 5.23744 2.05046L6.43904 6.80006C6.67727 6.66728 6.9455 6.59761 7.21824 6.59766H13.6094C13.8515 6.59822 14.0903 6.65337 14.3081 6.75901C14.5259 6.86464 14.7171 7.01805 14.8674 7.2078C15.0177 7.39755 15.1233 7.61876 15.1763 7.85497C15.2293 8.09117 15.2283 8.33628 15.1734 8.57206L14.547 11.3409C14.4674 11.6969 14.269 12.0152 13.9845 12.2436C13.7 12.472 13.3463 12.5968 12.9814 12.5977H7.84544C7.48086 12.5967 7.12742 12.4719 6.8431 12.2437C6.55878 12.0155 6.36045 11.6974 6.28064 11.3417L5.65344 8.57126C5.64481 8.53287 5.63761 8.49417 5.63184 8.45526C5.61574 8.41897 5.60237 8.38153 5.59184 8.34326L4.18864 2.79766ZM7.41344 15.3977C7.78474 15.3977 8.14084 15.2502 8.40339 14.9876C8.66594 14.7251 8.81344 14.369 8.81344 13.9977C8.81344 13.6264 8.66594 13.2703 8.40339 13.0077C8.14084 12.7452 7.78474 12.5977 7.41344 12.5977C7.04213 12.5977 6.68604 12.7452 6.42349 13.0077C6.16094 13.2703 6.01344 13.6264 6.01344 13.9977C6.01344 14.369 6.16094 14.7251 6.42349 14.9876C6.68604 15.2502 7.04213 15.3977 7.41344 15.3977ZM13.0134 15.3977C13.3847 15.3977 13.7408 15.2502 14.0034 14.9876C14.2659 14.7251 14.4134 14.369 14.4134 13.9977C14.4134 13.6264 14.2659 13.2703 14.0034 13.0077C13.7408 12.7452 13.3847 12.5977 13.0134 12.5977C12.6421 12.5977 12.286 12.7452 12.0235 13.0077C11.7609 13.2703 11.6134 13.6264 11.6134 13.9977C11.6134 14.369 11.7609 14.7251 12.0235 14.9876C12.286 15.2502 12.6421 15.3977 13.0134 15.3977Z" fill="#FFE6F2" />
                             <path d="M2.98288 2.59687H2.01328C1.90719 2.59687 1.80545 2.55473 1.73044 2.47972C1.65542 2.4047 1.61328 2.30296 1.61328 2.19687C1.61328 2.09079 1.65542 1.98905 1.73044 1.91403C1.80545 1.83902 1.90719 1.79688 2.01328 1.79688H3.29568C3.38491 1.7969 3.47156 1.82676 3.54187 1.88169C3.61217 1.93663 3.66209 2.0135 3.68368 2.10007L5.20128 8.18007C5.22422 8.28201 5.20636 8.38887 5.15153 8.47781C5.0967 8.56675 5.00924 8.6307 4.90787 8.65599C4.80649 8.68128 4.69924 8.66591 4.60906 8.61315C4.51887 8.56039 4.45291 8.47444 4.42528 8.37367L2.98288 2.59687Z" fill="#FFE6F2" />
@@ -180,6 +232,12 @@ export default function MarketCard({ bot, onRemove }) {
                 onClose={() => setModalVisible(false)}
                 lists={["Favorilerim", "Sık Kullanılanlar"]}
             />
+
+            {cartAdded && (
+                <div className="cart-feedback-badge">
+                    Sepete eklendi!
+                </div>
+            )}
 
             <CommentModal
                 isOpen={commentOpen}

@@ -23,6 +23,25 @@ export default function CartConfirm({ cartItems }) {
         cvv: ""
     });
 
+    function validateCVV(cvv) {
+        // Sadece rakam ve uzunluğu 3 (veya 4)
+        return /^\d{3,4}$/.test(cvv);
+    }
+
+
+    const [cvvError, setCvvError] = useState("");
+
+    const handleCVVChange = (e) => {
+        const value = e.target.value.replace(/\D/g, ""); // sadece sayı al
+        setCardInfo({ ...cardInfo, cvv: value });
+
+        if (value && !validateCVV(value)) {
+            setCvvError("CVV 3 veya 4 haneli olmalı");
+        } else {
+            setCvvError("");
+        }
+    };
+
     const [selectedItems, setSelectedItems] = useState(
         cartItems.map((item) => item.id)
     );
@@ -136,7 +155,7 @@ export default function CartConfirm({ cartItems }) {
                         />
                         <div className="int-ctr">
                             <input
-                                type="text"
+                                type="month"
                                 className="input"
                                 placeholder="SON KULLANMA TARİHİ"
                                 value={cardInfo.expiry}
@@ -145,10 +164,16 @@ export default function CartConfirm({ cartItems }) {
                             <input
                                 type="text"
                                 className="input"
+                                maxLength={4}
                                 placeholder="CVV"
                                 value={cardInfo.cvv}
-                                onChange={(e) => setCardInfo({ ...cardInfo, cvv: e.target.value })}
+                                onChange={handleCVVChange}
                             />
+                            {cvvError && (
+                                <div style={{ color: "#FF66C4", fontSize: 12, marginTop: 4 }}>
+                                    {cvvError}
+                                </div>
+                            )}
                         </div>
                         <label className="checkbox-option">
                             <input
@@ -161,6 +186,14 @@ export default function CartConfirm({ cartItems }) {
                             </span>
                             3D Secure ile ödeme yap
                         </label>
+                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                            <button
+                                className="add-card-btn"
+                                onClick={() => {/* Burada kart ekleme işlemi yapılabilir */ }}
+                            >
+                                Kartımı Ekle
+                            </button>
+                        </div>
                     </div>
                 </div>
 

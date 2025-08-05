@@ -156,14 +156,13 @@ export default function ChatbotForm() {
                     )}
                 </div>
 
-                <input
-                    type="text"
+                <textarea
                     name="stylePrompt"
                     value={formData.stylePrompt}
                     onChange={handleChange}
                     placeholder="STYLE PROMPT*"
-                    className="text-input"
-                />
+                    className="textarea-input"
+                ></textarea>
 
                 <div
                     className={`drag-drop-area ${isDragging ? 'dragging' : ''}`}
@@ -173,21 +172,21 @@ export default function ChatbotForm() {
                     onClick={() => generalFileInputRef.current?.click()} // 🔥 burası yeni
                 >
                     <input
-  type="file"
-  ref={generalFileInputRef}
-  accept="image/*,application/pdf"
-  style={{ display: 'none' }}
-  onChange={(e) => {
-    const file = e.target.files[0];
-    if (file && (file.type.startsWith("image/") || file.type === "application/pdf")) {
-      setUploadedFile({
-        file,
-        url: URL.createObjectURL(file),
-        type: file.type
-      });
-    }
-  }}
-/>
+                        type="file"
+                        ref={generalFileInputRef}
+                        accept="image/*,application/pdf"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file && (file.type.startsWith("image/") || file.type === "application/pdf")) {
+                                setUploadedFile({
+                                    file,
+                                    url: URL.createObjectURL(file),
+                                    type: file.type
+                                });
+                            }
+                        }}
+                    />
 
                     <div className="upload-icon">
                         <svg width="37" height="33" viewBox="0 0 37 33" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 export default function Settings() {
-    const [activeTab, setActiveTab] = useState("accountPoints");
+    const [activeTab, setActiveTab] = useState("user");
     const router = useRouter();
     const tabs = [
         /* { key: "accountPoints", label: "Hesap Puanı" }, */

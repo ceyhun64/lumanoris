@@ -7,13 +7,30 @@ import bellIcon from '../../../images/bell-icon.svg';
 import cartIcon from '../../../images/cart-icon.svg';
 import userIcon from '../../../images/user-icon.svg';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import NotificationPopup from '../NotificationPopup';
 
 export default function Header() {
     const router = useRouter();
-    const [showNotification, setShowNotification] = useState();
+    const [showNotification, setShowNotification] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [cartCount, setCartCount] = useState(0);
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const cartString = localStorage.getItem('cart');
+            if (cartString) {
+                try {
+                    const cart = JSON.parse(cartString);
+                    setCartCount(cart.length);
+                } catch (e) {
+                    setCartCount(0);
+                }
+            } else {
+                setCartCount(0);
+            }
+        }
+    }, []);
 
     const handleSearchKey = (e) => {
         if (e.key === 'Enter' && searchQuery.trim() !== '') {
@@ -66,6 +83,9 @@ export default function Header() {
                     </button>
                     <button className="icon-btn" onClick={handleCheckoutClick}>
                         <Image src={cartIcon} alt="sepet" />
+                        {cartCount > 0 && (
+                            <span className="cart-badge">{cartCount}</span>
+                        )}
                     </button>
                     <button className="icon-btn" onClick={handleProfileClick}>
                         <Image src={userIcon} alt="profil" />
