@@ -12,14 +12,19 @@ export default function Chat() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [messages, setMessages] = useState([]);
     const [isDialogModalOpen, setIsDialogModalOpen] = useState(false);
-    const searchParams = useSearchParams();
-    const prompt = searchParams.get('prompt') || '';
+    const [prompt, setPrompt] = useState(""); // <-- Prompt'u burada tut
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            setPrompt(params.get('prompt') || "");
+        }
+    }, []); 
 
     const handleSendMessage = (text) => {
         if (!text.trim()) return;
         setMessages((prev) => [...prev, { type: 'sent', text }]);
 
-        // Simüle edilen bot cevabı (örnek)
         setTimeout(() => {
             setMessages((prev) => [...prev, {
                 type: 'received',
@@ -34,7 +39,6 @@ export default function Chat() {
         }
     }, [messages]);
 
-
     const handleResetChat = () => {
         setMessages([]);
         setTimeout(() => {
@@ -43,7 +47,6 @@ export default function Chat() {
             }
         }, 50);
     };
-
 
     useEffect(() => {
         if (prompt && messages.length === 0) {
@@ -55,7 +58,7 @@ export default function Chat() {
                 ]);
             }, 1000);
         }
-    }, [prompt]);
+    }, [prompt]); 
 
 
 
