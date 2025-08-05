@@ -5,9 +5,9 @@ import aiPic from "../../../images/ai-pic.png";
 
 
 const categories = [
-    "Tümü", "Resmi", "Eğitim", "Çeviri", "Öne Çıkanlar",
-    "Uygulamalar", "Yapay Zeka", "Programlama", "Hobiler", "Oyunlar",
-    "Araçlar", "Profesyonel", "Karakter", "Komik", "Yaratıcı Yazarlık"
+    "Tümü", "Kurumsal", "Eğitim", "Çeviri", "Planlar",
+    "Uygulamalar", "Yaratıcı Fikirler", "Programlama", "Hobiler", "Oyunlar",
+    "Bilim&Araştırma", "Profesyonel", "Karakter", "Filmler", "Yaratıcı Yazarlık"
 ];
 
 const bots = [
@@ -18,7 +18,7 @@ const bots = [
         description: "GPT Researcher; Herhangi Bir Konu Hakkında Derinlemesine Araştırma Yapar Ve Kaynaklı Kapsamlı Raporlar Üretir.",
         image: aiPic,
         users: 456,
-        category: "Yapay Zeka"
+        category: "Yaratıcı Fikirler"
     },
     {
         id: 2,

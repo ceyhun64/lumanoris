@@ -5076,7 +5076,49 @@ body {
 }
 .chat-wrapper .chat-bottom .profile-card .profile-buttons .button-cart:hover,
 .chat-wrapper .chat-bottom .profile-card .profile-buttons .button-buy:hover {
-  transform: scale(1.02);
+  transform: rotate(5deg);
+  background: #ff66c4;
+}
+.chat-wrapper .chat-bottom .profile-card .profile-buttons .button-cart {
+  height: 47px;
+  border-radius: 50%;
+  padding: 12px 20px;
+  border-radius: 33px;
+  border: 1px dashed rgba(255, 102, 196, 0.3137254902);
+  background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("/images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #FFF;
+  text-align: center;
+  font-family: "Montserrat", sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 20px;
+  /* 133.333% */
+}
+.chat-wrapper .chat-bottom .profile-card .profile-buttons .button-buy {
+  width: 47px;
+  height: 47px;
+  border-radius: 50%;
+  border-radius: 33px;
+  border: 1px dashed rgba(255, 102, 196, 0.3137254902);
+  background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("/images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.chat-wrapper .chat-bottom .profile-card .profile-buttons .button-buy svg {
+  width: 20px;
 }
 .chat-wrapper .chat-bottom .profile-card .profile-buttons .dropdown-wrapper {
   position: relative;

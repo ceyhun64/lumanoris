@@ -138,8 +138,7 @@ export default function List() {
 
             <div className="list-inner">
                 {listData.map((item, index) => (
-                    <div className="list-card" key={index}
-                        onClick={() => router.push("/dashboard/chat")}>
+                    <div className="list-card" key={index}>
                         <div className="shadow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="205" height="121" viewBox="0 0 205 121" fill="none">
                                 <g filter="url(#filter0_f)">
@@ -157,7 +156,12 @@ export default function List() {
                             </svg>
                         </div>
 
-                        <div className="list-left">
+                        <div className="list-left"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                router.push("/dashboard/chat");
+                            }}
+                            style={{ cursor: "pointer" }}>
                             <img src={aiIcon.src} alt="Avatar" />
                             <img src={aiIcon.src} alt="Avatar" />
                             <img src={aiIcon.src} alt="Avatar" />

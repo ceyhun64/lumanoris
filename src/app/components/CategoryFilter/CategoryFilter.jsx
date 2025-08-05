@@ -3,7 +3,11 @@ import { useState, useRef, useEffect } from 'react';
 import { Splide, SplideSlide, SplideTrack } from '@splidejs/react-splide';
 import '@splidejs/splide/dist/css/splide.min.css';
 
-const categories = ['Tümü', 'Resmi', 'Eğitim', 'Çeviri', 'Öne Çıkanlar', 'Teknoloji', 'Sağlık', 'Yazılım', 'Sanat'];
+const categories = [
+    "Tümü", "Kurumsal", "Eğitim", "Çeviri", "Planlar",
+    "Uygulamalar", "Yaratıcı Fikirler", "Programlama", "Hobiler", "Oyunlar",
+    "Bilim&Araştırma", "Profesyonel", "Karakter", "Filmler", "Yaratıcı Yazarlık"
+];
 
 export default function CategoryFilter({ onSelect, selected: externalSelected }) {
     const [selected, setSelected] = useState(externalSelected || 'Tümü');

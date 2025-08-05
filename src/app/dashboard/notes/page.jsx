@@ -14,7 +14,7 @@ const cards = [
         id: 1,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 2,
@@ -26,7 +26,7 @@ const cards = [
         id: 3,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 4,
@@ -38,7 +38,7 @@ const cards = [
         id: 5,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 6,
@@ -50,7 +50,7 @@ const cards = [
         id: 7,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 8,
@@ -62,7 +62,7 @@ const cards = [
         id: 9,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 10,
@@ -74,7 +74,7 @@ const cards = [
         id: 11,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 12,
@@ -86,7 +86,7 @@ const cards = [
         id: 13,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 14,
@@ -98,7 +98,7 @@ const cards = [
         id: 15,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 16,
@@ -113,7 +113,7 @@ const myCards = [
         id: 1,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 2,
@@ -125,7 +125,7 @@ const myCards = [
         id: 3,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 4,
@@ -137,7 +137,7 @@ const myCards = [
         id: 5,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 6,
@@ -149,7 +149,7 @@ const myCards = [
         id: 7,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 8,
@@ -161,7 +161,7 @@ const myCards = [
         id: 9,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 10,
@@ -173,7 +173,7 @@ const myCards = [
         id: 11,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 12,
@@ -185,7 +185,7 @@ const myCards = [
         id: 13,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 14,
@@ -197,7 +197,7 @@ const myCards = [
         id: 15,
         title: 'Travel Planner AI',
         description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
-        tag: 'Resmi'
+        tag: 'Kurumsal'
     },
     {
         id: 16,

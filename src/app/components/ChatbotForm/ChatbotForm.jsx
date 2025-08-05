@@ -137,9 +137,9 @@ export default function ChatbotForm() {
                     {open && (
                         <div className="options">
                             {[
-                                'Yaratıcı Yazarlık', 'Resmi', 'Eğitim', 'Çeviri', 'Öne Çıkanlar',
-                                'Uygulamalar', 'Yapay Zeka', 'Programlama', 'Hobiler', 'Oyunlar',
-                                'Araçlar', 'Profesyonel', 'Karakter', 'Komik', 'Diğer'
+                                'Yaratıcı Yazarlık', 'Kurumsal', 'Eğitim', 'Çeviri', 'Planlar',
+                                'Uygulamalar', 'Yaratıcı Fikirler', 'Programlama', 'Hobiler', 'Oyunlar',
+                                'Bilim&Araştırma', 'Profesyonel', 'Karakter', 'Filmler', 'Diğer'
                             ].map((item, idx) => (
                                 <div
                                     key={idx}
@@ -217,9 +217,9 @@ export default function ChatbotForm() {
                     className="textarea-input"
                 ></textarea>
 
-                <h4 className="section-title">AYARLAR</h4>
+                
 
-                <div className="switch-row">
+                {/* <h4 className="section-title">AYARLAR</h4><div className="switch-row">
                     <label>Profilde görünür / gizli</label>
                     <label className="switch">
                         <input type="checkbox" name="showInProfile" onChange={handleChange} />
@@ -241,7 +241,7 @@ export default function ChatbotForm() {
                         <input type="checkbox" name="isPublic" onChange={handleChange} />
                         <span className="slider round"></span>
                     </label>
-                </div>
+                </div> */}
 
                 <div className="submit-area">
                     <button type="submit" className="submit-button">Yayınla</button>

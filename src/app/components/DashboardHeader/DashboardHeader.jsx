@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import NotificationPopup from '../NotificationPopup';
 import ProfilePopup from '../ProfilePopup';
+import QuitModal from '../QuitModal/QuitModal';
 export default function Header() {
     const router = useRouter();
     const [showProfile, setShowProfile] = useState(false);
@@ -17,6 +18,7 @@ export default function Header() {
     const [showNotification, setShowNotification] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [cartCount, setCartCount] = useState(0);
+    const [quitOpen, setQuitOpen] = useState(false);
 
 
     const user = {
@@ -27,7 +29,12 @@ export default function Header() {
     };
 
     const handleLogout = () => {
-        // Logout işlemi
+        setQuitOpen(true);
+    };
+
+    const handleConfirmLogout = () => {
+        setQuitOpen(false);
+        location.href = '/auth';
     };
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -66,7 +73,9 @@ export default function Header() {
             <header className="dashboard-header">
                 <div className="left">
 
-                    <div className="search-bar">
+                    <div className="search-bar" onClick={() => {
+                        router.push(`/dashboard/explore?search=${encodeURIComponent(searchQuery.trim())}`);
+                    }}>
                         <input
                             type="text"
                             placeholder="KEŞFET"
@@ -115,6 +124,11 @@ export default function Header() {
                     </div>
                 </div>
             </header>
+            <QuitModal
+                isOpen={quitOpen}
+                onClose={() => setQuitOpen(false)}
+                onConfirm={handleConfirmLogout}
+            />
         </>
     );
 }

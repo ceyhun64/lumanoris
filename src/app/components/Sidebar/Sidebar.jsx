@@ -160,10 +160,10 @@ export default function Sidebar({ isMobileOpen = false }) {
           </Link>
 
 
-          <button className="logout-btn" onClick={() => setIsQuitModalOpen(true)}>
+          {/* <button className="logout-btn" onClick={() => setIsQuitModalOpen(true)}>
             <img src={logoutIcon.src} alt="çıkış" style={{ marginRight: 8 }} />
             <span>Çıkış</span>
-          </button>
+          </button> */}
         </div>
         <Link href="/dashboard/upgrade" className="upgrade">
           <span>
