@@ -7,6 +7,9 @@ const categories = ['Tümü', 'Resmi', 'Eğitim', 'Çeviri', 'Öne Çıkanlar', 
 
 export default function CategoryFilter({ onSelect, selected: externalSelected }) {
     const [selected, setSelected] = useState(externalSelected || 'Tümü');
+    const [canGoPrev, setCanGoPrev] = useState(false);
+    const [canGoNext, setCanGoNext] = useState(true);
+
 
     const splideRef = useRef(null);
 
@@ -24,27 +27,45 @@ export default function CategoryFilter({ onSelect, selected: externalSelected })
     };
 
     const LeftArrow = () => (
-        <button className="custom-arrow left" onClick={handlePrev}>
+        <button className="custom-arrow left" onClick={handlePrev} disabled={!canGoPrev}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path opacity="0.5" d="M13.3334 8.5C13.466 8.5 13.5932 8.44732 13.687 8.35355C13.7807 8.25978 13.8334 8.13261 13.8334 8C13.8334 7.86739 13.7807 7.74022 13.687 7.64645C13.5932 7.55268 13.466 7.5 13.3334 7.5V8.5ZM13.3334 7.5H2.66675V8.5H13.3334V7.5Z" fill="white" />
-                <path d="M6.66675 4L2.66675 8L6.66675 12" stroke="white" strokeLinecap="round" strokeLinejoin="round" />
+                <path opacity="0.5" d="M13.3334 8.5C13.466 8.5 13.5932 8.44732 13.687 8.35355C13.7807 8.25978 13.8334 8.13261 13.8334 8C13.8334 7.86739 13.7807 7.74022 13.687 7.64645C13.5932 7.55268 13.466 7.5 13.3334 7.5V8.5ZM13.3334 7.5H2.66675V8.5H13.3334V7.5Z"
+                    fill={canGoPrev ? "#FF66C4" : "#C0C0C0"} />
+                <path d="M6.66675 4L2.66675 8L6.66675 12"
+                    stroke={canGoPrev ? "#FF66C4" : "#C0C0C0"}
+                    strokeLinecap="round" strokeLinejoin="round" />
             </svg>
         </button>
     );
 
     const RightArrow = () => (
-        <button className="custom-arrow right" onClick={handleNext}>
+        <button className="custom-arrow right" onClick={handleNext} disabled={!canGoNext}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path opacity="0.5" d="M2.66658 7.5C2.53398 7.5 2.4068 7.55268 2.31303 7.64645C2.21926 7.74022 2.16658 7.86739 2.16658 8C2.16658 8.13261 2.21926 8.25978 2.31303 8.35355C2.4068 8.44732 2.53398 8.5 2.66658 8.5V7.5ZM2.66658 8.5L13.3333 8.5V7.5L2.66658 7.5V8.5Z" fill="#FF66C4" />
-                <path d="M9.33325 12L13.3333 8L9.33325 4" stroke="#FF66C4" strokeLinecap="round" strokeLinejoin="round" />
+                <path opacity="0.5" d="M2.66658 7.5C2.53398 7.5 2.4068 7.55268 2.31303 7.64645C2.21926 7.74022 2.16658 7.86739 2.16658 8C2.16658 8.13261 2.21926 8.25978 2.31303 8.35355C2.4068 8.44732 2.53398 8.5 2.66658 8.5V7.5ZM2.66658 8.5L13.3333 8.5V7.5L2.66658 7.5V8.5Z"
+                    fill={canGoNext ? "#FF66C4" : "#C0C0C0"} />
+                <path d="M9.33325 12L13.3333 8L9.33325 4"
+                    stroke={canGoNext ? "#FF66C4" : "#C0C0C0"}
+                    strokeLinecap="round" strokeLinejoin="round" />
             </svg>
         </button>
     );
 
 
+
     useEffect(() => {
         if (externalSelected) setSelected(externalSelected);
     }, [externalSelected]);
+
+
+    const handleSplideMove = (splide) => {
+        let perPage = splide.options.perPage;
+        const width = window.innerWidth;
+        if (width < 768) perPage = 3;
+        else if (width < 1200) perPage = 4;
+        setCanGoPrev(splide.index > 0);
+        setCanGoNext(splide.index < splide.length - perPage);
+    };
+
 
     return (
         <div className="category-filter">
@@ -67,6 +88,8 @@ export default function CategoryFilter({ onSelect, selected: externalSelected })
                 }}
                 hasTrack={false}
                 ref={splideRef}
+                onMoved={handleSplideMove}
+                onMounted={handleSplideMove}
             >
                 <SplideTrack>
                     {categories.map((cat) => (

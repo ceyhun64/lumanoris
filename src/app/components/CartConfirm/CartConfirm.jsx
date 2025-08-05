@@ -4,6 +4,7 @@ import { useState } from "react";
 export default function CartConfirm({ cartItems }) {
     const [sendInvoice, setSendInvoice] = useState(false);
     const [use3DSecure, setUse3DSecure] = useState(false);
+    const [addCard, setAddCard] = useState(false);
     const [isPolicyOpen, setPolicyOpen] = useState(false);
     const [activePolicy, setActivePolicy] = useState(null);
     const [aggrementCheck, setAggrementCheck] = useState(false);
@@ -186,14 +187,25 @@ export default function CartConfirm({ cartItems }) {
                             </span>
                             3D Secure ile ödeme yap
                         </label>
-                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                        <label className="checkbox-option">
+                            <input
+                                type="checkbox"
+                                checked={addCard}
+                                onChange={() => setAddCard(!addCard)}
+                            />
+                            <span className="custom-check">
+
+                            </span>
+                            Kartımı Ekle
+                        </label>
+                        {/* <div style={{ display: "flex", justifyContent: "flex-end" }}>
                             <button
                                 className="add-card-btn"
-                                onClick={() => {/* Burada kart ekleme işlemi yapılabilir */ }}
+                                onClick={() => {/ }}
                             >
                                 Kartımı Ekle
                             </button>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 

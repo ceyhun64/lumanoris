@@ -46,15 +46,15 @@ body {
     margin: 15px 0 10px;
 }
 
-.container button {
+.container .button {
     border-radius: 12px;
-            border: 1px solid var(--liner, #FFFFFF20);
-            background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
+    border: 1px solid var(--liner, #FFFFFF20);
+    background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0.00) 178.12%));
 
-            background-image: url("/images/btn-bg.png");
-            background-position: center;
-            background-repeat: no-repeat;
-            background-size: cover;
+    background-image: url("/images/btn-bg.png");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
     color: #fff;
     font-size: 12px;
     padding: 10px 45px;

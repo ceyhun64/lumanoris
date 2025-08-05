@@ -7,6 +7,7 @@ import EmailEditor from "@/app/components/EmailEditor/EmailEditor";
 import LanguageSelector from "@/app/components/LanguageSelector/LanguageSelector";
 import PhoneEditor from "@/app/components/PhoneEditor/PhoneEditor";
 import PrivacyPolicy from "@/app/components/PrivacyPolicy";
+import ProfileImageEdit from "@/app/components/ProfileImageEdit";
 import TermsOfUse from "@/app/components/TermsOfUse";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -65,6 +66,12 @@ export default function Settings() {
             <div className="tab-content">
                 {/* {activeTab === "accountPoints" && <AccountPoints />} */}
                 {activeTab === "user" && <>
+                    <ProfileImageEdit
+                        onChange={file => console.log("Yüklenen dosya", file)}
+                        onRemove={() => console.log("Resim kaldırıldı")}
+                    />
+
+
                     <EditableField
                         fields={[
                             { name: "username", value: "kullaniciadi123", placeholder: "KULLANICI ADI" },

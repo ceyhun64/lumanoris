@@ -66,36 +66,34 @@ export default function MarketCard({ bot, onRemove }) {
 
 
     const handleAddToCart = (e) => {
-    e.stopPropagation();
+        e.stopPropagation();
 
-    const botItem = { ...bot, id: `${bot.id}-${bot.title}-${bot.author}` };
+        const botItem = { ...bot, id: `${bot.id}-${bot.title}-${bot.author}` };
 
-    let cart = [];
-    if (typeof window !== "undefined") {
-        const cartString = localStorage.getItem('cart');
-        if (cartString) {
-            try {
-                cart = JSON.parse(cartString);
-            } catch (e) {
-                cart = [];
+        let cart = [];
+        if (typeof window !== "undefined") {
+            const cartString = localStorage.getItem('cart');
+            if (cartString) {
+                try {
+                    cart = JSON.parse(cartString);
+                } catch (e) {
+                    cart = [];
+                }
+            }
+
+            if (!cart.find(item => item.id === botItem.id)) {
+                cart.push(botItem);
+                localStorage.setItem('cart', JSON.stringify(cart));
+                setCartAdded(true);
+
+                setTimeout(() => {
+                    setCartAdded(false);
+                    // Eski router kullanıyorsan:
+                 window.location.reload();
+                }, 2000);
             }
         }
-
-        if (!cart.find(item => item.id === botItem.id)) {
-            cart.push(botItem);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            setCartAdded(true);
-
-            setTimeout(() => {
-                setCartAdded(false);
-                // Next.js app router:
-                router.refresh();
-                // Eski router kullanıyorsan:
-                // window.location.reload();
-            }, 2000);
-        }
-    }
-};
+    };
 
 
     useEffect(() => {
@@ -220,7 +218,16 @@ export default function MarketCard({ bot, onRemove }) {
                         </svg>
 
                     </div>
-                    <button class="buy-button">Satın Al</button>
+                    <button
+                        className="buy-button"
+                        onClick={e => {
+                            e.stopPropagation(); 
+                            router.push('/dashboard/checkout');
+                        }}
+                    >
+                        Satın Al
+                    </button>
+
                 </div>
 
             </div>

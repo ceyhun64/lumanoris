@@ -1,11 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-export default function WithdrawalModal({ isOpen, onClose }) {
+export default function WithdrawalModal({ isOpen, onClose, moneyAmount }) {
     const [iban, setIban] = useState('');
     const [amount, setAmount] = useState('');
     const [selectedOptions, setSelectedOptions] = useState([]);
     const [showFeedback, setShowFeedback] = useState(false);
+    const [amountError, setAmountError] = useState('');
 
     const options = ['Tümünü çek'];
 
@@ -43,7 +44,10 @@ export default function WithdrawalModal({ isOpen, onClose }) {
 
     const isFormValid = () => {
         const isIbanValid = iban.trim() !== '';
-        const isAmountValid = selectedOptions.includes('Tümünü çek') || (amount.trim() !== '' && parseFloat(amount) > 0);
+        const isAmountValid =
+    selectedOptions.includes('Tümünü çek') ||
+    (String(amount).trim() !== '' && parseFloat(amount) > 0);
+
         return isIbanValid && isAmountValid;
     };
 
@@ -83,9 +87,29 @@ export default function WithdrawalModal({ isOpen, onClose }) {
                             type="number"
                             placeholder="Çekmek istediğin miktarı gir"
                             value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
+                            onChange={(e) => {
+                                let value = e.target.value;
+                                // Negatif değer önleme
+                                if (value < 0) value = 0;
+                                // Maksimum bakiye kontrolü
+                                if (Number(value) > Number(moneyAmount)) {
+                                    setAmount(moneyAmount);
+                                    setAmountError(`En fazla çekilebilecek miktar: ${moneyAmount}`);
+                                } else {
+                                    setAmount(value);
+                                    setAmountError('');
+                                }
+                            }}
                             disabled={selectedOptions.includes('Tümünü çek')}
+                            max={moneyAmount}
+                            min={0}
                         />
+                        {amountError && (
+                            <div className="input-error" style={{ color: '#FF66C4', fontSize: 13, marginTop: 4 }}>
+                                {amountError}
+                            </div>
+                        )}
+
                     </div>
 
                     <div className="checkbox-list">

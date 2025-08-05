@@ -8,15 +8,66 @@ import {
 } from "react-icons/fa";
 import "./AuthForm.css";
 import { useRouter } from "next/navigation";
+import Alert from "../components/Alert";
 
 export default function AuthForm() {
     const [isActive, setIsActive] = useState(false);
+    const [loginAlert, setLoginAlert] = useState(null);
+    const [registerAlert, setRegisterAlert] = useState(null);
     const router = useRouter();
+
+    // Kayıt (Sign Up) validasyonu
+    const handleRegister = (e) => {
+        e.preventDefault();
+        const name = e.target.name.value.trim();
+        const email = e.target.email.value.trim();
+        const password = e.target.password.value;
+
+        if (name.length < 2) {
+            setRegisterAlert("Lütfen ad ve soyadınızı girin (en az 2 karakter).");
+            return;
+        }
+        if (!email.includes("@") || !email.includes(".")) {
+            setRegisterAlert("Lütfen geçerli bir e-posta adresi girin.");
+            return;
+        }
+        if (password.length < 6) {
+            setRegisterAlert("Şifre en az 6 karakter olmalıdır.");
+            return;
+        }
+        setRegisterAlert(null);
+
+        window.location.href = "/dashboard";
+        // Başarılı kayıt işlemi burada
+        // ...
+    };
+
+    // Giriş (Sign In) validasyonu
+    const handleLogin = (e) => {
+        e.preventDefault();
+        const email = e.target.email.value.trim();
+        const password = e.target.password.value;
+
+        if (!email.includes("@") || !email.includes(".")) {
+            setLoginAlert("Lütfen geçerli bir e-posta adresi girin.");
+            return;
+        }
+        if (password.length < 6) {
+            setLoginAlert("Şifre en az 6 karakter olmalıdır.");
+            return;
+        }
+        setLoginAlert(null);
+
+        window.location.href = "/dashboard";
+        // Başarılı giriş işlemi burada
+        // ...
+    };
+
     return (
         <div className={`container ${isActive ? "active" : ""}`} id="container">
             {/* Kayıt Formu */}
             <div className="form-container sign-up">
-                <form>
+                <form onSubmit={handleRegister} autoComplete="off">
                     <h1>Hesap Oluştur</h1>
                     <div className="social-icons">
                         <a href="#" className="icon"><FaGooglePlusG /></a>
@@ -25,16 +76,20 @@ export default function AuthForm() {
                         <a href="#" className="icon"><FaLinkedinIn /></a>
                     </div>
                     <span>ya da e-posta ile kayıt olun</span>
-                    <input type="text" placeholder="Ad Soyad" />
-                    <input type="email" placeholder="E-posta" />
-                    <input type="password" placeholder="Şifre" />
-                    <button type="submit">Kayıt Ol</button>
+                    <input type="text" name="name" placeholder="Ad Soyad" autoComplete="off" />
+                    <input type="text" name="email" placeholder="E-posta" autoComplete="off" />
+                    <input type="password" name="password" placeholder="Şifre" autoComplete="off" />
+                    {/* Kayıt formu uyarısı */}
+                    {registerAlert && isActive && (
+                        <Alert message={registerAlert} onClose={() => setRegisterAlert(null)} />
+                    )}
+                    <button type="submit" className="button">Kayıt Ol</button>
                 </form>
             </div>
 
             {/* Giriş Formu */}
             <div className="form-container sign-in">
-                <form>
+                <form onSubmit={handleLogin} autoComplete="off">
                     <h1>Giriş Yap</h1>
                     <div className="social-icons">
                         <a href="#" className="icon"><FaGooglePlusG /></a>
@@ -43,12 +98,16 @@ export default function AuthForm() {
                         <a href="#" className="icon"><FaLinkedinIn /></a>
                     </div>
                     <span>ya da e-posta ve şifrenizi kullanın</span>
-                    <input type="email" placeholder="E-posta" />
-                    <input type="password" placeholder="Şifre" />
-                    <span  onClick={() => {
+                    <input type="text" name="email" placeholder="E-posta" autoComplete="off" />
+                    <input type="password" name="password" placeholder="Şifre" autoComplete="off" />
+                    <span className="forgot-password-btn" onClick={() => {
                         router.push("/forgot-password");
                     }}>Şifreni mi unuttun?</span>
-                    <button type="submit">Giriş Yap</button>
+                    {/* Giriş formu uyarısı */}
+                    {loginAlert && !isActive && (
+                        <Alert message={loginAlert} onClose={() => setLoginAlert(null)} />
+                    )}
+                    <button type="submit" className="button">Giriş Yap</button>
                 </form>
             </div>
 
@@ -58,12 +117,12 @@ export default function AuthForm() {
                     <div className="toggle-panel toggle-left">
                         <h1>Tekrar Hoş Geldin!</h1>
                         <p>Platforma erişmek için bilgilerinle giriş yap.</p>
-                        <button className="hidden" onClick={() => setIsActive(false)}>Giriş Yap</button>
+                        <button className="button" onClick={() => setIsActive(false)}>Giriş Yap</button>
                     </div>
                     <div className="toggle-panel toggle-right">
                         <h1>Merhaba, Dostum!</h1>
                         <p>Tüm özellikleri kullanmak için kaydol.</p>
-                        <button className="hidden" onClick={() => setIsActive(true)}>Kayıt Ol</button>
+                        <button className="hidden button" onClick={() => setIsActive(true)}>Kayıt Ol</button>
                     </div>
                 </div>
             </div>

@@ -88,10 +88,11 @@ export default function History() {
                         className="history-card"
                         onClick={(e) => {
                             if (
-                                menuRef.current &&
-                                menuRef.current.contains(e.target)
-                            ) return;
-
+                                (menuRef.current && menuRef.current.contains(e.target)) ||
+                                editingId === item.id
+                            ) {
+                                return;
+                            }
                             router.push("/dashboard/chat");
                         }}>
                         <div className="shadow">

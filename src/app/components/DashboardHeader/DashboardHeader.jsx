@@ -9,13 +9,26 @@ import userIcon from '../../../images/user-icon.svg';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import NotificationPopup from '../NotificationPopup';
-
+import ProfilePopup from '../ProfilePopup';
 export default function Header() {
     const router = useRouter();
+    const [showProfile, setShowProfile] = useState(false);
+
     const [showNotification, setShowNotification] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [cartCount, setCartCount] = useState(0);
 
+
+    const user = {
+        username: "Kullanicadi123",
+        fullname: "Ahmet Yılmaz",
+        followerCount: 1500,
+        followingCount: 40,
+    };
+
+    const handleLogout = () => {
+        // Logout işlemi
+    };
     useEffect(() => {
         if (typeof window !== "undefined") {
             const cartString = localStorage.getItem('cart');
@@ -63,9 +76,7 @@ export default function Header() {
                         />
                         <button
                             onClick={() => {
-                                if (searchQuery.trim() !== '') {
-                                    router.push(`/dashboard/explore?search=${encodeURIComponent(searchQuery.trim())}`);
-                                }
+                                router.push(`/dashboard/explore?search=${encodeURIComponent(searchQuery.trim())}`);
                             }}
                         >
                             <Image src={searchIcon} alt="ara" />
@@ -87,9 +98,21 @@ export default function Header() {
                             <span className="cart-badge">{cartCount}</span>
                         )}
                     </button>
-                    <button className="icon-btn" onClick={handleProfileClick}>
-                        <Image src={userIcon} alt="profil" />
-                    </button>
+                    <div
+                        className="profile-menu-wrapper"
+                        onMouseEnter={() => setShowProfile(true)}
+                        onMouseLeave={() => setShowProfile(false)}
+                        style={{ position: 'relative' }}
+                    >
+                        <button className="icon-btn">
+                            <Image src={userIcon} alt="profil" />
+                        </button>
+                        {showProfile && (
+                            <div style={{ position: "absolute", top: 50, right: 0, zIndex: 20 }}>
+                                <ProfilePopup user={user} onLogout={handleLogout} />
+                            </div>
+                        )}
+                    </div>
                 </div>
             </header>
         </>

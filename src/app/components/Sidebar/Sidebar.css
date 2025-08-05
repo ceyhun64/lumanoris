@@ -300,6 +300,9 @@
   padding: 0;
   background-size: cover;
 }
+.page-sidebar.logo-clicked .upgrade svg {
+  margin: 0;
+}
 .page-sidebar.logo-clicked .upgrade span {
   display: none;
 }

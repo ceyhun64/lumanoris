@@ -9,7 +9,7 @@ import ShareModal from '@/app/components/ShareModal/ShareModal';
 import ReportModal from '@/app/components/ReportModal/ReportModal';
 import AddToListModal from '@/app/components/AddToListModal/AddToListModal';
 
-const allCards = [
+const cards = [
     {
         id: 1,
         title: 'Travel Planner AI',
@@ -25,81 +25,186 @@ const allCards = [
     {
         id: 3,
         title: 'Travel Planner AI',
-        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy It has survived not only five centuries, but also the leap into electronic typesetting.',
-        tag: 'Çeviri'
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
+        tag: 'Resmi'
     },
     {
         id: 4,
         title: 'Travel Planner AI',
-        description: 'Contrary to popular belief, Lorem ILorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.psum is not simply random text.',
-        tag: 'Öne Çıkanlar'
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
+        tag: 'Eğitim'
     },
     {
         id: 5,
         title: 'Travel Planner AI',
-        description: 'It was populariseLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply d in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages.',
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
         tag: 'Resmi'
     },
     {
         id: 6,
         title: 'Travel Planner AI',
-        description: 'The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dMore recently with desktop puLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.blishing software like Aldus PageMaker including versions of Lorem Ipsum.',
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
         tag: 'Eğitim'
     },
     {
         id: 7,
         title: 'Travel Planner AI',
-        description: 'The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dhere are many variations of passages oLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.f Lorem Ipsum available, but the majority have suffered alteration.',
-        tag: 'Çeviri'
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
+        tag: 'Resmi'
     },
     {
         id: 8,
         title: 'Travel Planner AI',
-        description: 'All the Lorem Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Ipsum generators on the Internet tend to repeat predefined chunks as necessary.',
-        tag: 'Öne Çıkanlar'
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
+        tag: 'Eğitim'
     },
     {
         id: 9,
         title: 'Travel Planner AI',
-        description: 'The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.d.',
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
         tag: 'Resmi'
     },
     {
         id: 10,
         title: 'Travel Planner AI',
-        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Sections 1.10.32 and 1.10.33 from "de Finibus Bonorum et Malorum" by Cicero are also reproduced.Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Sections 1.10.32 and 1.10.33 from "de Finibus Bonorum et Malorum" by Cicero are also reproduced.Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Sections 1.10.32 and 1.10.33 from "de Finibus Bonorum et Malorum" by Cicero are also reproduced.',
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
         tag: 'Eğitim'
     },
     {
         id: 11,
         title: 'Travel Planner AI',
-        description: 'The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.d.',
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
         tag: 'Resmi'
     },
     {
         id: 12,
         title: 'Travel Planner AI',
-        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Sections 1.10.32 and 1.10.33 from "de Finibus Bonorum et Malorum" by Cicero are also reproduced.Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Sections 1.10.32 and 1.10.33 from "de Finibus Bonorum et Malorum" by Cicero are also reproduced.Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Sections 1.10.32 and 1.10.33 from "de Finibus Bonorum et Malorum" by Cicero are also reproduced.',
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
         tag: 'Eğitim'
     },
     {
         id: 13,
         title: 'Travel Planner AI',
-        description: 'The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.d.',
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
         tag: 'Resmi'
     },
     {
         id: 14,
         title: 'Travel Planner AI',
-        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Sections 1.10.32 and 1.10.33 from "de Finibus Bonorum et Malorum" by Cicero are also reproduced.Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Sections 1.10.32 and 1.10.33 from "de Finibus Bonorum et Malorum" by Cicero are also reproduced.Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Sections 1.10.32 and 1.10.33 from "de Finibus Bonorum et Malorum" by Cicero are also reproduced.',
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
         tag: 'Eğitim'
     },
     {
         id: 15,
         title: 'Travel Planner AI',
-        description: 'The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.d.',
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
         tag: 'Resmi'
-    }
+    },
+    {
+        id: 16,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
+        tag: 'Eğitim'
+    },
+];
+
+const myCards = [
+    {
+        id: 1,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
+        tag: 'Resmi'
+    },
+    {
+        id: 2,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
+        tag: 'Eğitim'
+    },
+    {
+        id: 3,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
+        tag: 'Resmi'
+    },
+    {
+        id: 4,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
+        tag: 'Eğitim'
+    },
+    {
+        id: 5,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
+        tag: 'Resmi'
+    },
+    {
+        id: 6,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
+        tag: 'Eğitim'
+    },
+    {
+        id: 7,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
+        tag: 'Resmi'
+    },
+    {
+        id: 8,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
+        tag: 'Eğitim'
+    },
+    {
+        id: 9,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
+        tag: 'Resmi'
+    },
+    {
+        id: 10,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
+        tag: 'Eğitim'
+    },
+    {
+        id: 11,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
+        tag: 'Resmi'
+    },
+    {
+        id: 12,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
+        tag: 'Eğitim'
+    },
+    {
+        id: 13,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
+        tag: 'Resmi'
+    },
+    {
+        id: 14,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
+        tag: 'Eğitim'
+    },
+    {
+        id: 15,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.',
+        tag: 'Resmi'
+    },
+    {
+        id: 16,
+        title: 'Travel Planner AI',
+        description: 'Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy Lorem Ipsum is simply dummy The standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dThe standard chunk of Lorem Ipsum used since the 1500s is reproduced LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply below for those interesteLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.dLoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply LoreLorem Ipsum is simply dummy text.Lorem Ipsum is simply dummy text.m Ipsum has been the industry’s standard dummy text ever since the 1500s.',
+        tag: 'Eğitim'
+    },
 ];
 
 
@@ -107,36 +212,36 @@ export default function DialoguePage() {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filtered, setFiltered] = useState('Tümü');
-    const [cards, setCards] = useState(allCards);
+    const [allCards, setAllCards] = useState(cards); // cards'ı state'e aldım
+    const [tab, setTab] = useState("all");
+    const [showSortMenu, setShowSortMenu] = useState(false); // <-- EKLENDİ!
 
-    const filteredCards = filtered === 'Tümü'
-        ? cards
-        : cards.filter(card => card.tag === filtered);
+    const filteredCards = (() => {
+        if (tab === "all") {
+            return filtered === 'Tümü'
+                ? allCards
+                : allCards.filter(card => card.tag === filtered);
+        }
+        if (tab === "mine") {
+            return filtered === 'Tümü'
+                ? myCards
+                : myCards.filter(card => card.tag === filtered);
+        }
+        return [];
+    })();
 
-    const breakpoints = {
-        default: 5,
-        1200: 4,
-        900: 3,
-        600: 2,
-        350: 1,
-    };
+    const breakpoints = { default: 5, 1200: 4, 900: 3, 600: 2, 350: 1 };
     const [menuOpenIndex, setMenuOpenIndex] = useState(null);
-
-    const menuRef = useRef();
     const menuRefs = useRef([]);
-
-
 
     const [shareOpen, setShareOpen] = useState(false);
     const [reportOpen, setReportOpen] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [showFeedbackBadge, setShowFeedbackBadge] = useState(false);
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-    };
-    const toggleMenu = (index) => {
-        setMenuOpenIndex(prev => (prev === index ? null : index));
-    };
+
+    const handleCloseModal = () => setIsModalOpen(false);
+
+    const toggleMenu = (index) => setMenuOpenIndex(prev => (prev === index ? null : index));
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -148,29 +253,26 @@ export default function DialoguePage() {
                 setMenuOpenIndex(null);
             }
         }
-
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [menuOpenIndex]);
 
-
-
     const handleHideBot = (e, index) => {
         e.stopPropagation();
-
         const cardToRemove = filteredCards[index];
-        console.log(cardToRemove);
-        setCards(prev => prev.filter(c => c.id !== cardToRemove.id));
-
+        setAllCards(prev => prev.filter(c => c.id !== cardToRemove.id)); // allCards güncelleniyor
         setShowFeedbackBadge(true);
         setMenuOpenIndex(null);
-
-        setTimeout(() => {
-            setShowFeedbackBadge(false);
-        }, 2000);
+        setTimeout(() => setShowFeedbackBadge(false), 2000);
     };
+
+    const sortOptions = [
+        { label: "Paylaşılanlar", value: "all" },
+        { label: "Paylaştıklarım", value: "mine" },
+    ];
+
 
 
 
@@ -178,6 +280,36 @@ export default function DialoguePage() {
         <div className="dialogue-wrapper">
             <div className="dialogue-header">
                 <h2>Diyalog Defteri</h2>
+
+                <div className="market-filter-select">
+                    <button
+                        className="market-filter-btn"
+                        onClick={() => setShowSortMenu((v) => !v)} // BURASI!
+                    >
+
+                        <svg width="16" height="10" viewBox="0 0 16 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M15.03 0L16 1.07812L8 10L0 1.07812L0.965 0L8 7.83854L15.03 0Z" fill="#FF66C4" />
+                        </svg>
+                        <span>{sortOptions.find(o => o.value === tab)?.label || "Filtrele"}</span>
+                    </button>
+                    {showSortMenu && (
+                        <div className="market-filter-dropdown">
+                            {sortOptions.map(opt => (
+                                <div
+                                    key={opt.value}
+                                    className={`filter-option${tab === opt.value ? " active" : ""}`}
+                                    onClick={() => {
+                                        setTab(opt.value);
+                                        setShowSortMenu(false);
+                                    }}
+                                >
+                                    <span>{opt.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
             </div>
 
             <CategoryFilter

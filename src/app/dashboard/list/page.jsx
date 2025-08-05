@@ -93,7 +93,7 @@ export default function List() {
 
             <div className="list-header">
                 <h2>Liste</h2>
-                {!isEmpty && <button className="create-button" onClick={() => setModalVisible(true)}>
+                {!isEmpty && <button className="create-button" onClick={() => setModalVisible2(true)}>
                     <span>＋</span> Yeni liste oluştur
                 </button>}
             </div>

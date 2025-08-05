@@ -5,21 +5,8 @@ import React, { useState } from "react";
 import avatarBot from "../../../images/avatar-bot.jpg";
 import botImage from "../../../images/ai-pic.png";
 import MarketCard from "@/app/components/MarketCard/MarketCard";
-
-const sortOptions = [
-    { label: "Önerilen", value: "populer", info: true },
-    { label: "En düşük fiyat", value: "fiyat-asc" },
-    { label: "En yüksek fiyat", value: "fiyat-desc" },
-    { label: "En favoriler", value: "favori" },
-    { label: "En çok listeye eklenen", value: "liste" },
-    { label: "En yeniler", value: "yeni" },
-    { label: "En çok diyalog", value: "diyalog" },
-    { label: "En çok değerlendirilen", value: "deger" },
-];
-
 export default function Market() {
     const [sortType, setSortType] = useState("populer");
-    const [showSortMenu, setShowSortMenu] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState("Tümü");
     const bots = [
         {
@@ -40,7 +27,7 @@ export default function Market() {
             author: "WanderBot",
             dialogues: 420,
             time: "1 Gün",
-            id: 2,
+            id:2,
             likes: 180,
             comments: 20,
             category: "Teknoloji",
@@ -55,7 +42,7 @@ export default function Market() {
             time: "5 Gün",
             likes: 90,
             comments: 5,
-            id: 3,
+            id:3,
             category: "Sağlık",
             avatar: avatarBot,
             image: botImage,
@@ -68,7 +55,7 @@ export default function Market() {
             time: "2 Gün",
             likes: 50,
             comments: 3,
-            id: 4,
+            id:4,
             category: "Eğitim",
             avatar: avatarBot,
             image: botImage,
@@ -82,7 +69,7 @@ export default function Market() {
             likes: 300,
             comments: 40,
             category: "Sağlık",
-            id: 5,
+            id:5,
             avatar: avatarBot,
             image: botImage,
             badge: { type: "produced", label: "Üretildi" },
@@ -93,7 +80,7 @@ export default function Market() {
             dialogues: 345,
             time: "3 Gün",
             likes: 150,
-            id: 6,
+            id:6,
             category: "Eğitim",
             comments: 12,
             avatar: avatarBot,
@@ -107,7 +94,7 @@ export default function Market() {
             time: "1 Gün",
             likes: 180,
             comments: 20,
-            id: 7,
+            id:7,
             category: "Teknoloji",
             avatar: avatarBot,
             image: botImage,
@@ -122,7 +109,7 @@ export default function Market() {
             comments: 5,
             category: "Sağlık",
             avatar: avatarBot,
-            id: 8,
+            id:8,
             image: botImage,
             badge: { type: "produced", label: "Üretildi" },
         },
@@ -130,7 +117,7 @@ export default function Market() {
             title: "Travel Planner AI",
             author: "WanderBot",
             dialogues: 110,
-            id: 9,
+            id:9,
             time: "2 Gün",
             likes: 50,
             comments: 3,
@@ -143,7 +130,7 @@ export default function Market() {
             title: "Travel Planner AI",
             author: "WanderBot",
             dialogues: 600,
-            id: 10,
+            id:10,
             time: "4 Gün",
             likes: 300,
             comments: 40,
@@ -158,7 +145,7 @@ export default function Market() {
             dialogues: 345,
             time: "3 Gün",
             likes: 150,
-            id: 11,
+            id:11,
             category: "Eğitim",
             comments: 12,
             avatar: avatarBot,
@@ -172,7 +159,7 @@ export default function Market() {
             time: "1 Gün",
             likes: 180,
             comments: 20,
-            id: 12,
+            id:12,
             category: "Teknoloji",
             avatar: avatarBot,
             image: botImage,
@@ -186,7 +173,7 @@ export default function Market() {
             likes: 90,
             comments: 5,
             category: "Sağlık",
-            id: 13,
+            id:13,
             avatar: avatarBot,
             image: botImage,
             badge: { type: "produced", label: "Üretildi" },
@@ -197,7 +184,7 @@ export default function Market() {
             dialogues: 110,
             time: "2 Gün",
             likes: 50,
-            id: 14,
+            id:14,
             comments: 3,
             category: "Eğitim",
             avatar: avatarBot,
@@ -210,7 +197,7 @@ export default function Market() {
             dialogues: 600,
             time: "4 Gün",
             likes: 300,
-            id: 15,
+            id:15,
             comments: 40,
             category: "Sağlık",
             avatar: avatarBot,
@@ -241,57 +228,9 @@ export default function Market() {
 
             <div className="market-header">
                 <h2>Satılık</h2>
-
-                <div className="market-filter-select">
-                    <button
-                        className="market-filter-btn"
-                        onClick={() => setShowSortMenu((v) => !v)}
-                    >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <g clip-path="url(#clip0_8050_5922)">
-                                <path d="M0.320007 3.32799L6.40001 9.72799V15.6176L9.60001 13.6176V9.72799L15.68 3.32799V0.320312H0.320007V3.32799ZM0.960007 0.960313H15.04V3.07263L8.96001 9.47263V13.263L7.04001 14.463V9.47263L0.960007 3.07263V0.960313Z" fill="#FF66C4" />
-                            </g>
-                            <defs>
-                                <clipPath id="clip0_8050_5922">
-                                    <rect width="16" height="16" fill="white" />
-                                </clipPath>
-                            </defs>
-                        </svg>
-
-                        <span>{sortOptions.find(o => o.value === sortType)?.label || "Filtrele"}</span>
-                    </button>
-                    {showSortMenu && (
-                        <div className="market-filter-dropdown">
-                            {sortOptions.map(opt => (
-                                <div
-                                    key={opt.value}
-                                    className={`filter-option${sortType === opt.value ? " active" : ""}`}
-                                    onClick={() => {
-                                        setSortType(opt.value);
-                                        setShowSortMenu(false);
-                                    }}
-                                >
-                                    <span>{opt.label}</span>
-                                    {opt.info && (
-                                        <span className="info-dot" title="Sizin için önerilenler">
-                                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <g clip-path="url(#clip0_8050_5936)">
-                                                    <path opacity="0.3" d="M5.49999 0.917969C8.03182 0.917969 10.0842 2.97039 10.0842 5.50222C10.0842 8.03359 8.03182 10.086 5.49999 10.086C2.96816 10.086 0.916657 8.03359 0.916657 5.50222C0.916198 2.97039 2.96816 0.917969 5.49999 0.917969Z" fill="white" />
-                                                    <path d="M5.50047 2.98068C5.42378 2.97858 5.34744 2.99187 5.27598 3.01978C5.20451 3.04769 5.13937 3.08965 5.0844 3.14317C5.02944 3.19669 4.98576 3.26069 4.95595 3.33139C4.92615 3.40209 4.91083 3.47804 4.91089 3.55476C4.91095 3.63148 4.9264 3.70741 4.95631 3.77806C4.98623 3.84871 5.03001 3.91264 5.08506 3.96607C5.14011 4.01951 5.20532 4.06136 5.27683 4.08916C5.34834 4.11695 5.4247 4.13012 5.50139 4.12789C5.65071 4.1235 5.79243 4.06104 5.89643 3.95381C6.00043 3.84657 6.05851 3.70301 6.05833 3.55362C6.05815 3.40424 5.99973 3.26081 5.89547 3.15382C5.79121 3.04684 5.64934 2.98472 5.50001 2.98068H5.50047ZM5.49818 4.69898C5.38586 4.69913 5.2775 4.74052 5.19369 4.8153C5.10987 4.89007 5.05643 4.99302 5.04351 5.1046L5.04031 5.15777L5.04214 7.67952L5.04489 7.73314C5.05781 7.84492 5.1114 7.94804 5.19545 8.02286C5.2795 8.09768 5.38813 8.13896 5.50065 8.13885C5.61318 8.13873 5.72173 8.09723 5.80562 8.02225C5.88952 7.94726 5.9429 7.84403 5.9556 7.73223L5.95835 7.6786L5.95651 5.15731L5.95331 5.10369C5.94006 4.9922 5.88635 4.88945 5.80237 4.81494C5.7184 4.74042 5.60999 4.69932 5.49772 4.69944L5.49818 4.69898Z" fill="white" />
-                                                </g>
-                                                <defs>
-                                                    <clipPath id="clip0_8050_5936">
-                                                        <rect width="11" height="11" fill="white" />
-                                                    </clipPath>
-                                                </defs>
-                                            </svg>
-
-                                        </span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                
+                <div className="button">
+                    
                 </div>
             </div>
 
@@ -304,6 +243,38 @@ export default function Market() {
                         <MarketCard key={idx} bot={bot} onRemove={() => handleRemoveBot(bot)} />
                     ))}
                 </div>
+
+                {/* <div className="right-sorts">
+                    <h3>Sıralama</h3>
+                    <div className="sort-buttons">
+                        {[
+                            { label: "Popüler", key: "populer" },
+                            { label: "En Çok Diyalog", key: "diyalog" },
+                            { label: "En Fazla Beğeni", key: "begeni" },
+                        ].map(({ label, key }) => (
+                            <button
+                                key={key}
+                                className={`sort-btn ${sortType === key ? "active" : ""}`}
+                                onClick={() => setSortType(key)}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="sort-list">
+                        {sortedBots.map((bot, idx) => (
+                            <div className="sort-item" key={idx}>
+                                <img
+                                    src={bot.avatar.src}
+                                    alt="bot-avatar"
+                                    className="avatar"
+                                />
+                                <span>{bot.title}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div> */}
 
             </div>
         </div>

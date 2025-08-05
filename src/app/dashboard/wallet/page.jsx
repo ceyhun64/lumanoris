@@ -86,7 +86,8 @@ export default function Wallet() {
                     </div>
                 ))}
             </div>
-            <WithdrawalModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            <WithdrawalModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
+                moneyAmount={1200} />
 
         </div>
     );

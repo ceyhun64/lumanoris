@@ -11,6 +11,7 @@ export default function MessageInput({ onSend, onResetChat }) {
     const [recordedAudioUrl, setRecordedAudioUrl] = useState('');
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
+    const textareaRef = useRef(null);
 
     const handleSend = () => {
         if (message.trim() && onSend) {
@@ -19,6 +20,12 @@ export default function MessageInput({ onSend, onResetChat }) {
             setSelectedFileName('');
             setRecordedAudioUrl('');
         }
+    };
+
+    const handleInput = (e) => {
+        textareaRef.current.style.height = "67px";
+        const scrollHeight = textareaRef.current.scrollHeight;
+        textareaRef.current.style.height = `${Math.min(scrollHeight, 180)}px`;
     };
 
     const handleFileSelect = (e) => {
@@ -83,15 +90,24 @@ export default function MessageInput({ onSend, onResetChat }) {
                         </svg>
                     </button>
 
-                    <input
-                        type="text"
+                    <textarea
+                        ref={textareaRef}
                         placeholder="Yeni sohbete başla..."
                         value={message}
-                        onChange={(e) => setMessage(e.target.value)}
+                        onChange={(e) => {
+                            setMessage(e.target.value);
+                            handleInput(e);
+                        }}
+                        onInput={handleInput} // mobile için gerekebilir
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') handleSend();
                         }}
+                        style={{
+                            resize: "none", // kullanıcı manuel büyütmesin diye
+                            overflowY: "auto"
+                        }}
                     />
+
                     <button className="send" onClick={handleSend}>
                         {/* Gönder ikonu */}
                         <svg width="34" height="35" viewBox="0 0 34 35" fill="none" xmlns="http://www.w3.org/2000/svg">
