@@ -5719,6 +5719,9 @@ body {
 .market-wrapper .market-content .left-cards .bot-card .info .bot-card-actions .buy-button:hover {
   background: #FF99D6;
 }
+.market-wrapper .market-content .left-cards .bot-card .info .action-item:hover svg path {
+  fill: #FF99D6;
+}
 .market-wrapper .market-content .left-cards .bot-card .popup-menu {
   position: absolute;
   bottom: 80px;
@@ -7403,7 +7406,7 @@ body {
   border: none;
   outline: none;
   padding: 25px 10px;
-  height: 67px;
+  height: 68px;
   padding-left: 0;
 }
 .message-input-ctr .left input::-moz-placeholder, .message-input-ctr .left textarea::-moz-placeholder {

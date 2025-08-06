@@ -6454,6 +6454,14 @@ body {
                         }
                     }
 
+                    .action-item:hover {
+                        svg{
+                            path{
+                                fill:#FF99D6;
+                            }
+                        }
+                    }
+
 
 
                 }
@@ -8351,7 +8359,7 @@ body {
             border: none;
             outline: none;
             padding: 25px 10px;
-            height: 67px;
+            height: 68px;
             padding-left: 0;
 
             &::placeholder {
