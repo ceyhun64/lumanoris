@@ -7375,15 +7375,15 @@ body {
 .message-input-ctr .left {
   width: 100%;
   display: flex;
-  align-items: stretch;
+  align-items: flex-end;
   background-color: #100f17;
   border-radius: 12px;
 }
 .message-input-ctr .left .icon-plus {
   background: transparent;
   border: none;
-  padding: 0 10px;
-  padding-left: 20px;
+  padding: 10px;
+  height: 67px;
   cursor: pointer;
 }
 .message-input-ctr .left .icon-plus svg {
@@ -7424,8 +7424,8 @@ body {
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 0;
-  padding-right: 20px;
+  padding: 10px;
+  height: 67px;
 }
 .message-input-ctr .left .send svg {
   transform: rotate(-45deg);
