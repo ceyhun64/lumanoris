@@ -8,7 +8,7 @@ import CommentModal from '../CommentModal/CommentModal';
 
 export default function MarketCard({ bot, onRemove }) {
     const router = useRouter();
-    const { image, title, author, dialogues, time, badge, avatar, likes, comments } = bot;
+    const { image, title, author, dialogues, time, badge, avatar, likes, comments, price, priceType } = bot;
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef();
     const [liked, setLiked] = useState(false);
@@ -89,7 +89,7 @@ export default function MarketCard({ bot, onRemove }) {
                 setTimeout(() => {
                     setCartAdded(false);
                     // Eski router kullanıyorsan:
-                 window.location.reload();
+                    window.location.reload();
                 }, 2000);
             }
         }
@@ -221,7 +221,7 @@ export default function MarketCard({ bot, onRemove }) {
                     <button
                         className="buy-button"
                         onClick={e => {
-                            e.stopPropagation(); 
+                            e.stopPropagation();
                             router.push('/dashboard/checkout');
                         }}
                     >
@@ -229,6 +229,20 @@ export default function MarketCard({ bot, onRemove }) {
                     </button>
 
                 </div>
+                <div className="market-card-meta-row">
+                    <div className="meta-dialogue">
+                        {dialogues} Diyalog
+                    </div>
+                    <div className="meta-time">
+                        {time}
+                    </div>
+                    <div className="meta-price-box">
+                        <span className="meta-price">
+                            {priceType === "USD" ? "$" : ""}{price}
+                        </span>
+                    </div>
+                </div>
+
 
             </div>
 

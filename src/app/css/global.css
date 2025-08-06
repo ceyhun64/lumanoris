@@ -391,7 +391,7 @@ body {
   font-size: 8.34px;
   font-style: normal;
   font-weight: 500;
-  line-height: 12.51px;
+  line-height: 11.51px;
   padding: 0 3px;
   border-radius: 4px;
   z-index: 2;
@@ -451,7 +451,7 @@ body {
   color: #FFF;
   text-align: center;
   font-family: "Montserrat", sans-serif;
-  font-size: 12.51px;
+  font-size: 11.51px;
   font-style: normal;
   font-weight: 400;
   line-height: 16.681px;
@@ -462,7 +462,7 @@ body {
   font-size: 8.34px;
   font-style: normal;
   font-weight: 400;
-  line-height: 12.51px;
+  line-height: 11.51px;
 }
 .marketplace-page .bot-grid .bot-card .info .top .menu-icon {
   cursor: pointer;
@@ -2164,7 +2164,7 @@ body {
   color: #FFF;
   text-align: left;
   font-family: "Montserrat", sans-serif;
-  font-size: 12.51px;
+  font-size: 11.51px;
   font-style: normal;
   font-weight: 400;
   line-height: 16.681px;
@@ -2177,7 +2177,7 @@ body {
   font-size: 8.34px;
   font-style: normal;
   font-weight: 500;
-  line-height: 12.51px;
+  line-height: 11.51px;
 }
 .cart-full-wrapper .cart-left .cart-left-inner .cart-item .cart-details span {
   color: #8C8C8C;
@@ -2442,7 +2442,7 @@ body {
   color: #FFF;
   text-align: center;
   font-family: "Montserrat", sans-serif;
-  font-size: 12.51px;
+  font-size: 11.51px;
   font-style: normal;
   font-weight: 400;
   line-height: 16.681px;
@@ -2451,7 +2451,7 @@ body {
   color: #FFF;
   text-align: center;
   font-family: "Montserrat", sans-serif;
-  font-size: 12.51px;
+  font-size: 11.51px;
   font-style: normal;
   font-weight: 400;
   line-height: 16.681px;
@@ -5535,6 +5535,10 @@ body {
   background: #0F0E16;
   position: relative;
   gap: 12px;
+  justify-content: space-between;
+}
+.market-wrapper .market-content .left-cards .bot-card * {
+  text-align: start !important;
 }
 .market-wrapper .market-content .left-cards .bot-card .card-top {
   overflow: hidden;
@@ -5582,7 +5586,7 @@ body {
   font-size: 8.34px;
   font-style: normal;
   font-weight: 500;
-  line-height: 12.51px;
+  line-height: 11.51px;
   padding: 0 3px;
   border-radius: 4px;
   z-index: 2;
@@ -5603,7 +5607,7 @@ body {
   display: flex;
   align-items: flex-start;
   flex-direction: column;
-  gap: 12px;
+  width: 100%;
   z-index: 2;
 }
 .market-wrapper .market-content .left-cards .bot-card .info .top {
@@ -5612,6 +5616,7 @@ body {
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  margin-bottom: 12px;
 }
 .market-wrapper .market-content .left-cards .bot-card .info .top .title-row {
   display: flex;
@@ -5642,7 +5647,7 @@ body {
   color: #FFF;
   text-align: center;
   font-family: "Montserrat", sans-serif;
-  font-size: 12.51px;
+  font-size: 11.51px;
   font-style: normal;
   font-weight: 400;
   line-height: 16.681px;
@@ -5653,7 +5658,7 @@ body {
   font-size: 8.34px;
   font-style: normal;
   font-weight: 400;
-  line-height: 12.51px;
+  line-height: 11.51px;
 }
 .market-wrapper .market-content .left-cards .bot-card .info .top .menu-icon {
   cursor: pointer;
@@ -5700,12 +5705,16 @@ body {
   color: #FFF;
   text-align: center;
   font-family: "Montserrat", sans-serif;
-  font-size: 8px;
+  font-size: 7px;
   font-style: normal;
   font-weight: 500;
   line-height: 12px;
-  background: #1B1A22;
   transition: all 0.3s ease;
+  background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
+  background-image: url("/images/btn-bg.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 .market-wrapper .market-content .left-cards .bot-card .info .bot-card-actions .buy-button:hover {
   background: #FF99D6;
@@ -5833,7 +5842,7 @@ body {
   color: #FFF;
   text-align: center;
   font-family: "Montserrat", sans-serif;
-  font-size: 12.51px;
+  font-size: 11.51px;
   font-style: normal;
   font-weight: 400;
   line-height: 16.681px;
@@ -8253,7 +8262,7 @@ body {
   font-size: 8.34px;
   font-style: normal;
   font-weight: 500;
-  line-height: 12.51px;
+  line-height: 11.51px;
   padding: 0 3px;
   border-radius: 4px;
   z-index: 2;
@@ -8329,7 +8338,7 @@ body {
   color: #FFF;
   text-align: center;
   font-family: "Montserrat", sans-serif;
-  font-size: 12.51px;
+  font-size: 11.51px;
   font-style: normal;
   font-weight: 400;
   line-height: 16.681px;
@@ -8340,7 +8349,7 @@ body {
   font-size: 8.34px;
   font-style: normal;
   font-weight: 400;
-  line-height: 12.51px;
+  line-height: 11.51px;
 }
 .suggested-bots .suggested-bots-grid .bot-card .info .top .menu-icon {
   cursor: pointer;
@@ -9126,4 +9135,35 @@ input[type=number] {
   width: -moz-max-content;
   width: max-content;
   font-family: "Montserrat", sans-serif;
+}
+
+.market-card-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 8px;
+  font-weight: 500;
+  width: 100%;
+  color: #62647C;
+}
+.market-card-meta-row .meta-dialogue,
+.market-card-meta-row .meta-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.market-card-meta-row .meta-price-box {
+  margin-left: auto;
+  color: #fff;
+  border-radius: 12px;
+  font-size: 9px;
+  padding: 3px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px 0 rgba(255, 102, 196, 0.2);
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.1333333333);
 }/*# sourceMappingURL=global.css.map */
