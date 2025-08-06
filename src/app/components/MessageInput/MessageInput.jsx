@@ -122,7 +122,7 @@ export default function MessageInput({ onSend, onResetChat }) {
                         style={{
                             resize: "none",
                             overflowY: "auto",
-                            minHeight: "68px",
+                            height: "68px",
                             maxHeight: "180px",
                             fontSize: "15px",
                         }}
