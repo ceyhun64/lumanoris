@@ -19,11 +19,11 @@ export default function Chat() {
             const params = new URLSearchParams(window.location.search);
             setPrompt(params.get('prompt') || "");
         }
-    }, []); 
+    }, []);
 
-    const handleSendMessage = (text) => {
-        if (!text.trim()) return;
-        setMessages((prev) => [...prev, { type: 'sent', text }]);
+    const handleSendMessage = (data) => {
+        if (!data.text.trim() && !data.fileName) return;
+        setMessages((prev) => [...prev, { type: 'sent', text: data.text, fileName: data.fileName }]);
 
         setTimeout(() => {
             setMessages((prev) => [...prev, {
@@ -58,7 +58,7 @@ export default function Chat() {
                 ]);
             }, 1000);
         }
-    }, [prompt]); 
+    }, [prompt]);
 
 
 
@@ -83,6 +83,11 @@ export default function Chat() {
                         <div className="chat-messages">
                             {messages.map((msg, index) => (
                                 <div key={index} className={`message ${msg.type}`}>
+                                    {msg.fileName && (
+                                        <div className="message-file-preview">
+                                            {msg.fileName}
+                                        </div>
+                                    )}
                                     {msg.type === 'received' ? (
                                         <>
                                             <div className="message-avatar">
@@ -105,7 +110,9 @@ export default function Chat() {
                                             </div>
                                         </>
                                     ) : (
-                                        <p>{msg.text}</p>
+
+                                        <p> {msg.text}</p>
+
                                     )}
                                 </div>
                             ))}
@@ -131,6 +138,6 @@ export default function Chat() {
 
 
 
-        </div>
+        </div >
     );
 }

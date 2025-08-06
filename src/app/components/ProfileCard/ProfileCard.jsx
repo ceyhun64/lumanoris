@@ -28,7 +28,16 @@ export default function ProfileCard() {
     const [disliked, setDisliked] = useState(false);
     const [dislikeCount, setDislikeCount] = useState(12); // varsayılan değer
     const router = useRouter();
+    const [cartAdded, setCartAdded] = useState(false);
+    const [isInCart, setIsInCart] = useState(false);
 
+    const profile = {
+        id: Math.random().toString(36).substr(2, 9),
+        title: "Yazılım Geliştirici",
+        author: "Leonardo.ai",
+        image: avatarImg.src,
+        // ... diğer bilgiler...
+    };
 
 
     useEffect(() => {
@@ -52,6 +61,61 @@ export default function ProfileCard() {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
+
+
+    const handleAddToCart = (e) => {
+    e?.stopPropagation && e.stopPropagation();
+
+    const profileItem = { ...profile, id: `${profile.id}-${profile.title}-${profile.author}` };
+
+    let cart = [];
+    if (typeof window !== "undefined") {
+        const cartString = localStorage.getItem('cart');
+        if (cartString) {
+            try {
+                cart = JSON.parse(cartString);
+            } catch (e) {
+                cart = [];
+            }
+        }
+
+        if (!cart.find(item => item.id === profileItem.id)) {
+            cart.push(profileItem);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            setCartAdded(true);
+
+            setTimeout(() => {
+                setCartAdded(false);
+                window.location.reload(); // istersen
+            }, 2000);
+        } else {
+            setAlreadyInCart(true);
+            setTimeout(() => setAlreadyInCart(false), 2000);
+        }
+    }
+};
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const cartString = localStorage.getItem('cart');
+            if (cartString) {
+                try {
+                    const cart = JSON.parse(cartString);
+                    const found = cart.some(item => item.id === `${profile.id}-${profile.title}-${profile.author}`);
+                    setIsInCart(found);
+                } catch (e) {
+                    setIsInCart(false);
+                }
+            }
+        }
+    }, [profile.id, profile.title, profile.author, cartAdded]);
+
+    // Satın al fonksiyonu
+    const handleBuy = (e) => {
+        e?.stopPropagation && e.stopPropagation();
+        router.push('/dashboard/checkout');
+    };
+
 
     return (
         <div className="profile-card">
@@ -190,7 +254,7 @@ export default function ProfileCard() {
                     <path d="M20.25 5.0625H3.75003C3.3522 5.0625 2.97067 5.22054 2.68937 5.50184C2.40806 5.78314 2.25003 6.16468 2.25003 6.5625V21.5625C2.2483 21.8485 2.32921 22.129 2.48305 22.3701C2.63689 22.6113 2.8571 22.8029 3.11721 22.9219C3.31543 23.0142 3.53138 23.0622 3.75003 23.0625C4.10214 23.0616 4.44256 22.936 4.71096 22.7081L4.7194 22.7016L7.78128 20.0625H20.25C20.6479 20.0625 21.0294 19.9045 21.3107 19.6232C21.592 19.3419 21.75 18.9603 21.75 18.5625V6.5625C21.75 6.16468 21.592 5.78314 21.3107 5.50184C21.0294 5.22054 20.6479 5.0625 20.25 5.0625ZM20.25 18.5625H7.50003C7.31994 18.5626 7.1459 18.6275 7.00971 18.7453L3.75003 21.5625V6.5625H20.25V18.5625Z" fill="#FFE6F2" />
                 </svg>
                 </span>12 Yorum</button>
-                <button className='button-ctr' onClick={() => setModalVisible(true)}>
+                {/* <button className='button-ctr' onClick={() => setModalVisible(true)}>
                     <span>
                         <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 21.5625C16.9706 21.5625 21 17.5331 21 12.5625C21 7.59194 16.9706 3.5625 12 3.5625C7.02944 3.5625 3 7.59194 3 12.5625C3 17.5331 7.02944 21.5625 12 21.5625Z" fill="white" fill-opacity="0.25" />
@@ -198,7 +262,7 @@ export default function ProfileCard() {
                         </svg>
                     </span >
                     Listeye Ekle
-                </button>
+                </button> */}
 
                 <div className="dropdown-wrapper" ref={menuRef}>
                     <button className="button-ctr" onClick={() => setShowMenu(prev => !prev)}>
@@ -238,20 +302,20 @@ export default function ProfileCard() {
                     )}
                 </div>
 
-                <div className="button-cart"
-                    onClick={
-                        () => router.push("/dashboard/checkout")
-                    }>
-                    Satın Al
-                </div>
-                <div className="button-buy" onClick={
-                    () => router.push("/dashboard/checkout")
-                }>
+
+                <div className="button-buy"
+                    style={isInCart ? { opacity: 0.7, pointerEvents: "none" } : {}}
+                    onClick={handleAddToCart}>
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M14.1667 17.082H14.2499M9.16675 17.082H9.24995" stroke="white" stroke-width="1.44" stroke-linecap="round" stroke-linejoin="round" />
                         <path d="M2.5 2.50007H4.2832C4.48424 2.49744 4.67943 2.5677 4.83268 2.69786C4.98592 2.82801 5.08685 3.00926 5.1168 3.20807L5.5168 5.83327M5.5168 5.83327L6.6668 13.3333L15.8332 12.5001L17.5 5.83327H5.5168Z" stroke="white" stroke-width="0.96" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </div>
+                <div className="button-cart"
+                    onClick={handleBuy}>
+                    Satın Al
+                </div>
+
             </div>
 
 
@@ -280,6 +344,11 @@ export default function ProfileCard() {
                 onClose={() => setModalVisible(false)}
                 lists={["Favorilerim", "Sık Kullanılanlar"]}
             />
+            {cartAdded && (
+                <div className="cart-feedback-badge">
+                    Sepete eklendi!
+                </div>
+            )}
         </div>
     )
 }

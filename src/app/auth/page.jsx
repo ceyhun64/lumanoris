@@ -20,11 +20,20 @@ export default function AuthForm() {
     const handleRegister = (e) => {
         e.preventDefault();
         const name = e.target.name.value.trim();
+        const username = e.target.username.value.trim();   // YENİ
         const email = e.target.email.value.trim();
         const password = e.target.password.value;
 
         if (name.length < 2) {
             setRegisterAlert("Lütfen ad ve soyadınızı girin (en az 2 karakter).");
+            return;
+        }
+        if (username.length < 3) { // örnek olarak min 3 karakter
+            setRegisterAlert("Lütfen bir kullanıcı adı girin (en az 3 karakter).");
+            return;
+        }
+        if (!/^[a-zA-Z0-9_.]+$/.test(username)) {
+            setRegisterAlert("Kullanıcı adı sadece harf, rakam, . ve _ içerebilir.");
             return;
         }
         if (!email.includes("@") || !email.includes(".")) {
@@ -38,8 +47,6 @@ export default function AuthForm() {
         setRegisterAlert(null);
 
         window.location.href = "/dashboard";
-        // Başarılı kayıt işlemi burada
-        // ...
     };
 
     // Giriş (Sign In) validasyonu
@@ -77,6 +84,7 @@ export default function AuthForm() {
                     </div>
                     <span>ya da e-posta ile kayıt olun</span>
                     <input type="text" name="name" placeholder="Ad Soyad" autoComplete="off" />
+                    <input type="text" name="username" placeholder="Kullanıcı Adı" autoComplete="off" />
                     <input type="text" name="email" placeholder="E-posta" autoComplete="off" />
                     <input type="password" name="password" placeholder="Şifre" autoComplete="off" />
                     {/* Kayıt formu uyarısı */}
@@ -117,7 +125,7 @@ export default function AuthForm() {
                     <div className="toggle-panel toggle-left">
                         <h1>Tekrar Hoş Geldin!</h1>
                         <p>Platforma erişmek için bilgilerinle giriş yap.</p>
-                        <button className="button" onClick={() => setIsActive(false)}>Giriş Yap</button>
+                        <button className="button" style={{ background: "transparent" }} onClick={() => setIsActive(false)}>Giriş Yap</button>
                     </div>
                     <div className="toggle-panel toggle-right">
                         <h1>Merhaba, Dostum!</h1>

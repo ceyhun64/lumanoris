@@ -13,19 +13,34 @@ export default function MessageInput({ onSend, onResetChat }) {
     const audioChunksRef = useRef([]);
     const textareaRef = useRef(null);
 
+    // ...diğer kodlar...
     const handleSend = () => {
-        if (message.trim() && onSend) {
-            onSend(message);
+        if ((message.trim() || selectedFileName) && onSend) {
+            onSend({
+                text: message,
+                fileName: selectedFileName
+            });
             setMessage('');
             setSelectedFileName('');
             setRecordedAudioUrl('');
+
+            if (textareaRef.current) {
+                textareaRef.current.style.height = "67px";
+                setTimeout(() => {
+                    if (textareaRef.current) {
+                        textareaRef.current.style.height = "67px";
+                    }
+                }, 0);
+            }
         }
     };
 
     const handleInput = (e) => {
-        textareaRef.current.style.height = "67px";
-        const scrollHeight = textareaRef.current.scrollHeight;
-        textareaRef.current.style.height = `${Math.min(scrollHeight, 180)}px`;
+        if (textareaRef.current) {
+            textareaRef.current.style.height = "67px";
+            const scrollHeight = textareaRef.current.scrollHeight;
+            textareaRef.current.style.height = `${Math.min(scrollHeight, 180)}px`;
+        }
     };
 
     const handleFileSelect = (e) => {
@@ -34,7 +49,6 @@ export default function MessageInput({ onSend, onResetChat }) {
             setSelectedFileName(file.name);
         }
     };
-
 
     const startRecording = async () => {
         try {
@@ -98,13 +112,19 @@ export default function MessageInput({ onSend, onResetChat }) {
                             setMessage(e.target.value);
                             handleInput(e);
                         }}
-                        onInput={handleInput} // mobile için gerekebilir
+                        onInput={handleInput}
                         onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSend();
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault(); // Enter'ın varsayılan davranışını engelle
+                                handleSend();
+                            }
                         }}
                         style={{
-                            resize: "none", // kullanıcı manuel büyütmesin diye
-                            overflowY: "auto"
+                            resize: "none",
+                            overflowY: "auto",
+                            minHeight: "67px",
+                            maxHeight: "180px",
+                            fontSize: "15px",
                         }}
                     />
 
@@ -149,13 +169,12 @@ export default function MessageInput({ onSend, onResetChat }) {
                 </div>
             </div>
 
-
             <VoiceModal
                 isOpen={voiceModalOpen}
                 onClose={() => setVoiceModalOpen(false)}
                 onConfirm={() => {
                     setVoiceModalOpen(false);
-                    startRecording(); // sadece mikrofonu başlat
+                    startRecording();
                 }}
             />
         </>

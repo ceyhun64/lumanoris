@@ -5002,6 +5002,7 @@ body {
   justify-content: flex-start;
   width: 100%;
   gap: 12px;
+  /* Border overlay */
 }
 @media (max-width: 992px) {
   .chat-wrapper .chat-bottom .profile-card .profile-buttons {
@@ -5071,22 +5072,19 @@ body {
 }
 .chat-wrapper .chat-bottom .profile-card .profile-buttons .button-cart svg,
 .chat-wrapper .chat-bottom .profile-card .profile-buttons .button-buy svg {
-  width: 100%;
-  height: 100%;
+  width: 20px;
+  height: 20px;
 }
 .chat-wrapper .chat-bottom .profile-card .profile-buttons .button-cart:hover,
 .chat-wrapper .chat-bottom .profile-card .profile-buttons .button-buy:hover {
-  transform: rotate(5deg);
   background: #ff66c4;
 }
+.chat-wrapper .chat-bottom .profile-card .profile-buttons .button-buy,
 .chat-wrapper .chat-bottom .profile-card .profile-buttons .button-cart {
-  height: 47px;
-  border-radius: 50%;
-  padding: 12px 20px;
-  border-radius: 33px;
-  border: 1px dashed rgba(255, 102, 196, 0.3137254902);
-  background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("/images/btn-bg.png");
+  position: relative;
+  overflow: visible;
+  background: linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%);
+  background-image: url("/images/btn-bg.png"), linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%);
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -5094,31 +5092,34 @@ body {
   justify-content: center;
   align-items: center;
   color: #FFF;
-  text-align: center;
   font-family: "Montserrat", sans-serif;
   font-size: 15px;
-  font-style: normal;
   font-weight: 500;
   line-height: 20px;
-  /* 133.333% */
+  z-index: 0;
+}
+.chat-wrapper .chat-bottom .profile-card .profile-buttons .button-buy::before,
+.chat-wrapper .chat-bottom .profile-card .profile-buttons .button-cart::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1.5px dashed rgba(255, 102, 196, 0.3058823529);
+  pointer-events: none;
+  z-index: 1;
 }
 .chat-wrapper .chat-bottom .profile-card .profile-buttons .button-buy {
   width: 47px;
   height: 47px;
   border-radius: 50%;
-  border-radius: 33px;
-  border: 1px dashed rgba(255, 102, 196, 0.3137254902);
-  background: var(--liner, linear-gradient(329deg, #54103A -2.05%, rgba(70, 153, 255, 0) 178.12%));
-  background-image: url("/images/btn-bg.png");
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  min-width: 47px;
+  min-height: 47px;
 }
-.chat-wrapper .chat-bottom .profile-card .profile-buttons .button-buy svg {
-  width: 20px;
+.chat-wrapper .chat-bottom .profile-card .profile-buttons .button-cart {
+  height: 47px;
+  border-radius: 33px;
+  padding: 0 28px;
+  min-width: 130px;
 }
 .chat-wrapper .chat-bottom .profile-card .profile-buttons .dropdown-wrapper {
   position: relative;
@@ -5205,7 +5206,6 @@ body {
 }
 .chat-wrapper .chat-bottom .chat-area .chat-messages .message {
   max-width: 70%;
-  padding: 10px 20px;
   border-radius: 12px;
   font-size: 14px;
   line-height: 1.4;
@@ -5216,6 +5216,7 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  padding: 10px 20px;
   padding: 12px 0;
   animation: fadeInUp 0.4s ease-out;
 }
@@ -5279,15 +5280,24 @@ body {
 }
 .chat-wrapper .chat-bottom .chat-area .chat-messages .message.sent {
   align-self: flex-end;
+  justify-content: flex-end;
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+}
+.chat-wrapper .chat-bottom .chat-area .chat-messages .message.sent p {
   background-color: #2d2d2d;
-  color: white;
   color: #FFF;
   font-family: "Montserrat", sans-serif;
-  font-size: 16px;
   font-style: normal;
   font-weight: 600;
-  line-height: 24px;
   text-transform: capitalize;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
+  white-space: pre-line;
 }
 
 .market-wrapper {
@@ -9098,4 +9108,22 @@ input[type=number] {
 }
 .profile-popup__logout-btn:hover .icon svg path {
   stroke: #ffb3e0;
+}
+
+.message-file-preview {
+  display: inline-block;
+  background: #111111;
+  color: #fff;
+  padding: 12px 32px;
+  border-radius: 12px;
+  margin-bottom: 6px;
+  font-weight: 400;
+  text-transform: capitalize;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  width: -moz-max-content;
+  width: max-content;
+  font-family: "Montserrat", sans-serif;
 }/*# sourceMappingURL=global.css.map */
