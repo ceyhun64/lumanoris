@@ -157,7 +157,7 @@ export default function CartConfirm({ cartItems }) {
                         <div className="int-ctr">
                             <input
                                 type="month"
-                                className="input"
+                                className="input dark-date"
                                 placeholder="SON KULLANMA TARİHİ"
                                 value={cardInfo.expiry}
                                 onChange={(e) => setCardInfo({ ...cardInfo, expiry: e.target.value })}

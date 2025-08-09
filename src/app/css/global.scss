@@ -1,3 +1,29 @@
+// Dark themed date input used across the app
+input.dark-date[type="date"] {
+    background: #0F0E16;
+    color: #fff;
+    border: 1px solid rgba(255, 241, 250, 0.13);
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+
+// WebKit calendar icon recolor to brand pink
+input.dark-date[type="date"]::-webkit-calendar-picker-indicator,
+input.dark-date[type="month"]::-webkit-calendar-picker-indicator {
+    /* Fallback: recolor existing icon via filter close to #FF66C4 */
+    filter: invert(52%) sepia(68%) saturate(7481%) hue-rotate(304deg) brightness(101%) contrast(101%);
+    opacity: 1;
+    cursor: pointer;
+    
+    /* Preferred: explicit pink calendar SVG */
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none'><rect x='3' y='4' width='18' height='17' rx='2' stroke='%23FF66C4' stroke-width='2'/><path d='M8 2v4M16 2v4M3 10h18' stroke='%23FF66C4' stroke-width='2' stroke-linecap='round'/></svg>") no-repeat center;
+}
+
+/* Firefox */
+input.dark-date[type="date"] { color-scheme: dark; }
+input.dark-date[type="month"] { color-scheme: dark; }
+input.dark-date[type="month"]::-webkit-calendar-picker-indicator { /* override fallback */ filter: none; }
+
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap');
 
 * {
@@ -2078,6 +2104,8 @@ body {
                         flex-direction: column;
                         justify-content: flex-start;
                         align-items: flex-start;
+                        min-width: 0;
+                        max-width: 80%;
 
                         .comment-text {
                             color: #FFF;
@@ -2086,6 +2114,9 @@ body {
                             font-style: normal;
                             font-weight: 400;
                             line-height: 14.888px;
+                            word-break: break-word;
+                            overflow-wrap: anywhere;
+                            text-align: left;
                         }
 
                         .comment-meta {
