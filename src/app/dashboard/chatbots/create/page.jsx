@@ -4,6 +4,10 @@ import { useState } from "react";
 import ChatbotForm from "@/app/components/ChatbotForm/ChatbotForm";
 
 export default function CreateChatbot() {
+    if (typeof window !== 'undefined') {
+        // Geçici olarak gizli: yönlendir veya boş render
+        return null;
+    }
     const [selectedCard, setSelectedCard] = useState(null);
 
     const cards = [

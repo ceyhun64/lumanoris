@@ -86,10 +86,11 @@ export default function MarketCard({ bot, onRemove }) {
                 localStorage.setItem('cart', JSON.stringify(cart));
                 setCartAdded(true);
 
+                // Header rozet sayısını güncelle
+                window.dispatchEvent(new Event('cartUpdated'));
+
                 setTimeout(() => {
                     setCartAdded(false);
-                    // Eski router kullanıyorsan:
-                    window.location.reload();
                 }, 2000);
             }
         }
@@ -222,7 +223,26 @@ export default function MarketCard({ bot, onRemove }) {
                         className="buy-button"
                         onClick={e => {
                             e.stopPropagation();
-                            router.push('/dashboard/checkout');
+                            // Önce sepete ekle
+                            const botItem = { ...bot, id: `${bot.id}-${bot.title}-${bot.author}` };
+                            let cart = [];
+                            if (typeof window !== 'undefined') {
+                                const cartString = localStorage.getItem('cart');
+                                if (cartString) {
+                                    try {
+                                        cart = JSON.parse(cartString);
+                                    } catch {
+                                        cart = [];
+                                    }
+                                }
+                                if (!cart.find(item => item.id === botItem.id)) {
+                                    cart.push(botItem);
+                                    localStorage.setItem('cart', JSON.stringify(cart));
+                                    window.dispatchEvent(new Event('cartUpdated'));
+                                }
+                                // Sonra yönlendir
+                                router.push('/dashboard/checkout');
+                            }
                         }}
                     >
                         Satın Al

@@ -37,24 +37,44 @@ export default function Header() {
         location.href = '/auth';
     };
     useEffect(() => {
-        if (typeof window !== "undefined") {
-            const cartString = localStorage.getItem('cart');
-            if (cartString) {
-                try {
-                    const cart = JSON.parse(cartString);
-                    setCartCount(cart.length);
-                } catch (e) {
-                    setCartCount(0);
-                }
-            } else {
+        if (typeof window === "undefined") return;
+
+        const updateCartCount = () => {
+            try {
+                const cartString = localStorage.getItem('cart');
+                const cart = cartString ? JSON.parse(cartString) : [];
+                setCartCount(Array.isArray(cart) ? cart.length : 0);
+            } catch {
                 setCartCount(0);
             }
-        }
+        };
+
+        // Initial load
+        updateCartCount();
+
+        // Listen for updates from other tabs
+        const handleStorage = (e) => {
+            if (e.key === 'cart') updateCartCount();
+        };
+        window.addEventListener('storage', handleStorage);
+
+        // Listen for in-tab updates
+        const handleCartUpdated = () => updateCartCount();
+        window.addEventListener('cartUpdated', handleCartUpdated);
+
+        return () => {
+            window.removeEventListener('storage', handleStorage);
+            window.removeEventListener('cartUpdated', handleCartUpdated);
+        };
     }, []);
+
+    const goToExplore = () => {
+        router.push(`/dashboard/explore?search=${encodeURIComponent(searchQuery.trim())}`);
+    };
 
     const handleSearchKey = (e) => {
         if (e.key === 'Enter' && searchQuery.trim() !== '') {
-            router.push(`/dashboard/explore?search=${encodeURIComponent(searchQuery.trim())}`);
+            goToExplore();
         }
     };
 
@@ -73,20 +93,23 @@ export default function Header() {
             <header className="dashboard-header">
                 <div className="left">
 
-                    <div className="search-bar" onClick={() => {
-                        router.push(`/dashboard/explore?search=${encodeURIComponent(searchQuery.trim())}`);
-                    }}>
+                    <div
+                        className="search-bar"
+                        onClick={goToExplore}
+                        onTouchStart={goToExplore}
+                    >
                         <input
                             type="text"
                             placeholder="KEŞFET"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onKeyDown={handleSearchKey}
+                            onClick={goToExplore}
+                            onTouchStart={goToExplore}
                         />
                         <button
-                            onClick={() => {
-                                router.push(`/dashboard/explore?search=${encodeURIComponent(searchQuery.trim())}`);
-                            }}
+                            onClick={goToExplore}
+                            onTouchStart={goToExplore}
                         >
                             <Image src={searchIcon} alt="ara" />
                         </button>

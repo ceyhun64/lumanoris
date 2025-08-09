@@ -5707,7 +5707,9 @@ body {
                     }
 
                     &:hover {
-                        background-color: rgba(255, 255, 255, 0.05);
+                        background-color: #2a2a2a;
+                        transform: scale(1.03);
+                        box-shadow: 0 4px 10px rgba(255, 255, 255, 0.05);
                     }
                 }
 
@@ -5860,6 +5862,7 @@ body {
                 background: #14181B;
                 padding: 4px 20px;
                 margin-top: 20px;
+                margin-bottom: 8px; // mesaj yazınca tasarımın sıkışmaması için
                 font-weight: 700;
                 line-height: 22px;
             }
@@ -6438,6 +6441,7 @@ body {
                             text-align: center;
                             font-family: "Montserrat", sans-serif;
                             font-size: 7px;
+                            min-width: 50px;
                             font-style: normal;
                             font-weight: 500;
                             line-height: 12px;
@@ -6455,9 +6459,9 @@ body {
                     }
 
                     .action-item:hover {
-                        svg{
-                            path{
-                                fill:#FF99D6;
+                        svg {
+                            path {
+                                fill: #FF99D6;
                             }
                         }
                     }
@@ -7699,8 +7703,15 @@ body {
         @media(max-width:992px) {
             display: flex;
             flex-wrap: nowrap;
-            overflow: scroll;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; // Firefox
             height: 48px;
+
+            &::-webkit-scrollbar { // Chrome, Safari
+                display: none;
+            }
 
             .category-button {
                 min-width: 200px;
@@ -10364,17 +10375,28 @@ input[type="number"] {
         gap: 6px;
     }
 
+        // Add bullet separator between dialogue and time
+        .meta-dialogue::after {
+            content: '•';
+            display: inline-block;
+            color: #62647C;
+        }
+
     .meta-price-box {
         margin-left: auto;
         color: #fff;
         border-radius: 12px;
-        font-size: 9px;
-        padding: 3px 10px;
+        font-family: "Montserrat", sans-serif;
+        font-size: 7px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 12px;
+        padding: 2px 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         box-shadow: 0 4px 14px 0 #ff66c433;
-        letter-spacing: 0.5px;
         border: 1px solid #fff2;
+        min-width: 50px;
     }
 }

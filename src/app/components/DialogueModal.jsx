@@ -195,14 +195,14 @@ export default function DialogueModal({ isOpen, onClose }) {
                             <span>12 Yorum</span>
                         </div>
 
-                        <div className="interaction-button" onClick={(e) => { e.stopPropagation(); setModalVisible(true) }}>
+                       {/*  <div className="interaction-button" onClick={(e) => { e.stopPropagation(); setModalVisible(true) }}>
                             <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12.6992 21C17.6698 21 21.6992 16.9706 21.6992 12C21.6992 7.02944 17.6698 3 12.6992 3C7.72866 3 3.69922 7.02944 3.69922 12C3.69922 16.9706 7.72866 21 12.6992 21Z" fill="white" fill-opacity="0.25" />
                                 <path d="M12.6992 8V16M16.6992 12H8.69922" stroke="#FFE6F2" stroke-width="1.2" stroke-linecap="square" stroke-linejoin="round" />
                             </svg>
 
                             <span>Listeye Ekle</span>
-                        </div>
+                        </div> */}
 
                         <div className="interaction-button" onClick={(e) => { e.stopPropagation(); setReportOpen(true) }}>
                             <svg width="19" height="18" viewBox="0 0 19 18" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -1,36 +1,33 @@
 "use client";
 import EmptyCart from "@/app/components/EmptyCart/EmptyCart";
-import React, { useState } from "react";
-import prodImage from "../../../images/ai-pic.png";
+import React, { useEffect, useState } from "react";
 import CartFull from "@/app/components/CartFull/CartFull";
 import CartConfirm from "@/app/components/CartConfirm/CartConfirm";
 
 export default function Checkout() {
+    const [cartItems, setCartItems] = useState([]);
 
-    const [cartItems, setCartItems] = useState([
-        {
-            id: 1,
-            title: "Travel Planner AI",
-            price: 99,
-            category: "Seyahat Planlama",
-            duration: "30 dk",
-            seller: "WanderBot",
-            image: prodImage,
-        },
-        {
-            id: 2,
-            title: "Travel Planner AI",
-            price: 120,
-            category: "Seyahat Planlama",
-            duration: "30 dk",
-            seller: "WanderBot",
-            image: prodImage,
-        },
-    ]);
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        try {
+            const cartString = localStorage.getItem("cart");
+            const cart = cartString ? JSON.parse(cartString) : [];
+            setCartItems(Array.isArray(cart) ? cart : []);
+        } catch {
+            setCartItems([]);
+        }
+    }, []);
 
 
     const handleRemove = (id) => {
-        setCartItems(prev => prev.filter(item => item.id !== id));
+        setCartItems(prev => {
+            const updated = prev.filter(item => item.id !== id);
+            if (typeof window !== "undefined") {
+                localStorage.setItem('cart', JSON.stringify(updated));
+                window.dispatchEvent(new Event('cartUpdated'));
+            }
+            return updated;
+        });
     };
 
     const [step, setStep] = useState(1);

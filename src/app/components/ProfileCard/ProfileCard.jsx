@@ -254,7 +254,7 @@ export default function ProfileCard() {
                     <path d="M20.25 5.0625H3.75003C3.3522 5.0625 2.97067 5.22054 2.68937 5.50184C2.40806 5.78314 2.25003 6.16468 2.25003 6.5625V21.5625C2.2483 21.8485 2.32921 22.129 2.48305 22.3701C2.63689 22.6113 2.8571 22.8029 3.11721 22.9219C3.31543 23.0142 3.53138 23.0622 3.75003 23.0625C4.10214 23.0616 4.44256 22.936 4.71096 22.7081L4.7194 22.7016L7.78128 20.0625H20.25C20.6479 20.0625 21.0294 19.9045 21.3107 19.6232C21.592 19.3419 21.75 18.9603 21.75 18.5625V6.5625C21.75 6.16468 21.592 5.78314 21.3107 5.50184C21.0294 5.22054 20.6479 5.0625 20.25 5.0625ZM20.25 18.5625H7.50003C7.31994 18.5626 7.1459 18.6275 7.00971 18.7453L3.75003 21.5625V6.5625H20.25V18.5625Z" fill="#FFE6F2" />
                 </svg>
                 </span>12 Yorum</button>
-                {/* <button className='button-ctr' onClick={() => setModalVisible(true)}>
+                <button className='button-ctr' onClick={() => setModalVisible(true)}>
                     <span>
                         <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 21.5625C16.9706 21.5625 21 17.5331 21 12.5625C21 7.59194 16.9706 3.5625 12 3.5625C7.02944 3.5625 3 7.59194 3 12.5625C3 17.5331 7.02944 21.5625 12 21.5625Z" fill="white" fill-opacity="0.25" />
@@ -262,7 +262,7 @@ export default function ProfileCard() {
                         </svg>
                     </span >
                     Listeye Ekle
-                </button> */}
+                </button>
 
                 <div className="dropdown-wrapper" ref={menuRef}>
                     <button className="button-ctr" onClick={() => setShowMenu(prev => !prev)}>

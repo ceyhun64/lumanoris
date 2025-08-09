@@ -85,6 +85,18 @@
 }
 @media (max-width: 992px) {
   .dashboard-header {
+    display: flex;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  .dashboard-header .right-icons {
     display: none;
+  }
+  .dashboard-header .left {
+    width: 100%;
+  }
+  .dashboard-header .left .search-bar {
+    min-width: 0;
+    width: 100%;
   }
 }/*# sourceMappingURL=Header.css.map */

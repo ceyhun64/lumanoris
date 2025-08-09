@@ -5060,7 +5060,9 @@ body {
   align-items: center;
 }
 .chat-wrapper .chat-bottom .profile-card .profile-buttons .button-ctr:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: #2a2a2a;
+  transform: scale(1.03);
+  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.05);
 }
 .chat-wrapper .chat-bottom .profile-card .profile-buttons .button-cart,
 .chat-wrapper .chat-bottom .profile-card .profile-buttons .button-buy {
@@ -5191,6 +5193,7 @@ body {
   background: #14181B;
   padding: 4px 20px;
   margin-top: 20px;
+  margin-bottom: 8px;
   font-weight: 700;
   line-height: 22px;
 }
@@ -5706,6 +5709,7 @@ body {
   text-align: center;
   font-family: "Montserrat", sans-serif;
   font-size: 7px;
+  min-width: 50px;
   font-style: normal;
   font-weight: 500;
   line-height: 12px;
@@ -6818,8 +6822,14 @@ body {
   .explore-wrapper .category-buttons {
     display: flex;
     flex-wrap: nowrap;
-    overflow: scroll;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     height: 48px;
+  }
+  .explore-wrapper .category-buttons::-webkit-scrollbar {
+    display: none;
   }
   .explore-wrapper .category-buttons .category-button {
     min-width: 200px;
@@ -9157,16 +9167,25 @@ input[type=number] {
   align-items: center;
   gap: 6px;
 }
+.market-card-meta-row .meta-dialogue::after {
+  content: "•";
+  display: inline-block;
+  color: #62647C;
+}
 .market-card-meta-row .meta-price-box {
   margin-left: auto;
   color: #fff;
   border-radius: 12px;
-  font-size: 9px;
-  padding: 3px 10px;
+  font-family: "Montserrat", sans-serif;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 12px;
+  padding: 2px 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 14px 0 rgba(255, 102, 196, 0.2);
-  letter-spacing: 0.5px;
   border: 1px solid rgba(255, 255, 255, 0.1333333333);
+  min-width: 50px;
 }/*# sourceMappingURL=global.css.map */

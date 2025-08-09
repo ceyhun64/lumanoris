@@ -371,11 +371,11 @@ export default function DialoguePage() {
                                 {menuOpenIndex === index && (
                                     <div className="popup-menu">
                                         <ul>
-                                            <li onClick={(e) => { e.stopPropagation(); setModalVisible(true) }}><span><svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            {/* <li onClick={(e) => { e.stopPropagation(); setModalVisible(true) }}><span><svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                 <path d="M16 3.5H8C7.46957 3.5 6.96086 3.71071 6.58579 4.08579C6.21071 4.46086 6 4.96957 6 5.5V21.5L12 18.5L18 21.5V5.5C18 4.96957 17.7893 4.46086 17.4142 4.08579C17.0391 3.71071 16.5304 3.5 16 3.5Z" stroke="#FF99D6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                             </svg>
 
-                                            </span> Listeye Kaydet</li>
+                                            </span> Listeye Kaydet</li> */}
                                             <li onClick={(e) => { e.stopPropagation(); setShareOpen(true) }}><span><svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                 <path opacity="0.3" d="M18 6.5C18.5523 6.5 19 6.05228 19 5.5C19 4.94772 18.5523 4.5 18 4.5C17.4477 4.5 17 4.94772 17 5.5C17 6.05228 17.4477 6.5 18 6.5Z" fill="#FF99D6" />
                                                 <path opacity="0.3" d="M6 13.5C6.55228 13.5 7 13.0523 7 12.5C7 11.9477 6.55228 11.5 6 11.5C5.44772 11.5 5 11.9477 5 12.5C5 13.0523 5.44772 13.5 6 13.5Z" fill="#FF99D6" />
