@@ -9272,4 +9272,19 @@ input[type=number] {
   box-shadow: 0 4px 14px 0 rgba(255, 102, 196, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.1333333333);
   min-width: 50px;
+}
+
+.input-with-error {
+  position: relative;
+  width: 100%;
+}
+.input-with-error .field-error {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #FF66C4;
+  font-size: 11px;
+  pointer-events: none;
+  opacity: 0.9;
 }/*# sourceMappingURL=global.css.map */

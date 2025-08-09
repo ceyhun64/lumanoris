@@ -23,10 +23,68 @@ export default function CartConfirm({ cartItems }) {
         expiry: "",
         cvv: ""
     });
+    const [cardNumberError, setCardNumberError] = useState("");
+    const [expiryError, setExpiryError] = useState("");
 
     function validateCVV(cvv) {
         // Sadece rakam ve uzunluğu 3 (veya 4)
         return /^\d{3,4}$/.test(cvv);
+    }
+
+    // LUHN algoritmasıyla kart numarası doğrulama (state değiştirmez)
+    function isValidCardNumber(rawNumber) {
+        const digits = rawNumber.replace(/\D/g, "");
+        if (digits.length < 16) return false;
+        let sum = 0;
+        let shouldDouble = false;
+        for (let i = digits.length - 1; i >= 0; i -= 1) {
+            let digit = parseInt(digits[i], 10);
+            if (shouldDouble) {
+                digit *= 2;
+                if (digit > 9) digit -= 9;
+            }
+            sum += digit;
+            shouldDouble = !shouldDouble;
+        }
+        return sum % 10 === 0;
+    }
+
+    function validateAndFormatCardNumber(input) {
+        const digits = input.replace(/\D/g, "");
+        const formatted = digits.replace(/(.{4})/g, "$1 ").trim();
+        if (!digits) {
+            setCardNumberError("Kart numarası gerekli");
+        } else if (digits.length < 16) {
+            setCardNumberError("Kart numarası 16 haneli olmalı");
+        } else if (!isValidCardNumber(digits)) {
+            setCardNumberError("Kart numarası geçersiz");
+        } else {
+            setCardNumberError("");
+        }
+        setCardInfo((prev) => ({ ...prev, number: formatted }));
+    }
+
+    function isValidExpiryPure(exp) {
+        if (!exp) return false;
+        const [yearStr, monthStr] = exp.split("-");
+        const year = parseInt(yearStr, 10);
+        const month = parseInt(monthStr, 10);
+        if (!year || !month || month < 1 || month > 12) return false;
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1;
+        return year > currentYear || (year === currentYear && month >= currentMonth);
+    }
+
+    function validateExpiry(exp) {
+        if (!exp) {
+            setExpiryError("Son kullanma tarihi gerekli");
+        } else if (!isValidExpiryPure(exp)) {
+            setExpiryError("Son kullanma tarihi geçmiş veya hatalı");
+        } else {
+            setExpiryError("");
+        }
+        setCardInfo((prev) => ({ ...prev, expiry: exp }));
     }
 
 
@@ -152,16 +210,29 @@ export default function CartConfirm({ cartItems }) {
                             className="input"
                             placeholder="KART NUMARASI"
                             value={cardInfo.number}
-                            onChange={(e) => setCardInfo({ ...cardInfo, number: e.target.value })}
+                            inputMode="numeric"
+                            onChange={(e) => validateAndFormatCardNumber(e.target.value)}
+                            onBlur={(e) => validateAndFormatCardNumber(e.target.value)}
                         />
+                        {cardNumberError && (
+                            <div style={{ color: "#FF66C4", fontSize: 12, marginTop: 4 }}>
+                                {cardNumberError}
+                            </div>
+                        )}
                         <div className="int-ctr">
                             <input
                                 type="month"
                                 className="input dark-date"
                                 placeholder="SON KULLANMA TARİHİ"
                                 value={cardInfo.expiry}
-                                onChange={(e) => setCardInfo({ ...cardInfo, expiry: e.target.value })}
+                                onChange={(e) => validateExpiry(e.target.value)}
+                                onBlur={(e) => validateExpiry(e.target.value)}
                             />
+                            {expiryError && (
+                                <div style={{ color: "#FF66C4", fontSize: 12, marginTop: 4 }}>
+                                    {expiryError}
+                                </div>
+                            )}
                             <input
                                 type="text"
                                 className="input"
@@ -252,7 +323,14 @@ export default function CartConfirm({ cartItems }) {
                             </div>
                             <input placeholder="İndirim kodu gir" />
                         </div>
-                        <button className="checkout-btn">
+                        <button
+                            className="checkout-btn"
+                            disabled={
+                                !isValidCardNumber(cardInfo.number) ||
+                                !isValidExpiryPure(cardInfo.expiry) ||
+                                !validateCVV(cardInfo.cvv)
+                            }
+                        >
                             SEPETİ ONAYLA
                         </button>
                     </div>

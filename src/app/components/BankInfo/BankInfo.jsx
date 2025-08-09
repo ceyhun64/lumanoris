@@ -13,6 +13,14 @@ export default function BankInfo() {
     const [cards, setCards] = useState([]);
     const [showAccountTypeOptions, setShowAccountTypeOptions] = useState(false);
     const accountTypeRef = useRef(null);
+    const [isEditing, setIsEditing] = useState(true);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [formError, setFormError] = useState("");
+    const [ibanError, setIbanError] = useState("");
+    const [idNumberError, setIdNumberError] = useState("");
+
+    const STORAGE_KEY_FORM = "bankInfoForm";
+    const STORAGE_KEY_CARDS = "bankInfoCards";
 
     // Dışarı tıklayınca kapanması için
     useEffect(() => {
@@ -28,28 +36,188 @@ export default function BankInfo() {
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
+        setIsLoaded(true);
     }, []);
+
+    // Load from localStorage on mount
+    useEffect(() => {
+        try {
+            const savedForm = localStorage.getItem(STORAGE_KEY_FORM);
+            if (savedForm) {
+                const parsed = JSON.parse(savedForm);
+                setFormData((prev) => ({ ...prev, ...parsed }));
+                // Edit mode only turns off if saved form is complete and valid
+                const complete = (
+                    (parsed?.accountType || "").trim() !== "" &&
+                    (parsed?.fullName || "").trim() !== "" &&
+                    (parsed?.idNumber || "").trim() !== "" &&
+                    (parsed?.phone || "").trim() !== "" &&
+                    (parsed?.address || "").trim() !== "" &&
+                    isValidTCKNPure(String(parsed?.idNumber || ""))
+                );
+                setIsEditing(!complete);
+            }
+            const savedCards = localStorage.getItem(STORAGE_KEY_CARDS);
+            if (savedCards) {
+                let parsedCards = [];
+                try {
+                    parsedCards = JSON.parse(savedCards);
+                } catch {
+                    // if it was saved as plain string before
+                    parsedCards = typeof savedCards === 'string' ? [savedCards] : [];
+                }
+                if (Array.isArray(parsedCards)) setCards(parsedCards);
+                else if (typeof parsedCards === 'string') setCards([parsedCards]);
+            }
+        } catch {
+            // ignore malformed storage
+        }
+    }, []);
+
+    // Persist to localStorage when data changes
+    useEffect(() => {
+        if (!isLoaded) return;
+        // Sadece düzenleme modunda veya kaydetme sırasında yaz
+        try {
+            localStorage.setItem(STORAGE_KEY_FORM, JSON.stringify(formData));
+        } catch {}
+    }, [formData, isLoaded]);
+
+    useEffect(() => {
+        if (!isLoaded) return;
+        try {
+            localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify(cards));
+        } catch {}
+    }, [cards, isLoaded]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        if (!isEditing) return;
+        if (name === "idNumber") {
+            const digits = value.replace(/\D/g, "").slice(0, 11);
+            setFormData((prev) => ({ ...prev, [name]: digits }));
+            validateTCKN(digits);
+            return;
+        }
+        if (name === "iban") {
+            const raw = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+            const grouped = raw.replace(/(.{4})/g, "$1 ").trim();
+            setFormData((prev) => ({ ...prev, [name]: grouped }));
+            validateIban(grouped);
+            return;
+        }
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleAccountTypeSelect = (type) => {
+        if (!isEditing) return;
         setFormData((prev) => ({ ...prev, accountType: type }));
         setShowAccountTypeOptions(false);
     };
 
+    const isBankInfoComplete = () => {
+        const { accountType, fullName, idNumber, phone, address } = formData;
+        return (
+            accountType.trim() !== "" &&
+            fullName.trim() !== "" &&
+            idNumber.trim() !== "" &&
+            phone.trim() !== "" &&
+            address.trim() !== ""
+        );
+    };
+
+    // IBAN validation utilities
+    const normalizeIban = (val) => val.replace(/\s+/g, "").toUpperCase();
+    const ibanMod97 = (ibanStr) => {
+        const rearranged = `${ibanStr.slice(4)}${ibanStr.slice(0, 4)}`;
+        let remainder = 0;
+        for (let i = 0; i < rearranged.length; i += 1) {
+            const ch = rearranged[i];
+            const v = ch >= "A" && ch <= "Z" ? (ch.charCodeAt(0) - 55).toString() : ch;
+            const block = `${remainder}${v}`;
+            remainder = Number(BigInt(block) % 97n);
+        }
+        return remainder === 1;
+    };
+    const isIbanValidPure = (val) => {
+        const stripped = normalizeIban(val);
+        if (!/^TR\d{24}$/.test(stripped)) return false;
+        return ibanMod97(stripped);
+    };
+    const validateIban = (val) => {
+        if (!val.trim()) {
+            setIbanError("");
+            return false;
+        }
+        const ok = isIbanValidPure(val);
+        setIbanError(ok ? "" : "Geçersiz IBAN");
+        return ok;
+    };
+
+    // T.C. Kimlik No validation
+    const isValidTCKNPure = (tc) => {
+        if (!/^\d{11}$/.test(tc)) return false;
+        if (tc[0] === '0') return false;
+        const digits = tc.split('').map((d) => parseInt(d, 10));
+        const oddSum = digits[0] + digits[2] + digits[4] + digits[6] + digits[8];
+        const evenSum = digits[1] + digits[3] + digits[5] + digits[7];
+        const d10 = ((oddSum * 7) - evenSum) % 10;
+        if (d10 !== digits[9]) return false;
+        const d11 = (digits.slice(0, 10).reduce((s, n) => s + n, 0)) % 10;
+        return d11 === digits[10];
+    };
+
+    const validateTCKN = (tc) => {
+        if (!tc) {
+            setIdNumberError("");
+            return false;
+        }
+        const ok = isValidTCKNPure(tc);
+        setIdNumberError(ok ? "" : "Geçersiz T.C. Kimlik No");
+        return ok;
+    };
+
     const handleSubmit = () => {
-        if (formData.iban.trim() === "") return;
-        setCards((prev) => [...prev, formData.iban.trim()]);
-        setFormData({ ...formData, iban: "" }); // sadece iban sıfırla
+        if (isEditing) {
+            if (!isBankInfoComplete()) {
+                setFormError("Lütfen tüm alanları doldurunuz.");
+                return;
+            }
+            if (!isValidTCKNPure(formData.idNumber)) {
+                setFormError("Lütfen geçerli bir T.C. Kimlik No giriniz.");
+                return;
+            }
+            // IBAN doluysa doğrula; geçersizse kaydetme
+            if (formData.iban.trim() !== "") {
+                if (!validateIban(formData.iban)) {
+                    setFormError("Lütfen geçerli bir IBAN giriniz.");
+                    return;
+                }
+            }
+            // Kart ekleme işlemini tüm validasyonlar geçtikten sonra yap
+            if (formData.iban.trim() !== "") {
+                const normalized = normalizeIban(formData.iban);
+                setCards((prev) => {
+                    const updated = [...prev, normalized];
+                    try { localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify(updated)); } catch {}
+                    return updated;
+                });
+                setFormData({ ...formData, iban: "" });
+            }
+            setFormError("");
+            // Formu kalıcı olarak sakla
+            try { localStorage.setItem(STORAGE_KEY_FORM, JSON.stringify(formData)); } catch {}
+            setIsEditing(false); // Kaydet → Düzenle moduna geç
+        } else {
+            setIsEditing(true); // Düzenle → Kaydet moduna geç
+        }
     };
 
     const handleDelete = (index) => {
         const updated = [...cards];
         updated.splice(index, 1);
         setCards(updated);
+        try { localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify(updated)); } catch {}
     };
     return (
         <div className="bank-info-wrapper">
@@ -62,11 +230,11 @@ export default function BankInfo() {
                         name="accountType"
                         placeholder="HESAP TÜRÜ"
                         value={formData.accountType}
-                        onFocus={() => setShowAccountTypeOptions(true)}
+                        onFocus={() => isEditing && setShowAccountTypeOptions(true)}
                         readOnly
-                        style={{ cursor: "pointer" }}
+                        style={{ cursor: isEditing ? "pointer" : "not-allowed", background: !isEditing ? "#15141b" : undefined, opacity: !isEditing ? 0.8 : 1 }}
                     />
-                    {showAccountTypeOptions && (
+                    {showAccountTypeOptions && isEditing && (
                         <div className="account-type-dropdown">
                             <div
                                 className="dropdown-option"
@@ -84,16 +252,35 @@ export default function BankInfo() {
                     )}
                 </div>
 
-                <input type="text" className="input" name="fullName" placeholder="AD SOYAD" value={formData.fullName} onChange={handleChange} />
-                <input type="text" className="input" name="idNumber" placeholder="KİMLİK NUMARASI" value={formData.idNumber} onChange={handleChange} />
-                <input type="text" className="input" name="phone" placeholder="TELEFON NUMARASI" value={formData.phone} onChange={handleChange} />
+                <div className="input-with-error">
+                    <input type="text" className="input" name="fullName" placeholder="AD SOYAD" value={formData.fullName} onChange={handleChange} disabled={!isEditing} />
+                </div>
+                <div className="input-with-error">
+                    <input type="text" className="input" name="idNumber" placeholder="KİMLİK NUMARASI" value={formData.idNumber} onChange={handleChange} disabled={!isEditing} />
+                    {idNumberError && <span className="field-error">{idNumberError}</span>}
+                </div>
+                <div className="input-with-error">
+                    <input type="text" className="input" name="phone" placeholder="TELEFON NUMARASI" value={formData.phone} onChange={handleChange} disabled={!isEditing} />
+                </div>
             </div>
 
-            <input type="text" className="input" name="iban" placeholder="IBAN NUMARASI" value={formData.iban} onChange={handleChange} />
-            <textarea name="address" className="textarea" placeholder="ADRES BİLGİLERİ" value={formData.address} onChange={handleChange}></textarea>
+            <div className="input-with-error">
+                <input
+                    type="text"
+                    className="input"
+                    name="iban"
+                    placeholder="IBAN NUMARASI"
+                    value={formData.iban}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                />
+                {ibanError && <span className="field-error">{ibanError}</span>}
+            </div>
+            <textarea name="address" className="textarea" placeholder="ADRES BİLGİLERİ" value={formData.address} onChange={handleChange} disabled={!isEditing}></textarea>
 
             <div className="form-actions">
-                <button onClick={handleSubmit}>Kaydet</button>
+                {formError && <div style={{ color: "#FF66C4", fontSize: 13, marginRight: 8 }}>{formError}</div>}
+                <button onClick={handleSubmit}>{isEditing ? "Kaydet" : "Düzenle"}</button>
             </div>
 
             <div className="card-section">
