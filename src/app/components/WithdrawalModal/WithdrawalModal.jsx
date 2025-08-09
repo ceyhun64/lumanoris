@@ -7,6 +7,7 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount }) {
     const [selectedOptions, setSelectedOptions] = useState([]);
     const [showFeedback, setShowFeedback] = useState(false);
     const [amountError, setAmountError] = useState('');
+    const [ibanError, setIbanError] = useState('');
 
     const options = ['Tümünü çek'];
 
@@ -24,9 +25,36 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount }) {
         }
     };
 
+    const normalizeIban = (value) => value.replace(/\s+/g, '').toUpperCase();
+
+    const ibanMod97 = (ibanStr) => {
+        // Move first 4 chars to end and convert letters to numbers (A=10 ... Z=35)
+        const rearranged = `${ibanStr.slice(4)}${ibanStr.slice(0, 4)}`;
+        let remainder = 0;
+        for (let i = 0; i < rearranged.length; i += 1) {
+            const ch = rearranged[i];
+            const value = ch >= 'A' && ch <= 'Z' ? (ch.charCodeAt(0) - 55).toString() : ch;
+            const block = `${remainder}${value}`;
+            remainder = Number(BigInt(block) % 97n);
+        }
+        return remainder === 1;
+    };
+
+    const isIbanValidPure = (value) => {
+        const stripped = normalizeIban(value);
+        if (!/^TR\d{24}$/.test(stripped)) return false;
+        return ibanMod97(stripped);
+    };
+
+    const validateIban = (value) => {
+        const ok = isIbanValidPure(value);
+        setIbanError(ok ? '' : 'Geçersiz IBAN');
+        return ok;
+    };
+
     const handleWithdraw = () => {
         const payload = {
-            iban,
+            iban: normalizeIban(iban),
             amount: selectedOptions.includes('Tümünü çek') ? 'Tüm Bakiye' : amount,
         };
 
@@ -43,12 +71,12 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount }) {
     };
 
     const isFormValid = () => {
-        const isIbanValid = iban.trim() !== '';
+        const hasValidIban = isIbanValidPure(iban);
         const isAmountValid =
     selectedOptions.includes('Tümünü çek') ||
     (String(amount).trim() !== '' && parseFloat(amount) > 0);
 
-        return isIbanValid && isAmountValid;
+        return hasValidIban && isAmountValid;
     };
 
     if (!isOpen) return null;
@@ -73,8 +101,20 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount }) {
                             type="text"
                             placeholder="IBAN ekle"
                             value={iban}
-                            onChange={(e) => setIban(e.target.value)}
+                            onChange={(e) => {
+                                const raw = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                // group by 4 for readability
+                                const grouped = raw.replace(/(.{4})/g, '$1 ').trim();
+                                setIban(grouped);
+                                validateIban(grouped);
+                            }}
+                            onBlur={(e) => validateIban(e.target.value)}
                         />
+                        {ibanError && (
+                            <div className="input-error" style={{ color: '#FF66C4', fontSize: 13, marginTop: 4 }}>
+                                {ibanError}
+                            </div>
+                        )}
                         <button disabled>
                             <svg width="25" height="26" viewBox="0 0 25 26" fill="none">
                                 <path d="M12.5 5.70898V20.292M5.2085 13.0005H19.7915" stroke="#FF66C4" strokeLinecap="round" strokeLinejoin="round" />
