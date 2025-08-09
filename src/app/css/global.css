@@ -3776,8 +3776,10 @@ body {
 }
 .history-wrapper .history-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
   margin-bottom: 40px;
 }
 .history-wrapper .history-header h2 {
@@ -3798,6 +3800,52 @@ body {
     font-weight: 700;
     line-height: 24px;
   }
+}
+.history-wrapper .history-header .history-search {
+  border-radius: 12px;
+  background: #100f17;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  transition: box-shadow 0.3s ease;
+  width: 100%;
+  margin-top: 10px;
+}
+.history-wrapper .history-header .history-search:hover {
+  box-shadow: 0 0 0 2px rgba(255, 102, 196, 0.3);
+}
+.history-wrapper .history-header .history-search input {
+  padding: 25px 20px;
+  flex: 1;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: "Montserrat", sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 20px;
+}
+.history-wrapper .history-header .history-search button {
+  height: 100%;
+  padding: 5px 20px 5px 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.history-wrapper .history-header .history-search button:hover {
+  transform: scale(1.1);
+}
+.history-wrapper .history-header .history-search button svg {
+  width: 24px;
+  height: 24px;
 }
 .history-wrapper .history-list {
   width: 100%;

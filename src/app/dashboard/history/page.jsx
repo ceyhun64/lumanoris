@@ -45,6 +45,7 @@ export default function History() {
     const [editingId, setEditingId] = useState(null);
     const [editedTitle, setEditedTitle] = useState("");
     const [historyItems, setHistoryItems] = useState(initialItems);
+    const [searchQuery, setSearchQuery] = useState("");
     const [activeMenuId, setActiveMenuId] = useState(null);
     const [deleteTargetId, setDeleteTargetId] = useState(null);
     const menuRef = useRef(null);
@@ -75,15 +76,42 @@ export default function History() {
         };
     }, [activeMenuId]);
 
+    const filteredItems = historyItems.filter((item) => {
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.toLowerCase();
+        return (
+            item.title.toLowerCase().includes(q) ||
+            item.subtitle.toLowerCase().includes(q) ||
+            item.date.toLowerCase().includes(q)
+        );
+    });
+
     return (
         <div className="history-wrapper">
             <div className="history-header">
                 <h2>Geçmişim</h2>
+                <div className="history-search">
+                    <input
+                        type="text"
+                        placeholder="Geçmiş sohbetlerde ara..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Escape') setSearchQuery('');
+                        }}
+                    />
+                    <button aria-label="Ara" onClick={(e)=>e.preventDefault()}>
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12.75 12.75L16.5 16.5" stroke="#f39" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="8" cy="8" r="5" stroke="#f39" strokeWidth="1.5"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
-            {historyItems.length == 0 && <EmptyCart />}
-            {historyItems.length > 0 && <div className="history-list">
-                {historyItems.map((item) => (
+            {filteredItems.length == 0 && <EmptyCart />}
+            {filteredItems.length > 0 && <div className="history-list">
+                {filteredItems.map((item) => (
                     <div key={item.id}
                         className="history-card"
                         onClick={(e) => {
