@@ -18,6 +18,7 @@ export default function BankInfo() {
     const [formError, setFormError] = useState("");
     const [ibanError, setIbanError] = useState("");
     const [idNumberError, setIdNumberError] = useState("");
+    const [phoneError, setPhoneError] = useState("");
 
     const STORAGE_KEY_FORM = "bankInfoForm";
     const STORAGE_KEY_CARDS = "bankInfoCards";
@@ -99,6 +100,11 @@ export default function BankInfo() {
             validateTCKN(digits);
             return;
         }
+        if (name === "phone") {
+            setFormData((prev) => ({ ...prev, [name]: value }));
+            validateTurkishPhone(value);
+            return;
+        }
         if (name === "iban") {
             const raw = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
             const grouped = raw.replace(/(.{4})/g, "$1 ").trim();
@@ -177,6 +183,49 @@ export default function BankInfo() {
         return ok;
     };
 
+    // Türkiye telefon numarası validasyonu
+    const validateTurkishPhone = (phone) => {
+        // Sadece rakamları al
+        const digits = phone.replace(/\D/g, "");
+        
+        // Türkiye telefon numarası formatları:
+        // +90 5XX XXX XX XX (mobil)
+        // +90 2XX XXX XX XX (sabit)
+        // 05XX XXX XX XX (mobil, başında 0)
+        // 02XX XXX XX XX (sabit, başında 0)
+        
+        if (digits.length === 0) {
+            setPhoneError("");
+            return false;
+        }
+        
+        // 11 haneli (0 ile başlayan) veya 12 haneli (+90 ile başlayan)
+        if (digits.length === 11 && digits.startsWith('0')) {
+            // 05XX veya 02XX ile başlamalı
+            const areaCode = digits.substring(1, 3);
+            if (areaCode >= '50' && areaCode <= '59') {
+                setPhoneError("");
+                return true; // Mobil numara
+            } else if (areaCode >= '20' && areaCode <= '29') {
+                setPhoneError("");
+                return true; // Sabit numara
+            }
+        } else if (digits.length === 12 && digits.startsWith('90')) {
+            // 905XX veya 902XX ile başlamalı
+            const areaCode = digits.substring(2, 4);
+            if (areaCode >= '50' && areaCode <= '59') {
+                setPhoneError("");
+                return true; // Mobil numara
+            } else if (areaCode >= '20' && areaCode <= '29') {
+                setPhoneError("");
+                return true; // Sabit numara
+            }
+        }
+        
+        setPhoneError("Geçersiz telefon numarası formatı");
+        return false;
+    };
+
     const handleSubmit = () => {
         if (isEditing) {
             if (!isBankInfoComplete()) {
@@ -185,6 +234,10 @@ export default function BankInfo() {
             }
             if (!isValidTCKNPure(formData.idNumber)) {
                 setFormError("Lütfen geçerli bir T.C. Kimlik No giriniz.");
+                return;
+            }
+            if (!validateTurkishPhone(formData.phone)) {
+                setFormError("Lütfen geçerli bir telefon numarası giriniz.");
                 return;
             }
             // IBAN doluysa doğrula; geçersizse kaydetme
@@ -260,7 +313,8 @@ export default function BankInfo() {
                     {idNumberError && <span className="field-error">{idNumberError}</span>}
                 </div>
                 <div className="input-with-error">
-                    <input type="text" className="input" name="phone" placeholder="TELEFON NUMARASI" value={formData.phone} onChange={handleChange} disabled={!isEditing} />
+                    <input type="text" className={`input ${phoneError ? 'error' : ''}`} name="phone" placeholder="TELEFON NUMARASI" value={formData.phone} onChange={handleChange} disabled={!isEditing} />
+                    {phoneError && <span className="field-error">{phoneError}</span>}
                 </div>
             </div>
 

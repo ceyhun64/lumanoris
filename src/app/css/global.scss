@@ -24,6 +24,41 @@ input.dark-date[type="date"] { color-scheme: dark; }
 input.dark-date[type="month"] { color-scheme: dark; }
 input.dark-date[type="month"]::-webkit-calendar-picker-indicator { /* override fallback */ filter: none; }
 
+/* React Day Picker Custom Styles */
+.custom-month-picker {
+    position: relative;
+    width: 100%;
+    z-index: 9999;
+}
+
+.month-picker-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+}
+
+.month-picker-dropdown {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #0F0E16;
+    border: 1px solid rgba(255, 241, 250, 0.13);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    width: auto;
+    max-width:90%;
+    z-index: 10000;
+}
+
+/* DayPicker CSS Variables for Dark Theme */
+
+
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap');
 
 * {
@@ -10503,4 +10538,15 @@ input[type="number"] {
         pointer-events: none;
         opacity: 0.9;
     }
+}
+
+// Input error styling
+.input.error {
+    border-color: #FF66C4 !important;
+    box-shadow: 0 0 0 1px rgba(255, 102, 196, 0.2);
+}
+
+.phone-input.error {
+    border-color: #FF66C4 !important;
+    box-shadow: 0 0 0 1px rgba(255, 102, 196, 0.2);
 }

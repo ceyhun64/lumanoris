@@ -1,6 +1,11 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { DayPicker } from 'react-day-picker';
+import "react-day-picker/style.css";
+
+import { format } from 'date-fns';
+import { tr } from 'date-fns/locale';
 export default function CartConfirm({ cartItems }) {
     const [sendInvoice, setSendInvoice] = useState(false);
     const [use3DSecure, setUse3DSecure] = useState(false);
@@ -8,6 +13,22 @@ export default function CartConfirm({ cartItems }) {
     const [isPolicyOpen, setPolicyOpen] = useState(false);
     const [activePolicy, setActivePolicy] = useState(null);
     const [aggrementCheck, setAggrementCheck] = useState(false);
+    const [showMonthPicker, setShowMonthPicker] = useState(false);
+    const monthPickerRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (monthPickerRef.current && !monthPickerRef.current.contains(event.target)) {
+                setShowMonthPicker(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     const openPolicy = (type) => {
         setActivePolicy(type);
         setPolicyOpen(true);
@@ -220,14 +241,41 @@ export default function CartConfirm({ cartItems }) {
                             </div>
                         )}
                         <div className="int-ctr">
-                            <input
-                                type="month"
-                                className="input dark-date"
-                                placeholder="SON KULLANMA TARİHİ"
-                                value={cardInfo.expiry}
-                                onChange={(e) => validateExpiry(e.target.value)}
-                                onBlur={(e) => validateExpiry(e.target.value)}
-                            />
+                            <div className="custom-month-picker" ref={monthPickerRef}>
+                                <input
+                                    type="text"
+                                    className={`input dark-date ${expiryError ? 'error' : ''}`}
+                                    placeholder="SON KULLANMA TARİHİ"
+                                    value={cardInfo.expiry ? format(new Date(cardInfo.expiry + '-01'), 'MMM yyyy', { locale: tr }) : ''}
+                                    readOnly
+                                    onClick={() => setShowMonthPicker(!showMonthPicker)}
+                                />
+                                {showMonthPicker && (
+                                    <>
+                                        <div className="month-picker-overlay" onClick={() => setShowMonthPicker(false)} />
+                                        <div className="month-picker-dropdown">
+                                            <DayPicker
+                                                mode="single"
+                                                selected={cardInfo.expiry ? new Date(cardInfo.expiry + '-01') : undefined}
+                                                onSelect={(date) => {
+                                                    if (date) {
+                                                        const year = date.getFullYear();
+                                                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                                                        validateExpiry(`${year}-${month}`);
+                                                    }
+                                                    setShowMonthPicker(false);
+                                                }}
+                                                locale={tr}
+                                                fromDate={new Date()}
+                                                toDate={new Date(new Date().getFullYear() + 10, 11, 31)}
+                                                captionLayout="dropdown-buttons"
+                                                showOutsideDays={false}
+                                                className="rdp-root"
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                             {expiryError && (
                                 <div style={{ color: "#FF66C4", fontSize: 12, marginTop: 4 }}>
                                     {expiryError}

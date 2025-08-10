@@ -31,6 +31,39 @@ input.dark-date[type=month]::-webkit-calendar-picker-indicator { /* override fal
   filter: none;
 }
 
+/* React Day Picker Custom Styles */
+.custom-month-picker {
+  position: relative;
+  width: 100%;
+  z-index: 9999;
+}
+
+.month-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+}
+
+.month-picker-dropdown {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #0F0E16;
+  border: 1px solid rgba(255, 241, 250, 0.13);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  width: auto;
+  max-width: 90%;
+  z-index: 10000;
+}
+
+/* DayPicker CSS Variables for Dark Theme */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -9287,4 +9320,14 @@ input[type=number] {
   font-size: 11px;
   pointer-events: none;
   opacity: 0.9;
+}
+
+.input.error {
+  border-color: #FF66C4 !important;
+  box-shadow: 0 0 0 1px rgba(255, 102, 196, 0.2);
+}
+
+.phone-input.error {
+  border-color: #FF66C4 !important;
+  box-shadow: 0 0 0 1px rgba(255, 102, 196, 0.2);
 }/*# sourceMappingURL=global.css.map */
