@@ -106,7 +106,13 @@ export default function BankInfo() {
             return;
         }
         if (name === "iban") {
-            const raw = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+            let raw = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+            
+            // TR ile başlamıyorsa otomatik ekle
+            if (raw.length > 0 && !raw.startsWith('TR')) {
+                raw = 'TR' + raw;
+            }
+            
             const grouped = raw.replace(/(.{4})/g, "$1 ").trim();
             setFormData((prev) => ({ ...prev, [name]: grouped }));
             validateIban(grouped);
@@ -323,7 +329,7 @@ export default function BankInfo() {
                     type="text"
                     className="input"
                     name="iban"
-                    placeholder="IBAN NUMARASI"
+                    placeholder="TR IBAN NUMARASI"
                     value={formData.iban}
                     onChange={handleChange}
                     disabled={!isEditing}

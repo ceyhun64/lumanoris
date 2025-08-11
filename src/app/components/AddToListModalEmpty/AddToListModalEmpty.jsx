@@ -41,11 +41,13 @@ export default function AddToListModalEmpty({ isOpen, onClose, onCreate, header 
                             placeholder="Liste adı"
                             value={newListName}
                             onChange={(e) => setNewListName(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
                         />
-                        
+                        <button onClick={handleSubmit}>
                             <svg width="25" height="26" viewBox="0 0 25 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12.5 5.70898V20.292M5.2085 13.0005H19.7915" stroke="#FF66C4" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
+                        </button>
                     </div>
                     <div className="modal-actions">
                         <button className="cancel-btn" onClick={onClose}>İptal</button>

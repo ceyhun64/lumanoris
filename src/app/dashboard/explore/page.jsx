@@ -56,6 +56,38 @@ export default function Explore() {
     const [isFromList, setIsFromList] = useState(false);
     const [listName, setListName] = useState("");
 
+    // localStorage'dan listeleri al
+    const getUserLists = () => {
+        if (typeof window !== "undefined") {
+            const lists = localStorage.getItem('userLists');
+            return lists ? JSON.parse(lists) : [];
+        }
+        return [];
+    };
+
+    // Listeye bot ekle
+    const addBotsToList = (listName, botIds) => {
+        const lists = getUserLists();
+        const selectedBotData = botIds.map(id => bots.find(bot => bot.id === id)).filter(Boolean);
+        
+        const existingListIndex = lists.findIndex(list => list.name === listName);
+        
+        if (existingListIndex >= 0) {
+            // Mevcut listeye botları ekle
+            lists[existingListIndex].bots = [...lists[existingListIndex].bots, ...selectedBotData];
+        } else {
+            // Yeni liste oluştur
+            lists.push({
+                name: listName,
+                bots: selectedBotData,
+                createdAt: new Date().toISOString()
+            });
+        }
+        
+        localStorage.setItem('userLists', JSON.stringify(lists));
+        console.log(`"${listName}" listesine ${selectedBotData.length} bot eklendi`);
+    };
+
     useEffect(() => {
         if (typeof window !== "undefined") {
             const params = new URLSearchParams(window.location.search);
@@ -170,9 +202,11 @@ export default function Explore() {
                     <button
                         className="save-button"
                         onClick={() => {
-                            const botParams = selectedBots.join(',');
-                            const encodedName = encodeURIComponent(listName);
-                            router.push(`/dashboard/list?name=${encodedName}&bots=${botParams}`);
+                            // Seçilen botları listeye ekle
+                            addBotsToList(listName, selectedBots);
+                            
+                            // Liste sayfasına yönlendir
+                            router.push('/dashboard/list');
                         }}
                     >
                         Kaydet ve Listeye Ekle

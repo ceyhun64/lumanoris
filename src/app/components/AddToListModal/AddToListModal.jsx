@@ -1,15 +1,29 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-export default function AddToListModal({ isOpen, onClose, lists = [], header = "Listeye Ekle" }) {
+export default function AddToListModal({ isOpen, onClose, lists = [], header = "Listeye Ekle", onCreateList }) {
     const [newListName, setNewListName] = useState('');
     const [radioSelection, setRadioSelection] = useState('');
-    const [allLists, setAllLists] = useState([...lists]);
+    const [allLists, setAllLists] = useState([]);
     const [showFeedback, setShowFeedback] = useState(false);
+
+    // localStorage'dan kullanıcının listelerini al
+    const getUserLists = () => {
+        if (typeof window !== "undefined") {
+            const userLists = localStorage.getItem('userLists');
+            if (userLists) {
+                const lists = JSON.parse(userLists);
+                return lists.map(list => list.name);
+            }
+        }
+        return [];
+    };
 
     useEffect(() => {
         if (isOpen) {
-            setAllLists([...lists]);
+            // localStorage'dan kullanıcının listelerini al
+            const userLists = getUserLists();
+            setAllLists([...userLists, ...lists]);
         }
     }, [isOpen, lists]);
 
@@ -19,6 +33,11 @@ export default function AddToListModal({ isOpen, onClose, lists = [], header = "
             setAllLists((prev) => [...prev, trimmedName]);
             setRadioSelection(trimmedName);
             setNewListName('');
+            
+            // Yeni liste oluşturulduğunda callback çağır
+            if (onCreateList) {
+                onCreateList(trimmedName);
+            }
         }
     };
 
@@ -32,6 +51,11 @@ export default function AddToListModal({ isOpen, onClose, lists = [], header = "
             onClose();
             setRadioSelection('');
             setNewListName('');
+            
+            // Seçilen listeye ekleme işlemi burada yapılabilir
+            if (radioSelection && onCreateList) {
+                onCreateList(radioSelection);
+            }
         }, 2000);
     };
 

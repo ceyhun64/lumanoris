@@ -99,10 +99,16 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount }) {
                     <div className="new-list-input">
                         <input
                             type="text"
-                            placeholder="IBAN ekle"
+                            placeholder="TR IBAN ekle"
                             value={iban}
                             onChange={(e) => {
-                                const raw = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                let raw = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                
+                                // TR ile başlamıyorsa otomatik ekle
+                                if (raw.length > 0 && !raw.startsWith('TR')) {
+                                    raw = 'TR' + raw;
+                                }
+                                
                                 // group by 4 for readability
                                 const grouped = raw.replace(/(.{4})/g, '$1 ').trim();
                                 setIban(grouped);
