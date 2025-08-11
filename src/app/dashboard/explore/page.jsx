@@ -46,8 +46,54 @@ const bots = [
         image: aiPic,
         users: 823,
         category: "Çeviri"
+    },
+    {
+        id: 5,
+        name: "FitBuddy",
+        icon: "💪",
+        description: "Kişisel fitness koçunuz; antrenman programları ve beslenme önerileri sunar.",
+        image: aiPic,
+        users: 1340,
+        category: "Sağlık"
+    },
+    {
+        id: 6,
+        name: "CodeHelper",
+        icon: "💻",
+        description: "Kodlama sorularınızı yanıtlar ve örnek kod parçaları üretir.",
+        image: aiPic,
+        users: 980,
+        category: "Teknoloji"
+    },
+    {
+        id: 7,
+        name: "StoryTeller",
+        icon: "📚",
+        description: "İstediğiniz temada kısa hikayeler ve senaryolar yazar.",
+        image: aiPic,
+        users: 512,
+        category: "Yaratıcı Fikirler"
+    },
+    {
+        id: 8,
+        name: "MoodChef",
+        icon: "🍽️",
+        description: "O anki ruh halinize göre yemek tarifi önerir.",
+        image: aiPic,
+        users: 276,
+        category: "Yaşam"
+    },
+    {
+        id: 9,
+        name: "FinanceGuru",
+        icon: "💰",
+        description: "Bütçe planlama, yatırım tavsiyesi ve finansal analiz sunar.",
+        image: aiPic,
+        users: 1432,
+        category: "Finans"
     }
 ];
+
 
 export default function Explore() {
     const router = useRouter();

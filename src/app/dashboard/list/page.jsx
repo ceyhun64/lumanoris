@@ -1,5 +1,5 @@
 "use client";
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import aiIcon from "../../../images/avatar-bot.jpg";
 import AddToListModal from "@/app/components/AddToListModal/AddToListModal";
 import listBlankIcon from "../../../images/list-blank.svg";
@@ -8,6 +8,8 @@ import Link from "next/link";
 import DeleteConfirmModal from "@/app/components/DeleteConfirmModal";
 import { useRouter } from "next/navigation";
 import AddToListModalEmpty from "@/app/components/AddToListModalEmpty/AddToListModalEmpty";
+import { Splide, SplideSlide, SplideTrack } from '@splidejs/react-splide';
+import '@splidejs/react-splide/css';
 
 const mockData = [
     {
@@ -50,6 +52,7 @@ export default function List() {
     const [listData, setListData] = useState([]);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [deleteTargetIndex, setDeleteTargetIndex] = useState(null);
+    const [splideInstances, setSplideInstances] = useState({});
     const router = useRouter();
 
     // localStorage'dan listeleri yükle
@@ -68,7 +71,12 @@ export default function List() {
                 }));
                 setListData(formattedLists);
             } else {
-                setListData(mockData); // Eğer localStorage'da veri yoksa mock data kullan
+                // Test için mock data'ya fazla bot ekle
+                const testMockData = mockData.map(item => ({
+                    ...item,
+                    bots: Array.from({ length: Math.floor(Math.random() * 10) + 1 }, (_, i) => ({ id: i, name: `Bot ${i + 1}` }))
+                }));
+                setListData(testMockData);
             }
         }
     }, []);
@@ -76,23 +84,23 @@ export default function List() {
 
     const handleCreateList = (name) => {
         console.log("Yeni liste oluşturuluyor:", name);
-        
+
         // localStorage'a yeni liste ekle
         const userLists = localStorage.getItem('userLists');
         const lists = userLists ? JSON.parse(userLists) : [];
-        
+
         const newList = {
             name: name,
             bots: [],
             createdAt: new Date().toISOString()
         };
-        
+
         lists.push(newList);
         localStorage.setItem('userLists', JSON.stringify(lists));
-        
+
         // Random diyalog sayısı oluştur (1-200 arası)
         const randomDialogCount = Math.floor(Math.random() * 200) + 1;
-        
+
         // State'i güncelle
         const formattedList = {
             title: name,
@@ -102,13 +110,13 @@ export default function List() {
             bots: [],
             createdAt: newList.createdAt
         };
-        
+
         setListData(prev => [...prev, formattedList]);
-        
+
         // Modal'ı kapat
         setModalVisible(false);
         setModalVisible2(false);
-        
+
         // Explore sayfasına yönlendir - seçilen ürünlerle beraber yeni liste oluşturulacak
         router.push(`/dashboard/explore?from=list&name=${encodeURIComponent(name)}`);
     };
@@ -121,7 +129,7 @@ export default function List() {
             const updatedLists = lists.filter((_, index) => index !== indexToRemove);
             localStorage.setItem('userLists', JSON.stringify(updatedLists));
         }
-        
+
         // State'den sil
         setListData(prev => prev.filter((_, index) => index !== indexToRemove));
     };
@@ -227,9 +235,83 @@ export default function List() {
                                 router.push("/dashboard/chat");
                             }}
                             style={{ cursor: "pointer" }}>
-                            <img src={aiIcon.src} alt="Avatar" />
-                            <img src={aiIcon.src} alt="Avatar" />
-                            <img src={aiIcon.src} alt="Avatar" />
+
+                            {item.bots && item.bots.length >= 5 ? (
+                                <div style={{ position: 'relative' }} className="splide-wrapper">
+                                    <Splide
+                                        options={{
+                                            type: 'loop',
+                                            perPage: 5,
+                                            gap: '4px',
+                                            arrows: false,
+                                            pagination: false,
+                                            autoplay: false,
+                                            interval: 3000,
+                                            pauseOnHover: true,
+                                            resetProgress: false,
+                                            height: '40px',
+                                            width: '250px'
+                                        }}
+                                        aria-label="Bot avatars"
+                                        onMounted={(splide) => {
+                                            setSplideInstances(prev => ({
+                                                ...prev,
+                                                [`splide-${index}`]: splide
+                                            }));
+                                        }}
+                                    >
+                                        {item.bots.map((bot, botIndex) => (
+                                            <SplideSlide key={botIndex}>
+                                                <img src={aiIcon.src} alt={`Bot ${botIndex + 1}`} />
+                                            </SplideSlide>
+                                        ))}
+                                    </Splide>
+
+                                    <div className="splide__arrows">
+                                        <button
+                                            className="splide__arrow splide__arrow--prev"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                splideInstances[`splide-${index}`]?.go('-1');
+                                            }}
+                                        >
+                                            <svg width="32" height="33" viewBox="0 0 32 33" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <rect x="32" y="32.5" width="32" height="32" rx="16" transform="rotate(-180 32 32.5)" fill="white" fill-opacity="0.24" />
+                                                <path opacity="0.5" d="M21.3332 17C21.4658 17 21.593 16.9473 21.6867 16.8536C21.7805 16.7598 21.8332 16.6326 21.8332 16.5C21.8332 16.3674 21.7805 16.2402 21.6867 16.1464C21.593 16.0527 21.4658 16 21.3332 16V17ZM21.3332 16L10.6665 16V17L21.3332 17V16Z" fill="#FF66C4" />
+                                                <path d="M14.6665 12.5L10.6665 16.5L14.6665 20.5" stroke="#FF66C4" strokeLinecap="round" strokeLinejoin="round" className="pathg" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            className="splide__arrow splide__arrow--next"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                splideInstances[`splide-${index}`]?.go('+1');
+                                            }}
+                                        >
+                                            <svg width="32" height="33" viewBox="0 0 32 33" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <rect y="0.5" width="32" height="32" rx="16" fill="white" fill-opacity="0.24" />
+                                                <path opacity="0.5" d="M10.6668 16C10.5342 16 10.407 16.0527 10.3133 16.1464C10.2195 16.2402 10.1668 16.3674 10.1668 16.5C10.1668 16.6326 10.2195 16.7598 10.3133 16.8536C10.407 16.9473 10.5342 17 10.6668 17V16ZM10.6668 17H21.3335V16L10.6668 16V17Z" fill="#FF66C4" />
+                                                <path d="M17.3335 20.5L21.3335 16.5L17.3335 12.5" stroke="#FF66C4" strokeLinecap="round" strokeLinejoin="round" className="pathg" />
+                                            </svg>
+
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    {item.bots && item.bots.length > 0 ? (
+                                        item.bots.map((bot, botIndex) => (
+                                            <img key={botIndex} src={aiIcon.src} alt={`Bot ${botIndex + 1}`} />
+                                        ))
+                                    ) : (
+                                        <>
+                                            <img src={aiIcon.src} alt="Avatar" />
+                                            <img src={aiIcon.src} alt="Avatar" />
+                                            <img src={aiIcon.src} alt="Avatar" />
+                                        </>
+                                    )}
+                                </>
+                            )}
                         </div>
 
                         <div className="list-content">

@@ -8,6 +8,7 @@ export default function MarketplaceHeader() {
     const fileInputRef = useRef(null);
     const [selectedFileName, setSelectedFileName] = useState('');
     const [promptText, setPromptText] = useState(''); // Ekle
+    const [isInputFocused, setIsInputFocused] = useState(false);
     const router = useRouter();
 
     const handleFileSelect = (e) => {

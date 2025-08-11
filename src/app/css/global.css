@@ -27,7 +27,8 @@ input.dark-date[type=month] {
   color-scheme: dark;
 }
 
-input.dark-date[type=month]::-webkit-calendar-picker-indicator { /* override fallback */
+input.dark-date[type=month]::-webkit-calendar-picker-indicator {
+  /* override fallback */
   filter: none;
 }
 
@@ -4410,6 +4411,12 @@ body {
   fill: linear-gradient(90deg, #4699FF 21.15%, #FF66C4 79.33%);
   filter: blur(59.3487968445px);
 }
+.list-wrapper .list-inner .list-card .splide-wrapper {
+  width: 320px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .list-wrapper .list-inner .list-card .list-left {
   display: flex;
   justify-content: center;
@@ -4424,6 +4431,58 @@ body {
      object-fit: cover;
   border-radius: 50%;
   box-shadow: 0px 4px 4px 5px rgba(0, 0, 0, 0.6);
+}
+.list-wrapper .list-inner .list-card .list-left .splide {
+  width: 320px;
+}
+.list-wrapper .list-inner .list-card .list-left .splide .splide__track {
+  padding: 20px;
+}
+.list-wrapper .list-inner .list-card .list-left .splide .splide__list {
+  align-items: center;
+}
+.list-wrapper .list-inner .list-card .list-left .splide .splide__slide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.list-wrapper .list-inner .list-card .list-left .splide .splide__slide img {
+  border-radius: 24px;
+  width: 44px;
+  height: 44px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0px 4px 4px 5px rgba(0, 0, 0, 0.6);
+}
+.list-wrapper .list-inner .list-card .splide__arrows .splide__arrow {
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.list-wrapper .list-inner .list-card .splide__arrows .splide__arrow:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+.list-wrapper .list-inner .list-card .splide__arrows .splide__arrow svg {
+  width: 32px !important;
+  height: 33px !important;
+}
+.list-wrapper .list-inner .list-card .splide__arrows .splide__arrow svg .pathg {
+  fill: transparent !important;
+}
+.list-wrapper .list-inner .list-card .splide__arrows .splide__arrow--prev {
+  left: 0;
+  transform: translateY(-50%) rotate(180deg);
+}
+.list-wrapper .list-inner .list-card .splide__arrows .splide__arrow--next {
+  right: 0;
 }
 .list-wrapper .list-inner .list-card .list-content {
   flex: 1;
@@ -5034,7 +5093,8 @@ body {
   flex-direction: column;
   justify-content: space-between;
   padding: 24px 64px;
-  padding-bottom: 100px; /* Input için alan bırak */
+  padding-bottom: 100px;
+  /* Input için alan bırak */
   height: calc(100vh - 84.5px);
   overflow: auto;
   color: #fff;
@@ -5049,18 +5109,25 @@ body {
 .chat-wrapper .fixed-input-container {
   position: fixed;
   bottom: 0;
-  left: 280px;
+  left: 0;
   right: 0;
+  margin-left: 280px;
   padding: 16px 64px;
-  z-index: 1000; /* 
-background-color: #0A0A0A;
-border-top: 1px solid rgba(255, 255, 255, 0.1); */
+  z-index: 1000;
+  transition: 0.3s all ease;
+}
+@media (max-width: 1100px) {
+  .chat-wrapper .fixed-input-container {
+    padding: 16px 15px;
+  }
 }
 @media (max-width: 992px) {
   .chat-wrapper .fixed-input-container {
-    left: 0; /* Mobilde tam genişlik */
-    padding: 16px 15px;
+    margin-left: 0;
   }
+}
+.chat-wrapper .fixed-input-container.logo-clicked {
+  margin-left: 90px !important;
 }
 .chat-wrapper .chat-header {
   display: flex;

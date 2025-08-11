@@ -10,6 +10,7 @@ import { useSearchParams } from "next/navigation";
 export default function Chat() {
     const messagesEndRef = useRef(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [logoClicked, setLogoClicked] = useState(false);
     const [messages, setMessages] = useState([]);
     const [isDialogModalOpen, setIsDialogModalOpen] = useState(false);
     const [prompt, setPrompt] = useState(""); // <-- Prompt'u burada tut
@@ -21,6 +22,20 @@ export default function Chat() {
             setPrompt(params.get('prompt') || "");
             setFileName(params.get('fileName') || "");
         }
+    }, []);
+
+
+    // Logo click event listener
+    useEffect(() => {
+        const handleLogoClick = (event) => {
+            setLogoClicked(event.detail.clicked);
+        };
+
+        window.addEventListener('logoClicked', handleLogoClick);
+        
+        return () => {
+            window.removeEventListener('logoClicked', handleLogoClick);
+        };
     }, []);
 
     const handleSendMessage = (data) => {
@@ -165,7 +180,7 @@ export default function Chat() {
             </div>
 
             {/* Fixed input at bottom */}
-            <div className="fixed-input-container">
+            <div className={`fixed-input-container ${logoClicked ? 'logo-clicked' : ''}`}>
                 <MessageInput onSend={handleSendMessage} onResetChat={handleResetChat} />
             </div>
 

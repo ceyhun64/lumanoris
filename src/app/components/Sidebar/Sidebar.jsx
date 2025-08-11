@@ -34,6 +34,10 @@ export default function Sidebar({ isMobileOpen = false }) {
 
   const handleLogoClick = () => {
     setLogoClicked((prev) => !prev); // toggle et
+    // Global event dispatch
+    window.dispatchEvent(new CustomEvent('logoClicked', { 
+      detail: { clicked: !logoClicked } 
+    }));
   };
 
   return (
