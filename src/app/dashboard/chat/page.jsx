@@ -51,18 +51,41 @@ export default function Chat() {
     };
 
     useEffect(() => {
+        // Önce localStorage'dan geçmiş chat mesajlarını kontrol et
+        const savedChatHistory = localStorage.getItem('chatHistory');
+        const savedChatTitle = localStorage.getItem('chatTitle');
+        const savedChatId = localStorage.getItem('chatId');
+        
+        if (savedChatHistory && messages.length === 0) {
+            // Geçmiş chat mesajlarını yükle
+            const parsedMessages = JSON.parse(savedChatHistory);
+            setMessages(parsedMessages);
+            
+            // Chat başlığını da güncelle (isteğe bağlı)
+            if (savedChatTitle) {
+                document.title = `Chat - ${savedChatTitle}`;
+            }
+            
+            // localStorage'ı temizle (bir kez kullanıldıktan sonra)
+            localStorage.removeItem('chatHistory');
+            localStorage.removeItem('chatTitle');
+            localStorage.removeItem('chatId');
+            
+            return; // Diğer kontrolleri yapma
+        }
+        
+        // Eğer geçmiş chat yoksa, normal prompt/fileName kontrolü yap
         if ((prompt || fileName) && messages.length === 0) {
             const initialMessages = [];
 
-            if (fileName) {
+            // Dosya ve metin varsa tek mesajda birleştir
+            if (fileName && prompt) {
+                initialMessages.push({ type: 'sent', text: prompt, fileName: fileName });
+            } else if (fileName) {
                 initialMessages.push({ type: 'sent', text: null, fileName: fileName });
-            }
-            
-            if (prompt) {
+            } else if (prompt) {
                 initialMessages.push({ type: 'sent', text: prompt });
             }
-            
-           
             
             setMessages(initialMessages);
             
@@ -98,11 +121,6 @@ export default function Chat() {
                         <div className="chat-messages">
                             {messages.map((msg, index) => (
                                 <div key={index} className={`message ${msg.type}`}>
-                                    {msg.fileName && (
-                                        <div className="message-file-preview">
-                                            {msg.fileName}
-                                        </div>
-                                    )}
                                     {msg.type === 'received' ? (
                                         <>
                                             <div className="message-avatar">
@@ -126,6 +144,11 @@ export default function Chat() {
                                         </>
                                     ) : (
                                         <>
+                                            {msg.fileName && (
+                                                <div className="message-file-preview">
+                                                    {msg.fileName}
+                                                </div>
+                                            )}
                                             {msg.text && <p>{msg.text}</p>}
                                         </>
                                     )}

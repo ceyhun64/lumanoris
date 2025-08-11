@@ -9,7 +9,7 @@ import CommentModal from "../CommentModal/CommentModal";
 import AddToSaleListModal from "../AddToSaleListModal";
 import DeleteConfirmModal from "../DeleteConfirmModal";
 
-export default function ChatbotCard({ title, image, likes, dislikes, comments, dialogs, status, onDelete }) {
+export default function ChatbotCard({ title, image, likes, dislikes, comments, dialogs, status, profileImage, onDelete }) {
     const router = useRouter();
     const [shareOpen, setShareOpen] = useState(false);
     const [commentOpen, setCommentOpen] = useState(false);
@@ -96,22 +96,34 @@ export default function ChatbotCard({ title, image, likes, dislikes, comments, d
                     </svg>
                 </div>
                 <div className="card-left">
-                    <Image src={sampleImage} alt="chatbot" className="bot-thumbnail" />
+                    <Image 
+                        src={image || sampleImage} 
+                        alt="chatbot" 
+                        className="bot-thumbnail"
+                        width={150}
+                        height={150}
+                    />
                 </div>
 
                 <div className="card-right">
                     <div className="top-row">
                         <div className="user-info">
-                            <Image src={profileIcon} alt="user" className="user-avatar" />
+                            <Image 
+                                src={profileImage || profileIcon} 
+                                alt="user" 
+                                className="user-avatar"
+                                width={40}
+                                height={40}
+                            />
                             <div className="user-meta">
-                                <p className="title">E-Ticaret Hakkında Bilgi</p>
+                                <p className="title">{title}</p>
                                 <div className="user-name">INVOKINK <span className="tag">#Eğitim</span></div>
                             </div>
                         </div>
 
                         <div className="dialog-info">
-                            <span className="dialog-count">734 Diyalog</span>
-                            <span className="status">Oluşturuldu</span>
+                            <span className="dialog-count">{dialogs} Diyalog</span>
+                            <span className={`status ${status === "Satın Alındı" ? "purchased" : ""}`}>{status}</span>
                         </div>
 
                         <div className="card-end">
@@ -121,8 +133,8 @@ export default function ChatbotCard({ title, image, likes, dislikes, comments, d
                         </div>
                     </div>
                     <div className="dialog-info-nm">
-                        <span className="dialog-count">734 Diyalog</span>
-                        <span className="status">Oluşturuldu</span>
+                        <span className="dialog-count">{dialogs} Diyalog</span>
+                        <span className={`status ${status === "Satın Alındı" ? "purchased" : ""}`}>{status}</span>
                     </div>
                     <div className="stats">
                         <span className={`like ${liked ? "active" : ""}`} onClick={handleLike}><div className="icc"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

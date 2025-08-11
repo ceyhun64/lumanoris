@@ -1,10 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function PhoneEditor() {
-    const [currentPhone, setCurrentPhone] = useState("+90 532 123 45 67"); // Varsayılan mevcut telefon
+    const [currentPhone, setCurrentPhone] = useState(""); // Varsayılan mevcut telefon
     const [newPhone, setNewPhone] = useState("");
     const [phoneError, setPhoneError] = useState("");
+    const [isEditing, setIsEditing] = useState(false);
 
     // Türkiye telefon numarası validasyonu
     const validateTurkishPhone = (phone) => {
@@ -55,6 +56,14 @@ export default function PhoneEditor() {
         validateTurkishPhone(value);
     };
 
+    // localStorage'dan telefon numarasını yükle
+    useEffect(() => {
+        const savedPhone = localStorage.getItem('userPhone');
+        if (savedPhone) {
+            setCurrentPhone(savedPhone);
+        }
+    }, []);
+
     const handleAddPhone = () => {
         if (!newPhone.trim()) {
             setPhoneError("Telefon numarası gerekli");
@@ -65,10 +74,21 @@ export default function PhoneEditor() {
             return;
         }
 
-        setCurrentPhone(newPhone.trim()); // Yeni telefon, mevcut telefon olur
+        // Telefon numarasını localStorage'a kaydet
+        const formattedPhone = newPhone.trim();
+        localStorage.setItem('userPhone', formattedPhone);
+        
+        setCurrentPhone(formattedPhone); // Yeni telefon, mevcut telefon olur
         setNewPhone(""); // Input temizlenir
         setPhoneError(""); // Hata mesajını temizle
-        console.log("Telefon eklendi:", newPhone);
+        setIsEditing(false); // Düzenleme modunu kapat
+        console.log("Telefon eklendi:", formattedPhone);
+    };
+
+    const handleEditClick = () => {
+        setIsEditing(true);
+        setNewPhone(currentPhone); // Mevcut telefonu input'a koy
+        setPhoneError(""); // Hata mesajını temizle
     };
 
     return (
@@ -76,23 +96,15 @@ export default function PhoneEditor() {
             <input
                 type="text"
                 className="phone-input"
-                value={currentPhone}
-                disabled
-                placeholder="MEVCUT TELEFON"
+                value={isEditing ? newPhone : (currentPhone || "Telefon numarası eklenmemiş")}
+                onChange={isEditing ? handlePhoneChange : undefined}
+                disabled={!isEditing}
+                placeholder={isEditing ? "TELEFON NUMARASI GİRİN" : "MEVCUT TELEFON"}
             />
-            <div className="input-with-error">
-                <input
-                    type="text"
-                    className={`phone-input ${phoneError ? 'error' : ''}`}
-                    value={newPhone}
-                    onChange={handlePhoneChange}
-                    placeholder="TELEFON NUMARASI EKLE"
-                />
-                {phoneError && <span className="field-error">{phoneError}</span>}
-            </div>
-            <button className="phone-submit-btn" onClick={handleAddPhone}>
-                Ekle
+            <button className="phone-submit-btn" onClick={isEditing ? handleAddPhone : handleEditClick}>
+                {isEditing ? "Kaydet" : (currentPhone ? "Düzenle" : "Ekle")}
             </button>
+            {isEditing && phoneError && <div className="phone-error">{phoneError}</div>}
         </div>
     );
 }

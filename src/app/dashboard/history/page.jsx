@@ -11,34 +11,68 @@ const initialItems = [
         id: 1,
         title: "E-Ticaret Hakkında Bilgi",
         subtitle: "Ürün Kategorilerini Optimize Etmek, Müşteri Deneyimini %30 Artırabilir.",
-        date: "1 Temmuz 2025"
+        date: "1 Temmuz 2025",
+        chatId: "ecommerce-chat",
+        messages: [
+            { type: 'sent', text: 'E-ticaret sitelerinde ürün kategorilerini nasıl optimize edebilirim?' },
+            { type: 'received', text: 'E-ticaret sitelerinde ürün kategorilerini optimize etmek için şu adımları takip edebilirsiniz:\n\n1. **Kullanıcı Davranışlarını Analiz Edin**: Hangi kategorilerin en çok ziyaret edildiğini ve satış yaptığını belirleyin.\n\n2. **Arama Analitiklerini Kullanın**: Müşterilerin hangi arama terimlerini kullandığını analiz edin.\n\n3. **Kategori Hiyerarşisini Düzenleyin**: Ana kategoriler, alt kategoriler ve ürün grupları oluşturun.\n\n4. **Filtreleme Seçeneklerini Geliştirin**: Fiyat, marka, renk, boyut gibi filtreler ekleyin.\n\n5. **Görsel Tasarımı İyileştirin**: Kategori sayfalarının kullanıcı dostu olmasını sağlayın.' },
+            { type: 'sent', text: 'Bu optimizasyonlar müşteri deneyimini ne kadar artırabilir?' },
+            { type: 'received', text: 'Doğru yapılan kategori optimizasyonları müşteri deneyimini ortalama %30 artırabilir. Bu artış şu şekilde gerçekleşir:\n\n• **Daha Hızlı Ürün Bulma**: %40 daha hızlı\n• **Satın Alma Oranı**: %25 artış\n• **Sayfa Görüntüleme Süresi**: %35 artış\n• **Müşteri Memnuniyeti**: %30 artış\n\nAyrıca arama motorlarında da daha iyi sıralama elde edersiniz.' }
+        ]
     },
     {
         id: 2,
         title: "Yapay Zeka ve Geleceğin Meslekleri",
-        subtitle: "2030 Yılına Kadar En Çok Talep Gören Mesleklerin %60’ı Henüz Ortaya Çıkmadı.",
-        date: "1 Temmuz 2025"
+        subtitle: "2030 Yılına Kadar En Çok Talep Gören Mesleklerin %60'ı Henüz Ortaya Çıkmadı.",
+        date: "1 Temmuz 2025",
+        chatId: "ai-careers-chat",
+        messages: [
+            { type: 'sent', text: 'Yapay zeka gelecekte hangi meslekleri etkileyecek?' },
+            { type: 'received', text: 'Yapay zeka teknolojileri gelecekte birçok mesleği derinden etkileyecek. İşte öne çıkan alanlar:\n\n**Yüksek Risk Altındaki Meslekler:**\n• Veri girişi ve muhasebe\n• Basit üretim işleri\n• Temel müşteri hizmetleri\n• Rutin analiz işleri\n\n**Yeni Ortaya Çıkacak Meslekler:**\n• AI Etik Uzmanı\n• Veri Bilimci\n• Makine Öğrenmesi Mühendisi\n• AI İnsan Etkileşimi Tasarımcısı\n\n2030 yılına kadar en çok talep gören mesleklerin %60\'ı henüz ortaya çıkmamış durumda.' },
+            { type: 'sent', text: 'Bu değişime nasıl hazırlanabilirim?' },
+            { type: 'received', text: 'Bu değişime hazırlanmak için şu adımları atabilirsiniz:\n\n1. **Sürekli Öğrenme**: Online kurslar ve sertifikalar alın\n2. **Teknoloji Okuryazarlığı**: AI araçlarını öğrenin\n3. **Yaratıcılık Geliştirin**: AI\'nın yapamayacağı işlere odaklanın\n4. **Sosyal Beceriler**: İnsan etkileşimi gerektiren alanlarda uzmanlaşın\n5. **Esneklik**: Farklı alanlarda deneyim kazanın\n\nGelecekte başarılı olmak için hem teknik hem de sosyal becerilerinizi geliştirmeniz önemli.' }
+        ]
     },
     {
         id: 3,
         title: "Sürdürülebilir Enerji Çözümleri",
-        subtitle: "Güneş ve Rüzgar Enerjisi, 2040’a Kadar Küresel Enerji Tüketiminin %50’sini Karşılayabilir.",
-        date: "28 Haziran 2025"
+        subtitle: "Güneş ve Rüzgar Enerjisi, 2040'a Kadar Küresel Enerji Tüketiminin %50'sini Karşılayabilir.",
+        date: "28 Haziran 2025",
+        chatId: "sustainable-energy-chat",
+        messages: [
+            { type: 'sent', text: 'Sürdürülebilir enerji çözümleri nelerdir?' },
+            { type: 'received', text: 'Sürdürülebilir enerji çözümleri şunları içerir:\n\n**Yenilenebilir Enerji Kaynakları:**\n• Güneş Enerjisi (Fotovoltaik sistemler)\n• Rüzgar Enerjisi (Onshore ve offshore)\n• Hidroelektrik Enerji\n• Jeotermal Enerji\n• Biyokütle Enerjisi\n\n**Enerji Verimliliği:**\n• Akıllı şebekeler\n• Enerji depolama sistemleri\n• LED aydınlatma\n• Enerji tasarruflu cihazlar\n\n2040 yılına kadar güneş ve rüzgar enerjisi küresel enerji tüketiminin %50\'sini karşılayabilir.' },
+            { type: 'sent', text: 'Bu geçişin ekonomik etkileri neler olacak?' },
+            { type: 'received', text: 'Sürdürülebilir enerjiye geçişin ekonomik etkileri:\n\n**Pozitif Etkiler:**\n• Yeni iş alanları oluşması\n• Enerji maliyetlerinin düşmesi\n• Teknoloji sektöründe büyüme\n• İhracat potansiyeli\n\n**Geçiş Maliyetleri:**\n• Altyapı yatırımları\n• Eğitim ve yeniden eğitim\n• Teknoloji geliştirme\n\nUzun vadede bu geçiş ekonomik büyümeyi destekleyecek ve yeni fırsatlar yaratacaktır.' }
+        ]
     },
     {
         id: 4,
         title: "Veri Güvenliği ve Siber Tehditler",
-        subtitle: "2025’te Şirketlerin %75’i En Az Bir Kez Ransomware Saldırısına Uğradı.",
-        date: "22 Haziran 2025"
+        subtitle: "2025'te Şirketlerin %75'i En Az Bir Kez Ransomware Saldırısına Uğradı.",
+        date: "22 Haziran 2025",
+        chatId: "cybersecurity-chat",
+        messages: [
+            { type: 'sent', text: 'Günümüzde en büyük siber tehditler nelerdir?' },
+            { type: 'received', text: 'Günümüzde en büyük siber tehditler şunlardır:\n\n**Ransomware Saldırıları:**\n• Veri şifreleme ve fidye talebi\n• Kritik sistemleri devre dışı bırakma\n• Çift şantaj (veri çalma + şifreleme)\n\n**Phishing Saldırıları:**\n• Gelişmiş sosyal mühendislik\n• Hedefli spear phishing\n• CEO dolandırıcılığı\n\n**IoT Güvenlik Açıkları:**\n• Akıllı cihaz saldırıları\n• Botnet oluşturma\n• Ağ güvenlik açıkları\n\n2025\'te şirketlerin %75\'i en az bir kez ransomware saldırısına uğradı.' },
+            { type: 'sent', text: 'Bu tehditlere karşı nasıl korunabilirim?' },
+            { type: 'received', text: 'Siber tehditlere karşı korunma yöntemleri:\n\n**Temel Güvenlik Önlemleri:**\n• Güçlü şifreler ve 2FA kullanın\n• Düzenli güncellemeler yapın\n• Antivirüs yazılımı kullanın\n• Veri yedekleme yapın\n\n**Eğitim ve Farkındalık:**\n• Çalışanları eğitin\n• Güvenlik politikaları oluşturun\n• Düzenli güvenlik testleri yapın\n• Olay müdahale planı hazırlayın\n\n**Teknik Önlemler:**\n• Firewall kullanın\n• VPN bağlantıları\n• Şifreli iletişim\n• Güvenlik izleme sistemleri' }
+        ]
     },
     {
         id: 5,
         title: "Uzaktan Çalışma Kültürü",
         subtitle: "Hibrit Çalışma Modelleri, Çalışan Verimliliğini Ortalama %18 Artırdı.",
-        date: "15 Haziran 2025"
+        date: "15 Haziran 2025",
+        chatId: "remote-work-chat",
+        messages: [
+            { type: 'sent', text: 'Uzaktan çalışma kültürü nasıl oluşturulur?' },
+            { type: 'received', text: 'Uzaktan çalışma kültürü oluşturmak için şu adımları takip edebilirsiniz:\n\n**Teknoloji Altyapısı:**\n• Güvenilir iletişim araçları\n• Proje yönetim platformları\n• Bulut tabanlı dosya paylaşımı\n• Video konferans sistemleri\n\n**İletişim Stratejileri:**\n• Düzenli toplantılar\n• Açık iletişim kanalları\n• Geri bildirim sistemleri\n• Takım oluşturma aktiviteleri\n\n**Çalışan Desteği:**\n• Esnek çalışma saatleri\n• Mental sağlık desteği\n• Profesyonel gelişim fırsatları\n• İş-yaşam dengesi' },
+            { type: 'sent', text: 'Hibrit çalışma modelinin avantajları nelerdir?' },
+            { type: 'received', text: 'Hibrit çalışma modelinin avantajları:\n\n**Çalışan Açısından:**\n• İş-yaşam dengesi\n• Zaman tasarrufu\n• Esneklik\n• Daha az stres\n\n**Şirket Açısından:**\n• Ofis maliyetlerinde azalma\n• Daha geniş yetenek havuzu\n• Çalışan memnuniyeti\n• Verimlilik artışı\n\nHibrit çalışma modelleri çalışan verimliliğini ortalama %18 artırdı ve bu trend gelecekte de devam edecek.' }
+        ]
     }
 ];
-
 
 export default function History() {
     const router = useRouter();
@@ -50,11 +84,20 @@ export default function History() {
     const [deleteTargetId, setDeleteTargetId] = useState(null);
     const menuRef = useRef(null);
 
-
     const handleDelete = () => {
         setHistoryItems(prev => prev.filter(item => item.id !== deleteTargetId));
         setDeleteTargetId(null);
         setActiveMenuId(null);
+    };
+
+    const handleChatClick = (item) => {
+        // Chat mesajlarını localStorage'a kaydet
+        localStorage.setItem('chatHistory', JSON.stringify(item.messages));
+        localStorage.setItem('chatTitle', item.title);
+        localStorage.setItem('chatId', item.chatId);
+        
+        // Chat sayfasına yönlendir
+        router.push("/dashboard/chat");
     };
 
     useEffect(() => {
@@ -121,7 +164,7 @@ export default function History() {
                             ) {
                                 return;
                             }
-                            router.push("/dashboard/chat");
+                            handleChatClick(item);
                         }}>
                         <div className="shadow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="205" height="111" viewBox="0 0 205 111" fill="none">

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from 'next/navigation';
+import sampleImage from "../../../images/sample-bot-page.png";
 
 export default function ChatbotForm() {
-
+    const router = useRouter();
     const [open, setOpen] = useState(false);
     const [selected, setSelected] = useState('');
     const [formData, setFormData] = useState({
@@ -28,11 +30,16 @@ export default function ChatbotForm() {
 
         const file = e.dataTransfer.files[0];
         if (file && (file.type.startsWith("image/") || file.type === "application/pdf")) {
-            setUploadedFile({
-                file,
-                url: URL.createObjectURL(file),
-                type: file.type
-            });
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const base64 = event.target.result;
+                setUploadedFile({
+                    file,
+                    url: base64,
+                    type: file.type
+                });
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -48,12 +55,16 @@ export default function ChatbotForm() {
     const handleFileUpload = (e, type) => {
         const file = e.target.files[0];
         if (file) {
-            const url = URL.createObjectURL(file);
-            if (type === 'cover') {
-                setCoverImage(url);
-            } else {
-                setProfileImage(url);
-            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const base64 = event.target.result;
+                if (type === 'cover') {
+                    setCoverImage(base64);
+                } else {
+                    setProfileImage(base64);
+                }
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -68,13 +79,39 @@ export default function ChatbotForm() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const payload = {
-            ...formData,
+        
+        // Yeni chatbot verisi oluştur
+        const newChatbot = {
+            id: Date.now(), // Benzersiz ID
+            title: formData.botName || "Yeni Chatbot",
+            image: coverImage || profileImage || sampleImage,
+            likes: 0,
+            dislikes: 0,
+            comments: 0,
+            status: "Oluşturuldu",
+            dialogs: Math.floor(Math.random() * 200) + 1, // 1-200 arası random
+            description: formData.description,
             category: selected,
+            stylePrompt: formData.stylePrompt,
+            message: formData.message,
             coverImage,
-            profileImage
+            profileImage,
+            uploadedFile
         };
-        console.log('Form Data:', payload);
+
+        // localStorage'dan mevcut chatbotları al
+        const existingChatbots = JSON.parse(localStorage.getItem('userChatbots') || '[]');
+        
+        // Yeni chatbot'u ekle
+        const updatedChatbots = [...existingChatbots, newChatbot];
+        
+        // localStorage'a kaydet
+        localStorage.setItem('userChatbots', JSON.stringify(updatedChatbots));
+        
+        console.log('Yeni Chatbot Eklendi:', newChatbot);
+        
+        // Chatbots sayfasına yönlendir
+        router.push('/dashboard/chatbots');
     };
 
 
@@ -179,11 +216,16 @@ export default function ChatbotForm() {
                         onChange={(e) => {
                             const file = e.target.files[0];
                             if (file && (file.type.startsWith("image/") || file.type === "application/pdf")) {
-                                setUploadedFile({
-                                    file,
-                                    url: URL.createObjectURL(file),
-                                    type: file.type
-                                });
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                    const base64 = event.target.result;
+                                    setUploadedFile({
+                                        file,
+                                        url: base64,
+                                        type: file.type
+                                    });
+                                };
+                                reader.readAsDataURL(file);
                             }
                         }}
                     />

@@ -4,33 +4,20 @@ import iconSrc from "../../../images/ubeyaz.png";
 import Image from "next/image";
 import sampleImage from "../../../images/sample-bot-page.png";
 import ChatbotCard from "@/app/components/ChatbotCard/ChatbotCard";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const mockChatbots = [
-    {
-        id: 1,
-        title: "E-Ticaret Hakkında Bilgi",
-        image: sampleImage,
-        likes: 150,
-        dislikes: 4,
-        comments: 12,
-        status: "Oluşturuldu",
-        dialogs: 734,
-    },
-    {
-        id: 2,
-        title: "Yapay Zeka Asistanı",
-        image: sampleImage,
-        likes: 88,
-        dislikes: 2,
-        comments: 5,
-        status: "Oluşturuldu",
-        dialogs: 314,
-    },
 ];
 
 export default function Chatbotlarim() {
-    const [chatbots, setChatbots] = useState(mockChatbots);
+    const [chatbots, setChatbots] = useState([]);
+
+    // Component mount olduğunda localStorage'dan chatbotları yükle
+    useEffect(() => {
+        const savedChatbots = JSON.parse(localStorage.getItem('userChatbots') || '[]');
+        const allChatbots = [...mockChatbots, ...savedChatbots];
+        setChatbots(allChatbots);
+    }, []);
 
 
     const isEmpty = chatbots.length === 0;
@@ -103,8 +90,18 @@ export default function Chatbotlarim() {
                         comments={bot.comments}
                         dialogs={bot.dialogs}
                         status={bot.status}
+                        profileImage={bot.profileImage}
                         onDelete={() => {
-                            setChatbots(prev => prev.filter(b => b.id !== bot.id));
+                            // Mock chatbot ise sadece state'den kaldır
+                            if (mockChatbots.find(mockBot => mockBot.id === bot.id)) {
+                                setChatbots(prev => prev.filter(b => b.id !== bot.id));
+                            } else {
+                                // localStorage'dan gelen chatbot ise localStorage'dan da kaldır
+                                const savedChatbots = JSON.parse(localStorage.getItem('userChatbots') || '[]');
+                                const updatedSavedChatbots = savedChatbots.filter(savedBot => savedBot.id !== bot.id);
+                                localStorage.setItem('userChatbots', JSON.stringify(updatedSavedChatbots));
+                                setChatbots(prev => prev.filter(b => b.id !== bot.id));
+                            }
                         }}
                     />
                 ))}

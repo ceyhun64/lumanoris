@@ -1,7 +1,8 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from 'date-fns';
+import PurchaseSuccessModal from "../PurchaseSuccessModal";
 export default function CartConfirm({ cartItems }) {
     const [sendInvoice, setSendInvoice] = useState(false);
     const [use3DSecure, setUse3DSecure] = useState(false);
@@ -9,6 +10,7 @@ export default function CartConfirm({ cartItems }) {
     const [isPolicyOpen, setPolicyOpen] = useState(false);
     const [activePolicy, setActivePolicy] = useState(null);
     const [aggrementCheck, setAggrementCheck] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
 
     const openPolicy = (type) => {
@@ -28,6 +30,8 @@ export default function CartConfirm({ cartItems }) {
     });
     const [cardNumberError, setCardNumberError] = useState("");
     const [expiryError, setExpiryError] = useState("");
+    const [savedCard, setSavedCard] = useState(null);
+    const [useSavedCard, setUseSavedCard] = useState(false);
 
     function validateCVV(cvv) {
         // Sadece rakam ve uzunluğu 3 (veya 4)
@@ -122,9 +126,56 @@ export default function CartConfirm({ cartItems }) {
         }
     };
 
+    // Kart bilgilerini localStorage'a kaydetme fonksiyonu
+    const saveCardToLocalStorage = () => {
+        if (addCard && cardInfo.number && cardInfo.expiry) {
+            const cardData = {
+                number: cardInfo.number,
+                expiry: cardInfo.expiry,
+                holderName: "Adnan Yusuf", // Varsayılan kart sahibi
+                savedAt: new Date().toISOString()
+            };
+            localStorage.setItem('savedCard', JSON.stringify(cardData));
+        }
+    };
+
+    // Ödeme onaylandığında kartı kaydet ve modal'ı aç
+    const handlePaymentConfirm = () => {
+        // Sadece kayıtlı kart kullanılmıyorsa ve "Kartımı Ekle" işaretliyse kaydet
+        if (!useSavedCard && addCard) {
+            saveCardToLocalStorage();
+        }
+        setShowSuccessModal(true);
+        // Burada ödeme işlemi yapılacak
+        console.log("Ödeme onaylandı, kayıtlı kart kullanıldı:", useSavedCard, "yeni kart kaydedildi:", addCard);
+    };
+
     const [selectedItems, setSelectedItems] = useState(
         cartItems.map((item) => item.id)
     );
+
+    // Kayıtlı kartı localStorage'dan yükle
+    useEffect(() => {
+        const savedCardData = localStorage.getItem('savedCard');
+        if (savedCardData) {
+            try {
+                const parsedCard = JSON.parse(savedCardData);
+                setSavedCard(parsedCard);
+            } catch {
+                // ignore malformed card data
+            }
+        }
+    }, []);
+
+    // Kart numarasını sansürleme fonksiyonu
+    const maskCardNumber = (cardNumber) => {
+        if (!cardNumber) return "";
+        const cleaned = cardNumber.replace(/\s/g, "");
+        if (cleaned.length < 4) return cardNumber;
+        const lastFour = cleaned.slice(-4);
+        const masked = "**".repeat(Math.ceil((cleaned.length - 4) / 2));
+        return `${masked} ${lastFour}`;
+    };
 
 
 
@@ -226,61 +277,84 @@ export default function CartConfirm({ cartItems }) {
                             </svg>
                         </div>
                         <h4>Ödeme Bilgileri</h4>
-                        <input
-                            type="text"
-                            className="input"
-                            placeholder="KART NUMARASI"
-                            value={cardInfo.number}
-                            inputMode="numeric"
-                            onChange={(e) => validateAndFormatCardNumber(e.target.value)}
-                            onBlur={(e) => validateAndFormatCardNumber(e.target.value)}
-                        />
+                        
+                        {/* Kayıtlı Kart Seçeneği */}
+                        {savedCard && (
+                            <div className="saved-card-option">
+                                <label className="checkbox-option">
+                                    <input
+                                        type="checkbox"
+                                        checked={useSavedCard}
+                                        onChange={() => setUseSavedCard(!useSavedCard)}
+                                    />
+                                    <span className="custom-check"></span>
+                                    <div className="saved-card-info">
+                                        <span className="card-number">{maskCardNumber(savedCard.number)}</span>
+                                        <span className="card-details">
+                                            {savedCard.holderName} • {savedCard.expiry}
+                                        </span>
+                                    </div>
+                                </label>
+                            </div>
+                        )}
+                        
+                        {/* Yeni Kart Girişi - Kayıtlı kart kullanılmıyorsa göster */}
+                        {(!savedCard || !useSavedCard) && (
+                            <input
+                                type="text"
+                                className="input"
+                                placeholder="KART NUMARASI"
+                                value={cardInfo.number}
+                                inputMode="numeric"
+                                onChange={(e) => validateAndFormatCardNumber(e.target.value)}
+                                onBlur={(e) => validateAndFormatCardNumber(e.target.value)}
+                            />
+                        )}
                         {cardNumberError && (
                             <div style={{ color: "#FF66C4", fontSize: 12, marginTop: 4 }}>
                                 {cardNumberError}
                             </div>
                         )}
-                        <div className="int-ctr">
-                            <input
-                                type="text"
-                                className={`input ${expiryError ? 'error' : ''}`}
-                                placeholder="AA/YY"
-                                value={cardInfo.expiry || ''}
-                                onChange={(e) => {
-                                    const formatted = formatExpiryDate(e.target.value);
-                                    setCardInfo(prev => ({ ...prev, expiry: formatted }));
-                                    
-                                    if (formatted.length === 5) { // MM/YY formatında
-                                        if (isValidExpiryDate(formatted)) {
-                                            setExpiryError('');
+                        
+                        {/* Tarih ve CVV - Kayıtlı kart kullanılmıyorsa göster */}
+                        {(!savedCard || !useSavedCard) && (
+                            <div className="int-ctr">
+                                <input
+                                    type="text"
+                                    className={`input ${expiryError ? 'error' : ''}`}
+                                    placeholder="AA/YY"
+                                    value={cardInfo.expiry || ''}
+                                    onChange={(e) => {
+                                        const formatted = formatExpiryDate(e.target.value);
+                                        setCardInfo(prev => ({ ...prev, expiry: formatted }));
+                                        
+                                        if (formatted.length === 5) { // MM/YY formatında
+                                            if (isValidExpiryDate(formatted)) {
+                                                setExpiryError('');
+                                            } else {
+                                                setExpiryError('Son kullanma tarihi geçmiş veya hatalı');
+                                            }
                                         } else {
-                                            setExpiryError('Son kullanma tarihi geçmiş veya hatalı');
+                                            setExpiryError('');
                                         }
-                                    } else {
-                                        setExpiryError('');
-                                    }
-                                }}
-                                maxLength={5}
-                            />{/* 
-                            {expiryError && (
-                                <div style={{ color: "#FF66C4", fontSize: 12, marginTop: 4 }}>
-                                    {expiryError}
-                                </div>
-                            )} */}
-                            <input
-                                type="text"
-                                className="input"
-                                maxLength={4}
-                                placeholder="CVV"
-                                value={cardInfo.cvv}
-                                onChange={handleCVVChange}
-                            />
-                            {cvvError && (
-                                <div style={{ color: "#FF66C4", fontSize: 12, marginTop: 4 }}>
-                                    {cvvError}
-                                </div>
-                            )}
-                        </div>
+                                    }}
+                                    maxLength={5}
+                                />
+                                <input
+                                    type="text"
+                                    className="input"
+                                    maxLength={4}
+                                    placeholder="CVV"
+                                    value={cardInfo.cvv}
+                                    onChange={handleCVVChange}
+                                />
+                                {cvvError && (
+                                    <div style={{ color: "#FF66C4", fontSize: 12, marginTop: 4 }}>
+                                        {cvvError}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         <label className="checkbox-option">
                             <input
                                 type="checkbox"
@@ -360,10 +434,14 @@ export default function CartConfirm({ cartItems }) {
                         <button
                             className="checkout-btn"
                             disabled={
-                                !isValidCardNumber(cardInfo.number) ||
-                                !isValidExpiryDate(cardInfo.expiry) ||
-                                !validateCVV(cardInfo.cvv)
+                                (!useSavedCard && (
+                                    !isValidCardNumber(cardInfo.number) ||
+                                    !isValidExpiryDate(cardInfo.expiry) ||
+                                    !validateCVV(cardInfo.cvv)
+                                )) ||
+                                !aggrementCheck
                             }
+                            onClick={handlePaymentConfirm}
                         >
                             ÖDEMEYİ ONAYLA
                         </button>
@@ -525,6 +603,12 @@ export default function CartConfirm({ cartItems }) {
                     </div>
                 </div>
             )}
+
+            <PurchaseSuccessModal 
+                isOpen={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                chatbotName={cartItems[0]?.title || "Travel Planner AI"}
+            />
         </div>
     );
 }
