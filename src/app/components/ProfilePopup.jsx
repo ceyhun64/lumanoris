@@ -1,11 +1,34 @@
 import React from "react";
 
 export default function ProfilePopup({ user, onLogout }) {
+    const [profileImage, setProfileImage] = React.useState(null);
+
+    React.useEffect(() => {
+        if (typeof window !== "undefined") {
+            const savedImage = localStorage.getItem('userProfileImage');
+            setProfileImage(savedImage);
+            
+            const handleProfileImageUpdated = () => {
+                const updatedImage = localStorage.getItem('userProfileImage');
+                setProfileImage(updatedImage);
+            };
+            
+            window.addEventListener('profileImageUpdated', handleProfileImageUpdated);
+            return () => {
+                window.removeEventListener('profileImageUpdated', handleProfileImageUpdated);
+            };
+        }
+    }, []);
+
     return (
         <div className="profile-popup">
             <div className="profile-popup__top">
                 <div className="profile-popup__avatar">
-                    <img src="/images/avatar-demo.png" alt="avatar" />
+                    {profileImage ? (
+                        <img src={profileImage} alt="avatar" />
+                    ) : (
+                        <img src="/images/avatar-demo.png" alt="avatar" />
+                    )}
                 </div>
                 <div>
                     <div className="profile-popup__username">{user.username}</div>

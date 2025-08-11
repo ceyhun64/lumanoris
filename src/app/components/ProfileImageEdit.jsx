@@ -1,29 +1,53 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState,useEffect } from "react";
 
 export default function ProfileImageEdit({ onChange, onRemove }) {
     const [image, setImage] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const inputRef = useRef();
 
+    // localStorage'dan profil fotoğrafını yükle
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const savedImage = localStorage.getItem('userProfileImage');
+            if (savedImage) {
+                setImage(savedImage);
+            }
+        }
+    }, []);
+
     const handleImageChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setImage(URL.createObjectURL(file));
-            setIsEditing(true);
+            const reader = new FileReader();
+            
+            reader.onload = (event) => {
+                const base64String = event.target.result;
+                setImage(base64String);
+                setIsEditing(true);
+            };
+            
+            reader.readAsDataURL(file);
         }
     };
 
     const handleRemove = () => {
         setImage(null);
         setIsEditing(false);
+        // localStorage'dan kaldır
+        localStorage.removeItem('userProfileImage');
+        // Event tetikle
+        window.dispatchEvent(new Event('profileImageUpdated'));
         if (onRemove) onRemove();
         if (inputRef.current) inputRef.current.value = "";
     };
 
     const handleSave = () => {
-        if (onChange && image) {
-            // URL'den file objesi oluştur (gerçek uygulamada bu farklı olabilir)
-            onChange(image);
+        if (image) {
+            // localStorage'a kaydet
+            localStorage.setItem('userProfileImage', image);
+            // Event tetikle (diğer component'lerin güncellenmesi için)
+            window.dispatchEvent(new Event('profileImageUpdated'));
+            if (onChange) onChange(image);
         }
         setIsEditing(false);
     };

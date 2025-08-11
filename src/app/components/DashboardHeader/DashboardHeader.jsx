@@ -14,6 +14,7 @@ import QuitModal from '../QuitModal/QuitModal';
 export default function Header() {
     const router = useRouter();
     const [showProfile, setShowProfile] = useState(false);
+    const [profileImage, setProfileImage] = useState(null);
 
     const [showNotification, setShowNotification] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -49,22 +50,32 @@ export default function Header() {
             }
         };
 
+        const updateProfileImage = () => {
+            const savedImage = localStorage.getItem('userProfileImage');
+            setProfileImage(savedImage);
+        };
+
         // Initial load
         updateCartCount();
+        updateProfileImage();
 
         // Listen for updates from other tabs
         const handleStorage = (e) => {
             if (e.key === 'cart') updateCartCount();
+            if (e.key === 'userProfileImage') updateProfileImage();
         };
         window.addEventListener('storage', handleStorage);
 
         // Listen for in-tab updates
         const handleCartUpdated = () => updateCartCount();
+        const handleProfileImageUpdated = () => updateProfileImage();
         window.addEventListener('cartUpdated', handleCartUpdated);
+        window.addEventListener('profileImageUpdated', handleProfileImageUpdated);
 
         return () => {
             window.removeEventListener('storage', handleStorage);
             window.removeEventListener('cartUpdated', handleCartUpdated);
+            window.removeEventListener('profileImageUpdated', handleProfileImageUpdated);
         };
     }, []);
 
@@ -131,7 +142,16 @@ export default function Header() {
                         style={{ position: 'relative' }}
                     >
                         <button className="icon-btn">
-                            <Image src={userIcon} alt="profil" />
+                        <Image 
+                                    src={userIcon} 
+                                    alt="profil" 
+                                    width={24} 
+                                    height={24} 
+                                    style={{ 
+                                        borderRadius: '50%',
+                                        objectFit: 'cover'
+                                    }} 
+                                />
                         </button>
                         {showProfile && (
                             <div style={{ position: "absolute", top: 50, right: 0, zIndex: 20 }}>

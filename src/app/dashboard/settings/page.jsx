@@ -1,5 +1,4 @@
 "use client";
-import AccountPoints from "@/app/components/AccountPoints/AccountPoints";
 import BankInfo from "@/app/components/BankInfo/BankInfo";
 import ContactForm from "@/app/components/ContactForm";
 import EditableField from "@/app/components/EditableField/EditableField";
@@ -10,7 +9,7 @@ import PrivacyPolicy from "@/app/components/PrivacyPolicy";
 import ProfileImageEdit from "@/app/components/ProfileImageEdit";
 import TermsOfUse from "@/app/components/TermsOfUse";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState("user");
