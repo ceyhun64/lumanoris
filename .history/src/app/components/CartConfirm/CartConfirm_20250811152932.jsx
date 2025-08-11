@@ -365,7 +365,7 @@ export default function CartConfirm({ cartItems }) {
                                 !validateCVV(cardInfo.cvv)
                             }
                         >
-                            ÖDEMEYİ ONAYLA
+                            SEPETİ ONAYLA
                         </button>
                     </div>
 

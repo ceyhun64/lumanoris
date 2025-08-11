@@ -5507,30 +5507,12 @@ body {
     flex-direction: column;
     justify-content: space-between;
     padding: 24px 64px;
-    padding-bottom: 100px; /* Input için alan bırak */
     height: calc(100vh - 84.5px);
     overflow: auto;
     color: #fff;
-    position: relative;
-    padding-bottom: 150px;
 
     @media(max-width:1100px) {
         padding: 32px 15px;
-    }
-
-    .fixed-input-container {
-        position: fixed;
-        bottom: 0;
-        left: 280px;
-        right: 0;
-        padding: 16px 64px;
-        z-index: 1000;
-        background-color: #0A0A0A;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        @media(max-width:992px) {
-            left: 0; /* Mobilde tam genişlik */
-            padding: 16px 15px;
-        }
     }
 
     .chat-header {
@@ -6017,7 +5999,6 @@ body {
                 overflow-y: auto;
                 display: flex;
                 flex-direction: column;
-                padding-bottom: 100px;
                 gap: 12px;
 
                 .message {

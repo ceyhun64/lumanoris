@@ -138,21 +138,18 @@ export default function Chat() {
                     }
 
 
+                    <MessageInput onSend={handleSendMessage} onResetChat={handleResetChat} />
+                    <DialogNotebookModal
+                        isOpen={isDialogModalOpen}
+                        onClose={() => setIsDialogModalOpen(false)}
+                        onPublish={(title) => {
+                            console.log("Diyalog başlığı:", title);
+                        }}
+                    />
+
+
                 </div>
             </div>
-
-            {/* Fixed input at bottom */}
-            <div className="fixed-input-container">
-                <MessageInput onSend={handleSendMessage} onResetChat={handleResetChat} />
-            </div>
-
-            <DialogNotebookModal
-                isOpen={isDialogModalOpen}
-                onClose={() => setIsDialogModalOpen(false)}
-                onPublish={(title) => {
-                    console.log("Diyalog başlığı:", title);
-                }}
-            />
 
 
 
