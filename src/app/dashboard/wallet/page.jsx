@@ -82,7 +82,6 @@ export default function Wallet() {
                             <span className="amount">{tx.amount >= 0 ? `+${tx.amount} ₺` : `${tx.amount} ₺`}</span>
                             {tx.description && <p className="description">{tx.description}</p>}
                         </div>
-                        <button className="detail-button">Detaylar</button>
                     </div>
                 ))}
             </div>

@@ -32,7 +32,7 @@ export default function EmptyCart() {
                 </svg>
             </div>
             <p className="message">SEPETİNDE ÜRÜN BULUNMAMAKTADIR.</p>
-            <button onClick={() => router.push("/dashboard/explore")} className="explore-btn">
+            <button onClick={() => router.push("/dashboard/market")} className="explore-btn">
                 KEŞFETMEYE BAŞLA
             </button>
         </div>
