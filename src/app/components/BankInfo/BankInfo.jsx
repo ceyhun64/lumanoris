@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import DeleteConfirmModal from "../DeleteConfirmModal";
 
 export default function BankInfo() {
     const [formData, setFormData] = useState({
@@ -20,6 +21,8 @@ export default function BankInfo() {
     const [ibanError, setIbanError] = useState("");
     const [idNumberError, setIdNumberError] = useState("");
     const [phoneError, setPhoneError] = useState("");
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState(null); // 'card' veya 'iban'
 
     const STORAGE_KEY_FORM = "bankInfoForm";
     const STORAGE_KEY_CARDS = "bankInfoCards";
@@ -81,7 +84,7 @@ export default function BankInfo() {
                 if (Array.isArray(parsedCards)) setCards(parsedCards);
                 else if (typeof parsedCards === 'string') setCards([parsedCards]);
             }
-            
+
             // Kayıtlı kartı yükle
             const savedCardData = localStorage.getItem('savedCard');
             if (savedCardData) {
@@ -103,14 +106,14 @@ export default function BankInfo() {
         // Sadece düzenleme modunda veya kaydetme sırasında yaz
         try {
             localStorage.setItem(STORAGE_KEY_FORM, JSON.stringify(formData));
-        } catch {}
+        } catch { }
     }, [formData, isLoaded]);
 
     useEffect(() => {
         if (!isLoaded) return;
         try {
             localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify(cards));
-        } catch {}
+        } catch { }
     }, [cards, isLoaded]);
 
     const handleChange = (e) => {
@@ -129,12 +132,12 @@ export default function BankInfo() {
         }
         if (name === "iban") {
             let raw = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-            
+
             // TR ile başlamıyorsa otomatik ekle
             if (raw.length > 0 && !raw.startsWith('TR')) {
                 raw = 'TR' + raw;
             }
-            
+
             const grouped = raw.replace(/(.{4})/g, "$1 ").trim();
             setFormData((prev) => ({ ...prev, [name]: grouped }));
             validateIban(grouped);
@@ -215,18 +218,18 @@ export default function BankInfo() {
     const validateTurkishPhone = (phone) => {
         // Sadece rakamları al
         const digits = phone.replace(/\D/g, "");
-        
+
         // Türkiye telefon numarası formatları:
         // +90 5XX XXX XX XX (mobil)
         // +90 2XX XXX XX XX (sabit)
         // 05XX XXX XX XX (mobil, başında 0)
         // 02XX XXX XX XX (sabit, başında 0)
-        
+
         if (digits.length === 0) {
             setPhoneError("");
             return false;
         }
-        
+
         // 11 haneli (0 ile başlayan) veya 12 haneli (+90 ile başlayan)
         if (digits.length === 11 && digits.startsWith('0')) {
             // 05XX veya 02XX ile başlamalı
@@ -249,7 +252,7 @@ export default function BankInfo() {
                 return true; // Sabit numara
             }
         }
-        
+
         setPhoneError("Geçersiz telefon numarası formatı");
         return false;
     };
@@ -280,12 +283,12 @@ export default function BankInfo() {
                 const normalized = normalizeIban(formData.iban);
                 // Mevcut IBAN'ı güncelle veya yeni IBAN ekle
                 setCards([normalized]);
-                try { localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify([normalized])); } catch {}
+                try { localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify([normalized])); } catch { }
                 setFormData({ ...formData, iban: "" });
             }
             setFormError("");
             // Formu kalıcı olarak sakla
-            try { localStorage.setItem(STORAGE_KEY_FORM, JSON.stringify(formData)); } catch {}
+            try { localStorage.setItem(STORAGE_KEY_FORM, JSON.stringify(formData)); } catch { }
             setIsEditing(false); // Kaydet → Düzenle moduna geç
         } else {
             // Düzenle moduna geçerken mevcut IBAN'ı input'a yükle
@@ -299,12 +302,29 @@ export default function BankInfo() {
     const handleDelete = (index) => {
         // Sadece 1 IBAN olduğu için tüm listeyi temizle
         setCards([]);
-        try { localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify([])); } catch {}
+        try { localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify([])); } catch { }
+        setDeleteModalVisible(false);
+        setDeleteTarget(null);
     };
 
     const handleDeleteCard = () => {
         localStorage.removeItem('savedCard');
         setSavedCard(null);
+        setDeleteModalVisible(false);
+        setDeleteTarget(null);
+    };
+
+    const openDeleteModal = (target) => {
+        setDeleteTarget(target);
+        setDeleteModalVisible(true);
+    };
+
+    const handleConfirmDelete = () => {
+        if (deleteTarget === 'card') {
+            handleDeleteCard();
+        } else if (deleteTarget === 'iban') {
+            handleDelete(0); // IBAN için index 0
+        }
     };
     return (
         <div className="bank-info-wrapper">
@@ -361,7 +381,7 @@ export default function BankInfo() {
                     value={formData.iban}
                     onChange={handleChange}
                     disabled={!isEditing}
-                    style={{ 
+                    style={{
                         cursor: isEditing ? "text" : "not-allowed",
                         background: !isEditing ? "#15141b" : undefined,
                         opacity: !isEditing ? 0.6 : 1
@@ -378,31 +398,30 @@ export default function BankInfo() {
 
             <div className="card-section">
                 <h4>Kayıtlı Kartlar</h4>
-                
+
                 {/* Kayıtlı Kredi Kartı */}
-                <div className="registered-cards">
                 {savedCard && (
-                    <div className="card-item credit-card">
-                        <div className="label">KREDİ KARTI</div>
-                        <div className="card-info">
-                            <span className="card-number">{maskCardNumber(savedCard.number)}</span>
-                            <div className="card-details">
-                                <span className="card-holder">{savedCard.holderName}</span>
-                                <span className="card-expiry">{savedCard.expiry}</span>
+                    <div className="registered-cards">
+                        <div className="card-item credit-card">
+                            <div className="label">KREDİ KARTI</div>
+                            <div className="card-info">
+                                <span className="card-number">{maskCardNumber(savedCard.number)}</span>
+                                <div className="card-details">
+                                    <span className="card-holder">{savedCard.holderName}</span>
+                                    <span className="card-expiry">{savedCard.expiry}</span>
+                                </div>
                             </div>
+                            <button onClick={() => openDeleteModal('card')} className="delete-btn" title="Sil">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4 7.5C4 7.264 4 7.146 4.073 7.073C4.146 7 4.264 7 4.5 7H19.5C19.736 7 19.854 7 19.927 7.073C20 7.146 20 7.264 20 7.5V7.752C20 7.842 20 7.888 19.986 7.928C19.9739 7.96246 19.9545 7.99386 19.929 8.02C19.899 8.05 19.859 8.07 19.778 8.111C19.127 8.436 18.802 8.599 18.565 8.843C18.3625 9.05152 18.2079 9.30165 18.112 9.576C18 9.896 18 10.26 18 10.988V16C18 17.886 18 18.828 17.414 19.414C16.828 20 15.886 20 14 20H10C8.114 20 7.172 20 6.586 19.414C6 18.828 6 17.886 6 16V10.988C6 10.26 6 9.896 5.888 9.576C5.79205 9.30165 5.63747 9.05152 5.435 8.843C5.198 8.599 4.873 8.436 4.222 8.111C4.16746 8.08827 4.11658 8.0576 4.071 8.02C4.04551 7.99386 4.02605 7.96246 4.014 7.928C4 7.888 4 7.842 4 7.752V7.5Z" fill="#FFE4E4" />
+                                    <path d="M10.0684 4.37016C10.1824 4.26416 10.4334 4.17016 10.7834 4.10316C11.185 4.03184 11.5924 3.99737 12.0004 4.00016C12.4404 4.00016 12.8684 4.03616 13.2174 4.10316C13.5664 4.17016 13.8174 4.26416 13.9324 4.37116" stroke="#DB1F35" stroke-linecap="round" />
+                                    <path d="M15 11.5C15 11.2239 14.7761 11 14.5 11C14.2239 11 14 11.2239 14 11.5V16.5C14 16.7761 14.2239 17 14.5 17C14.7761 17 15 16.7761 15 16.5V11.5Z" fill="#DB1F35" />
+                                    <path d="M10 11.5C10 11.2239 9.77614 11 9.5 11C9.22386 11 9 11.2239 9 11.5V16.5C9 16.7761 9.22386 17 9.5 17C9.77614 17 10 16.7761 10 16.5V11.5Z" fill="#DB1F35" />
+                                </svg>
+                            </button>
                         </div>
-                        <button onClick={handleDeleteCard} className="delete-btn" title="Sil">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M4 7.5C4 7.264 4 7.146 4.073 7.073C4.146 7 4.264 7 4.5 7H19.5C19.736 7 19.854 7 19.927 7.073C20 7.146 20 7.264 20 7.5V7.752C20 7.842 20 7.888 19.986 7.928C19.9739 7.96246 19.9545 7.99386 19.929 8.02C19.899 8.05 19.859 8.07 19.778 8.111C19.127 8.436 18.802 8.599 18.565 8.843C18.3625 9.05152 18.2079 9.30165 18.112 9.576C18 9.896 18 10.26 18 10.988V16C18 17.886 18 18.828 17.414 19.414C16.828 20 15.886 20 14 20H10C8.114 20 7.172 20 6.586 19.414C6 18.828 6 17.886 6 16V10.988C6 10.26 6 9.896 5.888 9.576C5.79205 9.30165 5.63747 9.05152 5.435 8.843C5.198 8.599 4.873 8.436 4.222 8.111C4.16746 8.08827 4.11658 8.0576 4.071 8.02C4.04551 7.99386 4.02605 7.96246 4.014 7.928C4 7.888 4 7.842 4 7.752V7.5Z" fill="#FFE4E4" />
-                                <path d="M10.0684 4.37016C10.1824 4.26416 10.4334 4.17016 10.7834 4.10316C11.185 4.03184 11.5924 3.99737 12.0004 4.00016C12.4404 4.00016 12.8684 4.03616 13.2174 4.10316C13.5664 4.17016 13.8174 4.26416 13.9324 4.37116" stroke="#DB1F35" stroke-linecap="round" />
-                                <path d="M15 11.5C15 11.2239 14.7761 11 14.5 11C14.2239 11 14 11.2239 14 11.5V16.5C14 16.7761 14.2239 17 14.5 17C14.7761 17 15 16.7761 15 16.5V11.5Z" fill="#DB1F35" />
-                                <path d="M10 11.5C10 11.2239 9.77614 11 9.5 11C9.22386 11 9 11.2239 9 11.5V16.5C9 16.7761 9.22386 17 9.5 17C9.77614 17 10 16.7761 10 16.5V11.5Z" fill="#DB1F35" />
-                            </svg>
-                        </button>
-                    </div>
-                )}
-                </div>
-                
+                    </div>)}
+
                 {/* Kayıtlı IBAN'lar */}
                 {cards.length === 0 && !savedCard ? (
                     <div className="empty-card">
@@ -420,7 +439,7 @@ export default function BankInfo() {
                             <div className="card-item" key={index}>
                                 <div className="label">IBAN NUMARASI</div>
                                 <span>{iban}</span>
-                                <button onClick={() => handleDelete(index)} className="delete-btn" title="Sil">
+                                <button onClick={() => openDeleteModal('iban')} className="delete-btn" title="Sil">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M4 7.5C4 7.264 4 7.146 4.073 7.073C4.146 7 4.264 7 4.5 7H19.5C19.736 7 19.854 7 19.927 7.073C20 7.146 20 7.264 20 7.5V7.752C20 7.842 20 7.888 19.986 7.928C19.9739 7.96246 19.9545 7.99386 19.929 8.02C19.899 8.05 19.859 8.07 19.778 8.111C19.127 8.436 18.802 8.599 18.565 8.843C18.3625 9.05152 18.2079 9.30165 18.112 9.576C18 9.896 18 10.26 18 10.988V16C18 17.886 18 18.828 17.414 19.414C16.828 20 15.886 20 14 20H10C8.114 20 7.172 20 6.586 19.414C6 18.828 6 17.886 6 16V10.988C6 10.26 6 9.896 5.888 9.576C5.79205 9.30165 5.63747 9.05152 5.435 8.843C5.198 8.599 4.873 8.436 4.222 8.111C4.16746 8.08827 4.11658 8.0576 4.071 8.02C4.04551 7.99386 4.02605 7.96246 4.014 7.928C4 7.888 4 7.842 4 7.752V7.5Z" fill="#FFE4E4" />
                                         <path d="M10.0684 4.37016C10.1824 4.26416 10.4334 4.17016 10.7834 4.10316C11.185 4.03184 11.5924 3.99737 12.0004 4.00016C12.4404 4.00016 12.8684 4.03616 13.2174 4.10316C13.5664 4.17016 13.8174 4.26416 13.9324 4.37116" stroke="#DB1F35" stroke-linecap="round" />
@@ -433,6 +452,15 @@ export default function BankInfo() {
                     </div>
                 )}
             </div>
+
+            <DeleteConfirmModal
+                isOpen={deleteModalVisible}
+                onClose={() => {
+                    setDeleteModalVisible(false);
+                    setDeleteTarget(null);
+                }}
+                onConfirm={handleConfirmDelete}
+            />
         </div>
     );
 }

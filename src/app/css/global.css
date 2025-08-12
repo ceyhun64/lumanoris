@@ -3606,6 +3606,8 @@ body {
   flex-direction: column;
   padding: 24px 64px;
   color: #fff;
+  position: relative;
+  z-index: 9999;
 }
 @media (max-width: 1100px) {
   .dialogue-wrapper {
@@ -7505,6 +7507,14 @@ body {
 }
 .chatbot-form-wrapper .chatbot-form .image-upload-section label.upload-btn-sec p {
   color: #FF66C4;
+}
+.chatbot-form-wrapper .chatbot-form .image-upload-section label.upload-btn-sec.error {
+  border-color: #FF6B6B;
+  background: rgba(255, 107, 107, 0.1);
+}
+.chatbot-form-wrapper .chatbot-form .image-upload-section label.upload-btn.error {
+  border-color: #FF6B6B;
+  background: rgba(255, 107, 107, 0.1);
 }
 .chatbot-form-wrapper .chatbot-form input[type=text] {
   border-radius: 8px;

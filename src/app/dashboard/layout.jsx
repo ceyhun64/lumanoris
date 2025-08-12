@@ -1,12 +1,25 @@
+'use client';
+import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import Header from "../components/DashboardHeader/DashboardHeader";
 import NavbarMobile from "../components/Navbar/Navbar";
 import Sidebar from "../components/Sidebar/Sidebar";
 import '../../font/stylesheet.css';
-export const metadata = {
-    title: "Dashboard | Lumanoris",
-};
 
 export default function DashboardLayout({ children }) {
+    const pathname = usePathname();
+
+    useEffect(() => {
+        const mainElement = document.querySelector('main');
+        if (mainElement) {
+            if (pathname === '/dashboard/notes') {
+                mainElement.style.overflow = 'visible';
+            } else {
+                mainElement.style.overflow = '';
+            }
+        }
+    }, [pathname]);
+
     return (
         <>
             <div className="dashboard-layout">
