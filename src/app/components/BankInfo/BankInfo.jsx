@@ -420,7 +420,8 @@ export default function BankInfo() {
                                 </svg>
                             </button>
                         </div>
-                    </div>)}
+                    </div>
+                )}
 
                 {/* Kayıtlı IBAN'lar */}
                 {cards.length === 0 && !savedCard ? (
