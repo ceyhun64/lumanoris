@@ -1919,6 +1919,13 @@ body {
   min-width: 0;
   max-width: 80%;
 }
+.comments-overlay .comments-modal .modal-body .comment-list .comment-item .comment-content .comment-text-wrapper {
+  width: 100%;
+  transition: all 0.3s ease;
+}
+.comments-overlay .comments-modal .modal-body .comment-list .comment-item .comment-content .comment-text-wrapper.expanded .comment-text {
+  max-height: none;
+}
 .comments-overlay .comments-modal .modal-body .comment-list .comment-item .comment-content .comment-text {
   color: #FFF;
   font-family: "Montserrat", sans-serif;
@@ -1929,6 +1936,34 @@ body {
   word-break: break-word;
   overflow-wrap: anywhere;
   text-align: left;
+  max-height: 44px; /* 3 satır için */
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.comments-overlay .comments-modal .modal-body .comment-list .comment-item .comment-content .read-more-btn {
+  background: none;
+  border: none;
+  color: #FF66C4;
+  font-family: "Montserrat", sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.3s ease;
+}
+.comments-overlay .comments-modal .modal-body .comment-list .comment-item .comment-content .read-more-btn:hover {
+  color: #FF99D6;
+  transform: translateX(2px);
+}
+.comments-overlay .comments-modal .modal-body .comment-list .comment-item .comment-content .read-more-btn .arrow-icon {
+  transition: transform 0.3s ease;
+}
+.comments-overlay .comments-modal .modal-body .comment-list .comment-item .comment-content .read-more-btn .arrow-icon.expanded {
+  transform: rotate(90deg);
 }
 .comments-overlay .comments-modal .modal-body .comment-list .comment-item .comment-content .comment-meta {
   color: var(--Secondary10, #8C8C8C);
@@ -5133,6 +5168,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-top: 50px;
 }
 .chat-wrapper .chat-header h2 {
   font-family: "Montserrat", sans-serif;
@@ -5159,6 +5195,13 @@ body {
   justify-content: space-between;
   height: 100%;
   min-height: 0;
+}
+@media (max-width: 992px) {
+  .chat-wrapper .chat-bottom {
+    padding-bottom: 100px;
+    height: auto;
+    min-height: auto;
+  }
 }
 .chat-wrapper .chat-bottom .profile-card {
   padding: 12px;
@@ -7474,10 +7517,15 @@ body {
   font-weight: 500;
   line-height: 18px;
   text-transform: uppercase;
-  border: none;
+  border: 1px solid transparent;
   outline: none;
   width: 100%;
   margin-bottom: 24px;
+  transition: all 0.3s ease;
+}
+.chatbot-form-wrapper .chatbot-form input[type=text].error {
+  border-color: #FF6B6B;
+  background: rgba(255, 107, 107, 0.1);
 }
 @media (max-width: 992px) {
   .chatbot-form-wrapper .chatbot-form input[type=text] {
@@ -7490,6 +7538,8 @@ body {
   padding: 16px 12px;
   min-height: 180px;
   color: #FFF0FF;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
   font-family: "Montserrat", sans-serif;
   font-size: 12px;
   font-style: normal;
@@ -7500,6 +7550,10 @@ body {
   outline: none;
   width: 100%;
   margin-bottom: 24px;
+}
+.chatbot-form-wrapper .chatbot-form textarea.error {
+  border-color: #FF6B6B;
+  border: 1px solid #FF6B6B;
 }
 @media (max-width: 992px) {
   .chatbot-form-wrapper .chatbot-form textarea {
@@ -7526,6 +7580,11 @@ body {
   width: 100%;
   color: white;
   margin-bottom: 24px;
+  transition: all 0.3s ease;
+}
+.chatbot-form-wrapper .chatbot-form .accordion-select.error .select-header {
+  border: 1px solid #FF6B6B;
+  background: rgba(255, 107, 107, 0.1);
 }
 @media (max-width: 992px) {
   .chatbot-form-wrapper .chatbot-form .accordion-select {
@@ -7540,6 +7599,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
 }
 .chatbot-form-wrapper .chatbot-form .accordion-select .select-header span {
   color: #FFF0FF;
@@ -7727,6 +7788,31 @@ body {
   background-color: white;
   transition: 0.4s;
   border-radius: 50%;
+}
+.chatbot-form-wrapper .chatbot-form .error-messages {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid #FF6B6B;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.chatbot-form-wrapper .chatbot-form .error-messages h4 {
+  color: #FF6B6B;
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: "Montserrat", sans-serif;
+}
+.chatbot-form-wrapper .chatbot-form .error-messages ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.chatbot-form-wrapper .chatbot-form .error-messages ul li {
+  color: #FF6B6B;
+  font-size: 13px;
+  margin-bottom: 4px;
+  line-height: 1.4;
+  font-family: "Montserrat", sans-serif;
 }
 .chatbot-form-wrapper .chatbot-form .submit-area {
   width: 100%;

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 export default function CommentModal({ isOpen, onClose, comments = [], onSend }) {
     const [input, setInput] = useState('');
     const [localComments, setLocalComments] = useState(comments);
+    const [expandedComments, setExpandedComments] = useState(new Set());
 
     useEffect(() => {
         setLocalComments(comments);
@@ -22,6 +23,32 @@ export default function CommentModal({ isOpen, onClose, comments = [], onSend })
         setLocalComments(prev => [...prev, newComment]);
         onSend?.(trimmed);
         setInput('');
+    };
+
+    const toggleCommentExpansion = (index) => {
+        setExpandedComments(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(index)) {
+                newSet.delete(index);
+            } else {
+                newSet.add(index);
+            }
+            return newSet;
+        });
+    };
+
+    const truncateText = (text, maxLines = 3) => {
+        const words = text.split(' ');
+        const maxWords = maxLines * 8; // Yaklaşık 8 kelime per satır
+        
+        if (words.length <= maxWords) {
+            return { text, isTruncated: false };
+        }
+        
+        return {
+            text: words.slice(0, maxWords).join(' ') + '...',
+            isTruncated: true
+        };
     };
 
     if (!isOpen) return null;
@@ -43,17 +70,49 @@ export default function CommentModal({ isOpen, onClose, comments = [], onSend })
 
                     {/* Yorumlar Listesi */}
                     <div className="comment-list">
-                        {localComments.map((comment, index) => (
-                            <div className="comment-item" key={index}>
-                                <div className="avatar-circle" />
-                                <div className="comment-content">
-                                    <p className="comment-text">{comment.text}</p>
-                                    <p className="comment-meta">
-                                        <strong>{comment.author}</strong> – {comment.date}
-                                    </p>
+                        {localComments.map((comment, index) => {
+                            const { text, isTruncated } = truncateText(comment.text);
+                            const isExpanded = expandedComments.has(index);
+                            
+                            return (
+                                <div className="comment-item" key={index}>
+                                    <div className="avatar-circle" />
+                                    <div className="comment-content">
+                                        <div className={`comment-text-wrapper ${isExpanded ? 'expanded' : ''}`}>
+                                            <p className="comment-text">
+                                                {isExpanded ? comment.text : text}
+                                            </p>
+                                            {isTruncated && (
+                                                <button 
+                                                    className="read-more-btn"
+                                                    onClick={() => toggleCommentExpansion(index)}
+                                                >
+                                                    {isExpanded ? 'Daha az göster' : 'Devamını oku'}
+                                                    <svg 
+                                                        className={`arrow-icon ${isExpanded ? 'expanded' : ''}`}
+                                                        width="16" 
+                                                        height="16" 
+                                                        viewBox="0 0 16 16" 
+                                                        fill="none"
+                                                    >
+                                                        <path 
+                                                            d="M6 12L10 8L6 4" 
+                                                            stroke="#FF66C4" 
+                                                            strokeWidth="2" 
+                                                            strokeLinecap="round" 
+                                                            strokeLinejoin="round"
+                                                        />
+                                                    </svg>
+                                                </button>
+                                            )}
+                                        </div>
+                                        <p className="comment-meta">
+                                            <strong>{comment.author}</strong> – {comment.date}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {/* Yorum Girişi */}

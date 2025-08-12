@@ -9,6 +9,7 @@ import ShareModal from '@/app/components/ShareModal/ShareModal';
 import ReportModal from '@/app/components/ReportModal/ReportModal';
 import AddToListModal from '@/app/components/AddToListModal/AddToListModal';
 import NotesEmpty from '@/app/components/NotesEmpty/NotesEmpty';
+import DeleteConfirmModal from '@/app/components/DeleteConfirmModal';
 
 const cards = [
     {
@@ -216,6 +217,7 @@ export default function DialoguePage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filtered, setFiltered] = useState('Tümü');
     const [allCards, setAllCards] = useState(cards); // cards'ı state'e aldım
+    const [myCardsState, setMyCardsState] = useState(myCards); // myCards'ı da state'e aldım
     const [tab, setTab] = useState("all");
     const [showSortMenu, setShowSortMenu] = useState(false); // <-- EKLENDİ!
 
@@ -227,8 +229,8 @@ export default function DialoguePage() {
         }
         if (tab === "mine") {
             return filtered === 'Tümü'
-                ? myCards
-                : myCards.filter(card => card.tag === filtered);
+                ? myCardsState
+                : myCardsState.filter(card => card.tag === filtered);
         }
         return [];
     })();
@@ -241,6 +243,8 @@ export default function DialoguePage() {
     const [reportOpen, setReportOpen] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [showFeedbackBadge, setShowFeedbackBadge] = useState(false);
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [deleteTargetIndex, setDeleteTargetIndex] = useState(null);
 
     const handleCloseModal = () => setIsModalOpen(false);
 
@@ -265,10 +269,32 @@ export default function DialoguePage() {
     const handleHideBot = (e, index) => {
         e.stopPropagation();
         const cardToRemove = filteredCards[index];
-        setAllCards(prev => prev.filter(c => c.id !== cardToRemove.id)); // allCards güncelleniyor
+        
+        // Hangi sekmede olduğuna göre silme işlemi
+        if (tab === "all") {
+            setAllCards(prev => prev.filter(c => c.id !== cardToRemove.id));
+        } else if (tab === "mine") {
+            setMyCardsState(prev => prev.filter(c => c.id !== cardToRemove.id));
+        }
+        
         setShowFeedbackBadge(true);
         setMenuOpenIndex(null);
         setTimeout(() => setShowFeedbackBadge(false), 2000);
+    };
+
+    const handleDelete = (indexToRemove) => {
+        const cardToRemove = filteredCards[indexToRemove];
+        
+        // Hangi sekmede olduğuna göre silme işlemi
+        if (tab === "all") {
+            setAllCards(prev => prev.filter(c => c.id !== cardToRemove.id));
+        } else if (tab === "mine") {
+            setMyCardsState(prev => prev.filter(c => c.id !== cardToRemove.id));
+        }
+        
+        setDeleteModalVisible(false);
+        setDeleteTargetIndex(null);
+        setMenuOpenIndex(null);
     };
 
     const sortOptions = [
@@ -414,6 +440,22 @@ export default function DialoguePage() {
                                                     <path d="M11 7.5H13V14.5H11V7.5Z" fill="#FF99D6" />
                                                 </svg>
                                                 </span> Bildir</li>
+                                                <hr />
+                                                <li onClick={(e) => { 
+                                                    e.stopPropagation(); 
+                                                    setDeleteTargetIndex(index);
+                                                    setDeleteModalVisible(true);
+                                                }}>
+                                                    <span>
+                                                        <svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M5 9.875C5 9.58 5 9.4325 5.09125 9.34125C5.1825 9.25 5.33 9.25 5.625 9.25H24.375C24.67 9.25 24.8175 9.25 24.9088 9.34125C25 9.4325 25 9.58 25 9.875V10.19C25 10.3025 25 10.36 24.9825 10.41C24.9674 10.4531 24.9431 10.4923 24.9113 10.525C24.8738 10.5625 24.8237 10.5875 24.7225 10.6388C23.9088 11.045 23.5025 11.2488 23.2063 11.5538C22.9532 11.8144 22.7599 12.1271 22.64 12.47C22.5 12.87 22.5 13.325 22.5 14.235V20.5C22.5 22.8575 22.5 24.035 21.7675 24.7675C21.035 25.5 19.8575 25.5 17.5 25.5H12.5C10.1425 25.5 8.965 25.5 8.2325 24.7675C7.5 24.035 7.5 22.8575 7.5 20.5V14.235C7.5 13.325 7.5 12.87 7.36 12.47C7.24007 12.1271 7.04683 11.8144 6.79375 11.5538C6.4975 11.2488 6.09125 11.045 5.2775 10.6388C5.20933 10.6103 5.14572 10.572 5.08875 10.525C5.05689 10.4923 5.03257 10.4531 5.0175 10.41C5 10.36 5 10.3025 5 10.19V9.875Z" fill="#FFE4E4" />
+                                                            <path d="M12.585 5.9627C12.7275 5.8302 13.0412 5.7127 13.4787 5.62895C13.9808 5.5398 14.49 5.49671 15 5.5002C15.55 5.5002 16.085 5.5452 16.5212 5.62895C16.9575 5.7127 17.2712 5.8302 17.415 5.96395" stroke="#DB1F35" strokeLinecap="round" />
+                                                            <path d="M18.75 14.875C18.75 14.5298 18.4702 14.25 18.125 14.25C17.7798 14.25 17.5 14.5298 17.5 14.875V21.125C17.5 21.4702 17.7798 21.75 18.125 21.75C18.4702 21.75 18.75 21.4702 18.75 21.125V14.875Z" fill="#DB1F35" />
+                                                            <path d="M12.5 14.875C12.5 14.5298 12.2202 14.25 11.875 14.25C11.5298 14.25 11.25 14.5298 11.25 14.875V21.125C11.25 21.4702 11.5298 21.75 11.875 21.75C12.2202 21.75 12.5 21.4702 12.5 21.125V14.875Z" fill="#DB1F35" />
+                                                        </svg>
+                                                    </span>
+                                                    Sil
+                                                </li>
                                             </ul>
                                         </div>
                                     )}
@@ -435,6 +477,16 @@ export default function DialoguePage() {
                 isOpen={modalVisible}
                 onClose={() => setModalVisible(false)}
                 lists={[]}
+            />
+
+            <DeleteConfirmModal
+                isOpen={deleteModalVisible}
+                onClose={() => setDeleteModalVisible(false)}
+                onConfirm={() => {
+                    handleDelete(deleteTargetIndex);
+                    setDeleteModalVisible(false);
+                    setDeleteTargetIndex(null);
+                }}
             />
 
             {showFeedbackBadge && (

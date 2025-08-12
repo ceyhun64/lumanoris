@@ -21,6 +21,8 @@ export default function ChatbotForm() {
     const [isDragging, setIsDragging] = useState(false);
     const [coverImage, setCoverImage] = useState(null);
     const [profileImage, setProfileImage] = useState(null);
+    const [errors, setErrors] = useState({});
+    const [showErrors, setShowErrors] = useState(false);
     const generalFileInputRef = useRef(null);
 
 
@@ -74,11 +76,70 @@ export default function ChatbotForm() {
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
+        
+        // Hata varsa temizle
+        if (errors[name]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+
+        // Bot ismi kontrolü
+        if (!formData.botName.trim()) {
+            newErrors.botName = 'Bot ismi gereklidir';
+        } else if (formData.botName.trim().length < 3) {
+            newErrors.botName = 'Bot ismi en az 3 karakter olmalıdır';
+        }
+
+        // Açıklama kontrolü
+        if (!formData.description.trim()) {
+            newErrors.description = 'Açıklama gereklidir';
+        } else if (formData.description.trim().length < 10) {
+            newErrors.description = 'Açıklama en az 10 karakter olmalıdır';
+        }
+
+        // Kategori kontrolü
+        if (!selected) {
+            newErrors.category = 'Kategori seçimi gereklidir';
+        }
+
+        // Style prompt kontrolü
+        if (!formData.stylePrompt.trim()) {
+            newErrors.stylePrompt = 'Style prompt gereklidir';
+        } else if (formData.stylePrompt.trim().length < 20) {
+            newErrors.stylePrompt = 'Style prompt en az 20 karakter olmalıdır';
+        }
+
+        // Sohbet başı mesajı kontrolü
+        if (!formData.message.trim()) {
+            newErrors.message = 'Sohbet başı mesajı gereklidir';
+        } else if (formData.message.trim().length < 5) {
+            newErrors.message = 'Sohbet başı mesajı en az 5 karakter olmalıdır';
+        }
+
+        // Kapak görseli kontrolü
+        if (!coverImage && !profileImage) {
+            newErrors.image = 'En az bir görsel (kapak veya profil) gereklidir';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        
+        // Validasyon yap
+        if (!validateForm()) {
+            setShowErrors(true);
+            return;
+        }
         
         // Yeni chatbot verisi oluştur
         const newChatbot = {
@@ -148,7 +209,7 @@ export default function ChatbotForm() {
                     value={formData.botName}
                     onChange={handleChange}
                     placeholder="BOT ISMI"
-                    className="text-input"
+                    className={`text-input ${showErrors && errors.botName ? 'error' : ''}`}
                 />
 
                 <textarea
@@ -156,12 +217,12 @@ export default function ChatbotForm() {
                     value={formData.description}
                     onChange={handleChange}
                     placeholder="AÇIKLAMA"
-                    className="textarea-input"
+                    className={`textarea-input ${showErrors && errors.description ? 'error' : ''}`}
                 ></textarea>
 
                 <h4 className="section-title">DAVRANIŞ AYARLARI</h4>
 
-                <div className="accordion-select">
+                <div className={`accordion-select ${showErrors && errors.category ? 'error' : ''}`}>
                     <div className="select-header" onClick={() => setOpen(!open)}>
                         <span>{selected || 'KATEGORİ SEÇ'}</span>
                         <div className={`arrow ${open ? 'open' : ''}`}>
@@ -198,7 +259,7 @@ export default function ChatbotForm() {
                     value={formData.stylePrompt}
                     onChange={handleChange}
                     placeholder="STYLE PROMPT*"
-                    className="textarea-input"
+                    className={`textarea-input ${showErrors && errors.stylePrompt ? 'error' : ''}`}
                 ></textarea>
 
                 <div
@@ -256,7 +317,7 @@ export default function ChatbotForm() {
                     value={formData.message}
                     onChange={handleChange}
                     placeholder="SOHBET BAŞI MESAJI"
-                    className="textarea-input"
+                    className={`textarea-input ${showErrors && errors.message ? 'error' : ''}`}
                 ></textarea>
 
                 
@@ -284,6 +345,20 @@ export default function ChatbotForm() {
                         <span className="slider round"></span>
                     </label>
                 </div> */}
+
+                {showErrors && Object.keys(errors).length > 0 && (
+                    <div className="error-messages">
+                        <h4>Lütfen aşağıdaki hataları düzeltin:</h4>
+                        <ul>
+                            {errors.botName && <li>• {errors.botName}</li>}
+                            {errors.description && <li>• {errors.description}</li>}
+                            {errors.category && <li>• {errors.category}</li>}
+                            {errors.stylePrompt && <li>• {errors.stylePrompt}</li>}
+                            {errors.message && <li>• {errors.message}</li>}
+                            {errors.image && <li>• {errors.image}</li>}
+                        </ul>
+                    </div>
+                )}
 
                 <div className="submit-area">
                     <button type="submit" className="submit-button">Yayınla</button>

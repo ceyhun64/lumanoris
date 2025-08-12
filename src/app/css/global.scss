@@ -2167,6 +2167,17 @@ body {
                         min-width: 0;
                         max-width: 80%;
 
+                        .comment-text-wrapper {
+                            width: 100%;
+                            transition: all 0.3s ease;
+
+                            &.expanded {
+                                .comment-text {
+                                    max-height: none;
+                                }
+                            }
+                        }
+
                         .comment-text {
                             color: #FFF;
                             font-family: "Montserrat", sans-serif;
@@ -2177,6 +2188,38 @@ body {
                             word-break: break-word;
                             overflow-wrap: anywhere;
                             text-align: left;
+                            max-height: 44px; /* 3 satır için */
+                            overflow: hidden;
+                            transition: max-height 0.3s ease;
+                        }
+
+                        .read-more-btn {
+                            background: none;
+                            border: none;
+                            color: #FF66C4;
+                            font-family: "Montserrat", sans-serif;
+                            font-size: 10px;
+                            font-weight: 500;
+                            cursor: pointer;
+                            padding: 4px 0;
+                            margin-top: 4px;
+                            display: flex;
+                            align-items: center;
+                            gap: 4px;
+                            transition: all 0.3s ease;
+
+                            &:hover {
+                                color: #FF99D6;
+                                transform: translateX(2px);
+                            }
+
+                            .arrow-icon {
+                                transition: transform 0.3s ease;
+
+                                &.expanded {
+                                    transform: rotate(90deg);
+                                }
+                            }
                         }
 
                         .comment-meta {
@@ -5798,7 +5841,7 @@ body {
         display: flex;
         justify-content: center;
         align-items: center;
-
+        margin-top:50px;
         h2 {
             font-family: "Montserrat", sans-serif;
             font-size: 36px;
@@ -5826,6 +5869,12 @@ body {
         justify-content: space-between;
         height: 100%;
         min-height: 0; // Flexbox için önemli
+
+        @media(max-width:992px){
+            padding-bottom: 100px;
+            height: auto;
+            min-height: auto;
+        }
 
 
         .profile-card {
@@ -8455,10 +8504,16 @@ body {
             font-weight: 500;
             line-height: 18px;
             text-transform: uppercase;
-            border: none;
+            border: 1px solid transparent;
             outline: none;
             width: 100%;
             margin-bottom: 24px;
+            transition: all 0.3s ease;
+
+            &.error {
+                border-color: #FF6B6B;
+                background: rgba(255, 107, 107, 0.1);
+            }
 
             @media(max-width:992px) {
                 margin-bottom: 12px;
@@ -8471,6 +8526,13 @@ body {
             padding: 16px 12px;
             min-height: 180px;
             color: #FFF0FF;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+
+            &.error {
+                border-color: #FF6B6B;
+                border: 1px solid #FF6B6B;
+            }
             font-family: "Montserrat", sans-serif;
             font-size: 12px;
             font-style: normal;
@@ -8507,6 +8569,14 @@ body {
             width: 100%;
             color: white;
             margin-bottom: 24px;
+            transition: all 0.3s ease;
+
+            &.error {
+                .select-header {
+                    border: 1px solid #FF6B6B;
+                    background: rgba(255, 107, 107, 0.1);
+                }
+            }
 
             @media(max-width:992px) {
                 margin-bottom: 12px;
@@ -8520,6 +8590,8 @@ body {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                border: 1px solid transparent;
+                transition: all 0.3s ease;
 
                 span {
                     color: #FFF0FF;
@@ -8730,6 +8802,35 @@ body {
                         transition: 0.4s;
                         border-radius: 50%;
                     }
+                }
+            }
+        }
+
+        .error-messages {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid #FF6B6B;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+
+            h4 {
+                color: #FF6B6B;
+                margin: 0 0 12px 0;
+                font-size: 14px;
+                font-weight: 600;
+                font-family: "Montserrat", sans-serif;
+            }
+
+            ul {
+                margin: 0;
+                padding-left: 20px;
+
+                li {
+                    color: #FF6B6B;
+                    font-size: 13px;
+                    margin-bottom: 4px;
+                    line-height: 1.4;
+                    font-family: "Montserrat", sans-serif;
                 }
             }
         }
