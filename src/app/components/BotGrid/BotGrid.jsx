@@ -1,11 +1,17 @@
 "use client";
 import BotCard from "../BotCard/BotCard";
 
-export default function BotGrid({ bots, onRemove }) {
+// components/BotGrid/BotGrid.jsx
+export default function BotGrid({ bots, userId, onRemove }) {
     return (
         <div className="bot-grid">
-            {bots.map((bot, i) => (
-                <BotCard key={i} bot={bot} onRemove={() => onRemove(i)} />
+            {bots.map((bot) => (
+                <BotCard 
+                    key={bot.id} 
+                    bot={bot} 
+                    userId={userId}
+                    onRemove={onRemove} // <-- Bunu eklemeyi unutma!
+                />
             ))}
         </div>
     );

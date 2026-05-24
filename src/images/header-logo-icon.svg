@@ -4,10 +4,10 @@
 <g filter="url(#filter0_f_7772_2478)">
 <circle cx="6" cy="2.25" r="13.5" fill="url(#paint0_linear_7772_2478)"/>
 </g>
-<path d="M23.2498 24.75L19.5 18L23.2498 11.25" stroke="white" stroke-width="0.72" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M23.2498 11.25H16.4998L12.75 18L16.4998 24.75H23.2498" stroke="#FF66C4" stroke-width="0.72" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M23.2498 24.75L19.5 18L23.2498 11.25" stroke="white" strokeWidth="0.72" strokeLinecap="round" strokeLinejoin="round"/>
+<path d="M23.2498 11.25H16.4998L12.75 18L16.4998 24.75H23.2498" stroke="#FF66C4" strokeWidth="0.72" strokeLinecap="round" strokeLinejoin="round"/>
 </g>
-<rect x="0.375" y="0.375" width="35.25" height="35.25" rx="17.625" stroke="#FFF1FA" stroke-width="0.75" style="mix-blend-mode:overlay"/>
+<rect x="0.375" y="0.375" width="35.25" height="35.25" rx="17.625" stroke="#FFF1FA" strokeWidth="0.75" style="mix-blend-mode:overlay"/>
 <defs>
 <filter id="filter0_f_7772_2478" x="-44.625" y="-48.375" width="101.25" height="101.25" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
 <feFlood floodOpacity="0" result="BackgroundImageFix"/>

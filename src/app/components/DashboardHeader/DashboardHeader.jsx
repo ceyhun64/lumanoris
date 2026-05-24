@@ -11,32 +11,96 @@ import { useEffect, useState } from 'react';
 import NotificationPopup from '../NotificationPopup';
 import ProfilePopup from '../ProfilePopup';
 import QuitModal from '../QuitModal/QuitModal';
-export default function Header() {
+export default function Header({userId}) {
     const router = useRouter();
     const [showProfile, setShowProfile] = useState(false);
     const [profileImage, setProfileImage] = useState(null);
+    const [user, setUser] = useState(
+        {
+            id: 0,
+            username: "",
+            fullname: "",
+            followerCount: 0, // şimdilik sabit, ileride DB’den çekilebilir
+            chatbotCount: 0,
+            }
+    );
+
+    const fetchCartCount = async () => {
+        const targetId = userId || user.id; 
+        if (!targetId) return;
+
+        try {
+            const res = await fetch(`/api/getcartcount.php?user_id=${targetId}`);
+            const result = await res.json();
+            if (result.success) {
+                setCartCount(result.count);
+                console.log("Cart Item Count: ",cartCount);
+            }
+        } catch (err) {
+            console.error("Sepet sayısı çekilemedi:", err);
+        }
+    };
 
     const [showNotification, setShowNotification] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [cartCount, setCartCount] = useState(0);
     const [quitOpen, setQuitOpen] = useState(false);
 
+    // 1. Sadece Kullanıcı Bilgilerini Çek
+    useEffect(() => {
+        async function fetchUser() {
+            const res = await fetch(`/api/getuserheader.php?id=${userId}`);
+            const result = await res.json();
+            if (result.success) {
+                setUser({
+                    id: result.id,
+                    username: result.username,
+                    fullname: result.fullname,
+                    followerCount: 0,
+                    chatbotCount: result.chatbotCount,
+                });
+            }
+        }
+        if (userId) fetchUser();
+    }, [userId]);
 
-    const user = {
-        username: "Kullanicadi123",
-        fullname: "Ahmet Yılmaz",
-        followerCount: 1500,
-        followingCount: 40,
-    };
+    // 2. Sepet Sayısını ve Eventleri Yönet (user.id değiştikçe tetiklenir)
+    useEffect(() => {
+        if (!user.id) return;
+
+        // İlk yüklemede çek
+        fetchCartCount();
+
+        const handleCartUpdate = () => fetchCartCount();
+        window.addEventListener('cartUpdated', handleCartUpdate);
+        const interval = setInterval(fetchCartCount, 30000);
+
+        return () => {
+            window.removeEventListener('cartUpdated', handleCartUpdate);
+            clearInterval(interval);
+        };
+    }, [user.id]); // user.id dolduğunda bu blok tekrar çalışır
 
     const handleLogout = () => {
         setQuitOpen(true);
     };
 
-    const handleConfirmLogout = () => {
+    const handleConfirmLogout = async () => {
         setQuitOpen(false);
-        location.href = '/auth';
+
+        try {
+            await fetch("/api/logout.php", {
+            method: "POST",
+            credentials: "include",
+            });
+        } catch (err) {
+            console.error("Logout error:", err);
+        }
+
+        location.href = "/login";
     };
+
+
     useEffect(() => {
         if (typeof window === "undefined") return;
 
@@ -100,7 +164,7 @@ export default function Header() {
         <>
             {showNotification && <NotificationPopup onClose={() => {
                 setShowNotification(false);
-            }} />}
+            }} userId={user.id} />}
             <header className="dashboard-header">
                 <div className="left">
 
@@ -154,7 +218,7 @@ export default function Header() {
                                 />
                         </button>
                         {showProfile && (
-                            <div style={{ position: "absolute", top: 50, right: 0, zIndex: 20 }}>
+                            <div style={{ position: "absolute", top: 50, right: 0, zIndex: 100000 }}>
                                 <ProfilePopup user={user} onLogout={handleLogout} />
                             </div>
                         )}

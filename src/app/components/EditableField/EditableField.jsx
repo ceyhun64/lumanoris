@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function EditableField({ fields, onSubmit }) {
     const [isEditing, setIsEditing] = useState(false);
@@ -9,6 +9,17 @@ export default function EditableField({ fields, onSubmit }) {
             return acc;
         }, {})
     );
+
+     useEffect(() => {
+        setValues(
+        fields.reduce((acc, field) => {
+            acc[field.name] = field.value || "";
+            return acc;
+        }, {})
+        );
+    }, [fields]);
+
+
 
     const handleChange = (e, name) => {
         setValues({ ...values, [name]: e.target.value });

@@ -1,0 +1,29 @@
+.notification.container,
+.notification {
+    z-index: 9999 !important;
+    height: 72px !important;
+    background-color: #ffffff !important;
+    color: black !important;
+    font-family: var(--bs-body-font-family) !important;
+}
+
+.notification.success.progress.show::before {
+    background: #41e144 !important;
+    /* düz yeşil */
+    background-image: none !important;
+    /* gradienti kapat */
+    animation: none !important;
+    /* rainbow animasyonu kapat */
+    height: 4px !important;
+    /* çubuk kalınlığı */
+}
+
+.notification.error.progress.show::before {
+    background: #e14441 !important;
+    background-image: none !important;
+    /* gradienti kapat */
+    animation: none !important;
+    /* rainbow animasyonu kapat */
+    height: 4px !important;
+    /* çubuk kalınlığı */
+}

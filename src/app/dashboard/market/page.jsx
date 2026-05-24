@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import avatarBot from "../../../images/avatar-bot.jpg";
 import botImage from "../../../images/ai-pic.png";
 import MarketCard from "@/app/components/MarketCard/MarketCard";
+import { notFound } from "next/navigation";
 
 const sortOptions = [
     { label: "Önerilen", value: "populer", info: true },
@@ -18,6 +19,7 @@ const sortOptions = [
 ];
 
 export default function Market() {
+    notFound();
     const [sortType, setSortType] = useState("populer");
     const [showSortMenu, setShowSortMenu] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState("Tümü");

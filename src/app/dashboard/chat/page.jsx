@@ -2,198 +2,728 @@
 import MessageInput from "@/app/components/MessageInput/MessageInput";
 import ProfileCard from "@/app/components/ProfileCard/ProfileCard";
 import WithdrawalModal from "@/app/components/WithdrawalModal/WithdrawalModal";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import avatarImg from "../../../images/avatar-bot.jpg";
 import DialogNotebookModal from "@/app/components/DialogNotebookModal";
 import { useSearchParams } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import { useRouter } from "next/navigation";
 
 export default function Chat() {
-    const messagesEndRef = useRef(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [logoClicked, setLogoClicked] = useState(false);
-    const [messages, setMessages] = useState([]);
-    const [isDialogModalOpen, setIsDialogModalOpen] = useState(false);
-    const [prompt, setPrompt] = useState(""); // <-- Prompt'u burada tut
-    const [fileName, setFileName] = useState(""); // <-- Dosya adını burada tut
+  const [bot, setBot] = useState(null);
+  const [botId, setBotId] = useState(0);
+  const [comments, setComments] = useState(null);
+  const [userId, setUserId] = useState();
+  const [prompt, setPrompt] = useState("");
+  const [conversation, setConversation] = useState();
+  const [conversationId, setConversationId] = useState(-1);
+  const [chatAdFrequency, setChatAdFrequency] = useState(10);
+  const messagesEndRef = useRef(null);
+  const [messages, setMessages] = useState([]);
+  const [logoClicked, setLogoClicked] = useState(false);
+  const [isDialogModalOpen, setIsDialogModalOpen] = useState(false);
+  const [activeDialog, setActiveDialog] = useState({ input: "", output: "" });
+  const [hasSubscription, setHasSubscription] = useState(false);
+  const [checkingSub, setCheckingSub] = useState(true);
+  const [fullTrainingPrompt, setFullTrainingPrompt] = useState("");
 
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            const params = new URLSearchParams(window.location.search);
-            setPrompt(params.get('prompt') || "");
-            setFileName(params.get('fileName') || "");
+  const checkSubscription = useCallback(async (uId, bId) => {
+      if (!uId || !bId) return;
+      try {
+          const res = await fetch(`/api/getsubscription.php?user_id=${uId}&chatbot_id=${bId}`);
+          const data = await res.json();
+          setHasSubscription(data.has_active_sub);
+      } catch (err) {
+          console.error("Abonelik kontrol hatası:", err);
+      } finally {
+          setCheckingSub(false);
+      }
+  }, []);
+
+  useEffect(() => {
+      if (userId && botId) {
+          checkSubscription(userId, botId);
+      }
+  }, [userId, botId, checkSubscription]);
+
+  const conversationIdRef = useRef(conversationId);
+  const botIdRef = useRef(botId);
+
+  const router = useRouter();
+
+  function timeAgo(dateString) {
+    const diff = Date.now() - new Date(dateString).getTime();
+    const seconds = Math.floor(diff / 1000);
+    if (seconds < 60) return `${seconds} saniye önce`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} dakika önce`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} saat önce`;
+    const days = Math.floor(hours / 24);
+    return `${days} gün önce`;
+  }
+
+  const formatImage = (img) => {
+    if (!img) return "";
+    return img.startsWith("data:") ? img : `data:image/jpeg;base64,${img}`;
+  };
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(",")[1]); // sadece Base64 kısmı
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const openDialogModal = (index) => {
+    const currentBotMsg = messages[index]?.text || "";
+    // Bot mesajından geriye doğru giderek ilk 'sent' (kullanıcı) mesajını buluyoruz
+    const lastUserMsg = messages
+      .slice(0, index)
+      .reverse()
+      .find((m) => m.type === "sent")?.text || "";
+
+    setActiveDialog({
+      input: lastUserMsg,
+      output: currentBotMsg
+    });
+    setIsDialogModalOpen(true);
+  };
+
+  const loadFullTrainingPrompt = async (id) => {
+    let currentOffset = 0;
+    let accumulatedPrompt = "";
+    let hasMore = true;
+    const CHUNK_LIMIT = 10000; // PHP'deki limit ile aynı olmalı
+
+    try {
+        while (hasMore) {
+            const response = await fetch(`/api/get_training_chunks.php?botId=${id}&offset=${currentOffset}`);
+            const data = await response.json();
+
+            if (data.success) {
+                accumulatedPrompt += data.chunk;
+                currentOffset += CHUNK_LIMIT; // 10.000 birim ilerle
+                hasMore = data.hasMore;
+                
+                // Debug için log ekleyelim
+                console.log(`Parça yüklendi: ${accumulatedPrompt.length} / ${data.totalLength}`);
+            } else {
+                hasMore = false;
+            }
         }
-    }, []);
+        setFullTrainingPrompt(accumulatedPrompt);
+        console.log("Eğitim verisi tamamen yüklendi, Toplam Uzunluk:", accumulatedPrompt.length);
+    } catch (error) {
+        console.error("Eğitim verisi yüklenirken hata:", error);
+    }
+};
 
+  async function checkSession() {
+    try {
+      const res = await fetch("/api/sessioncheck.php", {
+        credentials: "include", // cookie'yi gönder
+      });
+      const resultText = await res.text();
+      //console.log(resultText);
+      const result = JSON.parse(resultText);
 
-    // Logo click event listener
-    useEffect(() => {
-        const handleLogoClick = (event) => {
-            setLogoClicked(event.detail.clicked);
-        };
+      if (result.authenticated) {
+        setUserId(result.user_id);
+      } else {
+        router.push("/login");
+      }
+    } catch (err) {
+      console.error("Session check error:", err);
+      router.push("/login");
+    }
+  }
 
-        window.addEventListener('logoClicked', handleLogoClick);
-        
-        return () => {
-            window.removeEventListener('logoClicked', handleLogoClick);
-        };
-    }, []);
+  useEffect(() => {
+    checkSession();
 
-    const handleSendMessage = (data) => {
-        if (!data.text.trim() && !data.fileName) return;
-        setMessages((prev) => [...prev, { type: 'sent', text: data.text, fileName: data.fileName }]);
+    fetch("/api/getadcounts.php")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setChatAdFrequency(Number(data));
+      })
+      .catch((error) => {
+        console.error("Fetch error:", error);
+      });
 
-        setTimeout(() => {
-            setMessages((prev) => [...prev, {
-                type: 'received',
-                text: 'Teşekkürler, mesajınızı aldım!'
-            }]);
-        }, 1000);
+    const handleLogoClick = (event) => {
+      setLogoClicked(event.detail.clicked);
     };
 
-    useEffect(() => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-        }
-    }, [messages]);
+    window.addEventListener("logoClicked", handleLogoClick);
 
-    const handleResetChat = () => {
-        setMessages([]);
-        setTimeout(() => {
-            if (messagesEndRef.current) {
-                messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    return () => {
+      window.removeEventListener("logoClicked", handleLogoClick);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    let botIdd = 0;
+    const params = new URLSearchParams(window.location.search);
+    botIdd = params.get("botId") || 0;
+    console.log(botIdd);
+    setBotId(botIdd);
+    const initialPrompt = params.get("prompt") || "";
+    const conversationIdd = params.get("convId") || 0;
+    //console.log(conversationIdd);
+    setConversationId(conversationIdd);
+    setPrompt(initialPrompt);
+
+    fetch(`/api/getchatbot.php?id=${botIdd}`)
+      .then((res) => res.text())
+      .then(async (tdata) => {
+        let data = JSON.parse(tdata);
+        const botData = data.chatbot;
+        const commentsData = data.comments;
+
+        if (commentsData && commentsData.list) {
+          const mapped = commentsData.list.map((item) => ({
+            text: item.comment,
+            author: item.kullanici_adi,
+            date: timeAgo(item.commented_at), // helper fonksiyon
+          }));
+          setComments(mapped);
+        }
+        if (botData) {
+          setBot(botData);
+        }
+      });
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    if (!bot) return;
+
+    const convFetchUrl =
+      conversationId >= 1
+        ? `/api/getconversation.php?chatbot_id=${botId}&user_id=${userId}&convId=${conversationId}`
+        : `/api/getconversation.php?chatbot_id=${botId}&user_id=${userId}`;
+
+    console.log(convFetchUrl);
+
+    fetch(convFetchUrl)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("HTTP error " + response.status);
+        }
+        return response.json();
+      })
+      .then(async (data) => {
+        setConversation(data);
+
+        if (data[0]?.id == 0 && prompt.trim() !== "") {
+          const words = prompt.trim().split(/\s+/);
+          let convName = words.slice(0, 5).join(" ");
+          if (words.length > 5) {
+            convName += " ...";
+          }
+          const payload = {
+            chatbot_id: botId,
+            user_id: userId,
+            conversation_name: convName,
+          };
+          try {
+            const res = await fetch("/api/addconversation.php", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams({
+                data: JSON.stringify(payload),
+              }),
+            });
+            const result = await res.json();
+            //console.log("Yeni sohbet eklendi:", result);
+            //console.log("Id: ",Number(result.id));
+            const newConversation = {
+              id: Number(result.id), // backend’den dönen id
+              conversation_name: convName, // frontend’de oluşturduğun isim
+            };
+            console.log(newConversation);
+
+            setConversation(newConversation);
+            setConversationId(result.id);
+            console.log(conversationId);
+            const firstPrompt = {
+              text: prompt,
+              convId: newConversation.id,
+            };
+            console.log(firstPrompt);
+            handleSendMessage(firstPrompt);
+          } catch (err) {
+            console.error("Yeni sohbet eklenirken hata:", err);
+          }
+        }
+      })
+      .catch((error) => console.error("Hata:", error));
+  }, [bot]);
+
+  useEffect(() => {
+    // bot bilgisinin de geldiğinden emin oluyoruz (başlangıç mesajı için)
+    if (!conversation || !userId || !bot) return;
+    
+    console.log("Conversation: ", conversation);
+
+    // Eğer zaten mesaj varsa ve bu var olan bir sohbetse tekrar yükleme
+    if (messages.length > 0 && conversationIdRef.current > 0) {
+        return; 
+    }
+
+    const loadHistory = async () => {
+      try {
+        const historyRes = await fetch(
+          `/api/getchat.php?chatbot_id=${conversation.id}&user_id=${userId}`,
+        );
+        const historyData = await historyRes.json();
+        const hasHistory = Array.isArray(historyData) && historyData.length > 0;
+
+        if (hasHistory) {
+          // 1. Eğer geçmişte mesajlar varsa onları yükle
+          setMessages(
+            historyData.map((m) => ({
+              type: m.sent_by === "user" ? "sent" : "received",
+              text: m.message,
+            })),
+          );
+        } else {
+          // 2. EĞER GEÇMİŞ BOŞSA (YENİ SOHBET) VE BOTUN BAŞLANGIÇ MESAJI VARSA
+          if (bot.sohbet_basi_mesaj && bot.sohbet_basi_mesaj.trim() !== "") {
+            
+            
+            // Botun ilk mesajını ekrana bas
+            const initialMsg = {
+              type: "received",
+              text: bot.sohbet_basi_mesaj,
+            };
+            setMessages([initialMsg]);
+
+            // Bu mesajı veritabanına da kaydet ki sayfa yenilenince uçmasın
+            try {
+              const botPayload = {
+                chatbot_id: conversation.id, // current conversation id
+                user_id: userId,
+                sent_by: "bot",
+                message: bot.sohbet_basi_mesaj,
+              };
+
+              fetch("/api/addchat.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ data: JSON.stringify(botPayload) }),
+              });
+            } catch (dbErr) {
+              console.error("Bot başlangıç mesajı kaydedilemedi:", dbErr);
             }
-        }, 50);
+          }
+        }
+      } catch (err) {
+        console.error("Geçmiş yüklenirken hata:", err);
+      }
     };
 
-    useEffect(() => {
-        // Önce localStorage'dan geçmiş chat mesajlarını kontrol et
-        const savedChatHistory = localStorage.getItem('chatHistory');
-        const savedChatTitle = localStorage.getItem('chatTitle');
-        const savedChatId = localStorage.getItem('chatId');
-        
-        if (savedChatHistory && messages.length === 0) {
-            // Geçmiş chat mesajlarını yükle
-            const parsedMessages = JSON.parse(savedChatHistory);
-            setMessages(parsedMessages);
-            
-            // Chat başlığını da güncelle (isteğe bağlı)
-            if (savedChatTitle) {
-                document.title = `Chat - ${savedChatTitle}`;
-            }
-            
-            // localStorage'ı temizle (bir kez kullanıldıktan sonra)
-            localStorage.removeItem('chatHistory');
-            localStorage.removeItem('chatTitle');
-            localStorage.removeItem('chatId');
-            
-            return; // Diğer kontrolleri yapma
-        }
-        
-        // Eğer geçmiş chat yoksa, normal prompt/fileName kontrolü yap
-        if ((prompt || fileName) && messages.length === 0) {
-            const initialMessages = [];
+    loadHistory();
+  }, [conversation, bot]); // bot'u da bağımlılığa ekledik
 
-            // Dosya ve metin varsa tek mesajda birleştir
-            if (fileName && prompt) {
-                initialMessages.push({ type: 'sent', text: prompt, fileName: fileName });
-            } else if (fileName) {
-                initialMessages.push({ type: 'sent', text: null, fileName: fileName });
-            } else if (prompt) {
-                initialMessages.push({ type: 'sent', text: prompt });
-            }
-            
-            setMessages(initialMessages);
-            
-            setTimeout(() => {
-                setMessages(prev => [
-                    ...prev,
-                    { type: 'received', text: 'Teşekkürler, mesajınızı aldım!' }
-                ]);
-            }, 1000);
-        }
-    }, [prompt, fileName]);
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
+  useEffect(() => {
+    conversationIdRef.current = conversationId;
+  }, [conversationId]);
 
+  useEffect(() => {
+    botIdRef.current = botId;
+    if (botId > 0) {
+      loadFullTrainingPrompt(botId);
+    }
+  }, [botId]);
 
+  /*const handleResetChat = () => {
+    setMessages([]);
+    console.log(conversationId);
+    console.log("User: ",userId);
+    console.log("Bot: ",botId);
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 50);
+  };*/
 
-    return (
-        <div className="chat-wrapper">
+  const handleResetChat = async () => {
+    console.log("Conversation:", conversation);
+    setMessages([]);
+    const newConvId = conversation.id + 1;
+    const bot_id = conversation.chatbot_id;
+    console.log("Conversation ID:", newConvId);
+    console.log("User:", userId);
+    console.log("Bot:", conversation.chatbot_id);
+    const payload = {
+      chatbot_id: bot_id,
+      user_id: userId,
+      conversation_name: "Yeni Sohbet",
+    };
+    try {
+      const res = await fetch("/api/addconversation.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          data: JSON.stringify(payload),
+        }),
+      });
+      const result = await res.json();
+      const newConversation = {
+        id: Number(result.id), // backend’den dönen id
+        conversation_name: "Yeni Sohbet", // frontend’de oluşturduğun isim
+      };
+      console.log(newConversation);
 
+      setConversation(newConversation);
+      setConversationId(result.id);
+    } catch (err) {
+      console.error("Yeni sohbet eklenirken hata:", err);
+    }
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 50);
+  };
 
+  const handleSendMessage = async (data) => {
+  /*if (!hasSubscription) {
+        alert("Bu chatbot ile konuşmak için aktif bir aboneliğiniz bulunmuyor.");
+        return;
+    }*/
+  if (!data.text.trim() && !data.fileName && !data.audioUrl) return;
 
-            <div className="chat-bottom">
-                <ProfileCard />
+  // Fonksiyon içinde kullanacağımız yerel değişkenler
+  let currentConvId = (data.convId && data.convId > 0) ? data.convId : conversationId;
+  let isNewConversation = false;
+  let newConvData = null;
 
-                <div className="chat-header" style={messages.length == 0 ? { flex: 1 } : { display: 'none' }}>
-                    <h2>Merhaba Adnan</h2>
-                </div>
-                <div className="chat-area"
-                    style={messages.length == 0 ? { flex: 'unset' } : {}}>
-                    {messages.length > 0 && <div className="day">
-                        Bugün
-                    </div>}
-                    {messages.length > 0 &&
-                        <div className="chat-messages">
-                            {messages.map((msg, index) => (
-                                <div key={index} className={`message ${msg.type}`}>
-                                    {msg.type === 'received' ? (
-                                        <>
-                                            <div className="message-avatar">
-                                                <img src={avatarImg.src} alt="avatar" />
-                                            </div>
-                                            <div className="message-content">
-                                                <p className="sender-name">Yazılım Geliştirici</p>
-                                                <p className="message-text">{msg.text}</p>
-                                                <button className="message-action"
-                                                    onClick={() => setIsDialogModalOpen(true)}>
-                                                    <div className="icon">
-                                                        <svg width="10" height="9" viewBox="0 0 10 9" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M0.31861 6.34404L0.455756 6.69768C0.778898 7.53102 1.32791 8.25537 2.04373 8.79244C2.22566 8.92873 2.44173 8.99912 2.66079 8.99912C2.78492 8.99912 2.90991 8.97651 3.03021 8.93065C3.36295 8.80353 3.60333 8.51921 3.67329 8.17047L3.77119 7.68352C4.94495 7.73663 6.12873 7.63574 7.25108 7.39024C7.81823 7.26483 8.27233 6.84826 8.43699 6.29924C8.63685 5.61074 8.73817 4.90559 8.73817 4.203C8.73817 4.04303 8.73305 3.88327 8.7226 3.72372C8.70681 3.48292 8.49843 3.29991 8.25804 3.31633C8.01745 3.33211 7.83508 3.54008 7.85065 3.78089C7.85982 3.92124 7.86452 4.06222 7.86452 4.203C7.86452 4.82304 7.77493 5.4465 7.59896 6.05183C7.52644 6.29413 7.32083 6.48012 7.06339 6.53686C5.94338 6.78236 4.76088 6.87045 3.5803 6.79857C3.28105 6.7783 3.02105 6.98477 2.96239 7.27336L2.81671 7.99834C2.80178 8.07236 2.74888 8.10286 2.71859 8.11437C2.6883 8.12611 2.62837 8.13848 2.5678 8.09347C1.98316 7.65473 1.53439 7.06283 1.27012 6.38157L1.13894 6.04564C0.78445 4.83733 0.785302 3.55991 1.14086 2.35416C1.21338 2.11186 1.419 1.92587 1.67559 1.86913C2.69748 1.64752 3.74582 1.55367 4.79629 1.58801C5.04328 1.59655 5.2393 1.40693 5.2474 1.16591C5.2555 0.924882 5.06653 0.722894 4.82529 0.714791C3.70571 0.676822 2.58315 0.778354 1.48874 1.01575C0.921592 1.14116 0.467489 1.55773 0.303466 2.10504C-0.100301 3.47417 -0.101153 4.92201 0.300906 6.29285C0.304318 6.30415 0.314129 6.33274 0.31861 6.34404Z" fill="#AAAAAA" />
-                                                            <path d="M8.68011 0.384387C8.53785 0.241694 8.36124 0.132487 8.16928 0.0682872C7.69491 -0.089551 7.1796 0.0305323 6.82659 0.383964L4.99163 2.21872C4.76468 2.44566 4.61154 2.7319 4.54883 3.04608L4.38886 3.84593C4.34236 4.07736 4.41445 4.31539 4.58125 4.4824C4.71499 4.61592 4.89394 4.68866 5.07865 4.68866C5.12472 4.68866 5.17122 4.68418 5.2175 4.67479L6.01735 4.51482C6.33217 4.4519 6.6182 4.29876 6.84493 4.07203L8.67969 2.23706C9.03269 1.88427 9.15363 1.36981 8.99537 0.894377C8.93138 0.702619 8.82217 0.526015 8.68011 0.384387ZM8.06199 1.61914L6.22723 3.45432C6.12293 3.55862 5.9909 3.62922 5.84586 3.65823L5.29535 3.76829L5.40541 3.21735C5.43442 3.07274 5.50481 2.94093 5.60932 2.83641L7.4445 1.00145C7.52768 0.918263 7.63796 0.873899 7.75164 0.873899C7.79878 0.873899 7.84634 0.881578 7.89263 0.897146C7.95533 0.918049 8.01548 0.954947 8.06241 1.00208C8.10869 1.04837 8.14559 1.1083 8.16649 1.17059C8.21961 1.32992 8.17952 1.50183 8.06199 1.61914Z" fill="#AAAAAA" />
-                                                        </svg>
+  // 1. EĞER YENİ SOHBETSE ÖNCE LOCAL OLARAK OLUŞTUR
+  if (currentConvId <= 0) {
+    const words = data.text.trim().split(/\s+/);
+    let convName = words.slice(0, 5).join(" ");
+    if (words.length > 5) convName += " ...";
+    if (!convName) convName = "Yeni Sohbet";
 
-                                                    </div>
-                                                    <span>Diyalog Defterine Ekle</span>
-                                                </button>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            {msg.fileName && (
-                                                <div className="message-file-preview">
-                                                    {msg.fileName}
-                                                </div>
-                                            )}
-                                            {msg.text && <p>{msg.text}</p>}
-                                        </>
-                                    )}
-                                </div>
-                            ))}
+    const payload = {
+      chatbot_id: botId,
+      user_id: userId,
+      conversation_name: convName,
+    };
 
-                            {/* Scroll target */}
-                            <div ref={messagesEndRef} />
-                        </div>
-                    }
+    try {
+      const res = await fetch("/api/addconversation.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ data: JSON.stringify(payload) }),
+      });
+      const result = await res.json();
 
+      if (result.id) {
+        currentConvId = Number(result.id);
+        isNewConversation = true; // Yeni olduğunu işaretle
+        newConvData = { id: currentConvId, conversation_name: convName };
+        // DİKKAT: setConversation'ı burada çağırmıyoruz, sona saklıyoruz!
+      } else {
+        throw new Error("Conversation oluşturulamadı.");
+      }
+    } catch (err) {
+      console.error("Conversation oluşturma hatası:", err);
+      return;
+    }
+  }
 
-                </div>
-            </div>
+  // 2. Kullanıcı mesajını arayüze ekle
+  setMessages((prev) => [
+    ...prev,
+    {
+      type: "sent",
+      text: data.text || "",
+      fileName: data.fileName || "",
+      audioUrl: data.audioUrl || "",
+    },
+  ]);
 
-            {/* Fixed input at bottom */}
-            <div className={`fixed-input-container ${logoClicked ? 'logo-clicked' : ''}`}>
-                <MessageInput onSend={handleSendMessage} onResetChat={handleResetChat} />
-            </div>
+  // 3. Kullanıcı mesajını DB'ye kaydet
+  const userPayload = {
+    chatbot_id: currentConvId,
+    user_id: userId,
+    sent_by: "user",
+    message: data.text,
+  };
 
-            <DialogNotebookModal
-                isOpen={isDialogModalOpen}
-                onClose={() => setIsDialogModalOpen(false)}
-                onPublish={(title) => {
-                    console.log("Diyalog başlığı:", title);
-                }}
-            />
+  try {
+    fetch("/api/addchat.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ data: JSON.stringify(userPayload) }),
+    });
+  } catch (error) {
+    console.error("Kullanıcı mesajı DB hatası:", error);
+  }
 
+  // Gemini akışını başlat
+  let parts = [{ text: data.text }];
+  if (data.file) {
+    try {
+      const base64Data = await fileToBase64(data.file);
+      parts.push({
+        inline_data: { mime_type: data.file.type, data: base64Data },
+      });
+    } catch (err) {
+      console.error("Dosya hatası:", err);
+    }
+  }
 
+  try {
+    const envRes = await fetch("/admin/ajax/readenv.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ key: "API_GOOGLE_GEMINI" }),
+    });
+    const envData = await envRes.json();
+    const apiKey = envData.value;
 
-        </div >
+    const placeholderId = Date.now();
+    setMessages((prev) => [...prev, { id: placeholderId, type: "received", text: "" }]);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    const systemInstruction = `GÖREV: Aşağıdaki [BİLGİ KAYNAĞI] kısmına %100 sadık kalarak cevap ver. 
+    Bilgi kaynağı dışına çıkma. [KİŞİLİK/STİL] direktiflerini uygula.
+
+    [BİLGİ KAYNAĞI]:
+    ${fullTrainingPrompt || "Bilgi kaynağı yok, kullanıcının sana sorduğu sorulara cevap ver."}
+
+    [KİŞİLİK/STİL]:
+    ${bot?.style_prompt}`;
+
+    parts = [
+      { text: systemInstruction },
+      { text: data.text }
+    ];
+
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:streamGenerateContent?alt=sse&key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({ contents: [{ role: "user", parts }] }),
+      },
     );
+
+    const reader = geminiRes.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let fullText = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split("\n");
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          try {
+            const jsonStr = line.replace("data: ", "").trim();
+            const gData = JSON.parse(jsonStr);
+            const textChunk = gData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            if (textChunk) {
+              fullText += textChunk;
+              setMessages((prev) =>
+                prev.map((msg) => (msg.id === placeholderId ? { ...msg, text: fullText } : msg))
+              );
+            }
+          } catch (e) {}
+        }
+      }
+    }
+
+    // 4. Akış bittikten sonra BOT cevabını DB'ye kaydet
+    if (fullText) {
+      await fetch("/api/addchat.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          data: JSON.stringify({
+            chatbot_id: currentConvId,
+            user_id: userId,
+            sent_by: "bot",
+            message: fullText,
+          }),
+        }),
+      });
+    }
+
+    // 5. EN ÖNEMLİ KISIM: Her şey bittikten sonra conversation state'ini güncelle
+    // Bu sayede useEffect içindeki loadHistory tetiklendiğinde DB'de veriler hazır olacak
+    if (isNewConversation) {
+      setConversationId(currentConvId);
+      setConversation(newConvData);
+    }
+
+  } catch (err) {
+    console.error("Hata:", err);
+    if (err.name === 'AbortError') {
+        setMessages((prev) => prev.map((msg) => 
+            msg.id === placeholderId ? { ...msg, text: "Üzgünüm, cevap çok gecikti. Lütfen tekrar deneyin." } : msg
+        ));
+    }
+    else
+    {
+      setMessages((prev) => [
+      ...prev,
+      { type: "received", text: "Bir hata oluştu, lütfen tekrar deneyin." },
+    ]);
+    }
+  }
+};
+
+  return (
+    <div className="chat-wrapper">
+      <div className="chat-bottom">
+        {bot && <ProfileCard bot={bot} comments={comments} />}
+
+        <div
+          className="chat-header"
+          style={messages.length == 0 ? { flex: 1 } : { display: "none" }}
+        >
+          <h2>Merhaba</h2>
+        </div>
+        <div
+          className="chat-area"
+          style={messages.length == 0 ? { flex: "unset" } : {}}
+        >
+          {messages.length > 0 && <div className="day">Bugün</div>}
+          {messages.length > 0 && (
+            <div className="chat-messages">
+              {messages.map((msg, index) => (
+                <React.Fragment key={index}>
+                  <div className={`message ${msg.type}`}>
+                    {msg.type === "received" ? (
+                      <>
+                        <div className="message-avatar">
+                          <img
+                            src={formatImage(bot.profil_fotografi)}
+                            alt="avatar"
+                          />
+                        </div>
+                        <div className="message-content">
+                          <p className="sender-name">{bot.isim}</p>
+                          <div className="message-text">
+                            {msg.text ? (
+                              <ReactMarkdown>{msg.text}</ReactMarkdown>
+                            ) : (
+                              <div className="typing-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            className="message-action"
+                            onClick={() => openDialogModal(index)}
+                            /*onClick={() => setIsDialogModalOpen(true)}*/
+                          >
+                            <div className="icon">
+                              <svg
+                                width="10"
+                                height="9"
+                                viewBox="0 0 10 9"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M0.31861 6.34404L0.455756 6.69768C0.778898 7.53102 1.32791 8.25537 2.04373 8.79244C2.22566 8.92873 2.44173 8.99912 2.66079 8.99912C2.78492 8.99912 2.90991 8.97651 3.03021 8.93065C3.36295 8.80353 3.60333 8.51921 3.67329 8.17047L3.77119 7.68352C4.94495 7.73663 6.12873 7.63574 7.25108 7.39024C7.81823 7.26483 8.27233 6.84826 8.43699 6.29924C8.63685 5.61074 8.73817 4.90559 8.73817 4.203C8.73817 4.04303 8.73305 3.88327 8.7226 3.72372C8.70681 3.48292 8.49843 3.29991 8.25804 3.31633C8.01745 3.33211 7.83508 3.54008 7.85065 3.78089C7.85982 3.92124 7.86452 4.06222 7.86452 4.203C7.86452 4.82304 7.77493 5.4465 7.59896 6.05183C7.52644 6.29413 7.32083 6.48012 7.06339 6.53686C5.94338 6.78236 4.76088 6.87045 3.5803 6.79857C3.28105 6.7783 3.02105 6.98477 2.96239 7.27336L2.81671 7.99834C2.80178 8.07236 2.74888 8.10286 2.71859 8.11437C2.6883 8.12611 2.62837 8.13848 2.5678 8.09347C1.98316 7.65473 1.53439 7.06283 1.27012 6.38157L1.13894 6.04564C0.78445 4.83733 0.785302 3.55991 1.14086 2.35416C1.21338 2.11186 1.419 1.92587 1.67559 1.86913C2.69748 1.64752 3.74582 1.55367 4.79629 1.58801C5.04328 1.59655 5.2393 1.40693 5.2474 1.16591C5.2555 0.924882 5.06653 0.722894 4.82529 0.714791C3.70571 0.676822 2.58315 0.778354 1.48874 1.01575C0.921592 1.14116 0.467489 1.55773 0.303466 2.10504C-0.100301 3.47417 -0.101153 4.92201 0.300906 6.29285C0.304318 6.30415 0.314129 6.33274 0.31861 6.34404Z"
+                                  fill="#AAAAAA"
+                                />
+                                <path
+                                  d="M8.68011 0.384387C8.53785 0.241694 8.36124 0.132487 8.16928 0.0682872C7.69491 -0.089551 7.1796 0.0305323 6.82659 0.383964L4.99163 2.21872C4.76468 2.44566 4.61154 2.7319 4.54883 3.04608L4.38886 3.84593C4.34236 4.07736 4.41445 4.31539 4.58125 4.4824C4.71499 4.61592 4.89394 4.68866 5.07865 4.68866C5.12472 4.68866 5.17122 4.68418 5.2175 4.67479L6.01735 4.51482C6.33217 4.4519 6.6182 4.29876 6.84493 4.07203L8.67969 2.23706C9.03269 1.88427 9.15363 1.36981 8.99537 0.894377C8.93138 0.702619 8.82217 0.526015 8.68011 0.384387ZM8.06199 1.61914L6.22723 3.45432C6.12293 3.55862 5.9909 3.62922 5.84586 3.65823L5.29535 3.76829L5.40541 3.21735C5.43442 3.07274 5.50481 2.94093 5.60932 2.83641L7.4445 1.00145C7.52768 0.918263 7.63796 0.873899 7.75164 0.873899C7.79878 0.873899 7.84634 0.881578 7.89263 0.897146C7.95533 0.918049 8.01548 0.954947 8.06241 1.00208C8.10869 1.04837 8.14559 1.1083 8.16649 1.17059C8.21961 1.32992 8.17952 1.50183 8.06199 1.61914Z"
+                                  fill="#AAAAAA"
+                                />
+                              </svg>
+                            </div>
+                            <span>Diyalog Defterine Ekle</span>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {msg.fileName && (
+                          <div className="message-file-preview">
+                            {msg.fileName}
+                          </div>
+                        )}
+                        {msg.text && <ReactMarkdown>{msg.text}</ReactMarkdown>}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Reklam ekleme */}
+                  {(index + 1) % chatAdFrequency === 0 && (
+                    <div className="chat-ad">
+                      <img
+                        src="https://placehold.co/468x60?text=Bu+bir+reklam+alanıdır."
+                        alt="ad"
+                      />
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
+
+              {/* Scroll target */}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Fixed input at bottom */}
+      <div
+        className={`fixed-input-container ${logoClicked ? "logo-clicked" : ""}`}
+      >
+        <MessageInput
+          onSend={handleSendMessage}
+          onResetChat={handleResetChat}
+        />
+      </div>
+
+      <DialogNotebookModal
+        userId={userId}
+        botId={conversationId}
+        inputMessage={activeDialog.input}
+        outputMessage={activeDialog.output}
+        isOpen={isDialogModalOpen}
+        onClose={() => setIsDialogModalOpen(false)}
+        onPublish={(title) => {
+          console.log("Diyalog başlığı:", title);
+        }}
+      />
+    </div>
+  );
 }

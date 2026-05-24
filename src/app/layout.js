@@ -1,4 +1,4 @@
-
+export const dynamic = 'force-static';
 import '../app/css/global.css';
 
 export const metadata = {
@@ -17,6 +17,8 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="icon" href="/favicon-dark.png" media="(prefers-color-scheme: light)" />
         <link rel="icon" href="/favicon-white.png" media="(prefers-color-scheme: dark)" />
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2002896111697347" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"></link>
         <style>{`
         .rdp-root {
     --rdp-accent-color: #FF66C4;

@@ -18,7 +18,7 @@ export default function NavbarMobile() {
                     onClick={() => router.push('/dashboard')}
                     style={{ cursor: 'pointer' }}
                 >
-                    <img src={logo.src} alt="logo" />
+                    {logo?.src && <img src={logo.src} alt="logo" />}
                     <span>LUMANORIS</span>
                 </div>
 

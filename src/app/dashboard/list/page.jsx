@@ -11,38 +11,6 @@ import AddToListModalEmpty from "@/app/components/AddToListModalEmpty/AddToListM
 import { Splide, SplideSlide, SplideTrack } from '@splidejs/react-splide';
 import '@splidejs/react-splide/css';
 
-const mockData = [
-    {
-        title: "Puggs Nays",
-        username: "@Puggsnays",
-        summary: "Chatgpt, Sora, Gemini, Deep...",
-        dialog: "200 Diolog",
-    },
-    {
-        title: "NextBot Team",
-        username: "@NextBotAI",
-        summary: "LLMs, AI Agents, AutoGPT...",
-        dialog: "154 Diolog",
-    },
-    {
-        title: "Startup Vision",
-        username: "@visionstartup",
-        summary: "Pitch, MVP, Market, Users...",
-        dialog: "87 Diolog",
-    },
-    {
-        title: "FutureStack",
-        username: "@futurestack",
-        summary: "Web3, Blockchain, AI, Cloud",
-        dialog: "412 Diolog",
-    },
-    {
-        title: "Daily Prompt Club",
-        username: "@promptly",
-        summary: "Midjourney, Dall-e, GPT, Bard",
-        dialog: "98 Diolog",
-    },
-];
 /* 
 const mockData = []; */
 export default function List() {
@@ -53,90 +21,174 @@ export default function List() {
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [deleteTargetIndex, setDeleteTargetIndex] = useState(null);
     const [splideInstances, setSplideInstances] = useState({});
+    const [userId, setUserId] = useState(null);
     const router = useRouter();
 
-    // localStorage'dan listeleri yükle
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            const userLists = localStorage.getItem('userLists');
-            if (userLists) {
-                const lists = JSON.parse(userLists);
-                const formattedLists = lists.map(list => ({
+    const fetchUserLists = async (uid) => {
+        try {
+            const response = await fetch(`/api/getuserlists.php?id=${uid}`);
+            const data = await response.json();
+
+            if (Array.isArray(data)) {
+            // Her liste için bot bilgilerini de çekiyoruz
+            const formatted = await Promise.all(
+                data.map(async (list) => {
+                try {
+                    const botRes = await fetch(`/api/getbotsoflist.php?list_id=${list.id}`);
+                    const botData = await botRes.json();
+
+                    return {
+                    id: list.id,
                     title: list.name,
                     username: "@kullanıcı",
-                    summary: `${list.bots.length} bot içeriyor`,
-                    dialog: `${list.bots.length} Bot`,
-                    bots: list.bots,
-                    createdAt: list.createdAt
-                }));
-                setListData(formattedLists);
-            } else {
-                // Test için mock data'ya fazla bot ekle
-                const testMockData = mockData.map(item => ({
-                    ...item,
-                    bots: Array.from({ length: Math.floor(Math.random() * 10) + 1 }, (_, i) => ({ id: i, name: `Bot ${i + 1}` }))
-                }));
-                setListData(testMockData);
+                    summary: `${botData.bot_count} Bot İçeriyor`,
+                    dialog: `${botData.total_chats} Diyalog`,
+                    bots: botData.bots, // profil fotoğrafları array
+                    createdAt: new Date().toISOString(),
+                    };
+                } catch (err) {
+                    console.error("Bot verisi alınamadı:", err);
+                    return {
+                    id: list.id,
+                    title: list.name,
+                    username: "@kullanıcı",
+                    summary: "Bot bilgisi alınamadı",
+                    dialog: "...",
+                    bots: [],
+                    createdAt: new Date().toISOString(),
+                    };
+                }
+                })
+            );
+
+            setListData(formatted);
             }
+        } catch (error) {
+            console.error("Listeler yüklenirken hata oluştu:", error);
         }
-    }, []);
-
-
-    const handleCreateList = (name) => {
-        console.log("Yeni liste oluşturuluyor:", name);
-
-        // localStorage'a yeni liste ekle
-        const userLists = localStorage.getItem('userLists');
-        const lists = userLists ? JSON.parse(userLists) : [];
-
-        const newList = {
-            name: name,
-            bots: [],
-            createdAt: new Date().toISOString()
-        };
-
-        lists.push(newList);
-        localStorage.setItem('userLists', JSON.stringify(lists));
-
-        // Random diyalog sayısı oluştur (1-200 arası)
-        const randomDialogCount = Math.floor(Math.random() * 200) + 1;
-
-        // State'i güncelle
-        const formattedList = {
-            title: name,
-            username: "@kullanıcı",
-            summary: "0 bot içeriyor",
-            dialog: `${randomDialogCount} Bot`,
-            bots: [],
-            createdAt: newList.createdAt
-        };
-
-        setListData(prev => [...prev, formattedList]);
-
-        // Modal'ı kapat
-        setModalVisible(false);
-        setModalVisible2(false);
-
-        // Explore sayfasına yönlendir - seçilen ürünlerle beraber yeni liste oluşturulacak
-        router.push(`/dashboard/explore?from=list&name=${encodeURIComponent(name)}`);
     };
 
-    const handleDelete = (indexToRemove) => {
-        // localStorage'dan da sil
-        const userLists = localStorage.getItem('userLists');
-        if (userLists) {
-            const lists = JSON.parse(userLists);
-            const updatedLists = lists.filter((_, index) => index !== indexToRemove);
-            localStorage.setItem('userLists', JSON.stringify(updatedLists));
+    useEffect(() => {
+            async function checkSession() {
+                try {
+                    const res = await fetch("/api/sessioncheck.php", {
+                    credentials: "include", // cookie'yi gönder
+                    });
+                    const resultText = await res.text();
+                    console.log(resultText);
+                    const result = JSON.parse(resultText);
+    
+                    if (result.authenticated) {
+                    setUserId(result.user_id);
+                    fetchUserLists(result.user_id); 
+                    } else {
+                    router.push("/login");
+                    }
+                } catch (err) {
+                    console.error("Session check error:", err);
+                    router.push("/login");
+                }
+            }
+            checkSession();
+        }, [router]);
+
+    const handleCreateList = async (name) => {
+        console.log("Yeni liste oluşturuluyor:", name);
+
+        // 1. PHP'ye gönderilecek veriyi hazırla
+        const payload = {
+            user_id: userId,
+            name: name,
+        };
+
+        const formData = new FormData();
+        formData.append('data', JSON.stringify(payload));
+
+        try {
+            // 2. PHP AJAX modülüne isteği at (Dosya yolunu kendine göre güncelle)
+            const response = await fetch('/api/adduserlist.php', { 
+                method: 'POST',
+                body: formData
+            });
+            const resultText = await response.text();
+            console.log(resultText);
+            const result = JSON.parse(resultText);
+            //const result = await response.json();
+
+            if (result.success) {
+                // PHP tarafında başarıyla kaydedildiyse arayüzü güncelle
+                
+                // Random diyalog sayısı oluştur
+                //const randomDialogCount = Math.floor(Math.random() * 200) + 1;
+
+                const formattedList = {
+                    title: name,
+                    username: "@kullanıcı",
+                    summary: "0 bot içeriyor",
+                    dialog: `0 Bot`,
+                    bots: [],
+                    createdAt: new Date().toISOString()
+                };
+
+                // State'i güncelle
+                setListData(prev => [...prev, formattedList]);
+
+                // Modalları kapat
+                setModalVisible(false);
+                setModalVisible2(false);
+
+                // Explore sayfasına yönlendir
+                //router.push(`/dashboard/explore?from=list&name=${encodeURIComponent(name)}`);
+                
+            } else {
+                alert("Veritabanı hatası: " + result.message);
+            }
+
+        } catch (error) {
+            console.error("İstek gönderilirken hata oluştu:", error);
+            alert("Sunucuyla bağlantı kurulamadı.");
+        }
+    };
+
+    const handleDelete = async (indexToRemove) => {
+        // Silinecek listenin veritabanı ID'sini alıyoruz
+        const listToDelete = listData[indexToRemove];
+        
+        if (!listToDelete || !listToDelete.id) {
+            alert("Liste ID'si bulunamadı!");
+            return;
         }
 
-        // State'den sil
-        setListData(prev => prev.filter((_, index) => index !== indexToRemove));
+        const formData = new FormData();
+        formData.append('id', listToDelete.id); // PHP'deki $_POST['id'] buraya gidiyor
+
+        try {
+            const response = await fetch('/api/deleteuserlist.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            const resultText = await response.text();
+            console.log(resultText);
+            const result = JSON.parse(resultText);
+            //const result = await response.json();
+
+            if (result.success) {
+                // Veritabanından başarıyla silindiyse state'den de kaldır
+                setListData(prev => prev.filter((_, index) => index !== indexToRemove));
+                console.log("Silindi:", result.message);
+            } else {
+                alert("Silme hatası: " + result.message);
+            }
+        } catch (error) {
+            console.error("Silme işlemi sırasında hata:", error);
+            alert("Sunucuyla iletişim kurulamadı.");
+        }
     };
 
     const isEmpty = listData.length === 0;
 
-
+      console.log(listData);
     return (
         <div className="list-wrapper">
             <AddToListModal
@@ -232,7 +284,7 @@ export default function List() {
                         <div className="list-left"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                router.push("/dashboard/chat");
+                                router.push("/dashboard/chat/?botId=" + item.id);
                             }}
                             style={{ cursor: "pointer" }}>
 
@@ -262,7 +314,7 @@ export default function List() {
                                     >
                                         {item.bots.map((bot, botIndex) => (
                                             <SplideSlide key={botIndex}>
-                                                <img src={aiIcon.src} alt={`Bot ${botIndex + 1}`} />
+                                                <img src={bot.profil_fotografi} alt={`Bot ${botIndex + 1}`} />
                                             </SplideSlide>
                                         ))}
                                     </Splide>
@@ -301,13 +353,10 @@ export default function List() {
                                 <>
                                     {item.bots && item.bots.length > 0 ? (
                                         item.bots.map((bot, botIndex) => (
-                                            <img key={botIndex} src={aiIcon.src} alt={`Bot ${botIndex + 1}`} />
+                                            <img key={botIndex} src={bot.profil_fotografi} alt={`Bot ${botIndex + 1}`} />
                                         ))
                                     ) : (
                                         <>
-                                            <img src={aiIcon.src} alt="Avatar" />
-                                            <img src={aiIcon.src} alt="Avatar" />
-                                            <img src={aiIcon.src} alt="Avatar" />
                                         </>
                                     )}
                                 </>

@@ -11,12 +11,12 @@ export default function AuthLayout({ children }) {
         <>
             <div className="auth-layout">
                 <div className="navbar-auth">
-                    <div className="logo">
+                    {/* <div className="logo">
                         <div className="icon">
                             <img src={logo.src} alt="logo" />
                         </div>
                         <span>LUMANORIS</span>
-                    </div>
+                    </div> */}
                 </div>
 
                 {children}

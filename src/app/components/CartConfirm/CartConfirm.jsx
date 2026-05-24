@@ -3,6 +3,8 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { format } from 'date-fns';
 import PurchaseSuccessModal from "../PurchaseSuccessModal";
+import { useRouter } from "next/navigation";
+
 export default function CartConfirm({ cartItems }) {
     const [sendInvoice, setSendInvoice] = useState(false);
     const [use3DSecure, setUse3DSecure] = useState(false);
@@ -12,6 +14,17 @@ export default function CartConfirm({ cartItems }) {
     const [aggrementCheck, setAggrementCheck] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+    const [userId, setUserId] = useState(null);
+    const router = useRouter();
+
+    useEffect(() => {
+        async function fetchUser() {
+            const res = await fetch("/api/sessioncheck.php");
+            const data = await res.json();
+            if (data.authenticated) setUserId(data.user_id);
+        }
+        fetchUser();
+    }, []);
 
     const openPolicy = (type) => {
         setActivePolicy(type);
@@ -26,12 +39,24 @@ export default function CartConfirm({ cartItems }) {
     const [cardInfo, setCardInfo] = useState({
         number: "",
         expiry: "",
-        cvv: ""
+        cvv: "",
+        holderName: ""
     });
+    const [holderNameError, setHolderNameError] = useState("");
     const [cardNumberError, setCardNumberError] = useState("");
     const [expiryError, setExpiryError] = useState("");
     const [savedCard, setSavedCard] = useState(null);
     const [useSavedCard, setUseSavedCard] = useState(false);
+
+    const getItemPrice = (item) => {
+        const weeklyPrice = parseFloat(item.price) || 0;
+        const monthlyPrice = parseFloat(item.monthlyPrice) || (weeklyPrice * 4);
+        
+        if (item.duration_weeks === 4) {
+            return (monthlyPrice * 0.95); // %5 İndirimli aylık
+        }
+        return (weeklyPrice * item.duration_weeks); // Haftalık x süre
+    };
 
     function validateCVV(cvv) {
         // Sadece rakam ve uzunluğu 3 (veya 4)
@@ -132,22 +157,175 @@ export default function CartConfirm({ cartItems }) {
             const cardData = {
                 number: cardInfo.number,
                 expiry: cardInfo.expiry,
-                holderName: "Adnan Yusuf", // Varsayılan kart sahibi
+                holderName: cardInfo.holderName, // Varsayılan kart sahibi
                 savedAt: new Date().toISOString()
             };
             localStorage.setItem('savedCard', JSON.stringify(cardData));
         }
     };
 
+    const calculateTotal = () => {
+        const subtotal = cartItems.reduce((sum, item) => sum + getItemPrice(item), 0);
+        const serviceFee = cartItems.length > 0 ? 5 : 0;
+        return { subtotal, serviceFee, total: subtotal + serviceFee };
+    };
+
+    const { subtotal, serviceFee, total } = calculateTotal();
+
     // Ödeme onaylandığında kartı kaydet ve modal'ı aç
-    const handlePaymentConfirm = () => {
-        // Sadece kayıtlı kart kullanılmıyorsa ve "Kartımı Ekle" işaretliyse kaydet
-        if (!useSavedCard && addCard) {
-            saveCardToLocalStorage();
+    // const handlePaymentConfirm = async () => {
+    //     const itemsPayload = cartItems.map(item => ({
+    //         chatbot_id: item.chatbot_id,
+    //         duration_weeks: item.duration_weeks
+    //     }));
+
+    //     const payload = {
+    //         user_id: userId,
+    //         items: itemsPayload
+    //     };
+
+    //     const formData = new FormData();
+    //     formData.append('data', JSON.stringify(payload));
+
+    //     try {
+    //         const res = await fetch('/api/createsubscription.php', {
+    //             method: 'POST',
+    //             body: formData
+    //         });
+    //         const result = await res.json();
+    //         // ... modal ve yönlendirme işlemleri ...
+    //     } catch (error) {
+    //         console.error("Ödeme hatası:", error);
+    //     }
+    // };
+
+    const handlePaymentConfirm = async () => {
+        if (!userId) {
+            alert("Oturum bulunamadı!");
+            return;
         }
-        setShowSuccessModal(true);
-        // Burada ödeme işlemi yapılacak
-        console.log("Ödeme onaylandı, kayıtlı kart kullanıldı:", useSavedCard, "yeni kart kaydedildi:", addCard);
+
+        const itemsPayload = cartItems.map(item => ({
+            chatbot_id: item.chatbot_id,
+            duration_weeks: item.duration_weeks
+        }));
+
+        const activeCard = (useSavedCard && savedCard)
+            ? {
+                number: (savedCard.number || "").replace(/\s/g, ""),
+                expiry: savedCard.expiry || "",
+                cvv: cardInfo.cvv,
+                holder_name: (savedCard.holderName || "").trim(),
+            }
+            : {
+                number: (cardInfo.number || "").replace(/\s/g, ""),
+                expiry: cardInfo.expiry || "",
+                cvv: cardInfo.cvv,
+                holder_name: (cardInfo.holderName || "").trim(),
+            };
+
+        if (!activeCard.number || !activeCard.expiry || !activeCard.cvv || !activeCard.holder_name) {
+            alert("Kart bilgilerini eksiksiz girin.");
+            return;
+        }
+        if (!aggrementCheck) {
+            alert("Devam etmek için sözleşmeleri onaylamanız gerekiyor.");
+            return;
+        }
+
+        const payload = {
+            user_id: userId,
+            items: itemsPayload,
+            card: activeCard,
+            use_3d: use3DSecure,
+            use_saved_card: useSavedCard && !!savedCard,
+            send_invoice: sendInvoice,
+        };
+
+        const formData = new FormData();
+        formData.append('data', JSON.stringify(payload));
+
+        try {
+            const res = await fetch('/api/createsubscription.php', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await res.json();
+
+            if (result.success) {
+                if (result.requires_redirect && result.redirect_url) {
+                    window.location.href = result.redirect_url;
+                    return;
+                }
+                // --- BİLDİRİM OLUŞTURMA BAŞLANGICI ---
+                const itemCount = cartItems.length;
+                let msgTr, msgEn;
+
+                if (itemCount === 1) {
+                    // Tek ürün varsa ismiyle hitap edelim
+                    const botName = cartItems[0].title || "Chatbot";
+                    msgTr = `${botName} ile sohbetin aktif hale getirildi.`;
+                    msgEn = `Your chat with ${botName} has been activated.`;
+                } else {
+                    // Birden fazla ürün varsa sayısını belirtelim
+                    msgTr = `${itemCount} chatbot ile sohbetin aktif hale getirildi.`;
+                    msgEn = `Your chats with ${itemCount} chatbots have been activated.`;
+                }
+
+                const notificationPayload = {
+                    user_id: userId,
+                    type: 'purchase_success',
+                    title_tr: 'Satın Alma Başarılı',
+                    title_en: 'Purchase Successful',
+                    message_tr: msgTr,
+                    message_en: msgEn,
+                    is_read: 0
+                };
+
+                const notificationFormData = new FormData();
+                notificationFormData.append('data', JSON.stringify(notificationPayload));
+
+                // Bildirimi arka planda gönderiyoruz (await etmeyebilirsin ama garanti olsun diye edelim)
+                await fetch('/api/createnotification.php', {
+                    method: 'POST',
+                    body: notificationFormData
+                });
+                // --- BİLDİRİM OLUŞTURMA BİTİŞİ ---
+
+                // Kart kaydetme ve Modal işlemleri (Eski kodun devamı)
+                if (!useSavedCard && addCard) {
+                    const cardData = {
+                        number: cardInfo.number,
+                        expiry: cardInfo.expiry,
+                        holderName: cardInfo.holderName,
+                        savedAt: new Date().toISOString()
+                    };
+                    localStorage.setItem('savedCard', JSON.stringify(cardData));
+                }
+
+                setShowSuccessModal(true);
+                window.dispatchEvent(new Event('cartUpdated'));
+
+                setTimeout(() => {
+                    router.push('/dashboard');
+                }, 3000);
+
+            } else {
+                const msg = result.message || "Ödeme başlatılamadı.";
+                const isSellerIssue = /satıcı kaydı|pazaryeri/i.test(msg);
+                if (isSellerIssue) {
+                    const goCart = window.confirm(`${msg}\n\nSepetinizi gözden geçirmek için yönlendirilmek ister misiniz?`);
+                    if (goCart) {
+                        router.push('/dashboard/checkout');
+                    }
+                } else {
+                    alert("Ödeme Hatası: " + msg);
+                }
+            }
+        } catch (error) {
+            console.error("Ödeme hatası:", error);
+            alert("Sunucuyla bağlantı kurulamadı.");
+        }
     };
 
     const [selectedItems, setSelectedItems] = useState(
@@ -180,9 +358,9 @@ export default function CartConfirm({ cartItems }) {
 
 
     const selectedProducts = cartItems.filter((item) => selectedItems.includes(item.id));
-    const subtotal = selectedProducts.reduce((sum, item) => sum + item.price, 0);
+    /*const subtotal = selectedProducts.reduce((sum, item) => sum + item.price, 0);
     const serviceFee = selectedProducts.length > 0 ? 5 : 0;
-    const total = subtotal + serviceFee;
+    const total = subtotal + serviceFee;*/
 
     return (
         <div className="cart-full-wrapper">
@@ -210,10 +388,17 @@ export default function CartConfirm({ cartItems }) {
                         <h3>Satın Alınacak Sohbet ({cartItems.length})</h3>
                         {cartItems.map(item => (
                             <div key={item.id} className="confirm-product">
-                                <Image src={item.image} width={100} height={100} alt={item.title} />
+                                <Image 
+                                    src={item.image} 
+                                    width={80} 
+                                    height={80} 
+                                    alt={item.title} 
+                                    className="cart-item-img" 
+                                />
                                 <div>
                                     <p>{item.title}</p>
-                                    <span>{item.price} ₺</span>
+                                    <span className="duration-info">{item.duration_weeks === 4 ? '1 Aylık Paket' : `${item.duration_weeks} Haftalık Paket`}</span>
+                                    <span style={{fontWeight: 'bold'}}>{getItemPrice(item).toFixed(2)} ₺</span>
                                 </div>
                             </div>
                         ))}
@@ -240,7 +425,7 @@ export default function CartConfirm({ cartItems }) {
                             </svg>
                         </div>
                         <h4>Erişim Bilgisi</h4>
-                        <p className="dsc">Kullanıcı: Adnan Yusuf</p>
+                        <p className="dsc">Kullanıcı: {((useSavedCard && savedCard?.holderName) || cardInfo.holderName || "-")}</p>
                         <p className="dsc">E-posta: adnan@lumanoris.ai</p>
                         <label className="checkbox-option">
                             <input
@@ -300,15 +485,39 @@ export default function CartConfirm({ cartItems }) {
                         
                         {/* Yeni Kart Girişi - Kayıtlı kart kullanılmıyorsa göster */}
                         {(!savedCard || !useSavedCard) && (
-                            <input
-                                type="text"
-                                className="input"
-                                placeholder="KART NUMARASI"
-                                value={cardInfo.number}
-                                inputMode="numeric"
-                                onChange={(e) => validateAndFormatCardNumber(e.target.value)}
-                                onBlur={(e) => validateAndFormatCardNumber(e.target.value)}
-                            />
+                            <>
+                                <input
+                                    type="text"
+                                    className={`input ${holderNameError ? 'error' : ''}`}
+                                    placeholder="KART ÜZERİNDEKİ İSİM"
+                                    value={cardInfo.holderName}
+                                    autoComplete="cc-name"
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^a-zA-ZçÇğĞıİöÖşŞüÜ\s'-]/g, "").toLocaleUpperCase("tr-TR");
+                                        setCardInfo(prev => ({ ...prev, holderName: value }));
+                                        if (value.trim().length < 3) {
+                                            setHolderNameError("Kart üzerindeki ismi giriniz");
+                                        } else {
+                                            setHolderNameError("");
+                                        }
+                                    }}
+                                    maxLength={50}
+                                />
+                                {holderNameError && (
+                                    <div style={{ color: "#FF66C4", fontSize: 12, marginTop: 4 }}>
+                                        {holderNameError}
+                                    </div>
+                                )}
+                                <input
+                                    type="text"
+                                    className="input"
+                                    placeholder="KART NUMARASI"
+                                    value={cardInfo.number}
+                                    inputMode="numeric"
+                                    onChange={(e) => validateAndFormatCardNumber(e.target.value)}
+                                    onBlur={(e) => validateAndFormatCardNumber(e.target.value)}
+                                />
+                            </>
                         )}
                         {cardNumberError && (
                             <div style={{ color: "#FF66C4", fontSize: 12, marginTop: 4 }}>
@@ -426,7 +635,7 @@ export default function CartConfirm({ cartItems }) {
                             <div className="ic">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
                                     <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" fill="#FFF0FF" />
-                                    <path d="M12 8V16M16 12H8" stroke="#FF66C4" stroke-width="1.2" stroke-linecap="square" stroke-linejoin="round" />
+                                    <path d="M12 8V16M16 12H8" stroke="#FF66C4" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="round" />
                                 </svg>
                             </div>
                             <input placeholder="İndirim kodu gir" />
@@ -437,8 +646,10 @@ export default function CartConfirm({ cartItems }) {
                                 (!useSavedCard && (
                                     !isValidCardNumber(cardInfo.number) ||
                                     !isValidExpiryDate(cardInfo.expiry) ||
-                                    !validateCVV(cardInfo.cvv)
+                                    !validateCVV(cardInfo.cvv) ||
+                                    (cardInfo.holderName || "").trim().length < 3
                                 )) ||
+                                (useSavedCard && !validateCVV(cardInfo.cvv)) ||
                                 !aggrementCheck
                             }
                             onClick={handlePaymentConfirm}

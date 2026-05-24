@@ -60,7 +60,7 @@ export default function AccountPoints() {
                     </p>
                     <span className={`icon ${showAdvanced ? "rotate" : ""}`}>
                         <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M6 9.5625L12 15.5625L18 9.5625" stroke="white" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M6 9.5625L12 15.5625L18 9.5625" stroke="white" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                     </span>
                 </button>

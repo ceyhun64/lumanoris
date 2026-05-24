@@ -77,18 +77,147 @@ const initialItems = [
 export default function History() {
     const router = useRouter();
     const [editingId, setEditingId] = useState(null);
-    const [editedTitle, setEditedTitle] = useState("");
-    const [historyItems, setHistoryItems] = useState(initialItems);
+    //const [editedTitle, setEditedTitle] = useState("");
+    const [historyItems, setHistoryItems] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeMenuId, setActiveMenuId] = useState(null);
     const [deleteTargetId, setDeleteTargetId] = useState(null);
     const menuRef = useRef(null);
+    const [userId, setUserId] = useState();
 
-    const handleDelete = () => {
+    function formatDateToTurkish(dateString) {
+        const months = [
+            "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+            "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+        ];
+
+        // Eğer dateString null, undefined, boş string veya "0" ise bugünü kullan
+        let date;
+        if (!dateString || dateString === "0") {
+            date = new Date();
+        } else {
+            date = new Date(dateString);
+        }
+
+        const day = date.getDate();
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+
+        return `${day} ${month} ${year}`;
+    }
+
+    async function checkSession() {
+        try {
+          const res = await fetch("/api/sessioncheck.php", {
+            credentials: "include", // cookie'yi gönder
+          });
+          const resultText = await res.text();
+          console.log(resultText);
+          const result = JSON.parse(resultText);
+    
+          if (result.authenticated) {
+            setUserId(result.user_id);
+          } else {
+            router.push("/login");
+          }
+        } catch (err) {
+          console.error("Session check error:", err);
+          router.push("/login");
+        }
+    }
+
+    const handleUpdateTitle = async (id, newTitle) => {
+        // 1. Önce arayüzü (state) hızlıca güncelle (Kullanıcı beklemesin)
+        setHistoryItems(prev =>
+            prev.map(i => i.id === id ? { ...i, conversation_name: newTitle } : i)
+        );
+        setEditingId(null);
+
+        // 2. Veritabanına isteği gönder
+        try {
+            const formData = new FormData();
+            // PHP kodun json_decode($_POST['data']) beklediği için bu formatta gönderiyoruz
+            formData.append('data', JSON.stringify({
+                id: id,
+                conversation_name: newTitle
+            }));
+
+            const res = await fetch("/api/updateconversation.php", {
+                method: "POST",
+                body: formData, // FormData otomatik olarak Content-Type: multipart/form-data ayarlar
+            });
+
+            const result = await res.json();
+            
+            if (!result.success) {
+                console.error("Güncelleme başarısız:", result.message);
+                // Hata durumunda belki sayfayı yenileyebilir veya eski halini geri yükleyebilirsin
+            }
+        } catch (err) {
+            console.error("API Hatası:", err);
+        }
+    };
+
+    useEffect(() => {
+        checkSession();
+    },[]);
+
+    useEffect(() => {
+        if(!userId) return;
+        fetch(`/api/gethistory.php?user_id=${userId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP hatası! Durum: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("API Yanıtı:", data);
+            setHistoryItems(data.results);
+        })
+        .catch(error => {
+            console.error("Veri çekilirken bir sorun oluştu:", error);
+        });
+    },[userId]);
+
+    const handleDelete = async () => {
+        // Silinecek ID yoksa işlemi durdur
+        if (!deleteTargetId) return;
+
+        try {
+            // PHP tarafı $_POST['id'] beklediği için FormData oluşturuyoruz
+            const formData = new FormData();
+            formData.append('id', deleteTargetId);
+
+            const res = await fetch("/api/deleteconversation.php", {
+                method: "POST",
+                body: formData,
+            });
+
+            const result = await res.json();
+
+            if (result.success) {
+                // Veritabanında silindiği onaylanınca arayüzden de kaldırıyoruz
+                setHistoryItems(prev => prev.filter(item => item.id !== deleteTargetId));
+                console.log("Sohbet silindi:", result.deleted_id);
+            } else {
+                // API hata döndürürse kullanıcıya bilgi verebilirsin
+                alert("Hata: " + result.message);
+            }
+        } catch (err) {
+            console.error("Silme işlemi sırasında hata oluştu:", err);
+            alert("İşlem gerçekleştirilemedi. Lütfen tekrar deneyin.");
+        } finally {
+            // Her durumda modalı ve menüyü kapat
+            setDeleteTargetId(null);
+            setActiveMenuId(null);
+        }
+    };
+    /*const handleDelete = () => {
         setHistoryItems(prev => prev.filter(item => item.id !== deleteTargetId));
         setDeleteTargetId(null);
         setActiveMenuId(null);
-    };
+    };*/
 
     const handleChatClick = (item) => {
         // Chat mesajlarını localStorage'a kaydet
@@ -97,7 +226,7 @@ export default function History() {
         localStorage.setItem('chatId', item.chatId);
         
         // Chat sayfasına yönlendir
-        router.push("/dashboard/chat");
+        router.push(`/dashboard/chat/?botId=${item.chatbot_id}&convId=${item.id}`);
     };
 
     useEffect(() => {
@@ -123,9 +252,9 @@ export default function History() {
         if (!searchQuery.trim()) return true;
         const q = searchQuery.toLowerCase();
         return (
-            item.title.toLowerCase().includes(q) ||
-            item.subtitle.toLowerCase().includes(q) ||
-            item.date.toLowerCase().includes(q)
+            item.conversation_name.toLowerCase().includes(q) ||
+            item.latest_message.toLowerCase().includes(q) ||
+            item.latest_sent_time.toLowerCase().includes(q)
         );
     });
 
@@ -133,23 +262,26 @@ export default function History() {
         <div className="history-wrapper">
             <div className="history-header">
                 <h2>Geçmişim</h2>
-                <div className="history-search">
-                    <input
-                        type="text"
-                        placeholder="Geçmiş sohbetlerde ara..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Escape') setSearchQuery('');
-                        }}
-                    />
-                    <button aria-label="Ara" onClick={(e)=>e.preventDefault()}>
-                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12.75 12.75L16.5 16.5" stroke="#f39" strokeWidth="1.5" strokeLinecap="round"/>
-                            <circle cx="8" cy="8" r="5" stroke="#f39" strokeWidth="1.5"/>
-                        </svg>
-                    </button>
-                </div>
+                {filteredItems.length > 0 && (
+                    <div className="history-search">
+                        <input
+                            type="text"
+                            placeholder="Geçmiş sohbetlerde ara..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Escape') setSearchQuery('');
+                            }}
+                        />
+                        <button aria-label="Ara" onClick={(e)=>e.preventDefault()}>
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12.75 12.75L16.5 16.5" stroke="#f39" strokeWidth="1.5" strokeLinecap="round"/>
+                                <circle cx="8" cy="8" r="5" stroke="#f39" strokeWidth="1.5"/>
+                            </svg>
+                        </button>
+                    </div>
+                )}
+                
             </div>
 
             {filteredItems.length == 0 && <EmptyCart />}
@@ -185,33 +317,32 @@ export default function History() {
                             </svg>
                         </div>
                         <div className="icon">
-                            <Image src={aiIcon} alt="AI Icon" />
+                            <Image src={item.profil_fotografi} width={40} height={40} alt="AI Icon" />
                         </div>
                         <div className="details">
                             <div className="top-card">
                                 {editingId === item.id ? (
                                     <input
                                         type="text"
-                                        value={editedTitle}
+                                        defaultValue={item.conversation_name/*editedTitle*/}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                         }}
-                                        onChange={(e) => setEditedTitle(e.target.value)}
-                                        onBlur={() => {
+                                        //onChange={(e) => setEditedTitle(e.target.value)}
+                                        onBlur={() => handleUpdateTitle(item.id, editedTitle)}
+                                        /*onBlur={() => {
                                             setHistoryItems(prev =>
                                                 prev.map(i =>
                                                     i.id === item.id ? { ...i, title: editedTitle } : i
                                                 )
                                             );
                                             setEditingId(null);
-                                        }}
+                                        }}*/
                                         onKeyDown={(e) => {
                                             if (e.key === "Enter") {
-                                                setHistoryItems(prev =>
-                                                    prev.map(i =>
-                                                        i.id === item.id ? { ...i, title: editedTitle } : i
-                                                    )
-                                                );
+                                                handleUpdateTitle(item.id, e.target.value);
+                                            }
+                                            if (e.key === "Escape") {
                                                 setEditingId(null);
                                             }
                                         }}
@@ -219,9 +350,9 @@ export default function History() {
                                         className="editable-input"
                                     />
                                 ) : (
-                                    <h4>{item.title}</h4>
+                                    <h4>{item.conversation_name}</h4>
                                 )}
-                                <p>{item.date}</p>
+                                <p>{formatDateToTurkish(item.latest_sent_time)}</p>
                             </div>
                             <span className="subtitle">
                                 <div className="icon">
@@ -232,7 +363,7 @@ export default function History() {
 
                                 </div>
                                 <span>
-                                    {item.subtitle}
+                                    {item.latest_message && item.latest_message.length > 100 ? item.latest_message.substring(0, 100) + "..." : item.latest_message}
                                 </span>
                             </span>
                         </div>
@@ -252,7 +383,7 @@ export default function History() {
                                     <button className="menu-item" onClick={(e) => { e.preventDefault(); setDeleteTargetId(item.id) }}>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="21" viewBox="0 0 20 21" fill="none">
                                             <path d="M0 5.375C0 5.08 -5.58794e-08 4.9325 0.0912499 4.84125C0.1825 4.75 0.33 4.75 0.625 4.75H19.375C19.67 4.75 19.8175 4.75 19.9088 4.84125C20 4.9325 20 5.08 20 5.375V5.69C20 5.8025 20 5.86 19.9825 5.91C19.9674 5.95308 19.9431 5.99233 19.9113 6.025C19.8738 6.0625 19.8237 6.0875 19.7225 6.13875C18.9088 6.545 18.5025 6.74875 18.2063 7.05375C17.9532 7.3144 17.7599 7.62707 17.64 7.97C17.5 8.37 17.5 8.825 17.5 9.735V16C17.5 18.3575 17.5 19.535 16.7675 20.2675C16.035 21 14.8575 21 12.5 21H7.5C5.1425 21 3.965 21 3.2325 20.2675C2.5 19.535 2.5 18.3575 2.5 16V9.735C2.5 8.825 2.5 8.37 2.36 7.97C2.24007 7.62707 2.04683 7.3144 1.79375 7.05375C1.4975 6.74875 1.09125 6.545 0.2775 6.13875C0.209326 6.11033 0.145723 6.072 0.0887501 6.025C0.0568881 5.99233 0.0325681 5.95308 0.0174999 5.91C-7.68341e-08 5.86 0 5.8025 0 5.69V5.375Z" fill="#FFE4E4" />
-                                            <path d="M7.58594 1.4627C7.72844 1.3302 8.04219 1.2127 8.47969 1.12895C8.98179 1.0398 9.49099 0.996708 10.0009 1.0002C10.5509 1.0002 11.0859 1.0452 11.5222 1.12895C11.9584 1.2127 12.2722 1.3302 12.4159 1.46395" stroke="#DB1F35" stroke-linecap="round" />
+                                            <path d="M7.58594 1.4627C7.72844 1.3302 8.04219 1.2127 8.47969 1.12895C8.98179 1.0398 9.49099 0.996708 10.0009 1.0002C10.5509 1.0002 11.0859 1.0452 11.5222 1.12895C11.9584 1.2127 12.2722 1.3302 12.4159 1.46395" stroke="#DB1F35" strokeLinecap="round" />
                                             <path d="M13.75 10.375C13.75 10.0298 13.4702 9.75 13.125 9.75C12.7798 9.75 12.5 10.0298 12.5 10.375V16.625C12.5 16.9702 12.7798 17.25 13.125 17.25C13.4702 17.25 13.75 16.9702 13.75 16.625V10.375Z" fill="#DB1F35" />
                                             <path d="M7.5 10.375C7.5 10.0298 7.22018 9.75 6.875 9.75C6.52982 9.75 6.25 10.0298 6.25 10.375V16.625C6.25 16.9702 6.52982 17.25 6.875 17.25C7.22018 17.25 7.5 16.9702 7.5 16.625V10.375Z" fill="#DB1F35" />
                                         </svg>
@@ -261,13 +392,13 @@ export default function History() {
                                     <div className="seperator"></div>
                                     <button className="menu-item" onClick={(e) => {
                                         e.preventDefault();
-                                        setEditedTitle(item.title);
+                                        //setEditedTitle(item.conversation_name);
                                         setEditingId(item.id);
                                         setActiveMenuId(null);
                                     }}>
                                         <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M15.8335 3.16732C15.511 2.87064 15.0839 2.71403 14.6461 2.73184C14.2082 2.74965 13.7953 2.94043 13.498 3.26232L8.05144 8.70924L7.125 11.8758L10.2915 10.9497L15.7385 5.54232C15.9037 5.39449 16.0375 5.21499 16.132 5.01445C16.2265 4.81392 16.2798 4.59644 16.2886 4.37493C16.2975 4.15341 16.2618 3.93238 16.1836 3.72494C16.1054 3.51749 15.9863 3.32787 15.8335 3.16732Z" stroke="white" stroke-linecap="round" stroke-linejoin="round" />
-                                            <path d="M9.5 2.375H3.16654C2.95661 2.375 2.75528 2.45839 2.60684 2.60684C2.45839 2.75528 2.375 2.95661 2.375 3.16654V15.8335C2.375 16.0434 2.45839 16.2447 2.60684 16.3932C2.75528 16.5416 2.95661 16.625 3.16654 16.625H15.8335C16.0434 16.625 16.2447 16.5416 16.3932 16.3932C16.5416 16.2447 16.625 16.0434 16.625 15.8335V9.5" stroke="url(#paint0_linear_7960_8661)" stroke-linecap="round" stroke-linejoin="round" />
+                                            <path d="M15.8335 3.16732C15.511 2.87064 15.0839 2.71403 14.6461 2.73184C14.2082 2.74965 13.7953 2.94043 13.498 3.26232L8.05144 8.70924L7.125 11.8758L10.2915 10.9497L15.7385 5.54232C15.9037 5.39449 16.0375 5.21499 16.132 5.01445C16.2265 4.81392 16.2798 4.59644 16.2886 4.37493C16.2975 4.15341 16.2618 3.93238 16.1836 3.72494C16.1054 3.51749 15.9863 3.32787 15.8335 3.16732Z" stroke="white" strokeLinecap="round" strokeLinejoin="round" />
+                                            <path d="M9.5 2.375H3.16654C2.95661 2.375 2.75528 2.45839 2.60684 2.60684C2.45839 2.75528 2.375 2.95661 2.375 3.16654V15.8335C2.375 16.0434 2.45839 16.2447 2.60684 16.3932C2.75528 16.5416 2.95661 16.625 3.16654 16.625H15.8335C16.0434 16.625 16.2447 16.5416 16.3932 16.3932C16.5416 16.2447 16.625 16.0434 16.625 15.8335V9.5" stroke="url(#paint0_linear_7960_8661)" strokeLinecap="round" strokeLinejoin="round" />
                                             <defs>
                                                 <linearGradient id="paint0_linear_7960_8661" x1="17.8437" y1="19.9659" x2="2.56565" y2="0.0473143" gradientUnits="userSpaceOnUse">
                                                     <stop offset="0.211538" stop-color="#FF66C4" />
@@ -275,7 +406,6 @@ export default function History() {
                                                 </linearGradient>
                                             </defs>
                                         </svg>
-
                                         Başlığı Düzenle
                                     </button>
                                 </div>

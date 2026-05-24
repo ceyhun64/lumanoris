@@ -76,7 +76,7 @@ export default function Sidebar({ isMobileOpen = false }) {
         <div className="seperator"></div>
 
         <ul className="menu">
-          <li className={pathname === '/dashboard' ? 'active' : ''}>
+          <li className={(pathname === '/dashboard/' || pathname === '/dashboard' ) ? 'active' : ''}>
 
             <Link href="/dashboard">
               <img src={homeIcon.src} alt="anasayfa" />
@@ -91,12 +91,12 @@ export default function Sidebar({ isMobileOpen = false }) {
             </Link>
           </li>
 
-          <li className={isActive('/dashboard/market') ? 'active' : ''}>
+          {/* <li className={isActive('/dashboard/market') ? 'active' : ''}>
             <Link href="/dashboard/market">
               <img src={storeIcon.src} alt="satılık" />
               <span>Satılık</span>
             </Link>
-          </li>
+          </li> */}
 
           <li className={isActive('/dashboard/following') ? 'active' : ''}>
             <Link href="/dashboard/following">
@@ -156,8 +156,8 @@ export default function Sidebar({ isMobileOpen = false }) {
             </svg>
           </div>
           <Link
-            href="/dashboard/settings"
-            className={pathname === '/dashboard/settings' ? 'active' : ''}
+            href="/dashboard/settings/"
+            className={pathname === '/dashboard/settings/' ? 'active' : ''}
           >
             <img src={settingsIcon.src} alt="ayarlar" style={{ marginRight: 8 }} />
             <span>Ayarlar</span>
@@ -174,7 +174,7 @@ export default function Sidebar({ isMobileOpen = false }) {
             Hesabınızı Yükseltin
           </span>
 
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 18h14M5 14h14l1-9l-4 3l-4-5l-4 5l-4-3z" /></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 18h14M5 14h14l1-9l-4 3l-4-5l-4 5l-4-3z" /></svg>
         </Link>
       </div>
       <QuitModal

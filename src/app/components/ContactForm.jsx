@@ -19,10 +19,30 @@ export default function ContactForm() {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Form Gönderildi:", formData);
-        // Form gönderim işlemi burada yapılır (örn. API post)
+
+        const data = new FormData();
+        data.append("fullName", formData.fullName);
+        data.append("email", formData.email);
+        data.append("subject", formData.subject);
+        data.append("message", formData.message);
+        if (formData.file) {
+            data.append("file", formData.file);
+        }
+
+        try {
+            const res = await fetch("/api/contact.php", {
+            method: "POST",
+            body: data,
+            });
+
+            const result = await res.json();
+            //console.log("API result:", result);
+            alert(result.message);
+        } catch (err) {
+            console.error("Form gönderim hatası:", err);
+        }
     };
 
     return (

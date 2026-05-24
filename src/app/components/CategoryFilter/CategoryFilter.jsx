@@ -2,34 +2,41 @@
 import { useState, useRef, useEffect } from 'react';
 import { Splide, SplideSlide, SplideTrack } from '@splidejs/react-splide';
 import '@splidejs/splide/dist/css/splide.min.css';
+import './CategoryFilter.css';
 
-const categories = [
-    "Tümü", "Kurumsal", "Eğitim", "Çeviri", "Planlar",
-    "Uygulamalar", "Yaratıcı Fikirler", "Programlama", "Hobiler", "Oyunlar",
-    "Bilim&Araştırma", "Profesyonel", "Karakter", "Filmler", "Yaratıcı Yazarlık"
-];
-
-export default function CategoryFilter({ onSelect, selected: externalSelected }) {
+export default function CategoryFilter({ categories, onSelect, selected: externalSelected }) {
     const [selected, setSelected] = useState(externalSelected || 'Tümü');
     const [canGoPrev, setCanGoPrev] = useState(false);
     const [canGoNext, setCanGoNext] = useState(true);
 
-
     const splideRef = useRef(null);
 
+    // Dışarıdan seçili kategori değişirse yerel state'i güncelle
+    useEffect(() => {
+        if (externalSelected) setSelected(externalSelected);
+    }, [externalSelected]);
+
     const handleClick = (cat) => {
+        const catName = cat.kategori_adi_tr; 
+        setSelected(catName);
+        if (onSelect) onSelect(catName); 
+    };
+
+    /*const handleClick = (cat) => {
         setSelected(cat);
         if (onSelect) onSelect(cat);
+    };*/
+
+    const handlePrev = () => splideRef.current?.go('<');
+    const handleNext = () => splideRef.current?.go('>');
+
+    // Slider hareket ettiğinde veya yüklendiğinde butonların durumunu güncelle
+    const handleSplideMove = (splide) => {
+        setCanGoPrev(splide.index > 0);
+        setCanGoNext(splide.index < splide.length - splide.options.perPage);
     };
 
-    const handlePrev = () => {
-        splideRef.current?.go('<');
-    };
-
-    const handleNext = () => {
-        splideRef.current?.go('>');
-    };
-
+    // Ok Bileşenleri
     const LeftArrow = () => (
         <button className="custom-arrow left" onClick={handlePrev} disabled={!canGoPrev}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -54,40 +61,29 @@ export default function CategoryFilter({ onSelect, selected: externalSelected })
         </button>
     );
 
-
-
-    useEffect(() => {
-        if (externalSelected) setSelected(externalSelected);
-    }, [externalSelected]);
-
-
-    const handleSplideMove = (splide) => {
-        let perPage = splide.options.perPage;
-        const width = window.innerWidth;
-        if (width < 768) perPage = 3;
-        else if (width < 1200) perPage = 4;
-        setCanGoPrev(splide.index > 0);
-        setCanGoNext(splide.index < splide.length - perPage);
-    };
-
-
     return (
         <div className="category-filter">
             <div className='arw-ct'>
                 <LeftArrow />
             </div>
             <Splide
+                // KRİTİK: categories uzunluğu değiştiğinde slider'ı baştan yaratır.
+                // Bu sayede yeni gelen verilerle genişlik hesaplamaları doğru yapılır.
+                key={categories.length} 
                 options={{
                     type: 'slide',
-                    gap: '7px',
+                    gap: '10px',
                     perPage: 5,
                     perMove: 1,
                     pagination: false,
                     arrows: false,
-                    drag: 'free',
+                    drag: 'free', // Serbest kaydırma hissi verir
+                    flickPower: 400, // Kaydırma hassasiyeti
+                    bound: true, // Başta ve sonda takılı kalmasını sağlar
                     breakpoints: {
-                        768: { perPage: 3 },
                         1200: { perPage: 4 },
+                        768: { perPage: 3 },
+                        480: { perPage: 2 },
                     },
                 }}
                 hasTrack={false}
@@ -96,20 +92,19 @@ export default function CategoryFilter({ onSelect, selected: externalSelected })
                 onMounted={handleSplideMove}
             >
                 <SplideTrack>
-                    {categories.map((cat) => (
-                        <SplideSlide key={cat}>
+                    {categories.map((cat, index) => (
+                        <SplideSlide key={`${cat.kategori_adi_tr}-${index}`}>
                             <button
                                 onClick={() => handleClick(cat)}
-                                className={`cat-btn ${selected === cat ? 'active' : ''}`}
+                                className={`cat-btn ${selected === cat.kategori_adi_tr ? 'active' : ''}`}
                             >
-                                {cat}
+                                {cat.kategori_adi_tr}
                             </button>
                         </SplideSlide>
                     ))}
                 </SplideTrack>
             </Splide>
             <div className='arw-ct'>
-
                 <RightArrow />
             </div>
         </div>

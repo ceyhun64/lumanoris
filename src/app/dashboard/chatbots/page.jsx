@@ -5,20 +5,96 @@ import Image from "next/image";
 import sampleImage from "../../../images/sample-bot-page.png";
 import ChatbotCard from "@/app/components/ChatbotCard/ChatbotCard";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 const mockChatbots = [
 ];
 
 export default function Chatbotlarim() {
     const [chatbots, setChatbots] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [userId, setUserId] = useState(null);
+    const router = useRouter();
 
-    // Component mount olduğunda localStorage'dan chatbotları yükle
     useEffect(() => {
-        const savedChatbots = JSON.parse(localStorage.getItem('userChatbots') || '[]');
-        const allChatbots = [...mockChatbots, ...savedChatbots];
-        setChatbots(allChatbots);
-    }, []);
+                async function checkSession() {
+                    try {
+                        const res = await fetch("/api/sessioncheck.php", {
+                        credentials: "include", // cookie'yi gönder
+                        });
+                        const resultText = await res.text();
+                        console.log(resultText);
+                        const result = JSON.parse(resultText);
+        
+                        if (result.authenticated) {
+                        setUserId(result.user_id);
+                        } else {
+                        router.push("/login");
+                        }
+                    } catch (err) {
+                        console.error("Session check error:", err);
+                        router.push("/login");
+                    }
+                }
+                checkSession();
+            }, [router]);
 
+    useEffect(() => {
+        console.log(userId);
+        fetch(`/api/getchatbotsmenu.php?id=${userId}`)
+            .then(res => res.text())
+            .then(dataText => {
+                console.log(dataText);
+                const data = JSON.parse(dataText);
+                console.log(data);
+                if (Array.isArray(data)) {
+                    setChatbots(data);
+                }
+            })
+            .catch(err => console.error("Yükleme hatası:", err));
+        
+        fetch('/api/getcategories.php')
+            .then(async res => {
+                const text = await res.text(); // Önce metin olarak alıyoruz
+                //console.log("Sunucudan gelen ham yanıt:", text);
+                
+                try {
+                    const data = JSON.parse(text); // Sonra manuel olarak parse etmeyi deniyoruz
+                    if (Array.isArray(data)) {
+                        setCategories(data);
+                    } else {
+                        console.error("Gelen veri bir dizi değil:", data);
+                    }
+                } catch (parseError) {
+                    console.error("JSON Parse Hatası! Sunucu muhtemelen PHP hatası döndürdü.");
+                }
+            })
+            .catch(err => console.error("Fetch Hatası:", err));
+    }, [userId]);
+
+    const handleDelete = async (id) => {
+        if (!confirm("Bu chatbot'u silmek istediğinize emin misiniz?")) return;
+
+        const formData = new FormData();
+        formData.append('id', id);
+
+        try {
+            const response = await fetch('/api/deletechatbot.php', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                // State'den anlık olarak kaldır
+                setChatbots(prev => prev.filter(bot => bot.id !== id));
+            } else {
+                alert("Hata: " + result.message);
+            }
+        } catch (error) {
+            console.error("Silme hatası:", error);
+        }
+    };
 
     const isEmpty = chatbots.length === 0;
 
@@ -80,32 +156,34 @@ export default function Chatbotlarim() {
             </div>
 
             <div className="chatbots-grid">
-                {chatbots.map((bot) => (
-                    <ChatbotCard
-                        key={bot.id}
-                        title={bot.title}
-                        image={bot.image}
-                        likes={bot.likes}
-                        dislikes={bot.dislikes}
-                        comments={bot.comments}
-                        dialogs={bot.dialogs}
-                        status={bot.status}
-                        profileImage={bot.profileImage}
-                        onDelete={() => {
-                            // Mock chatbot ise sadece state'den kaldır
-                            if (mockChatbots.find(mockBot => mockBot.id === bot.id)) {
-                                setChatbots(prev => prev.filter(b => b.id !== bot.id));
-                            } else {
-                                // localStorage'dan gelen chatbot ise localStorage'dan da kaldır
-                                const savedChatbots = JSON.parse(localStorage.getItem('userChatbots') || '[]');
-                                const updatedSavedChatbots = savedChatbots.filter(savedBot => savedBot.id !== bot.id);
-                                localStorage.setItem('userChatbots', JSON.stringify(updatedSavedChatbots));
-                                setChatbots(prev => prev.filter(b => b.id !== bot.id));
-                            }
-                        }}
-                    />
-                ))}
+                {chatbots.map((bot) => {
+                    // Chatbot'un kategori_id'sine sahip kategoriyi buluyoruz
+                    const targetCategory = categories.find(cat => String(cat.id) === String(bot.kategori_id));
+                    
+                    // Eğer kategori bulunduysa adını, bulunamadıysa 'Kategorisiz' (veya boş string) döndürüyoruz
+                    const categoryLabel = targetCategory ? targetCategory.kategori_adi_tr : "Genel";
 
+                    return (
+                        <ChatbotCard
+                            key={bot.id}
+                            id={bot.id}
+                            userId={userId}
+                            title={bot.isim}
+                            image={bot.kapak_fotografi}
+                            profileImage={bot.profil_fotografi}
+                            category={categoryLabel}
+                            status={bot.seller_status === 'active' ? 'Aktif' : 'Yayında Değil'}
+                            sellerStatus={bot.seller_status}
+                            likes={bot.likes}
+                            dislikes={bot.dislikes}
+                            comments={bot.comments}
+                            dialogs={bot.dialogs}
+                            weeklyPrice={bot.ucret_haftalik}
+                            monthlyPrice={bot.ucret_aylik}
+                            onDelete={() => handleDelete(bot.id)}
+                        />
+                    );
+                })}
             </div>
         </div>
     );

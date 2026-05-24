@@ -1,19 +1,35 @@
 import React, { useRef, useState,useEffect } from "react";
 
-export default function ProfileImageEdit({ onChange, onRemove }) {
+export default function ProfileImageEdit({ onChange, onRemove, userId }) {
     const [image, setImage] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const inputRef = useRef();
 
     // localStorage'dan profil fotoğrafını yükle
     useEffect(() => {
+        async function fetchProfilePhoto() {
+        try {
+            const res = await fetch(`/api/user_getphoto.php?id=${userId}`);
+            const result = await res.json();
+            if (result.success && result.avatar) {
+            setImage(result.avatar);
+            }
+        } catch (err) {
+            console.error("Profil fotoğrafı alınamadı:", err);
+        }
+        }
+        fetchProfilePhoto();
+    }, [userId]);
+
+
+    /*useEffect(() => {
         if (typeof window !== "undefined") {
             const savedImage = localStorage.getItem('userProfileImage');
             if (savedImage) {
                 setImage(savedImage);
             }
         }
-    }, []);
+    }, []);*/
 
     const handleImageChange = (e) => {
         if (e.target.files && e.target.files[0]) {

@@ -15,7 +15,7 @@ input.dark-date[type=month]::-webkit-calendar-picker-indicator {
   opacity: 1;
   cursor: pointer;
   /* Preferred: explicit pink calendar SVG */
-  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none'><rect x='3' y='4' width='18' height='17' rx='2' stroke='%23FF66C4' stroke-width='2'/><path d='M8 2v4M16 2v4M3 10h18' stroke='%23FF66C4' stroke-width='2' stroke-linecap='round'/></svg>") no-repeat center;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none'><rect x='3' y='4' width='18' height='17' rx='2' stroke='%23FF66C4' strokeWidth='2'/><path d='M8 2v4M16 2v4M3 10h18' stroke='%23FF66C4' strokeWidth='2' strokeLinecap='round'/></svg>") no-repeat center;
 }
 
 /* Firefox */
@@ -2109,7 +2109,7 @@ body {
   font-weight: 500;
   line-height: 40px;
   margin-bottom: 32px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 .cart-box .explore-btn {
   width: 100%;
@@ -3619,6 +3619,7 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 40px;
+  z-index: 10 !important;
 }
 .dialogue-wrapper .dialogue-header h2 {
   font-family: "Montserrat", sans-serif;
@@ -3710,6 +3711,7 @@ body {
   align-items: center;
   margin-bottom: 43px;
   margin: 0 auto;
+  z-index: 10 !important;
 }
 @media (min-width: 992px) {
   .dialogue-wrapper .category-filter {
@@ -5150,7 +5152,7 @@ body {
   right: 0;
   margin-left: 280px;
   padding: 16px 64px;
-  z-index: 1000;
+  z-index: 8;
   transition: 0.3s all ease;
 }
 @media (max-width: 1100px) {
@@ -5566,6 +5568,12 @@ body {
   line-height: 24px;
   text-transform: capitalize;
 }
+
+.profile-description {
+  align-self: flex-start;
+  text-align: left !important;
+}
+
 .chat-wrapper .chat-bottom .chat-area {
   display: flex;
   flex-direction: column;
@@ -5647,7 +5655,7 @@ body {
   font-style: normal;
   font-weight: 600;
   line-height: 24px;
-  text-transform: capitalize;
+  text-transform: none;
 }
 .chat-wrapper .chat-bottom .chat-area .chat-messages .message.received .message-content .message-action {
   border-radius: 5px;
@@ -5690,7 +5698,7 @@ body {
   font-family: "Montserrat", sans-serif;
   font-style: normal;
   font-weight: 600;
-  text-transform: capitalize;
+  text-transform: none;
   padding: 10px 20px;
   border-radius: 12px;
   font-size: 14px;
@@ -9503,6 +9511,7 @@ input[type=number] {
   flex-direction: column;
   gap: 12px;
   transition: box-shadow 0.18s, transform 0.18s;
+  z-index: 10001;
 }
 .profile-popup:hover {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2509803922);
@@ -9703,4 +9712,710 @@ input[type=number] {
 .phone-input.error {
   border-color: #FF66C4 !important;
   box-shadow: 0 0 0 1px rgba(255, 102, 196, 0.2);
-}/*# sourceMappingURL=global.css.map */
+}
+/* --- Chatbot Formunda Kullanılacak Fiyat ve Kazanç Alanları İçin Stiller --- */
+
+.pricing-section-wrapper {
+    font-family: "Montserrat", sans-serif;
+    color: #fff;
+    margin: 20px 0;
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .divider {
+        border: 0;
+        border-top: 1px solid #2c2833;
+        margin-bottom: 20px;
+    }
+
+    .section-description {
+        font-size: 13px;
+        color: #aaa;
+        line-height: 1.6;
+        margin-bottom: 30px;
+    }
+}
+
+.pricing-container {
+    display: flex;
+    flex-direction: column; /* Mobilde alt alta */
+    gap: 20px;
+    align-items: center;
+
+    @media (min-width: 768px) {
+        flex-direction: row; /* Geniş ekranda yan yana */
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+}
+
+.price-setting-area {
+    width: 100%;
+    flex: 1;
+
+    .price-input-group {
+        background-color: #0c0c0e; /* Görseldeki daha koyu ton */
+        border: 1px solid #1e1a24;
+        border-radius: 12px;
+        padding: 15px 20px;
+        display: flex;
+        flex-direction: column;
+
+        label {
+            font-size: 14px;
+            color: #efefef;
+            margin-bottom: 5px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            .text-input {
+                background: transparent;
+                border: none;
+                outline: none;
+                color: #fff;
+                font-size: 20px;
+                font-weight: 500;
+                width: 100%;
+                font-family: "Montserrat", sans-serif;
+                
+                &::placeholder { color: #444; }
+            }
+
+            .currency-symbol {
+                color: #FF66C4;
+                font-size: 20px;
+                font-weight: bold;
+                margin-left: 10px;
+            }
+        }
+    }
+}
+
+.earnings-display {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+    padding-top: 10px;
+
+    @media (min-width: 768px) {
+        padding-left: 40px;
+    }
+
+    p {
+        margin: 0;
+        font-size: 15px;
+        color: #FF66C4; /* Pembe tonu */
+        display: flex;
+        justify-content: flex-start;
+        gap: 10px;
+        white-space: nowrap;
+
+        .earning-value {
+            color: #fff; /* Değerler beyaz veya açık gri */
+            font-weight: 500;
+        }
+    }
+}
+
+/* Hata Durumu */
+.price-input-group:has(.error) {
+    border-color: #ff4d4f !important;
+}
+
+.image-upload-section {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+    width: 100%;
+}
+
+.upload-card {
+    flex: 1;
+    background: #121218; /* Koyu arka plan */
+    border: 1px solid #24242e;
+    border-radius: 12px;
+    display: flex;
+    padding: 20px;
+    gap: 20px;
+    transition: all 0.3s ease;
+}
+
+.upload-card.error {
+    border-color: #ff4d4d;
+    box-shadow: 0 0 10px rgba(255, 77, 77, 0.2);
+}
+
+.card-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 160px;
+}
+
+.preview-box {
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 102, 196, 0.05);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.upload-label {
+    color: #ff66c4;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+.card-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1;
+}
+
+.card-right h4 {
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.card-right ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+}
+
+.card-right ul li {
+    color: #a0a0ab;
+    font-size: 11px;
+    line-height: 1.6;
+    margin-bottom: 6px;
+    position: relative;
+    padding-left: 12px;
+}
+
+.card-right ul li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #ff66c4;
+}
+
+.change-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 15px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-image: linear-gradient(to right, #4699ff, #ff66c4) 1; /* Border gradient */
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    text-transform: uppercase;
+}
+
+.change-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Ana kapsayıcıyı hizala */
+.input-ctr {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Elemanlar arası boşluk */
+  position: relative;
+  width: 100%;
+  background: #121217; /* Örnek koyu tema rengi */
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.input-ctr input {
+  flex: 1; /* Input'un tüm boşluğu kaplamasını sağlar, butonları sağa iter */
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+}
+
+/* Filtre Butonu ve Menü Kapsayıcısı */
+.market-filter-select {
+  position: relative; /* Menünün buna göre konumlanması için kritik */
+}
+
+.market-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px dashed #ff66c4; /* Görseldeki kesikli pembe kenarlık */
+  padding: 6px 12px;
+  border-radius: 15px;
+  cursor: pointer;
+  color: white;
+  white-space: nowrap;
+}
+
+/* AÇILIR MENÜ (DROPDOWN) AYARLARI */
+.market-filter-dropdown {
+  position: absolute;
+  top: calc(100% + 10px); /* Butonun hemen altına, biraz boşlukla koy */
+  right: 0; /* Sağ kenara hizala */
+  width: 220px; /* Görseldeki gibi genişlik */
+  background: #1a1a23; /* Görseldeki koyu gri/siyah tonu */
+  border-radius: 12px;
+  padding: 8px 0;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5); /* Derinlik hissi */
+  z-index: 999; /* Diğer kartların üstünde kalması için */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Menü Seçenekleri */
+.filter-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  color: #e0e0e0;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: "Montserrat", sans-serif;
+  transition: background 0.2s;
+}
+
+.filter-option:hover {
+  background: rgba(255, 102, 196, 0.1); /* Hafif pembe hover efekti */
+}
+
+.filter-option.active {
+  color: #ff66c4;
+}
+
+/* "Önerilen" yanındaki bilgi ikonu (i) */
+.info-dot {
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.6;
+}
+
+.message.sent {
+  text-transform: none !important;
+  color: red;
+}
+
+/* Ana kapsayıcıyı tam genişlik yapıyoruz */
+.dialogue-block {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px; /* Bloklar arası boşluk */
+}
+
+/* Header kısmını (Başlık ve Kopyala Butonu) yayıyoruz */
+.block-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between; /* Başlık solda, buton sağda */
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0; /* Opsiyonel: Ayırıcı çizgi */
+    margin-bottom: 10px;
+}
+
+/* İçerik alanını sola yaslıyoruz */
+.block-content {
+    width: 100%;
+    text-align: left; /* Metni sola yasla */
+}
+
+/* Metnin kendisi için ek düzenlemeler */
+.block-content p {
+    width: 100%;
+    margin: 0;
+    text-align: left;
+    line-height: 1.6; /* Daha rahat okuma için satır aralığı */
+    word-wrap: break-word; /* Uzun kelimelerin taşmasını önler */
+    white-space: pre-wrap; /* Mesajdaki satır başlarını ve boşlukları korur */
+}
+
+#forgotPasswordLink {
+  color: rgb(255,102,196);
+  transition-duration: 0.25s;
+}
+
+#forgotPasswordLink:hover {
+  color: rgb(220,90,171);
+}
+
+#forgotPasswordLink:active {
+  color: rgb(200,80,151);
+}
+
+#iyzicoFooter {
+  position: relative;
+  top: 20px;
+}
+
+/* Mobil Uyumluluk */
+@media (max-width: 992px) {
+    .image-upload-section {
+        flex-direction: column;
+    }
+}
+
+/* Sepet onay sayfasındaki ürün görselleri */
+.confirm-product {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Görsel ile yazı arasındaki boşluk */
+    margin-bottom: 15px;
+}
+
+.cart-item-img {
+    width: 80px !important;  /* Sabit genişlik */
+    height: 80px !important; /* Sabit yükseklik */
+    object-fit: cover;       /* Oranı koru ve alanı doldur (sünmeyi önler) */
+    border-radius: 12px;     /* Hafif yuvarlatılmış köşeler (tasarıma uygun) */
+    flex-shrink: 0;          /* Yazı uzun olsa bile görselin küçülmesini engeller */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Opsiyonel: hafif bir çerçeve */
+}
+
+.confirm-product div p {
+    margin: 0;
+    font-weight: 600;
+    color: #fff;
+}
+
+.confirm-product div span {
+    color: #FF66C4; /* Fiyat rengi */
+    font-size: 14px;
+}
+
+/* .quit-overlay (Modal Backdrop) için CSS, sağladığınız örneğe benzer */
+.modal-backdrop {
+  position: fixed;
+  inset: 0; /* top: 0; left: 0; bottom: 0; right: 0; */
+  background: rgba(0, 0, 0, 0.8); /* Koyu arka plan */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* Diğer her şeyin üzerinde olması için yüksek bir değer */
+  animation: fadeIn 0.25s ease-out;
+}
+
+/* .buy-modal (Modal İçeriği) için CSS */
+.buy-modal {
+  border-radius: 24px; /* Büyük ihtimalle bu yuvarlaklık */
+  background: #14181B; /* Koyu modal arka planı */
+  width: 90%;
+  max-width: 440px; /* Maksimum genişlik */
+  padding: 24px; /* İçerik boşlukları */
+  position: relative;
+  text-align: left; /* Metin sola yaslı */
+  animation: scaleIn 0.3s ease;
+  color: #FFFFFF;
+}
+
+.buy-modal .modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #FF66C4; /* Görüntüdeki X rengine yakın */
+  cursor: pointer;
+}
+
+/* Başlıklar */
+.buy-modal .modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.buy-modal .modal-subtitle {
+  color: #FF66C4; /* Aristoteles başlığı için */
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.buy-modal .modal-description,
+.buy-modal .modal-info {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+/* Seçenek Butonları */
+.duration-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2x2 grid */
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.duration-btn {
+  padding: 14px 10px;
+  border-radius: 12px;
+  background: #262B30; /* Koyu buton arka planı */
+  color: #FFFFFF;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.duration-btn:hover {
+    background: #30363B;
+}
+
+.duration-btn.active {
+  background: linear-gradient(90deg, #7A3D9C 0%, #C466FF 100%); /* Mavi/Mor Gradyan */
+  border: 1px solid #9966FF;
+  font-weight: 600;
+}
+
+/* Aylık İndirim Kutusu */
+.monthly-discount {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(160, 102, 198, 0.15); /* Hafif Mor arka plan */
+  color: #FF66C4;
+  font-size: 13px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.monthly-discount svg {
+    margin-right: 8px;
+}
+
+/* Fiyat Gösterimi */
+.price-display {
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 12px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.2);
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+    margin-bottom: 24px;
+    position: relative;
+}
+
+.price-display strong {
+    color: #FF66C4; /* Fiyat rengi */
+}
+
+.price-display .sale-icon {
+    /* Sale ikonu buraya position: absolute ile eklenebilir */
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    /* SVG kodunuzun veya ikonun buraya yerleşimi */
+}
+
+
+/* Alt Butonlar */
+.modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.btn-cancel,
+.btn-buy-final {
+  padding: 14px 12px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  transition: opacity 0.2s ease;
+}
+
+.btn-cancel {
+  background: #383C41; /* İptal butonu koyu gri/siyah */
+  color: #FFFFFF;
+}
+
+.btn-buy-final {
+  background: linear-gradient(90deg, #7A3D9C 0%, #C466FF 100%); /* Satın Al butonu gradyanı */
+  color: #FFFFFF;
+}
+
+/* Animasyonlar (Gerekirse) */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes scaleIn {
+    from { transform: scale(0.9); }
+    to { transform: scale(1); }
+}
+
+/* CartFull.jsx içinde eklenen süre seçimi için stil */
+.cart-item .duration-selector {
+    display: flex;
+    gap: 6px;
+    padding: 5px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.05); /* Koyu gri arka plan */
+    margin-left: 10px; /* Cart-details ile arasına boşluk eklemek için */
+}
+
+.cart-item .duration-pill {
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.cart-item .duration-pill.active {
+    background-color: #6A3D9C; /* Seçili butonun rengi */
+    color: #FFFFFF;
+    border-color: #C466FF;
+    font-weight: 600;
+}
+
+.address-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr); /* 6 kutuyu yan yana dizer */
+        gap: 10px;
+    }
+    .mt-10 { margin-top: 10px; }
+    
+    /* Mobil uyumluluk: Ekran küçülünce 2 veya 3 satıra düşer */
+    @media (max-width: 1024px) {
+        .address-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 600px) {
+        .address-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  padding: 8px 0;
+}
+
+.typing-dots span {
+  width: 8px;
+  height: 8px;
+  background-color: #aaa;
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1.0); }
+}
+
+/* === Withdrawal Confirm Modal Theme === */
+.withdrawal-confirm-modal {
+    background: #14181B !important; /* Tema koyu rengi */
+    border: 1px solid rgba(255, 241, 250, 0.13) !important; /* İnce çerçeve */
+    border-radius: 24px !important; /* Yuvarlak köşeler */
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 102, 196, 0.15) !important; /* Derinlik ve glow */
+    padding: 32px !important;
+}
+
+.withdrawal-confirm-modal h3 {
+    color: #FFF !important;
+    font-family: "Montserrat", sans-serif !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px;
+}
+
+.withdrawal-confirm-modal p, 
+.withdrawal-confirm-modal strong {
+    color: #FFF !important;
+    font-family: "Montserrat", sans-serif !important;
+}
+
+/* İptal Butonu (Secondary) */
+.btn-confirm-cancel {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
+    color: #FFF !important;
+    padding: 12px 24px !important;
+    font-family: "Montserrat", sans-serif !important;
+    font-weight: 500 !important;
+    cursor: pointer;
+    transition: all 0.2s ease !important;
+}
+.btn-confirm-cancel:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: #FFF !important;
+}
+
+/* Onayla Butonu (Primary - Tema Rengi) */
+.btn-confirm-submit {
+    background: linear-gradient(323deg, #FF66C4 9.6%, #4699FF 108.66%) !important; /* Site ana gradient'i */
+    border-radius: 12px !important;
+    color: #FFF !important;
+    padding: 12px 24px !important;
+    font-family: "Montserrat", sans-serif !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 102, 196, 0.3) !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+}
+.btn-confirm-submit:hover {
+    transform: scale(1.03) !important;
+    box-shadow: 0 6px 20px rgba(255, 102, 196, 0.5) !important;
+}
+
+.chatbot-card.inactive-seller { position: relative; opacity: 0.55; }
+.chatbot-card.inactive-seller::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,0.35); border-radius: inherit; pointer-events: none; }
+.chatbot-card .seller-inactive-badge { position: absolute; top: 10px; left: 10px; right: 10px; z-index: 3; background: linear-gradient(135deg, rgba(255,102,196,0.95), rgba(70,153,255,0.95)); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 12px; text-align: center; cursor: pointer; font-weight: 500; }
+.chatbot-card .seller-inactive-badge:hover { filter: brightness(1.1); }
+
+/*# sourceMappingURL=global.css.map */

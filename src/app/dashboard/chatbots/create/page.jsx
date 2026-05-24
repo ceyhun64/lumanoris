@@ -1,10 +1,17 @@
 'use client';
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ChatbotForm from "@/app/components/ChatbotForm/ChatbotForm";
+import SellerOnboardingWizard from "@/app/components/SellerOnboardingWizard/SellerOnboardingWizard";
+import useSellerStatus from "@/app/hooks/useSellerStatus";
+import { useRouter } from "next/navigation";
 
 export default function CreateChatbot() {
     // İlk adım gizli, direkt form göster
+    const [bot, setBot] = useState(null); //düzenlenecek bot
+    const [botId, setBotId] = useState(0);
+    const router = useRouter();
+    const [userId, setUserId] = useState(null);
     const [selectedCard, setSelectedCard] = useState({
             title: "YÖNLENDİRME BOTU",
             desc: "Talimat Vererek Bir Bot Oluştur.",
@@ -18,13 +25,88 @@ export default function CreateChatbot() {
         bgColor: "#9BC8FF"
     });
 
+    useEffect(() => {
+                    async function checkSession() {
+                        try {
+                            const res = await fetch("/api/sessioncheck.php", {
+                            credentials: "include", // cookie'yi gönder
+                            });
+                            const resultText = await res.text();
+                            console.log(resultText);
+                            const result = JSON.parse(resultText);
+            
+                            if (result.authenticated) {
+                            setUserId(result.user_id);
+                            } else {
+                            router.push("/login");
+                            }
+                        } catch (err) {
+                            console.error("Session check error:", err);
+                            router.push("/login");
+                        }
+                    }
+                    checkSession();
+                }, [router]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        let botId = params.get("id") || -1;
+        setBotId(botId);
+        if(botId !== -1)
+        {
+            fetch(`/api/getchatbot.php?id=${botId}`)
+            .then(res => res.text())
+            .then(async (tdata) => {
+                let data = JSON.parse(tdata);
+                const botData = Array.isArray(data) ? data[0] : data;
+                if(botData)
+                {
+                    setBot(botData);
+                    console.log("Bot geldi!");
+                }
+            })
+            .catch(err => console.error("Bot fetch error:", err));
+        }
+        
+    }, []);
+
+    if (botId !== -1 && !bot) {
+        return <div>Bot bilgileri yükleniyor...</div>;
+    }
+
+    return <CreateChatbotInner userId={userId} bot={bot} botId={botId} selectedCard={selectedCard} />;
+}
+
+function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
+    const seller = useSellerStatus(userId);
+
+    if (!userId || seller.loading) {
+        return <div className="chatbot-create-wrapper"><p>Yükleniyor...</p></div>;
+    }
+
+    if (seller.status !== "active") {
+        return (
+            <div className="chatbot-create-wrapper">
+                <div className="chatbot-create-header">
+                    <h2>Satıcı Kaydı Gerekli</h2>
+                </div>
+                <SellerOnboardingWizard
+                    userId={userId}
+                    initialStatus={seller}
+                    onComplete={() => seller.refetch()}
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="chatbot-create-wrapper">
             <div className="chatbot-create-header">
                 <h2>Oluştur</h2>
             </div>
-                <ChatbotForm selectedCard={selectedCard} />
+            {bot
+                ? <ChatbotForm selectedCard={selectedCard} bot={bot} botId={botId} userId={userId} />
+                : <ChatbotForm selectedCard={selectedCard} userId={userId} />}
         </div>
     );
 }

@@ -10,9 +10,12 @@ export default function ForgotPassword() {
     const [showPassword, setShowPassword] = useState(false);
     const [showPasswordRepeat, setShowPasswordRepeat] = useState(false);
     const [email, setEmail] = useState("");
+    const [verificationCode, setVerificationCode] = useState(""); // *** YENİ: Doğrulama kodu state'i ***
     const [password, setPassword] = useState("");
     const [passwordRepeat, setPasswordRepeat] = useState("");
     const [alert, setAlert] = useState({ show: false, message: "", type: "warning" });
+    const [generatedCode, setGeneratedCode] = useState(""); // *** YENİ: Oluşturulan kod (TEST AMAÇLI) ***
+    const [userId, setUserId] = useState(null);
 
     // Email validation
     const validateEmail = (email) => {
@@ -39,8 +42,13 @@ export default function ForgotPassword() {
         setAlert({ show: false, message: "", type: "warning" });
     };
 
+    // Doğrulama kodu oluşturma (TEST AMAÇLI)
+    const generateRandomCode = () => {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+    };
+
     // Handle step 1 - Send code
-    const handleSendCode = () => {
+    const handleSendCode = async () => {
         if (!email.trim()) {
             showAlert("E-posta adresi boş olamaz.");
             return;
@@ -51,12 +59,54 @@ export default function ForgotPassword() {
             return;
         }
 
-        setStep(2);
-        showAlert("Doğrulama kodu e-posta adresinize gönderildi.", "success");
+        // Kod oluşturuluyor ve state'e atanıyor
+        const code = generateRandomCode();
+        setGeneratedCode(code);
+
+        try {
+            // Backend'e POST isteği atıyoruz
+            const formData = new FormData();
+            formData.append("email", email);
+            formData.append("resetCode", code);
+
+            const res = await fetch("/api/passresetmail.php", {
+            method: "POST",
+            body: formData,
+            });
+
+            const resultText = await res.text();
+            console.log(resultText);
+            const result = JSON.parse(resultText);
+            // const result = await res.json();
+            // console.log("API result:", result);
+
+            if (result.success) {
+            setStep(2);
+            showAlert("Doğrulama kodu e-posta adresinize gönderildi.", "success");
+            setUserId(result.user_id);
+            } else {
+            showAlert(result.message || "Kod gönderilemedi.");
+            }
+        } catch (err) {
+            console.error("Kod gönderme hatası:", err);
+            showAlert("Sunucuya bağlanırken hata oluştu.");
+        }
     };
 
     // Handle password save
-    const handleSavePassword = () => {
+    const handleSavePassword = async () => {
+        // Kod kontrolü
+        if (!verificationCode.trim()) {
+            showAlert("Doğrulama kodu boş olamaz.");
+            return;
+        }
+
+        if (verificationCode !== generatedCode) {
+            showAlert("Girilen doğrulama kodu hatalı.");
+            return;
+        }
+
+        // Şifre kontrolleri
         if (!password.trim()) {
             showAlert("Yeni şifre boş olamaz.");
             return;
@@ -78,12 +128,33 @@ export default function ForgotPassword() {
             return;
         }
 
-        // Here you would typically make an API call to save the new password
-        // For now, we'll just redirect
-        showAlert("Şifreniz başarıyla güncellendi.", "success");
-        setTimeout(() => {
-            window.location.href = "/dashboard";
-        }, 1500);
+        try {
+            // Backend'e isteği gönderiyoruz
+            const formData = new FormData();
+            formData.append("id", userId); // şifre sıfırlanan kullanıcının id'si
+            formData.append("password", password);
+            formData.append("password_confirm", passwordRepeat);
+
+            const res = await fetch("/api/updateuserpass.php", {
+            method: "POST",
+            body: formData,
+            });
+
+            const result = await res.json();
+            console.log("API result:", result);
+
+            if (result.success) {
+            showAlert("Şifreniz başarıyla güncellendi.", "success");
+            setTimeout(() => {
+                window.location.href = "/login"; // ✅ login sayfasına yönlendirme
+            }, 1500);
+            } else {
+            showAlert(result.message || "Şifre güncellenemedi.");
+            }
+        } catch (err) {
+            console.error("Şifre güncelleme hatası:", err);
+            showAlert("Sunucuya bağlanırken hata oluştu.");
+        }
     };
 
     return (
@@ -142,8 +213,19 @@ export default function ForgotPassword() {
                     <>
                         <p className="info">
                             <strong>Yeni Şifrenizi Belirleyin</strong><br />
-                            Hesabınız için yeni bir şifre oluşturun.
+                            E-posta adresinize gönderilen kodu girin ve yeni bir şifre oluşturun.
                         </p>
+                        
+                        {/* *** YENİ: Doğrulama Kodu Girdisi *** */}
+                        <input
+                            type="text"
+                            placeholder="DOĞRULAMA KODU"
+                            className="input"
+                            value={verificationCode}
+                            onChange={(e) => setVerificationCode(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleSavePassword()}
+                        />
+                        {/* ************************************* */}
 
                         <div className="password-group">
                             <input

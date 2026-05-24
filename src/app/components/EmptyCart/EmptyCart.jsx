@@ -27,12 +27,12 @@ export default function EmptyCart() {
 
                 </div>
                 <svg class="icc" xmlns="http://www.w3.org/2000/svg" width="93" height="93" viewBox="0 0 93 93" fill="none">
-                    <path d="M65.875 79.4375H66.2619M42.625 79.4375H43.0119" stroke="#FF66C4" stroke-width="5.58" stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M11.625 11.6253H19.9169C20.8517 11.6131 21.7594 11.9398 22.472 12.545C23.1845 13.1503 23.6539 13.993 23.7931 14.9175L25.6531 27.1247M25.6531 27.1247L31.0006 61.9997L73.6244 58.1253L81.375 27.1247H25.6531Z" stroke="white" stroke-width="3.72" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M65.875 79.4375H66.2619M42.625 79.4375H43.0119" stroke="#FF66C4" strokeWidth="5.58" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M11.625 11.6253H19.9169C20.8517 11.6131 21.7594 11.9398 22.472 12.545C23.1845 13.1503 23.6539 13.993 23.7931 14.9175L25.6531 27.1247M25.6531 27.1247L31.0006 61.9997L73.6244 58.1253L81.375 27.1247H25.6531Z" stroke="white" strokeWidth="3.72" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
             </div>
             <p className="message">SEPETİNDE ÜRÜN BULUNMAMAKTADIR.</p>
-            <button onClick={() => router.push("/dashboard/market")} className="explore-btn">
+            <button onClick={() => router.push("/dashboard/explore")} className="explore-btn">
                 KEŞFETMEYE BAŞLA
             </button>
         </div>

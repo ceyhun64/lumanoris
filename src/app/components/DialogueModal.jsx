@@ -9,7 +9,7 @@ import CommentModal from "./CommentModal/CommentModal";
 import { useRouter } from 'next/navigation';
 
 
-export default function DialogueModal({ isOpen, onClose }) {
+export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
     const inputRef = useRef(null);
     const outputRef = useRef(null);
     const router = useRouter();
@@ -21,6 +21,105 @@ export default function DialogueModal({ isOpen, onClose }) {
     const [disliked, setDisliked] = useState(false);
     const [likeCount, setLikeCount] = useState(1500);
     const [dislikeCount, setDislikeCount] = useState(20);
+    const [comments, setComments] = useState([]);
+    const [userId, setUserId] = useState();
+    const [commentCount, setCommentCount] = useState(0);
+
+    async function checkSession() {
+      try {
+        const res = await fetch("/api/sessioncheck.php", {
+          credentials: "include", // cookie'yi gönder
+        });
+        const resultText = await res.text();
+        //console.log(resultText);
+        const result = JSON.parse(resultText);
+
+        if (result.authenticated) {
+          setUserId(result.user_id);
+        } else {
+          router.push("/login");
+        }
+      } catch (err) {
+        console.error("Session check error:", err);
+        router.push("/login");
+      }
+    }
+
+    const checkUserLike = async () => {
+      try {
+        const res = await fetch("/api/diduserlike2.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            data: JSON.stringify({
+              user_id: userId,
+              dialog_id: selectedHistory.id,
+            }),
+          }),
+        });
+
+        const resultText = await res.text();
+        //console.log(resultText);
+        const result = JSON.parse(resultText);
+
+        if (result.success) {
+          setLiked(result.didLike); // backend'den gelen boolean
+        }
+      } catch (err) {
+        console.error("diduserlike API error:", err);
+      }
+    };
+
+    const checkUserDisLike = async () => {
+      try {
+        const res = await fetch("/api/diduserdislike2.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            data: JSON.stringify({
+              user_id: userId,
+              dialog_id: selectedHistory.id,
+            }),
+          }),
+        });
+
+        const resultText = await res.text();
+        //console.log(resultText);
+        const result = JSON.parse(resultText);
+
+        if (result.success) {
+          setDisliked(result.didDisLike); // backend'den gelen boolean
+        }
+      } catch (err) {
+        console.error("diduserdislike API error:", err);
+      }
+    };
+
+    useEffect(() => {
+        checkSession();
+        //console.log("History to display: ",selectedHistory);
+        const dialogId = selectedHistory.id;
+        if (dialogId) {
+            fetch(`/api/getdialoginteracts.php?id=${dialogId}`)
+                .then((response) => response.json())
+                .then((data) => {
+                    //console.log(data);
+                    setLikeCount(data.dialog.likes);
+                    setDislikeCount(data.dialog.dislikes);
+                    setComments(data.comments);
+                    setCommentCount(data.comments.length);
+                    /*setLiked(data.liked);
+                    setDisliked(data.disliked);*/
+
+                })
+                .catch((error) => {
+                    console.error("Hata:", error);
+                });
+        }
+        checkUserLike();
+        checkUserDisLike();
+
+    },[selectedHistory]);
 
     useEffect(() => {
         const closeOnEsc = (e) => e.key === 'Escape' && onClose();
@@ -36,7 +135,7 @@ export default function DialogueModal({ isOpen, onClose }) {
         const text = ref.current.innerText;
         navigator.clipboard.writeText(text)
             .then(() => {
-                console.log('Kopyalandı:', text);
+                //console.log('Kopyalandı:', text);
             })
             .catch((err) => {
                 console.error('Kopyalama başarısız:', err);
@@ -67,8 +166,8 @@ export default function DialogueModal({ isOpen, onClose }) {
                             <button className="copy-button" onClick={() => handleCopy(inputRef)}>
                                 <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <g clip-path="url(#clip0_7960_14766)">
-                                        <path d="M14.1667 6.375H7.79167C7.00926 6.375 6.375 7.00926 6.375 7.79167V14.1667C6.375 14.9491 7.00926 15.5833 7.79167 15.5833H14.1667C14.9491 15.5833 15.5833 14.9491 15.5833 14.1667V7.79167C15.5833 7.00926 14.9491 6.375 14.1667 6.375Z" stroke="url(#paint0_linear_7960_14766)" stroke-linecap="round" stroke-linejoin="round" />
-                                        <path d="M3.54102 10.6243H2.83268C2.45696 10.6243 2.09662 10.4751 1.83095 10.2094C1.56527 9.94374 1.41602 9.58341 1.41602 9.20768V2.83268C1.41602 2.45696 1.56527 2.09662 1.83095 1.83095C2.09662 1.56527 2.45696 1.41602 2.83268 1.41602H9.20768C9.58341 1.41602 9.94374 1.56527 10.2094 1.83095C10.4751 2.09662 10.6243 2.45696 10.6243 2.83268V3.54102" stroke="#FFE6F2" stroke-linecap="round" stroke-linejoin="round" />
+                                        <path d="M14.1667 6.375H7.79167C7.00926 6.375 6.375 7.00926 6.375 7.79167V14.1667C6.375 14.9491 7.00926 15.5833 7.79167 15.5833H14.1667C14.9491 15.5833 15.5833 14.9491 15.5833 14.1667V7.79167C15.5833 7.00926 14.9491 6.375 14.1667 6.375Z" stroke="url(#paint0_linear_7960_14766)" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M3.54102 10.6243H2.83268C2.45696 10.6243 2.09662 10.4751 1.83095 10.2094C1.56527 9.94374 1.41602 9.58341 1.41602 9.20768V2.83268C1.41602 2.45696 1.56527 2.09662 1.83095 1.83095C2.09662 1.56527 2.45696 1.41602 2.83268 1.41602H9.20768C9.58341 1.41602 9.94374 1.56527 10.2094 1.83095C10.4751 2.09662 10.6243 2.45696 10.6243 2.83268V3.54102" stroke="#FFE6F2" strokeLinecap="round" strokeLinejoin="round" />
                                     </g>
                                     <defs>
                                         <linearGradient id="paint0_linear_7960_14766" x1="16.3709" y1="17.7422" x2="6.4982" y2="4.87085" gradientUnits="userSpaceOnUse">
@@ -85,7 +184,7 @@ export default function DialogueModal({ isOpen, onClose }) {
                         </div>
                         <div className="block-content" ref={inputRef}>
                             <p>
-                                Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into
+                                {selectedHistory.input_message}
                             </p>
                         </div>
                     </div>
@@ -98,8 +197,8 @@ export default function DialogueModal({ isOpen, onClose }) {
                             <button className="copy-button" onClick={() => handleCopy(outputRef)}>
                                 <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <g clip-path="url(#clip0_7960_14766)">
-                                        <path d="M14.1667 6.375H7.79167C7.00926 6.375 6.375 7.00926 6.375 7.79167V14.1667C6.375 14.9491 7.00926 15.5833 7.79167 15.5833H14.1667C14.9491 15.5833 15.5833 14.9491 15.5833 14.1667V7.79167C15.5833 7.00926 14.9491 6.375 14.1667 6.375Z" stroke="url(#paint0_linear_7960_14766)" stroke-linecap="round" stroke-linejoin="round" />
-                                        <path d="M3.54102 10.6243H2.83268C2.45696 10.6243 2.09662 10.4751 1.83095 10.2094C1.56527 9.94374 1.41602 9.58341 1.41602 9.20768V2.83268C1.41602 2.45696 1.56527 2.09662 1.83095 1.83095C2.09662 1.56527 2.45696 1.41602 2.83268 1.41602H9.20768C9.58341 1.41602 9.94374 1.56527 10.2094 1.83095C10.4751 2.09662 10.6243 2.45696 10.6243 2.83268V3.54102" stroke="#FFE6F2" stroke-linecap="round" stroke-linejoin="round" />
+                                        <path d="M14.1667 6.375H7.79167C7.00926 6.375 6.375 7.00926 6.375 7.79167V14.1667C6.375 14.9491 7.00926 15.5833 7.79167 15.5833H14.1667C14.9491 15.5833 15.5833 14.9491 15.5833 14.1667V7.79167C15.5833 7.00926 14.9491 6.375 14.1667 6.375Z" stroke="url(#paint0_linear_7960_14766)" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M3.54102 10.6243H2.83268C2.45696 10.6243 2.09662 10.4751 1.83095 10.2094C1.56527 9.94374 1.41602 9.58341 1.41602 9.20768V2.83268C1.41602 2.45696 1.56527 2.09662 1.83095 1.83095C2.09662 1.56527 2.45696 1.41602 2.83268 1.41602H9.20768C9.58341 1.41602 9.94374 1.56527 10.2094 1.83095C10.4751 2.09662 10.6243 2.45696 10.6243 2.83268V3.54102" stroke="#FFE6F2" strokeLinecap="round" strokeLinejoin="round" />
                                     </g>
                                     <defs>
                                         <linearGradient id="paint0_linear_7960_14766" x1="16.3709" y1="17.7422" x2="6.4982" y2="4.87085" gradientUnits="userSpaceOnUse">
@@ -116,18 +215,7 @@ export default function DialogueModal({ isOpen, onClose }) {
                         </div>
                         <div className="block-content" ref={outputRef}>
                             <p>
-                                What is Lorem Ipsum?
-                                Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-                                It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text,
-                                What is Lorem Ipsum?
-                                Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-                                It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text,
-                                What is Lorem Ipsum?
-                                Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-                                It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text,
-                                What is Lorem Ipsum?
-                                Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-                                It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text,
+                                {selectedHistory.output_message}
                             </p>
                         </div>
                     </div>
@@ -135,7 +223,38 @@ export default function DialogueModal({ isOpen, onClose }) {
                     <div className="interaction-bar">
                         <div className="interaction-button">
                             <svg className={`like ${liked ? "active" : ""}`}
-                                onClick={(e) => {
+                                onClick={async () => {
+                                    try {
+                                    const res = await fetch("/api/likedialog.php", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                                        body: new URLSearchParams({
+                                        data: JSON.stringify({
+                                            user_id: userId,
+                                            dialog_id: selectedHistory.id,
+                                        }),
+                                        }),
+                                    });
+                                    const result = await res.json();
+
+                                    if (result.success) {
+                                        if (result.action === "liked") {
+                                        setLiked(true);
+                                        setLikeCount((prev) => prev + 1);
+                                        if (disliked) {
+                                            setDisliked(false);
+                                            setDislikeCount((prev) => prev - 1);
+                                        }
+                                        } else if (result.action === "unliked") {
+                                        setLiked(false);
+                                        setLikeCount((prev) => prev - 1);
+                                        }
+                                    }
+                                    } catch (err) {
+                                    console.error("Like API error:", err);
+                                    }
+                                }}
+                                /*onClick={(e) => {
                                     e.stopPropagation();
                                     if (!liked) {
                                         setLiked(true);
@@ -148,16 +267,47 @@ export default function DialogueModal({ isOpen, onClose }) {
                                         setLiked(false);
                                         setLikeCount((prev) => prev - 1);
                                     }
-                                }} width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                }}*/ width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M20.3698 16.265L21.0748 12.185C21.1162 11.9459 21.1048 11.7006 21.0415 11.4663C20.9782 11.232 20.8644 11.0144 20.7082 10.8287C20.552 10.643 20.3571 10.4936 20.1372 10.391C19.9172 10.2885 19.6775 10.2352 19.4348 10.235H14.2528C14.132 10.2349 14.0127 10.2085 13.903 10.1576C13.7934 10.1068 13.6962 10.0327 13.6181 9.94049C13.54 9.8483 13.4829 9.74023 13.4507 9.62376C13.4185 9.50729 13.4121 9.38522 13.4318 9.26601L14.0948 5.22101C14.2019 4.56422 14.1713 3.89233 14.0048 3.24801C13.9329 2.9819 13.795 2.73823 13.604 2.5395C13.4129 2.34077 13.1749 2.1934 12.9118 2.11101L12.7668 2.06401C12.4393 1.95938 12.0841 1.9837 11.7738 2.13201C11.4338 2.29601 11.1858 2.59501 11.0938 2.95001L10.6178 4.78401C10.4665 5.36772 10.2463 5.93135 9.96184 6.46301C9.54584 7.24001 8.90383 7.86301 8.23683 8.43801L6.79683 9.67801C6.5972 9.85052 6.44129 10.0679 6.34186 10.3123C6.24244 10.5567 6.20233 10.8211 6.22483 11.084L7.03784 20.477C7.07361 20.8922 7.26372 21.279 7.57066 21.5609C7.87759 21.8429 8.27906 21.9995 8.69583 22H13.3448C16.8258 22 19.7968 19.574 20.3688 16.265" fill="#FFE6F2" />
                                 <path opacity="0.5" fill-rule="evenodd" clip-rule="evenodd" d="M3.06769 9.48509C3.26095 9.47664 3.45 9.54319 3.59535 9.67084C3.7407 9.79849 3.83111 9.97736 3.84769 10.1701L4.81769 21.4061C4.83412 21.5734 4.81627 21.7423 4.76523 21.9025C4.71419 22.0627 4.63103 22.2108 4.52083 22.3378C4.41063 22.4648 4.2757 22.5679 4.12429 22.641C3.97288 22.7141 3.80816 22.7555 3.64019 22.7628C3.47222 22.7701 3.30453 22.7431 3.14736 22.6834C2.99019 22.6237 2.84684 22.5326 2.72607 22.4156C2.60529 22.2986 2.50963 22.1583 2.44491 22.0031C2.3802 21.8479 2.3478 21.6812 2.34969 21.5131V10.2341C2.34977 10.0408 2.42449 9.85495 2.55827 9.7154C2.69205 9.57585 2.87455 9.49334 3.06769 9.48509Z" fill="#FFE6F2" />
                             </svg>
 
 
-                            <span>{likeCount.toLocaleString("tr-TR")}</span>
+                            <span>{likeCount}</span>
                             <div className="divider" />
                             <svg className={`dislike ${disliked ? "active" : ""}`}
-                                onClick={(e) => {
+                                onClick={async () => {
+                                    try {
+                                    const res = await fetch("/api/dislikedialog.php", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                                        body: new URLSearchParams({
+                                        data: JSON.stringify({
+                                            user_id: userId,
+                                            dialog_id: selectedHistory.id,
+                                        }),
+                                        }),
+                                    });
+                                    const result = await res.json();
+
+                                    if (result.success) {
+                                        if (result.action === "disliked") {
+                                        setDisliked(true);
+                                        setDislikeCount((prev) => prev + 1);
+                                        if (disliked) {
+                                            setLiked(false);
+                                            setLikeCount((prev) => prev - 1);
+                                        }
+                                        } else if (result.action === "undisliked") {
+                                        setDisliked(false);
+                                        setDislikeCount((prev) => prev - 1);
+                                        }
+                                    }
+                                    } catch (err) {
+                                    console.error("Like API error:", err);
+                                    }
+                                }}
+                                /*onClick={(e) => {
                                     e.stopPropagation();
                                     if (!disliked) {
                                         setDisliked(true);
@@ -170,11 +320,11 @@ export default function DialogueModal({ isOpen, onClose }) {
                                         setDisliked(false);
                                         setDislikeCount((prev) => prev - 1);
                                     }
-                                }} width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                }}*/ width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M20.3698 8.485L21.0748 12.565C21.1162 12.8041 21.1048 13.0494 21.0415 13.2837C20.9782 13.518 20.8644 13.7356 20.7082 13.9213C20.552 14.1071 20.3571 14.2564 20.1372 14.359C19.9172 14.4615 19.6775 14.5148 19.4348 14.515H14.2528C14.132 14.5151 14.0127 14.5415 13.903 14.5924C13.7934 14.6432 13.6962 14.7173 13.6181 14.8095C13.54 14.9017 13.4829 15.0098 13.4507 15.1263C13.4185 15.2427 13.4121 15.3648 13.4318 15.484L14.0948 19.529C14.2021 20.1861 14.1714 20.8584 14.0048 21.503C13.8648 22.036 13.4538 22.465 12.9118 22.639L12.7668 22.686C12.4393 22.7906 12.0841 22.7663 11.7738 22.618C11.6077 22.5395 11.4607 22.4256 11.3433 22.2843C11.2258 22.143 11.1407 21.9777 11.0938 21.8L10.6178 19.966C10.4665 19.3823 10.2463 18.8187 9.96184 18.287C9.54584 17.51 8.90383 16.887 8.23683 16.312L6.79683 15.072C6.5972 14.8995 6.44129 14.6821 6.34186 14.4377C6.24244 14.1934 6.20233 13.9289 6.22483 13.666L7.03784 4.273C7.07361 3.85776 7.26372 3.47101 7.57066 3.18907C7.87759 2.90712 8.27906 2.75046 8.69583 2.75H13.3448C16.8258 2.75 19.7968 5.176 20.3688 8.485" fill="#FFE6F2" />
                                 <path opacity="0.5" fill-rule="evenodd" clip-rule="evenodd" d="M3.06769 15.2652C3.26095 15.2737 3.45 15.2071 3.59535 15.0795C3.7407 14.9518 3.83111 14.773 3.84769 14.5802L4.81769 3.34422C4.83412 3.1769 4.81627 3.00799 4.76523 2.8478C4.71419 2.68761 4.63103 2.5395 4.52083 2.41253C4.41063 2.28555 4.2757 2.18237 4.12429 2.1093C3.97288 2.03622 3.80816 1.99477 3.64019 1.98749C3.47222 1.98021 3.30453 2.00724 3.14736 2.06694C2.99019 2.12664 2.84684 2.21775 2.72607 2.33471C2.60529 2.45167 2.50963 2.59203 2.44491 2.7472C2.3802 2.90237 2.3478 3.06911 2.34969 3.23722V14.5162C2.34951 14.7097 2.42412 14.8958 2.55793 15.0356C2.69173 15.1753 2.87437 15.257 3.06769 15.2652Z" fill="#FFE6F2" />
                             </svg>
-                            {dislikeCount.toLocaleString("tr-TR")}
+                            {dislikeCount}
                         </div>
 
                         <div className="interaction-button" onClick={(e) => { e.stopPropagation(); setShareOpen(true) }}>
@@ -192,13 +342,13 @@ export default function DialogueModal({ isOpen, onClose }) {
                                 <path d="M20.75 4.5H4.25003C3.8522 4.5 3.47067 4.65804 3.18937 4.93934C2.90806 5.22064 2.75003 5.60218 2.75003 6V21C2.7483 21.286 2.82921 21.5665 2.98305 21.8076C3.13689 22.0488 3.3571 22.2404 3.61721 22.3594C3.81543 22.4517 4.03138 22.4997 4.25003 22.5C4.60214 22.4991 4.94256 22.3735 5.21096 22.1456L5.2194 22.1391L8.28128 19.5H20.75C21.1479 19.5 21.5294 19.342 21.8107 19.0607C22.092 18.7794 22.25 18.3978 22.25 18V6C22.25 5.60218 22.092 5.22064 21.8107 4.93934C21.5294 4.65804 21.1479 4.5 20.75 4.5ZM20.75 18H8.00003C7.81994 18.0001 7.6459 18.065 7.50971 18.1828L4.25003 21V6H20.75V18Z" fill="#FFE6F2" />
                             </svg>
 
-                            <span>12 Yorum</span>
+                            <span>{comments.length} Yorum</span>
                         </div>
 
                        {/*  <div className="interaction-button" onClick={(e) => { e.stopPropagation(); setModalVisible(true) }}>
                             <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12.6992 21C17.6698 21 21.6992 16.9706 21.6992 12C21.6992 7.02944 17.6698 3 12.6992 3C7.72866 3 3.69922 7.02944 3.69922 12C3.69922 16.9706 7.72866 21 12.6992 21Z" fill="white" fill-opacity="0.25" />
-                                <path d="M12.6992 8V16M16.6992 12H8.69922" stroke="#FFE6F2" stroke-width="1.2" stroke-linecap="square" stroke-linejoin="round" />
+                                <path d="M12.6992 8V16M16.6992 12H8.69922" stroke="#FFE6F2" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="round" />
                             </svg>
 
                             <span>Listeye Ekle</span>
@@ -225,9 +375,9 @@ export default function DialogueModal({ isOpen, onClose }) {
                     <div
                         className="profile-info"
                         onClick={() => {
-                            const username = "leonardo.ai";
-                            const role = "Yazılım Geliştirici";
-                            const avatarUrl = avatarBot.src;
+                            const username = selectedHistory.owner_kullanici_adi;
+                            const role = selectedHistory.chatbot_isim;
+                            const avatarUrl = selectedHistory.chatbot_profil_fotografi;
 
                             const params = new URLSearchParams({
                                 username,
@@ -240,16 +390,16 @@ export default function DialogueModal({ isOpen, onClose }) {
                         style={{ cursor: 'pointer' }}
                     >
                         <div className="avatar">
-                            <Image src={avatarBot.src} alt="avatar" width={48} height={48} />
+                            <Image src={selectedHistory.chatbot_profil_fotografi} alt="avatar" width={48} height={48} />
                         </div>
                         <div className="info">
-                            <p className="name">Yazılım Geliştirici</p>
-                            <p className="username">leonardo.ai</p>
+                            <p className="name">{selectedHistory.chatbot_isim}</p>
+                            <p className="username">{selectedHistory.owner_kullanici_adi}</p>
                         </div>
                     </div>
                 </div>
             </div>
-            <ShareModal isOpen={shareOpen} onClose={() => setShareOpen(false)} />
+            <ShareModal isOpen={shareOpen} urlId={selectedHistory.conversation_chatbot_id} onClose={() => setShareOpen(false)} />
             <ReportModal isOpen={reportOpen} onClose={() => setReportOpen(false)} />
             <AddToListModal
                 isOpen={modalVisible}
@@ -259,14 +409,41 @@ export default function DialogueModal({ isOpen, onClose }) {
             <CommentModal
                 isOpen={commentOpen}
                 onClose={() => setCommentOpen(false)}
-                comments={[
-                    { text: "Harika bir model olmuş", author: "adnankocak", date: "2 gün önce" },
-                    { text: "Gerçekten faydalı bir model", author: "ahmetyasin", date: "2 gün önce" },
-                    { text: "Harika bir model olmuş", author: "adnankocak", date: "2 gün önce" },
-                    { text: "Gerçekten faydalı bir model", author: "ahmetyasin", date: "2 gün önce" },
-                    { text: "Harika bir model olmuş", author: "adnankocak", date: "2 gün önce" },
-                ]}
-                onSend={(comment) => console.log("Yeni yorum:", comment)}
+                comments={comments}
+                onSend={async (commentText) => {
+                    const payload = {
+                        user_id: userId,
+                        dialog_id: selectedHistory.id,
+                        comment: commentText
+                    };
+
+                    try
+                    {
+                        const formData = new FormData();
+                        formData.append("data", JSON.stringify(payload));
+
+                        const res = await fetch("/api/addcomment2.php", {
+                            method: "POST",
+                            body: formData
+                        });
+                        const resultText = await res.text();
+                        //console.log(resultText);
+                        const result = JSON.parse(resultText);
+                        if (result.success)
+                        {
+                            setCommentCount(prev => prev + 1);
+                        }
+                        else
+                        {
+                            alert(result.message);
+                        }
+                    }
+                    catch (err)
+                    {
+                        alert("Yorum eklenemedi: " + err.message);
+                    }
+                }}
+                /*onSend={(comment) => console.log("Yeni yorum:", comment)}*/
             />
         </div>
     );

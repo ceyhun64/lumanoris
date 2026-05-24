@@ -1,10 +1,36 @@
 "use client";
 import WithdrawalModal from "@/app/components/WithdrawalModal/WithdrawalModal";
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function Wallet() {
     const [activeTab, setActiveTab] = useState("bakiye");
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [userId, setUserId] = useState(null);
+
+    const router = useRouter();
+
+    useEffect(() => {
+            async function checkSession() {
+                try {
+                    const res = await fetch("/api/sessioncheck.php", {
+                    credentials: "include", // cookie'yi gönder
+                    });
+                    const resultText = await res.text();
+                    const result = JSON.parse(resultText);
+    
+                    if (result.authenticated) {
+                    setUserId(result.user_id);
+                    } else {
+                    router.push("/login");
+                    }
+                } catch (err) {
+                    console.error("Session check error:", err);
+                    router.push("/login");
+                }
+            }
+            checkSession();
+        }, [router]);
 
     const bakiyeIslemleri = [
         { amount: +126, description: "Satışlarınızdan elde ettiğiniz gelir bakiyenize aktarıldı. §2345" },
@@ -86,7 +112,7 @@ export default function Wallet() {
                 ))}
             </div>
             <WithdrawalModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
-                moneyAmount={1200} />
+                moneyAmount={1200} userId={userId} />
 
         </div>
     );

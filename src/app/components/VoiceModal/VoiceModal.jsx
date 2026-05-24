@@ -40,8 +40,8 @@ export default function VoiceModal({ isOpen, onClose, onConfirm }) {
                     <div className="icon">
                         <svg width="81" height="81" viewBox="0 0 81 81" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <mask id="mask0_7772_14507" style={{ maskType: 'luminance' }} maskUnits="userSpaceOnUse" x="11" y="3" width="59" height="75">
-                                <path d="M52.3125 18.5625C52.3125 12.0386 47.0239 6.75 40.5 6.75C33.9761 6.75 28.6875 12.0386 28.6875 18.5625V40.5C28.6875 47.0239 33.9761 52.3125 40.5 52.3125C47.0239 52.3125 52.3125 47.0239 52.3125 40.5V18.5625Z" fill="#555555" stroke="white" stroke-width="6.75" stroke-linejoin="round" />
-                                <path d="M15.1875 38.8125C15.1875 52.7918 26.5207 64.125 40.5 64.125M40.5 64.125C54.4793 64.125 65.8125 52.7918 65.8125 38.8125M40.5 64.125V74.25" stroke="white" stroke-width="6.75" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M52.3125 18.5625C52.3125 12.0386 47.0239 6.75 40.5 6.75C33.9761 6.75 28.6875 12.0386 28.6875 18.5625V40.5C28.6875 47.0239 33.9761 52.3125 40.5 52.3125C47.0239 52.3125 52.3125 47.0239 52.3125 40.5V18.5625Z" fill="#555555" stroke="white" strokeWidth="6.75" strokeLinejoin="round" />
+                                <path d="M15.1875 38.8125C15.1875 52.7918 26.5207 64.125 40.5 64.125M40.5 64.125C54.4793 64.125 65.8125 52.7918 65.8125 38.8125M40.5 64.125V74.25" stroke="white" strokeWidth="6.75" strokeLinecap="round" strokeLinejoin="round" />
                             </mask>
                             <g mask="url(#mask0_7772_14507)">
                                 <path d="M0 0H81V81H0V0Z" fill="#FF99D6" />

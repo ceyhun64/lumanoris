@@ -1,11 +1,25 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-export default function ReportModal({ isOpen, onClose }) {
+export default function ReportModal({ isOpen, repId, onClose }) {
     const [step, setStep] = useState(1);
     const [selectedReasons, setSelectedReasons] = useState([]);
     const [extraDetail, setExtraDetail] = useState('');
     const [showFeedback, setShowFeedback] = useState(false);
+    const [userId, setUserId] = useState(null);
+    const [chatbotId, setChatbotId] = useState(null);
+    
+    useEffect(() => {
+        if(repId)
+        {
+            setChatbotId(repId);
+            return;
+        }
+        let botId = 0;
+        const params = new URLSearchParams(window.location.search);
+        botId = params.get("botid") || 0;
+        setChatbotId(botId);
+    },[]);
 
     useEffect(() => {
         const closeOnEsc = (e) => e.key === 'Escape' && onClose();
@@ -13,11 +27,11 @@ export default function ReportModal({ isOpen, onClose }) {
         return () => document.removeEventListener('keydown', closeOnEsc);
     }, [isOpen, onClose]);
 
-    const handleCheckboxChange = (reason) => {
-        setSelectedReasons((prev) =>
-            prev.includes(reason)
-                ? prev.filter((r) => r !== reason)
-                : [...prev, reason]
+    const handleCheckboxChange = (value) => {
+        setSelectedReasons(prev => 
+            prev.includes(value) 
+                ? prev.filter(item => item !== value) 
+                : [...prev, value]
         );
     };
 
@@ -25,19 +39,50 @@ export default function ReportModal({ isOpen, onClose }) {
         if (selectedReasons.length > 0) setStep(2);
     };
 
-    const handleSubmit = () => {
-        console.log("Bildiriliyor:", { selectedReasons, extraDetail });
+    const handleSubmit = async () => {
+        const payload = {
+            user_id: userId,
+            chatbot_id:  chatbotId,
+            reported_for: selectedReasons, // Direkt slug dizisi gidiyor
+            report_detail: extraDetail
+        };
 
-        setShowFeedback(true); // geribildirim göster
+        //console.log(payload);
 
-        setTimeout(() => {
-            setShowFeedback(false); // 2 saniye sonra gizle
-            onClose(); // modalı kapat
-            setStep(1);
-            setSelectedReasons([]);
-            setExtraDetail('');
-        }, 2000);
+        const formData = new FormData();
+        formData.append('data', JSON.stringify(payload));
+
+        try {
+            const response = await fetch('/api/addreport.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                setShowFeedback(true);
+                setTimeout(() => {
+                    setShowFeedback(false);
+                    onClose();
+                    setStep(1);
+                    setSelectedReasons([]);
+                    setExtraDetail('');
+                }, 2000);
+            } else {
+                alert("Hata: " + result.message);
+            }
+        } catch (error) {
+            alert("Bağlantı hatası!");
+        }
     };
+
+    const reportOptions = [
+        { label: 'Cinsel içerik', value: 'sexual_content' },
+        { label: 'Yasal sorun', value: 'legal_issue' },
+        { label: 'Terörizmi destekliyor', value: 'terrorism' },
+        { label: 'Spam veya yanıltıcı içerik', value: 'spam' }
+    ];
 
     if (!isOpen) return null;
 
@@ -80,20 +125,17 @@ export default function ReportModal({ isOpen, onClose }) {
                             <h4 className="modal-title" style={{ color: "#D063CC" }}>İçeriği tüm topluluk kurallarına göre kontrol edeceğiz.</h4>
                             <p className="desc">En doğru seçimi yapmanız gerekmiyor.</p>
                             <div className="checkbox-list">
-                                {[
-                                    'Cinsel içerik',
-                                    'Yasal sorun',
-                                    'Terörizmi destekliyor',
-                                    'Spam veya yanıltıcı içerik'
-                                ].map((label) => (
-                                    <label key={label} className="checkbox-option">
+                                {reportOptions.map((option) => (
+                                    <label key={option.value} className="checkbox-option">
                                         <input
                                             type="checkbox"
-                                            checked={selectedReasons.includes(label)}
-                                            onChange={() => handleCheckboxChange(label)}
+                                            // State içinde artık 'Cinsel içerik' değil, 'sexual_content' tutuluyor
+                                            checked={selectedReasons.includes(option.value)}
+                                            onChange={() => handleCheckboxChange(option.value)}
                                         />
                                         <span className="custom-check"></span>
-                                        {label}
+                                        {/* Ekranda gözüken kısım */}
+                                        {option.label}
                                     </label>
                                 ))}
                             </div>

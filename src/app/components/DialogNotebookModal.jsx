@@ -1,11 +1,56 @@
 "use client";
 import { useState, useEffect } from "react";
 
-export default function DialogNotebookModal({ isOpen, onClose, onPublish }) {
+export default function DialogNotebookModal({ userId, botId, inputMessage, outputMessage, isOpen, onClose, onPublish }) {
     const [title, setTitle] = useState("");
     const [showFeedback, setShowFeedback] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false); // Çift tıklamayı önlemek için
 
-    const handlePublish = () => {
+    const handlePublish = async () => {
+        if (!title.trim() || isSubmitting) return;
+        setIsSubmitting(true);
+
+        try {
+            const payload = {
+                user_id: userId,
+                chatbot_id: botId,
+                name: title,
+                input_message: inputMessage,
+                output_message: outputMessage,
+                // gerekirse diğer alanları da ekle
+            };
+
+            const formData = new FormData();
+            formData.append("data", JSON.stringify(payload));
+
+            const res = await fetch("/api/adddialogbook.php", {
+                method: "POST",
+                body: formData
+            });
+
+            const restext = await res.text();
+            const result = JSON.parse(restext);
+
+             if (result.success) {
+                if (onPublish) onPublish(title);
+                setTitle("");
+                setShowFeedback(true);
+                setTimeout(() => {
+                    setShowFeedback(false);
+                    onClose();
+                }, 1800);
+            } else {
+                alert("Hata: " + result.message);
+            }
+        }
+        catch (err) {
+            console.error("Yayınlama hatası:", err);
+            alert("Bir hata oluştu.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    /*const handlePublish = () => {
         if (!title.trim()) return;
         if (onPublish) onPublish(title);
         setTitle("");
@@ -14,7 +59,7 @@ export default function DialogNotebookModal({ isOpen, onClose, onPublish }) {
             setShowFeedback(false);
             onClose();
         }, 1800); // feedback 1.8sn görünsün
-    };
+    };*/
 
     useEffect(() => {
         const handleEsc = (e) => e.key === "Escape" && onClose();
@@ -57,11 +102,6 @@ export default function DialogNotebookModal({ isOpen, onClose, onPublish }) {
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                             />
-                            <button className="plus-btn">
-                                <svg width="25" height="26" viewBox="0 0 25 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12.5 5.70898V20.292M5.2085 13.0005H19.7915" stroke="#FF66C4" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                            </button>
                         </div>
                         <div className="modal-actions">
                             <button className="cancel-btn" onClick={onClose}>

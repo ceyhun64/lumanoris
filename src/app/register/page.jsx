@@ -2,12 +2,125 @@
 import ubeyazlogo from "../../images/ubeyaz.png";
 import googleIcon from "../../images/google-icon.svg";
 import appleIcon from "../../images/apple-icon.svg";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { GoogleOAuthProvider, useGoogleLogin, GoogleLogin } from '@react-oauth/google';
 
 export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
     const [isPolicyOpen, setPolicyOpen] = useState(false);
     const [activePolicy, setActivePolicy] = useState(null); // "terms" | "privacy"
+    const [loading, setLoading] = useState(false);
+
+    const router = useRouter();
+
+    const [formData, setFormData] = useState({
+        eposta: "",
+        dogum_tarihi: "",
+        telefon: "",
+        sifre: "",
+        kullanici_adi: "" // PHP modülün bunu bekliyor, istersen e-postayı kullanıcı adı yapabilirsin
+    });
+
+    const handleGoogleSuccess = async (credentialResponse) => {
+        setLoading(true);
+        try {
+            const dataToSend = new FormData();
+            // Google'ın verdiği o meşhur karmaşık token'ı direkt PHP'ye yolluyoruz
+            dataToSend.append("data", JSON.stringify({
+                action: "google_login",
+                google_token: credentialResponse.credential 
+            }));
+            for (const [key, value] of dataToSend.entries()) {
+                console.log(key, value);
+            }
+
+
+            const res = await fetch("/api/login-google.php", { // PHP dosyanın yolu
+                method: "POST",
+                body: dataToSend,
+            });
+
+            const resultText = await res.text();
+            console.log(resultText);
+            const result = JSON.parse(resultText);
+            //const result = await res.json();
+            if (result.success) {
+                alert(result.message);
+                router.push("/dashboard");
+            } else {
+                alert("Google girişi başarısız: " + result.message);
+            }
+        } catch (err) {
+            console.error("Hata:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value,
+            // Eğer kullanıcı adı alanı yoksa, e-postayı kullanıcı adı olarak setleyebiliriz:
+            kullanici_adi: name === "eposta" ? value.split('@')[0] : prev.kullanici_adi
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault(); // Sayfa yenilenmesini engelle
+        setLoading(true);
+
+        try {
+            const dataToSend = new FormData();
+            // PHP tarafı $_POST['data'] beklediği için JSON string yapıyoruz
+            dataToSend.append("data", JSON.stringify(formData));
+
+            const res = await fetch("/api/register.php", {
+                method: "POST",
+                body: dataToSend,
+            });
+
+            const resultText = await res.text();
+            console.log(resultText);
+            const result = JSON.parse(resultText);
+            //const result = await res.json();
+
+            if (result.success) {
+                alert("Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz.");
+                router.push("/login");
+            } else {
+                alert("Hata: " + result.message);
+            }
+        } catch (err) {
+            console.error("Kayıt hatası:", err);
+            alert("Sunucuyla bağlantı kurulamadı.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+                async function checkSession() {
+                    try {
+                        const res = await fetch("/api/sessioncheck.php", {
+                        credentials: "include", // cookie'yi gönder
+                        });
+                        const resultText = await res.text();
+                        console.log(resultText);
+                        const result = JSON.parse(resultText);
+            
+                        if (result.authenticated) {
+                        router.push("/dashboard");
+                        }
+                    } catch (err) {
+                        console.error("Session check error:", err);
+                        router.push("/dashboard");
+                    }
+                }
+                checkSession();
+            }, [router]);
 
     const openPolicy = (type) => {
         setActivePolicy(type);
@@ -20,7 +133,8 @@ export default function Register() {
     };
 
     return (
-        <div className="register-content">
+        <GoogleOAuthProvider clientId="457680679934-poocs7d0n78r3eq8q53c6sedfdi1dh0c.apps.googleusercontent.com">
+            <div className="register-content">
             <div className="register-box">
                 <div className="logo">
                     <div className="shadow">
@@ -49,17 +163,17 @@ export default function Register() {
 
                 <h2 className="title">KAYIT OL</h2>
 
-                <form className="register-form">
+                <form className="register-form" onSubmit={handleSubmit}>
                     <div className="input-group">
                         <div className="icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 25 25" fill="none">
                                 <path d="M12.5332 13.1836L4.5332 8.18359V18.1836H20.5332V8.18359L12.5332 13.1836Z" fill="#FF66C4" fill-opacity="0.27" />
-                                <path d="M4.5332 5.18359H20.5332C21.0832 5.18359 21.5332 5.63359 21.5332 6.18359V18.1836C21.5332 18.7336 21.0832 19.1836 20.5332 19.1836H4.5332C3.9832 19.1836 3.5332 18.7336 3.5332 18.1836V6.18359C3.5332 5.63359 3.9832 5.18359 4.5332 5.18359Z" stroke="#FF66C4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                <path d="M3.5332 6.68359L12.5332 12.1836L21.5332 6.68359" stroke="#FF66C4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M4.5332 5.18359H20.5332C21.0832 5.18359 21.5332 5.63359 21.5332 6.18359V18.1836C21.5332 18.7336 21.0832 19.1836 20.5332 19.1836H4.5332C3.9832 19.1836 3.5332 18.7336 3.5332 18.1836V6.18359C3.5332 5.63359 3.9832 5.18359 4.5332 5.18359Z" stroke="#FF66C4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M3.5332 6.68359L12.5332 12.1836L21.5332 6.68359" stroke="#FF66C4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
 
                         </div>
-                        <input type="email" placeholder="E-POSTA ADRESİNİZİ GİRİN" />
+                        <input type="email" name="eposta" placeholder="E-POSTA ADRESİNİZİ GİRİN" required value={formData.eposta} onChange={handleChange} />
                     </div>
 
                     <div className="input-group">
@@ -69,7 +183,7 @@ export default function Register() {
                                 <path d="M19.5332 4.27344H18.5332V7.27344C18.5332 7.53865 18.4278 7.79301 18.2403 7.98054C18.0528 8.16808 17.7984 8.27344 17.5332 8.27344C17.268 8.27344 17.0136 8.16808 16.8261 7.98054C16.6386 7.79301 16.5332 7.53865 16.5332 7.27344V4.27344H8.5332V7.27344C8.5332 7.53865 8.42785 7.79301 8.24031 7.98054C8.05277 8.16808 7.79842 8.27344 7.5332 8.27344C7.26799 8.27344 7.01363 8.16808 6.8261 7.98054C6.63856 7.79301 6.5332 7.53865 6.5332 7.27344V4.27344H5.5332C4.73755 4.27344 3.97449 4.58951 3.41188 5.15212C2.84927 5.71473 2.5332 6.47779 2.5332 7.27344V10.2734H22.5332V7.27344C22.5332 6.47779 22.2171 5.71473 21.6545 5.15212C21.0919 4.58951 20.3289 4.27344 19.5332 4.27344Z" fill="#FF66C4" />
                             </svg>
                         </div>
-                        <input type="date" placeholder="DOĞUM TARİHİ" />
+                        <input type="date" name="dogum_tarihi" placeholder="DOĞUM TARİHİ" required value={formData.dogum_tarihi} onChange={handleChange} />
                     </div>
 
                     <div className="input-group">
@@ -80,7 +194,7 @@ export default function Register() {
                             </svg>
 
                         </div>
-                        <input type="tel" placeholder="NUMARA" />
+                        <input type="tel" name="telefon" placeholder="NUMARA" required value={formData.telefon} onChange={handleChange} />
                     </div>
 
                     <div className="input-group password">
@@ -93,8 +207,8 @@ export default function Register() {
                         </div>
                         <input
                             type={showPassword ? "text" : "password"}
-                            placeholder="ŞİFRE BELİRLE"
-                        />
+                            placeholder="ŞİFRE BELİRLE" name="sifre" required value={formData.sifre} onChange={handleChange}
+                        /> 
                         <div
                             className="eye-icon"
                             onClick={() => setShowPassword(prev => !prev)}
@@ -119,7 +233,15 @@ export default function Register() {
                         KAYIT YAP
                     </button>
 
-                    <button type="button" className="social-btn google">
+                    <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={() => console.log('Giriş Başarısız')}
+                        useOneTap // İstersen sağ üstte "X olarak devam et" penceresini açar
+                        theme="filled_blue"
+                        shape="pill"
+                        locale="tr"
+                    />
+                    {/* <button type="button" className="social-btn google">
                         <div className="shadow"><svg xmlns="http://www.w3.org/2000/svg" width="76" height="49" viewBox="0 0 76 49" fill="none">
                             <g filter="url(#filter0_f_7772_13560)">
                                 <circle cx="8" cy="3.49414" r="18" fill="url(#paint0_linear_7772_13560)" />
@@ -142,7 +264,7 @@ export default function Register() {
                         <span>
                             GOOGLE İLE DEVAM ET
                         </span>
-                    </button>
+                    </button> */}
 
                     <button type="button" className="social-btn apple">
                         <div className="shadow"><svg xmlns="http://www.w3.org/2000/svg" width="76" height="49" viewBox="0 0 76 49" fill="none">
@@ -367,5 +489,7 @@ export default function Register() {
             )}
 
         </div>
+        </GoogleOAuthProvider>
+        
     );
 }

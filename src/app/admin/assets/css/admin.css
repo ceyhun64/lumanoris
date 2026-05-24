@@ -1,0 +1,27 @@
+@font-face {
+  font-family: 'Inter';
+  src: url('../fonts/Inter.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+html, body {
+  font-family: 'Inter' !important;
+  scroll-behavior: smooth;
+}
+#hamburger {
+  color: white;
+  transition: color 0.25s, transform 0.25s;
+}
+
+#hamburger:hover {
+  color: rgb(224,224,224);
+}
+
+#hamburger:active {
+  color: rgb(192,192,192);
+}
+
+/* .font-inter {
+  font-family: 'Inter', sans-serif !important;
+} */

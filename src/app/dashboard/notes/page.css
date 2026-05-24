@@ -1,0 +1,676 @@
+.notes-wrapper {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    padding: 24px 64px;
+    color: #fff;
+    position: relative;
+}
+@media (max-width: 1100px) {
+  .notes-wrapper {
+    padding: 32px 15px;
+  }
+}
+.notes-wrapper .notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    z-index: 10 !important;
+}
+
+.notes-wrapper .notes-header h2 {
+    font-family: "Montserrat", sans-serif;
+    font-size: 36px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 56px;
+    background: var(--Linear, linear-gradient(323deg, #FF66C4 9.6%, #4699FF 108.66%));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+@media (max-width: 1100px) {
+  .notes-wrapper .notes-header h2 {
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 24px;
+  }
+}
+
+.notes-wrapper .notes-header .notes-filter-select {
+  position: relative;
+}
+
+.notes-wrapper .notes-header .notes-filter-select .notes-filter-btn {
+  display: flex;
+  align-items: center;
+  background: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 1px dashed #FF66C4;
+  background: #100F17;
+  cursor: pointer;
+  transition: border 0.15s;
+  color: #FFF;
+  font-family: "Montserrat", sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.notes-wrapper .notes-header .notes-filter-select .notes-filter-btn svg {
+  margin-right: 7px;
+}
+
+.notes-wrapper .notes-header .notes-filter-select .notes-filter-btn:hover {
+  border-color: #FF66C4;
+}
+
+.notes-wrapper .notes-header .notes-filter-select .notes-filter-dropdown {
+  position: absolute;
+  right: 0;
+  top: 110%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  border-radius: 8.34px;
+  background: #1A1920;
+  box-shadow: -6px 2px 14px 0 rgba(0, 0, 0, 0.25);
+  width: 170px;
+  padding: 15px 20px;
+  z-index: 99;
+  gap: 10px;
+}
+
+/* Dropdown Options */
+.notes-wrapper .notes-header .notes-filter-select .notes-filter-dropdown .filter-option {
+  color: #FFF;
+  font-family: "Montserrat", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transition: color 0.18s;
+  width: 100%;
+  padding: 4px 0;
+  border-radius: 4px;
+}
+
+.notes-wrapper .notes-header .notes-filter-select .notes-filter-dropdown .filter-option:hover,
+.notes-wrapper .notes-header .notes-filter-select .notes-filter-dropdown .filter-option.active {
+  color: #FF66C4;
+}
+
+.notes-wrapper .notes-header .notes-filter-select .notes-filter-dropdown .filter-option .info-dot {
+  display: flex;
+  align-items: center;
+}
+
+/* Main Content Grid */
+.notes-wrapper .notes-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  padding-bottom: 40px;
+}
+
+@media (max-width: 768px) {
+  .notes-wrapper .notes-content {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 576px) {
+  .notes-wrapper .notes-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Note Card */
+.notes-wrapper .notes-content .note-card {
+  background: #0F0E16;
+  border: 1.043px solid rgba(255, 241, 250, 0.13);
+  border-radius: 8.34px;
+  padding: 16px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notes-wrapper .notes-content .note-card:hover {
+  box-shadow: 0 0 12px rgba(255, 102, 196, 0.25);
+  border-color: rgba(255, 102, 196, 0.25);
+  transform: translateY(-2px);
+}
+
+.notes-wrapper .notes-content .note-card .shadow {
+  position: absolute;
+  left: 0;
+  top: -45px;
+  width: 100%;
+  pointer-events: none;
+}
+
+.notes-wrapper .notes-content .note-card .shadow svg {
+  fill: linear-gradient(90deg, #4699FF 21.15%, #FF66C4 79.33%);
+  filter: blur(59.3488px);
+}
+
+.notes-wrapper .notes-content .note-card .note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  z-index: 2;
+}
+
+.notes-wrapper .notes-content .note-card .note-header h3 {
+  color: #FFF;
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 21px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.notes-wrapper .notes-content .note-card .note-header .menu-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  z-index: 3;
+}
+
+.notes-wrapper .notes-content .note-card .note-header .menu-btn:hover {
+  transform: scale(1.1);
+}
+
+.notes-wrapper .notes-content .note-card .note-preview {
+  color: #8C8C8C;
+  font-family: "Montserrat", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  z-index: 2;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notes-wrapper .notes-content .note-card .note-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 2;
+}
+
+.notes-wrapper .notes-content .note-card .note-meta span {
+  color: #8C8C8C;
+  font-family: "Montserrat", sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+/* Empty State */
+.notes-wrapper .notes-empty-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  text-align: center;
+  flex: 1;
+  min-height: 400px;
+}
+
+.notes-wrapper .notes-empty-state .empty-icon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 24px;
+  opacity: 0.7;
+}
+
+.notes-wrapper .notes-empty-state h3 {
+  color: #FFF;
+  font-family: "Montserrat", sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.notes-wrapper .notes-empty-state p {
+  color: #8C8C8C;
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+  margin-bottom: 24px;
+  max-width: 400px;
+}
+
+.notes-wrapper .notes-empty-state .create-btn {
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: 1px solid #FF66C4;
+  background: transparent;
+  color: #FF66C4;
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.notes-wrapper .notes-empty-state .create-btn:hover {
+  background: rgba(255, 102, 196, 0.1);
+  transform: scale(1.02);
+}
+
+/* Masonry Grid Layout */
+.notes-wrapper .my-masonry-grid {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+  width: 100%;
+}
+
+.notes-wrapper .my-masonry-grid_column {
+  background-clip: padding-box;
+}
+
+/* Dialogue Card Base */
+.notes-wrapper .dialogue-card {
+  border-radius: 7.444px;
+  border: 0.931px solid rgba(255, 241, 250, 0.13);
+  background: #0F0E16;
+  padding: 8px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #fff;
+  position: relative;
+  z-index: 0;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.4s ease-out forwards;
+  animation-delay: calc(var(--card-index, 0) * 50ms);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  will-change: transform;
+}
+
+.notes-wrapper .dialogue-card:hover {
+  transform: translateY(-2px) scale(1.015);
+  box-shadow: 0 4px 20px rgba(255, 102, 196, 0.2);
+  border-color: rgba(255, 102, 196, 0.25);
+}
+
+/* Card Shadow Glow Effect */
+.notes-wrapper .dialogue-card .shadow {
+  position: absolute;
+  top: -40px;
+  z-index: -2;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.notes-wrapper .dialogue-card .shadow svg {
+  fill: linear-gradient(90deg, #4699FF 21.15%, #FF66C4 79.33%);
+  filter: blur(59.3488px);
+}
+
+/* Card Content Area */
+.notes-wrapper .dialogue-card .card-content {
+  font-size: 12px;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  line-height: 1.6;
+  margin-bottom: 8px;
+  position: relative;
+  max-height: 180px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notes-wrapper .dialogue-card .card-content::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60%;
+  border-radius: 8px;
+  background: linear-gradient(to top, #0F0E16, transparent);
+  pointer-events: none;
+}
+
+.notes-wrapper .dialogue-card .card-content .card-title {
+  color: #FFF;
+  font-family: "Montserrat", sans-serif;
+  font-size: 11.166px;
+  font-weight: 600;
+  line-height: 14.888px;
+  text-transform: capitalize;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notes-wrapper .dialogue-card .card-content p {
+  color: #8C8C8C;
+  font-family: "Montserrat", sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+/* Card Footer Layout */
+.notes-wrapper .dialogue-card .card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 4px 4px 4px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Left Section: Avatar + Info */
+.notes-wrapper .dialogue-card .card-footer .left {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.notes-wrapper .dialogue-card .card-footer .left .icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.notes-wrapper .dialogue-card .card-footer .left .icon img {
+  border-radius: 50%;
+  border: 0.931px solid rgba(255, 230, 242, 0.12);
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.notes-wrapper .dialogue-card .card-footer .left .icon:hover img {
+  transform: scale(1.1);
+}
+
+.notes-wrapper .dialogue-card .card-footer .left .left-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: flex-start;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.notes-wrapper .dialogue-card .card-footer .left .left-item .card-title {
+  color: #FFF;
+  font-family: "Montserrat", sans-serif;
+  font-size: 11.166px;
+  font-weight: 500;
+  line-height: 14.888px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.notes-wrapper .dialogue-card .card-footer .left .left-item .card-sub {
+  color: #8C8C8C;
+  font-family: "Montserrat", sans-serif;
+  font-size: 7.444px;
+  font-weight: 400;
+  line-height: 11.166px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+/* Menu Trigger Button */
+.notes-wrapper .dialogue-card .card-footer .menu-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.notes-wrapper .dialogue-card .card-footer .menu-icon {
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.notes-wrapper .dialogue-card .card-footer .menu-icon:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: scale(1.05);
+}
+
+.notes-wrapper .dialogue-card .card-footer .menu-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+/* Popup Menu */
+.notes-wrapper .dialogue-card .card-footer .popup-menu {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 8px;
+  padding: 12px 0;
+  width: 220px;
+  z-index: 99999;
+  border-radius: 12px;
+  background: #14181B;
+  border: 1px solid rgba(255, 241, 250, 0.13);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.15s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notes-wrapper .dialogue-card .card-footer .popup-menu ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+}
+
+.notes-wrapper .dialogue-card .card-footer .popup-menu ul li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  color: #FFF;
+  font-family: "Montserrat", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.notes-wrapper .dialogue-card .card-footer .popup-menu ul li span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.notes-wrapper .dialogue-card .card-footer .popup-menu ul li span svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.notes-wrapper .dialogue-card .card-footer .popup-menu ul li:hover {
+  background: rgba(255, 102, 196, 0.1);
+  color: #FF66C4;
+  transform: translateX(2px);
+}
+
+.notes-wrapper .dialogue-card .card-footer .popup-menu ul hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 4px 0;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1100px) {
+  .notes-wrapper .dialogue-card .card-content {
+    font-size: 11px;
+    padding: 10px;
+    max-height: 160px;
+  }
+  
+  .notes-wrapper .dialogue-card .card-content .card-title {
+    font-size: 10px;
+  }
+  
+  .notes-wrapper .dialogue-card .card-content p {
+    font-size: 9px;
+    -webkit-line-clamp: 3;
+  }
+  
+  .notes-wrapper .dialogue-card .card-footer .left .left-item .card-title {
+    font-size: 10px;
+    max-width: 100px;
+  }
+  
+  .notes-wrapper .dialogue-card .card-footer .left .left-item .card-sub {
+    font-size: 7px;
+    max-width: 110px;
+  }
+  
+  .notes-wrapper .dialogue-card .card-footer .popup-menu {
+    width: 200px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 768px) {
+  .notes-wrapper .dialogue-card .card-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .notes-wrapper .dialogue-card .card-footer .left {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .notes-wrapper .dialogue-card .card-footer .menu-wrapper {
+    position: static;
+  }
+  
+  .notes-wrapper .dialogue-card .card-footer .popup-menu {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    margin: 0;
+    border-radius: 16px 16px 0 0;
+    animation: slideUpMobile 0.2s ease-out;
+  }
+  
+  @keyframes slideUpMobile {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Empty State Fallback (if needed) */
+.notes-wrapper .notes-empty {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 20px;
+  text-align: center;
+  color: #8C8C8C;
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+}
+
+.notes-wrapper .notes-empty svg {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+/* Animation Keyframes (if not already in global.css) */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

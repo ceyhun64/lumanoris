@@ -1,37 +1,46 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import VoiceModal from '../VoiceModal/VoiceModal';
+
+// Tarayıcı desteği kontrolü
+const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
 
 export default function MessageInput({ onSend, onResetChat }) {
     const fileInputRef = useRef(null);
     const [selectedFileName, setSelectedFileName] = useState('');
+    const [selectedFile, setSelectedFile] = useState(null);
     const [voiceModalOpen, setVoiceModalOpen] = useState(false);
     const [message, setMessage] = useState('');
     const [isRecording, setIsRecording] = useState(false);
     const [recordedAudioUrl, setRecordedAudioUrl] = useState('');
+    
     const mediaRecorderRef = useRef(null);
+    const recognitionRef = useRef(null);
     const audioChunksRef = useRef([]);
     const textareaRef = useRef(null);
 
-    // ...diğer kodlar...
+    // Mesaj gönderildiğinde veya silindiğinde yüksekliği sıfırla
+    const resetTextareaHeight = () => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = "67px";
+        }
+    };
+
     const handleSend = () => {
-        if ((message.trim() || selectedFileName) && onSend) {
+        if ((message.trim() || selectedFileName || recordedAudioUrl) && onSend) {
             onSend({
                 text: message,
-                fileName: selectedFileName
+                fileName: selectedFileName,
+                file: selectedFile || null,
+                audioUrl: recordedAudioUrl || null
             });
+            
+            // Temizlik
             setMessage('');
             setSelectedFileName('');
+            setSelectedFile(null);
             setRecordedAudioUrl('');
-
-            if (textareaRef.current) {
-                textareaRef.current.style.height = "67px";
-                setTimeout(() => {
-                    if (textareaRef.current) {
-                        textareaRef.current.style.height = "67px";
-                    }
-                }, 0);
-            }
+            resetTextareaHeight();
         }
     };
 
@@ -47,20 +56,22 @@ export default function MessageInput({ onSend, onResetChat }) {
         const file = e.target.files?.[0];
         if (file) {
             setSelectedFileName(file.name);
+            setSelectedFile(file);
+            setRecordedAudioUrl(''); 
         }
     };
 
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            // 1. Ses Kaydı Ayarları (Blob/Audio dosyası için)
             const mediaRecorder = new MediaRecorder(stream);
             mediaRecorderRef.current = mediaRecorder;
             audioChunksRef.current = [];
 
             mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) {
-                    audioChunksRef.current.push(e.data);
-                }
+                if (e.data.size > 0) audioChunksRef.current.push(e.data);
             };
 
             mediaRecorder.onstop = () => {
@@ -68,7 +79,37 @@ export default function MessageInput({ onSend, onResetChat }) {
                 const url = URL.createObjectURL(audioBlob);
                 setRecordedAudioUrl(url);
                 setIsRecording(false);
+                setSelectedFileName('');
+                setSelectedFile(null);
+                // Not: Burada setMessage('') yapmıyoruz ki yazıya dökülen metin kalsın.
             };
+
+            // 2. Web Speech API Ayarları (Sesi yazıya dökmek için)
+            if (SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'tr-TR';
+                recognition.continuous = true;
+                recognition.interimResults = true;
+
+                recognition.onresult = (event) => {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    setMessage(transcript); // Textarea içeriğini güncelle
+                    
+                    // Yazı doldukça textarea yüksekliğini otomatik ayarla
+                    if (textareaRef.current) {
+                        textareaRef.current.style.height = "67px";
+                        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 180)}px`;
+                    }
+                };
+
+                recognition.onerror = (err) => console.error("Speech Recog Error:", err);
+                
+                recognitionRef.current = recognition;
+                recognition.start();
+            }
 
             mediaRecorder.start();
             setIsRecording(true);
@@ -82,31 +123,94 @@ export default function MessageInput({ onSend, onResetChat }) {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
             mediaRecorderRef.current.stop();
         }
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+        }
     };
 
     return (
         <>
-            <div className="message-input-ctr">
+            {(selectedFileName && !recordedAudioUrl) && (
+                <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'flex-start', 
+                    padding: '0 20px', // Kenarlardan boşluk
+                    marginBottom: '10px' // Sohbet barı ile arasındaki mesafe
+                }}>
+                    <div className="file-preview success" style={{ 
+                        position: 'relative', 
+                        border: '2px solid #FF66C4', 
+                        borderRadius: '12px', 
+                        padding: '1rem', 
+                        minWidth: '130px',
+                        backgroundColor: '#000',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        background: '#000' // Altındaki içeriklerden ayrılması için
+                    }}>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="#FF66C4">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#FF66C4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                            <path d="M14 2v6h6" stroke="#FF66C4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        
+                        <span style={{ fontSize: '0.8rem', color: '#fff', textAlign: 'center', fontWeight: '500' }}>
+                            {selectedFileName}
+                        </span>
+
+                        <button 
+                            onClick={() => {
+                                setSelectedFileName('');
+                                setSelectedFile(null);
+                            }} 
+                            style={{ 
+                                position: 'absolute',
+                                top: '-10px',
+                                right: '-10px',
+                                background: '#ff4d4d',
+                                color: 'white',
+                                border: '2px solid #fff',
+                                borderRadius: '50%',
+                                width: '24px',
+                                height: '24px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* 2. SOHBET BARI (Message Input Container) */}
+            <div className="message-input-ctr" style={{ position: 'relative', zIndex: 0 }}>
                 <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileSelect} />
-                {selectedFileName && (
-                    <div className="file-preview">
-                        <span>{selectedFileName}</span>
+                
+                {/* Ses Kaydı Önizleme buranın içinde kalabilir veya yukarıdaki gibi taşınabilir */}
+                {recordedAudioUrl && (
+                    <div className="file-preview audio-preview">
+                        <span>🎤 Ses Kaydedildi</span>
                         <button onClick={() => {
-                            setSelectedFileName('');
+                            setRecordedAudioUrl('');
                             setMessage('');
                         }}>×</button>
                     </div>
                 )}
+
                 <div className="left">
                     <button className="icon-plus" onClick={() => fileInputRef.current.click()}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="25" height="26" viewBox="0 0 25 26" fill="none">
-                            <path d="M12.5005 5.70898V20.292M5.20898 13.0005H19.792" stroke="#FF66C4" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M12.5005 5.70898V20.292M5.20898 13.0005H19.792" stroke="#FF66C4" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                     </button>
 
                     <textarea
                         ref={textareaRef}
-                        placeholder="Yeni sohbete başla..."
+                        placeholder={isRecording ? "Dinleniyor..." : "Yeni sohbete başla..."}
                         value={message}
                         onChange={(e) => {
                             setMessage(e.target.value);
@@ -115,7 +219,7 @@ export default function MessageInput({ onSend, onResetChat }) {
                         onInput={handleInput}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault(); // Enter'ın varsayılan davranışını engelle
+                                e.preventDefault();
                                 handleSend();
                             }
                         }}
@@ -126,39 +230,44 @@ export default function MessageInput({ onSend, onResetChat }) {
                             fontSize: "15px",
                             overflowY: message.length < 150 ? "hidden" : "auto"
                         }}
+                        disabled={isRecording /*|| !!selectedFileName*/} 
                     />
 
-                    <button className="send" onClick={handleSend}>
-                        {/* Gönder ikonu */}
+                    <button className="send" onClick={handleSend} disabled={isRecording || !(message.trim() || selectedFileName || recordedAudioUrl)}>
+                        {/* Send Ikonu */}
                         <svg width="34" height="35" viewBox="0 0 34 35" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <g clipPath="url(#clip0_7772_2648)">
-                                <path d="M14.6049 17.4928L10.9684 7.79529L32.7877 17.4928L10.9684 27.1902L14.6049 17.4928Z" fill="#FF66C4" fillOpacity="0.2" />
-                                <path d="M14.6049 17.4928L10.9684 7.79529L32.7877 17.4928L10.9684 27.1902L14.6049 17.4928ZM14.6049 17.4928H21.878" stroke="#FF99D6" strokeLinecap="round" strokeLinejoin="round" />
-                            </g>
-                            <defs>
-                                <clipPath id="clip0_7772_2648">
-                                    <rect width="24" height="24" fill="white" transform="translate(17.0293 0.521484) rotate(45)" />
-                                </clipPath>
-                            </defs>
+                            <path d="M14.6049 17.4928L10.9684 7.79529L32.7877 17.4928L10.9684 27.1902L14.6049 17.4928Z" fill="#FF66C4" fillOpacity="0.2" />
+                            <path d="M14.6049 17.4928L10.9684 7.79529L32.7877 17.4928L10.9684 27.1902L14.6049 17.4928ZM14.6049 17.4928H21.878" stroke="#FF99D6" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                     </button>
                 </div>
 
                 <div className="right-actions">
-                    <button className="icon-button" onClick={() => setVoiceModalOpen(true)}>
-                        <svg width="17" height="22" viewBox="0 0 17 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <mask id="mask0_7960_16038" style={{ maskType: 'luminance' }} maskUnits="userSpaceOnUse" x="0" y="0" width="17" height="22">
-                                <path d="M12 4.5C12 2.567 10.433 1 8.5 1C6.567 1 5 2.567 5 4.5V11C5 12.933 6.567 14.5 8.5 14.5C10.433 14.5 12 12.933 12 11V4.5Z" fill="#555555" stroke="white" stroke-width="2" stroke-linejoin="round" />
-                                <path d="M1 10.5C1 14.642 4.358 18 8.5 18M8.5 18C12.642 18 16 14.642 16 10.5M8.5 18V21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            </mask>
-                            <g mask="url(#mask0_7960_16038)">
-                                <path d="M-3.5 -1H20.5V23H-3.5V-1Z" fill="#FF99D6" />
-                            </g>
-                        </svg>
+                    {/* Mikrofon ve Reset butonları buraya gelecek */}
+                    {isRecording ? (
+                        <button className="icon-button recording" onClick={stopRecording}>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="10" fill="#FF0000" fillOpacity="0.2" stroke="red" strokeWidth="2" />
+                                <rect x="9" y="9" width="6" height="6" fill="red" />
+                            </svg>
+                        </button>
+                    ) : (
+                        <button className="icon-button" onClick={() => setVoiceModalOpen(true)} disabled={!!selectedFileName}>
+                            <svg width="17" height="22" viewBox="0 0 17 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <mask id="mask0_7960_16038" style={{ maskType: 'luminance' }} maskUnits="userSpaceOnUse" x="0" y="0" width="17" height="22">
+                                    <path d="M12 4.5C12 2.567 10.433 1 8.5 1C6.567 1 5 2.567 5 4.5V11C5 12.933 6.567 14.5 8.5 14.5C10.433 14.5 12 12.933 12 11V4.5Z" fill="#555555" stroke="white" strokeWidth="2" strokeLinejoin="round" />
+                                    <path d="M1 10.5C1 14.642 4.358 18 8.5 18M8.5 18C12.642 18 16 14.642 16 10.5M8.5 18V21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </mask>
+                                <g mask="url(#mask0_7960_16038)">
+                                    <path d="M-3.5 -1H20.5V23H-3.5V-1Z" fill="#FF99D6" />
+                                </g>
+                            </svg>
+                        </button>
+                    )}
 
-                    </button>
                     <span className="divider" />
                     <button className="icon-button" onClick={onResetChat}>
+                        {/* Reset Ikonu */}
                         <svg xmlns="http://www.w3.org/2000/svg" width="23" height="21" viewBox="0 0 23 21" fill="none">
                             <rect x="3.31836" y="12.1719" width="5.53293" height="6.63951" fill="#603D56" />
                             <rect x="1.10742" y="1.10742" width="19.9185" height="15.4922" rx="6" fill="#603D56" />
@@ -166,6 +275,7 @@ export default function MessageInput({ onSend, onResetChat }) {
                             <path d="M0.807118 14.2735L1.15454 15.1699C1.97314 17.2809 3.36393 19.1159 5.17726 20.4764C5.63815 20.8217 6.1855 21 6.74042 21C7.05489 21 7.37152 20.9427 7.67626 20.8266C8.51917 20.5045 9.12811 19.7843 9.30534 18.9008L9.55335 17.6673C12.5241 17.8029 15.5261 17.5462 18.3687 16.9243C19.8055 16.6066 20.9558 15.5514 21.373 14.1606C21.8792 12.4164 22.1359 10.6301 22.1359 8.85025C22.1359 7.06881 21.8792 5.28195 21.3703 3.53021C20.9558 2.14914 19.8055 1.09389 18.3644 0.77509C13.5923 -0.258007 8.54889 -0.259081 3.77134 0.776174C2.33462 1.09389 1.18426 2.14915 0.768752 3.53562C-0.254087 7.00396 -0.256244 10.6717 0.762268 14.1444C0.771453 14.1741 0.792522 14.2357 0.807118 14.2735ZM2.89007 4.16672C3.07378 3.55291 3.59465 3.08175 4.24466 2.93856C8.70937 1.97083 13.4307 1.96976 17.8911 2.93748C18.5454 3.08175 19.0663 3.55291 19.2473 4.15753C19.6958 5.69854 19.9227 7.27791 19.9227 8.85025C19.9227 10.421 19.6958 12.0003 19.25 13.5338C19.0663 14.1476 18.5454 14.6188 17.8933 14.7625C15.0566 15.3844 12.061 15.6076 9.06977 15.4255C8.32088 15.3736 7.65304 15.8966 7.50445 16.6282L7.1354 18.4648C7.09758 18.6523 6.96358 18.7296 6.88685 18.7587C6.80959 18.7884 6.65884 18.8209 6.50485 18.7058C5.02382 17.5943 3.88698 16.0949 3.21752 14.3691L2.87819 13.4933C1.98718 10.4394 1.99151 7.21307 2.89007 4.16672Z" fill="#FF99D6" />
                         </svg>
                     </button>
+                    {/* ... mevcut kodun devamı ... */}
                 </div>
             </div>
 

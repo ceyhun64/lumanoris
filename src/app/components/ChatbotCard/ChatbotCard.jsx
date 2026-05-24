@@ -9,7 +9,8 @@ import CommentModal from "../CommentModal/CommentModal";
 import AddToSaleListModal from "../AddToSaleListModal";
 import DeleteConfirmModal from "../DeleteConfirmModal";
 
-export default function ChatbotCard({ title, image, likes, dislikes, comments, dialogs, status, profileImage, onDelete }) {
+export default function ChatbotCard({ id, userId, title, image, likes, dislikes, comments, dialogs, status, sellerStatus, profileImage, category, weeklyPrice, monthlyPrice, onDelete }) {
+    const isInactiveSeller = sellerStatus && sellerStatus !== 'active';
     const router = useRouter();
     const [shareOpen, setShareOpen] = useState(false);
     const [commentOpen, setCommentOpen] = useState(false);
@@ -21,11 +22,42 @@ export default function ChatbotCard({ title, image, likes, dislikes, comments, d
     const [disliked, setDisliked] = useState(false);
     const [likeCount, setLikeCount] = useState(likes || 0);
     const [dislikeCount, setDislikeCount] = useState(dislikes || 0);
+    const [commentCount, setCommentCount] = useState(comments || 0);
+    const [commentList, setCommentList] = useState([]);
 
-    const handleLike = (e) => {
+    const handleLike = async (e) => {
         e.stopPropagation();
 
-        if (liked) {
+        try {
+          const res = await fetch("/api/likechatbot.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              data: JSON.stringify({
+                user_id: userId,
+                chatbot_id: id,
+              }),
+            }),
+          });
+          const result = await res.json();
+
+          if (result.success) {
+            if (result.action === "liked") {
+              setLiked(true);
+              setLikeCount((prev) => prev + 1);
+              if (disliked) {
+                setDisliked(false);
+                setDislikeCount((prev) => prev - 1);
+              }
+            } else if (result.action === "unliked") {
+              setLiked(false);
+              setLikeCount((prev) => prev - 1);
+            }
+          }
+        } catch (err) {
+          console.error("Like API error:", err);
+        }
+        /*if (liked) {
             setLiked(false);
             setLikeCount(likeCount - 1);
         } else {
@@ -35,13 +67,42 @@ export default function ChatbotCard({ title, image, likes, dislikes, comments, d
                 setDisliked(false);
                 setDislikeCount(dislikeCount - 1);
             }
-        }
+        }*/
     };
 
-    const handleDislike = (e) => {
+    const handleDislike = async (e) => {
         e.stopPropagation();
 
-        if (disliked) {
+        try {
+          const res = await fetch("/api/dislikechatbot.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              data: JSON.stringify({
+                user_id: userId,
+                chatbot_id: id,
+              }),
+            }),
+          });
+          const result = await res.json();
+
+          if (result.success) {
+            if (result.action === "disliked") {
+              setDisliked(true);
+              setDislikeCount((prev) => prev + 1);
+              if (liked) {
+                setLiked(false);
+                setLikeCount((prev) => prev - 1);
+              }
+            } else if (result.action === "undisliked") {
+              setDisliked(false);
+              setDislikeCount((prev) => prev - 1);
+            }
+          }
+        } catch (err) {
+          console.error("Dislike API error:", err);
+        }
+        /*if (disliked) {
             setDisliked(false);
             setDislikeCount(dislikeCount - 1);
         } else {
@@ -51,9 +112,77 @@ export default function ChatbotCard({ title, image, likes, dislikes, comments, d
                 setLiked(false);
                 setLikeCount(likeCount - 1);
             }
-        }
+        }*/
     };
 
+    useEffect(() => {
+        const checkUserLike = async () => {
+            try {
+                const res = await fetch("/api/diduserlike.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    data: JSON.stringify({
+                    user_id: userId,
+                    chatbot_id: id,
+                    }),
+                }),
+                });
+
+                const resultText = await res.text();
+                //console.log(resultText);
+                const result = JSON.parse(resultText);
+
+                if (result.success) {
+                setLiked(result.didLike); // backend'den gelen boolean
+                }
+            } catch (err) {
+                console.error("diduserlike API error:", err);
+            }
+        };
+
+        const checkUserDisLike = async () => {
+            try {
+                const res = await fetch("/api/diduserdislike.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    data: JSON.stringify({
+                    user_id: userId,
+                    chatbot_id: id,
+                    }),
+                }),
+                });
+
+                const resultText = await res.text();
+                //console.log(resultText);
+                const result = JSON.parse(resultText);
+
+                if (result.success) {
+                setDisliked(result.didDisLike); // backend'den gelen boolean
+                }
+            } catch (err) {
+                console.error("diduserdislike API error:", err);
+            }
+        };
+
+        checkUserLike();
+        checkUserDisLike();
+    }, [id]);
+
+    useEffect(() => {
+        if (!id) return; // id yoksa fetch etme
+
+        fetch(`/api/getchatbotcomments.php?chatbot_id=${id}`)
+        .then((res) => res.json())
+        .then((data) => {
+            // API response: { count: X, list: [...] }
+            setCommentList(data.list || []);
+        })
+        .catch((err) => {
+            console.error("Yorumlar alınamadı:", err);
+        });
+    }, [id]);
 
 
     useEffect(() => {
@@ -76,7 +205,12 @@ export default function ChatbotCard({ title, image, likes, dislikes, comments, d
 
     return (
         <>
-            <div className="chatbot-card" onClick={() => router.push('/dashboard/chat')}>
+            <div className={`chatbot-card ${isInactiveSeller ? "inactive-seller" : ""}`} onClick={() => router.push('/dashboard/chat?botId=' + id)}>
+                {isInactiveSeller && (
+                    <div className="seller-inactive-badge" onClick={(e) => { e.stopPropagation(); router.push('/dashboard/chatbots/create'); }}>
+                        <span>Yayında Değil — Pazaryeri kaydını tamamla</span>
+                    </div>
+                )}
                 <div className="shadow">
                     <svg xmlns="http://www.w3.org/2000/svg" width="205" height="220" viewBox="0 0 205 220" fill="none">
                         <g filter="url(#filter0_f_7772_6151)">
@@ -97,7 +231,7 @@ export default function ChatbotCard({ title, image, likes, dislikes, comments, d
                 </div>
                 <div className="card-left">
                     <Image 
-                        src={image || sampleImage} 
+                        src={image} 
                         alt="chatbot" 
                         className="bot-thumbnail"
                         width={150}
@@ -109,7 +243,7 @@ export default function ChatbotCard({ title, image, likes, dislikes, comments, d
                     <div className="top-row">
                         <div className="user-info">
                             <Image 
-                                src={profileImage || profileIcon} 
+                                src={profileImage} 
                                 alt="user" 
                                 className="user-avatar"
                                 width={40}
@@ -117,7 +251,7 @@ export default function ChatbotCard({ title, image, likes, dislikes, comments, d
                             />
                             <div className="user-meta">
                                 <p className="title">{title}</p>
-                                <div className="user-name">INVOKINK <span className="tag">#Eğitim</span></div>
+                                {/* <div className="user-name">INVOKINK <span className="tag">#{category}</span></div> */}
                             </div>
                         </div>
 
@@ -150,14 +284,14 @@ export default function ChatbotCard({ title, image, likes, dislikes, comments, d
                         <span onClick={(e) => { e.stopPropagation(); setCommentOpen(true) }}><div className="icc"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
                             <path opacity="0.2" d="M21 6V18C21 18.1989 20.921 18.3897 20.7803 18.5303C20.6397 18.671 20.4489 18.75 20.25 18.75H7.5L4.23281 21.5728C4.12357 21.6647 3.99038 21.7235 3.84887 21.7423C3.70737 21.7612 3.56343 21.7392 3.43397 21.6791C3.30451 21.6189 3.1949 21.523 3.11803 21.4028C3.04116 21.2825 3.00021 21.1428 3 21V6C3 5.80109 3.07902 5.61032 3.21967 5.46967C3.36032 5.32902 3.55109 5.25 3.75 5.25H20.25C20.4489 5.25 20.6397 5.32902 20.7803 5.46967C20.921 5.61032 21 5.80109 21 6Z" fill="#FFE6F2" />
                             <path d="M20.25 4.5H3.75003C3.3522 4.5 2.97067 4.65804 2.68937 4.93934C2.40806 5.22064 2.25003 5.60218 2.25003 6V21C2.2483 21.286 2.32921 21.5665 2.48305 21.8076C2.63689 22.0488 2.8571 22.2404 3.11721 22.3594C3.31543 22.4517 3.53138 22.4997 3.75003 22.5C4.10214 22.4991 4.44256 22.3735 4.71096 22.1456L4.7194 22.1391L7.78128 19.5H20.25C20.6479 19.5 21.0294 19.342 21.3107 19.0607C21.592 18.7794 21.75 18.3978 21.75 18V6C21.75 5.60218 21.592 5.22064 21.3107 4.93934C21.0294 4.65804 20.6479 4.5 20.25 4.5ZM20.25 18H7.50003C7.31994 18.0001 7.1459 18.065 7.00971 18.1828L3.75003 21V6H20.25V18Z" fill="#FFE6F2" />
-                        </svg></div> 12</span>
+                        </svg></div> {commentCount}</span>
                         <span onClick={(e) => { e.stopPropagation(); setShareOpen(true) }}><div className="icc"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
                             <path opacity="0.5" d="M19.5 6C19.5 5.46957 19.2893 4.96086 18.9142 4.58579C18.5391 4.21071 18.0304 4 17.5 4C16.9696 4 16.4609 4.21071 16.0858 4.58579C15.7107 4.96086 15.5 5.46957 15.5 6C15.5 6.53043 15.7107 7.03914 16.0858 7.41421C16.4609 7.78929 16.9696 8 17.5 8C18.0304 8 18.5391 7.78929 18.9142 7.41421C19.2893 7.03914 19.5 6.53043 19.5 6ZM8.5 12C8.5 11.4696 8.28929 10.9609 7.91421 10.5858C7.53914 10.2107 7.03043 10 6.5 10C5.96957 10 5.46086 10.2107 5.08579 10.5858C4.71071 10.9609 4.5 11.4696 4.5 12C4.5 12.5304 4.71071 13.0391 5.08579 13.4142C5.46086 13.7893 5.96957 14 6.5 14C7.03043 14 7.53914 13.7893 7.91421 13.4142C8.28929 13.0391 8.5 12.5304 8.5 12ZM17.5 16C18.0304 16 18.5391 16.2107 18.9142 16.5858C19.2893 16.9609 19.5 17.4696 19.5 18C19.5 18.5304 19.2893 19.0391 18.9142 19.4142C18.5391 19.7893 18.0304 20 17.5 20C16.9696 20 16.4609 19.7893 16.0858 19.4142C15.7107 19.0391 15.5 18.5304 15.5 18C15.5 17.4696 15.7107 16.9609 16.0858 16.5858C16.4609 16.2107 16.9696 16 17.5 16Z" fill="#FFE6F2" />
                             <path fill-rule="evenodd" clip-rule="evenodd" d="M17.4999 3.25C17.9255 3.24999 18.3452 3.34875 18.7261 3.5385C19.1071 3.72825 19.4387 4.00381 19.6951 4.34351C19.9514 4.6832 20.1254 5.07775 20.2034 5.49611C20.2814 5.91447 20.2612 6.34522 20.1445 6.75445C20.0277 7.16369 19.8176 7.54024 19.5306 7.85448C19.2436 8.16872 18.8876 8.41207 18.4906 8.56537C18.0936 8.71867 17.6665 8.77775 17.2428 8.73795C16.8191 8.69815 16.4104 8.56055 16.0489 8.336C16.0202 8.35485 15.9904 8.37221 15.9599 8.388L9.24691 11.868C9.25078 11.956 9.25078 12.044 9.24691 12.132L9.25991 12.14L15.6759 15.942C16.1555 15.5168 16.7685 15.2725 17.409 15.2512C18.0496 15.23 18.6775 15.4331 19.1842 15.8256C19.6909 16.218 20.0446 16.7751 20.1842 17.4007C20.3238 18.0262 20.2406 18.6808 19.9488 19.2515C19.6571 19.8221 19.1752 20.273 18.5864 20.5261C17.9976 20.7793 17.3389 20.8188 16.7241 20.6379C16.1092 20.457 15.5768 20.0671 15.219 19.5354C14.8611 19.0037 14.7001 18.3637 14.7639 17.726L8.41991 13.968C8.03237 14.3463 7.54178 14.6017 7.00966 14.7023C6.47753 14.8028 5.92756 14.744 5.42872 14.5332C4.92987 14.3225 4.50436 13.9691 4.20555 13.5175C3.90674 13.0658 3.74793 12.536 3.74903 11.9945C3.75013 11.4529 3.9111 10.9238 4.21175 10.4734C4.5124 10.0229 4.93935 9.67131 5.43905 9.46257C5.93874 9.25384 6.48895 9.19728 7.02066 9.30001C7.55237 9.40273 8.04192 9.66016 8.42791 10.04L14.8429 6.714C14.7333 6.30635 14.719 5.87895 14.8012 5.46489C14.8833 5.05084 15.0597 4.66125 15.3166 4.32631C15.5735 3.99137 15.904 3.72007 16.2827 3.53342C16.6613 3.34678 17.0778 3.2498 17.4999 3.25ZM16.4439 17.331C16.4159 17.4105 16.3779 17.4861 16.3309 17.556C16.2166 17.8555 16.2218 18.1876 16.3453 18.4834C16.4689 18.7792 16.7014 19.0163 16.9948 19.1456C17.2882 19.2748 17.62 19.2864 17.9217 19.1779C18.2234 19.0694 18.4719 18.8492 18.6158 18.5627C18.7597 18.2761 18.788 17.9453 18.6949 17.6385C18.6017 17.3317 18.3943 17.0725 18.1154 16.9143C17.8365 16.7562 17.5075 16.7112 17.1964 16.7888C16.8853 16.8663 16.6159 17.0604 16.4439 17.331ZM18.7499 6C18.7499 5.66848 18.6182 5.35054 18.3838 5.11612C18.1494 4.8817 17.8314 4.75 17.4999 4.75C17.1684 4.75 16.8504 4.8817 16.616 5.11612C16.3816 5.35054 16.2499 5.66848 16.2499 6C16.2499 6.33152 16.3816 6.64946 16.616 6.88388C16.8504 7.1183 17.1684 7.25 17.4999 7.25C17.8314 7.25 18.1494 7.1183 18.3838 6.88388C18.6182 6.64946 18.7499 6.33152 18.7499 6ZM7.74991 12C7.74991 11.6685 7.61821 11.3505 7.38379 11.1161C7.14937 10.8817 6.83143 10.75 6.49991 10.75C6.16839 10.75 5.85044 10.8817 5.61602 11.1161C5.3816 11.3505 5.24991 11.6685 5.24991 12C5.24991 12.3315 5.3816 12.6495 5.61602 12.8839C5.85044 13.1183 6.16839 13.25 6.49991 13.25C6.83143 13.25 7.14937 13.1183 7.38379 12.8839C7.61821 12.6495 7.74991 12.3315 7.74991 12Z" fill="#FFE6F2" />
-                        </svg></div> Share</span>
+                        </svg></div> Paylaş</span>
                     </div>
                     <div className="actions">
-                        <button className="edit-btn" onClick={(e) => { e.stopPropagation(); router.push('/dashboard/chatbots/create') }}>
+                        <button className="edit-btn" onClick={(e) => { e.stopPropagation(); router.push('/dashboard/chatbots/create?id=' + id) }}>
                             <div className="icc"><svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M15.8335 3.16732C15.511 2.87064 15.0839 2.71403 14.6461 2.73184C14.2082 2.74965 13.7953 2.94043 13.498 3.26232L8.05144 8.70924L7.125 11.8758L10.2915 10.9497L15.7385 5.54232C15.9037 5.39449 16.0375 5.21499 16.132 5.01445C16.2265 4.81392 16.2798 4.59644 16.2886 4.37493C16.2975 4.15341 16.2618 3.93238 16.1836 3.72494C16.1054 3.51749 15.9863 3.32787 15.8335 3.16732Z" stroke="white" strokeLinecap="round" strokeLinejoin="round" />
                                 <path d="M9.5 2.375H3.16654C2.95661 2.375 2.75528 2.45839 2.60684 2.60684C2.45839 2.75528 2.375 2.95661 2.375 3.16654V15.8335C2.375 16.0434 2.45839 16.2447 2.60684 16.3932C2.75528 16.5416 2.95661 16.625 3.16654 16.625H15.8335C16.0434 16.625 16.2447 16.5416 16.3932 16.3932C16.5416 16.2447 16.625 16.0434 16.625 15.8335V9.5" stroke="url(#paint0_linear_7772_6155)" strokeLinecap="round" strokeLinejoin="round" />
@@ -187,7 +321,7 @@ export default function ChatbotCard({ title, image, likes, dislikes, comments, d
                                 </svg>
                             </div>
                             <span>
-                                satış listesine ekle
+                                Satış Fiyatını Düzenle
                             </span>
                         </button>
                     </div>
@@ -215,7 +349,7 @@ export default function ChatbotCard({ title, image, likes, dislikes, comments, d
 
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="21" viewBox="0 0 20 21" fill="none">
                                     <path d="M0 5.375C0 5.08 -5.58794e-08 4.9325 0.0912499 4.84125C0.1825 4.75 0.33 4.75 0.625 4.75H19.375C19.67 4.75 19.8175 4.75 19.9088 4.84125C20 4.9325 20 5.08 20 5.375V5.69C20 5.8025 20 5.86 19.9825 5.91C19.9674 5.95308 19.9431 5.99233 19.9113 6.025C19.8738 6.0625 19.8237 6.0875 19.7225 6.13875C18.9088 6.545 18.5025 6.74875 18.2063 7.05375C17.9532 7.3144 17.7599 7.62707 17.64 7.97C17.5 8.37 17.5 8.825 17.5 9.735V16C17.5 18.3575 17.5 19.535 16.7675 20.2675C16.035 21 14.8575 21 12.5 21H7.5C5.1425 21 3.965 21 3.2325 20.2675C2.5 19.535 2.5 18.3575 2.5 16V9.735C2.5 8.825 2.5 8.37 2.36 7.97C2.24007 7.62707 2.04683 7.3144 1.79375 7.05375C1.4975 6.74875 1.09125 6.545 0.2775 6.13875C0.209326 6.11033 0.145723 6.072 0.0887501 6.025C0.0568881 5.99233 0.0325681 5.95308 0.0174999 5.91C-7.68341e-08 5.86 0 5.8025 0 5.69V5.375Z" fill="#FFE4E4" />
-                                    <path d="M7.58594 1.4627C7.72844 1.3302 8.04219 1.2127 8.47969 1.12895C8.98179 1.0398 9.49099 0.996708 10.0009 1.0002C10.5509 1.0002 11.0859 1.0452 11.5222 1.12895C11.9584 1.2127 12.2722 1.3302 12.4159 1.46395" stroke="#DB1F35" stroke-linecap="round" />
+                                    <path d="M7.58594 1.4627C7.72844 1.3302 8.04219 1.2127 8.47969 1.12895C8.98179 1.0398 9.49099 0.996708 10.0009 1.0002C10.5509 1.0002 11.0859 1.0452 11.5222 1.12895C11.9584 1.2127 12.2722 1.3302 12.4159 1.46395" stroke="#DB1F35" strokeLinecap="round" />
                                     <path d="M13.75 10.375C13.75 10.0298 13.4702 9.75 13.125 9.75C12.7798 9.75 12.5 10.0298 12.5 10.375V16.625C12.5 16.9702 12.7798 17.25 13.125 17.25C13.4702 17.25 13.75 16.9702 13.75 16.625V10.375Z" fill="#DB1F35" />
                                     <path d="M7.5 10.375C7.5 10.0298 7.22018 9.75 6.875 9.75C6.52982 9.75 6.25 10.0298 6.25 10.375V16.625C6.25 16.9702 6.52982 17.25 6.875 17.25C7.22018 17.25 7.5 16.9702 7.5 16.625V10.375Z" fill="#DB1F35" />
                                 </svg>
@@ -226,22 +360,47 @@ export default function ChatbotCard({ title, image, likes, dislikes, comments, d
                 </div>
 
             </div>
-            <ShareModal isOpen={shareOpen} onClose={() => setShareOpen(false)} />
+            <ShareModal isOpen={shareOpen} urlId={id} onClose={() => setShareOpen(false)} />
             <CommentModal
                 isOpen={commentOpen}
                 onClose={() => setCommentOpen(false)}
-                comments={[
-                    { text: "Harika bir model olmuş", author: "adnankocak", date: "2 gün önce" },
-                    { text: "Gerçekten faydalı bir model", author: "ahmetyasin", date: "2 gün önce" },
-                    { text: "Harika bir model olmuş", author: "adnankocak", date: "2 gün önce" },
-                    { text: "Gerçekten faydalı bir model", author: "ahmetyasin", date: "2 gün önce" },
-                    { text: "Harika bir model olmuş", author: "adnankocak", date: "2 gün önce" },
-                ]}
-                onSend={(comment) => console.log("Yeni yorum:", comment)}
+                comments={commentList}
+                onSend={async (commentText) => {
+                    const payload = {
+                    user_id: userId,      // giriş yapan kullanıcı id'si
+                    chatbot_id: bot.id,   // yorum yapılan chatbot id'si
+                    comment: commentText
+                    };
+
+                    try {
+                    const formData = new FormData();
+                    formData.append("data", JSON.stringify(payload));
+
+                    const res = await fetch("/api/addcomment.php", {
+                        method: "POST",
+                        body: formData
+                    });
+                    const resultText = await res.text();
+                    //console.log(resultText);
+                    const result = JSON.parse(resultText);
+                    if (result.success) {
+                        //console.log("Yeni yorum eklendi:", result);
+                        // yorum listesini güncelle
+                        setCommentCount(prev => prev + 1);
+                    } else {
+                        alert(result.message);
+                    }
+                    } catch (err) {
+                    alert("Yorum eklenemedi: " + err.message);
+                    }
+                }}
             />
             <AddToSaleListModal
                 isOpen={addOpen}
                 onClose={() => setAddOpen(false)}
+                botId={id}
+                weeklyPrice={weeklyPrice}
+                monthlyPrice={monthlyPrice}
             />
             <DeleteConfirmModal
                 isOpen={confirmDeleteOpen}

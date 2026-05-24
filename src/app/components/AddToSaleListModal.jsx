@@ -1,18 +1,89 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-export default function AddToSaleListModal({ isOpen, onClose, lists = [], header = "Listeye Ekle" }) {
-    const [price, setPrice] = useState('');
+export default function AddToSaleListModal({ 
+    isOpen, 
+    onClose,
+    botId, 
+    weeklyPrice, // Mevcut haftalık fiyat (örn: 100)
+    monthlyPrice, // Mevcut aylık fiyat (örn: 380)
+    header = "Satış Fiyatını Düzenle" 
+}) {
+    const [wPrice, setWPrice] = useState(weeklyPrice || '');
+    const [mPrice, setMPrice] = useState(monthlyPrice || '');
+    const [selectedWeeks, setSelectedWeeks] = useState(1);
     const [showFeedback, setShowFeedback] = useState(false);
 
-    const handleSave = () => {
-        console.log("Satış fiyatı:", price);
-        setShowFeedback(true);
-        setTimeout(() => {
-            setShowFeedback(false);
-            onClose();
-            setPrice('');
-        }, 1500);
+    // Modal her açıldığında proplardan gelen güncel fiyatları state'e yükle
+    useEffect(() => {
+        if (isOpen) {
+            setWPrice(weeklyPrice);
+            setMPrice(monthlyPrice);
+        }
+    }, [isOpen, weeklyPrice, monthlyPrice]);
+
+    // Toplam Tutar Hesaplama (Görüntüleme amaçlı)
+    const calculateTotal = () => {
+        const weekly = parseFloat(wPrice) || 0;
+        const monthly = parseFloat(mPrice) || 0;
+
+        if (selectedWeeks === 4) {
+            return monthly.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
+        }
+        return (weekly * selectedWeeks).toLocaleString('tr-TR', { minimumFractionDigits: 2 });
+    };
+
+    const handleSave = async () => {
+        const weekly = parseFloat(wPrice);
+        const monthly = parseFloat(mPrice);
+
+        // 1. Giriş Kontrolleri
+        if (isNaN(weekly) || isNaN(monthly) || weekly <= 0 || monthly <= 0) {
+            alert("Haftalık ve aylık fiyatlar geçerli pozitif sayı olmalıdır.");
+            return;
+        }
+
+        // 2. Sınırlama Kontrolü
+        const calculatedMax = weekly * 4; // Haftalık fiyat * 4
+        const calculatedMin = weekly * 3; // Haftalık fiyat * 3 (veya dilediğiniz alt sınır)
+
+        // Aylık fiyatın, 3 haftalık fiyat ile 4 haftalık fiyat arasında olup olmadığını kontrol ediyoruz.
+        // Eğer aylık fiyat 4 haftalık fiyattan büyükse veya 3 haftalık fiyattan küçükse uyarı ver.
+        if (monthly > calculatedMax || monthly < calculatedMin) {
+            alert(`Aylık fiyat, ${selectedWeeks === 4 ? '4 hafta' : '3-4 hafta'} fiyat aralığında olmalıdır. Hesaplanan Aralık: ${calculatedMin.toFixed(2)} TL ile ${calculatedMax.toFixed(2)} TL arasında.`);
+            return;
+        }
+
+        // Eğer kontroller geçerse API çağrısını yap
+        const payload = {
+            id: botId, // Modal'a prop olarak botun ID'sini de geçmelisin
+            ucret_haftalik: wPrice,
+            ucret_aylik: mPrice
+        };
+
+        const formData = new FormData();
+        formData.append('data', JSON.stringify(payload));
+
+        try {
+            const res = await fetch('/api/updatechatbotprice.php', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await res.json();
+            
+            if (result.success) {
+                setShowFeedback(true);
+                setTimeout(() => {
+                    setShowFeedback(false);
+                    window.dispatchEvent(new Event('cartUpdated'));
+                    onClose();
+                }, 1500);
+            } else {
+                alert(result.message);
+            }
+        } catch (err) {
+            console.error("Fiyat güncelleme hatası:", err);
+        }
     };
 
     useEffect(() => {
@@ -23,10 +94,9 @@ export default function AddToSaleListModal({ isOpen, onClose, lists = [], header
 
     if (!isOpen) return null;
 
-
     return (
         <div className="share-overlay" onClick={onClose}>
-            {showFeedback && <div className="copy-badge">Fiyat eklendi ✅</div>}
+            {showFeedback && <div className="copy-badge">Fiyatlar Güncellendi ✅</div>}
 
             <div className="share-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
@@ -40,27 +110,103 @@ export default function AddToSaleListModal({ isOpen, onClose, lists = [], header
 
                 <div className="modal-body">
                     <p className="desc-2" style={{ marginBottom: '20px' }}>
-                        Yapay zekanı en iyi şekilde satmak için ortalama fiyatları incele ve doğru listelemeyi yap.
+                        Botunuzun satış fiyatlarını aşağıdan düzenleyebilirsiniz.
                     </p>
 
-                    <div className="new-list-input">
-                        <input
-                            type="text"
-                            placeholder="Belirlediğin satış fiyatı"
-                            value={price}
-                            onChange={(e) => setPrice(e.target.value)}
-                        />
-                        <button className="plus-btn">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <path d="M12 5v14M5 12h14" stroke="#FF66C4" strokeWidth="2" strokeLinecap="round" />
-                            </svg>
-                        </button>
+                    {/* Haftalık Fiyat Düzenleme */}
+                    <div className="input-group" style={{ marginBottom: '15px' }}>
+                        <label style={{ fontSize: '12px', color: '#FF66C4', display: 'block', marginBottom: '5px' }}>HAFTALIK BİRİM FİYAT</label>
+                        <div className="new-list-input">
+                            <input
+                                type="number"
+                                value={wPrice}
+                                onChange={(e) => setWPrice(e.target.value)}
+                                placeholder="0.00"
+                            />
+                            <span style={{ color: '#FF66C4', fontWeight: 'bold', marginRight: '10px' }}>TL</span>
+                        </div>
                     </div>
 
+                    {/* Aylık Fiyat Düzenleme */}
+                    <div className="input-group" style={{ marginBottom: '20px' }}>
+                        <label style={{ fontSize: '12px', color: '#00D1FF', display: 'block', marginBottom: '5px' }}>AYLIK (4 HAFTA) ÖZEL FİYAT</label>
+                        <div className="new-list-input" style={{ border: '1px solid rgba(0, 209, 255, 0.5)' }}>
+                            <input
+                                type="number"
+                                value={mPrice}
+                                onChange={(e) => setMPrice(e.target.value)}
+                                placeholder="0.00"
+                            />
+                            <span style={{ color: '#00D1FF', fontWeight: 'bold', marginRight: '10px' }}>TL</span>
+                        </div>
+                    </div>
 
-                    <div className="modal-actions">
-                        <button className="cancel-btn" onClick={onClose}>İptal</button>
-                        <button className="save-btn" onClick={handleSave}>Kaydet</button>
+                    <div className="seperator" style={{ height: '1px', background: 'rgba(255,255,255,0.1)', marginBottom: '20px' }}></div>
+
+                    {/* Önizleme İçin Süre Seçimi */}
+                    <label style={{ fontSize: '12px', opacity: 0.7, display: 'block', marginBottom: '10px' }}>ÖNİZLEME İÇİN SÜRE SEÇİN</label>
+                    <div className="duration-selector" style={{ 
+    display: 'grid', 
+    gridTemplateColumns: '1fr 1fr', // Sütunları tam yayar
+    gap: '10px', 
+    marginBottom: '25px',
+    width: '100%', // Kapsayıcıyı tam doldur
+    maxWidth: '400px' // Burayı kartın genişliğine göre artırabilirsin
+}}>
+    {[
+        { id: 1, label: 'Bir Haftalık' },
+        { id: 2, label: 'İki Haftalık' },
+        { id: 3, label: 'Üç Haftalık' },
+        { id: 4, label: 'Bir Aylık' }
+    ].map((d) => {
+        const isActive = selectedWeeks === d.id;
+        return (
+            <button
+                key={d.id}
+                className={`week-btn ${isActive ? 'active' : ''}`}
+                onClick={() => setSelectedWeeks(d.id)}
+                style={{
+                    width: '100%', // BUTONU GENİŞLETEN ASIL KISIM
+                    padding: '14px 0', // Biraz daha heybetli dursun diye artırdım
+                    borderRadius: '12px',
+                    border: 'none',
+                    fontSize: '13px',
+                    fontWeight: isActive ? '600' : '400',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    background: isActive 
+                        ? 'linear-gradient(90deg, #8B5CF6 0%, #D946EF 100%)' 
+                        : '#23252B',
+                    color: '#fff',
+                    boxShadow: isActive ? '0 4px 15px rgba(139, 92, 246, 0.3)' : 'none'
+                }}
+            >
+                {d.label}
+            </button>
+        );
+    })}
+</div>
+
+                    {/* Özet Alanı */}
+                    <div className="price-summary" style={{ 
+                        background: 'rgba(255, 255, 255, 0.05)', 
+                        padding: '15px', 
+                        borderRadius: '12px',
+                        marginBottom: '20px',
+                        textAlign: 'center',
+                        border: '1px dashed rgba(255, 102, 196, 0.5)'
+                    }}>
+                        <span style={{ fontSize: '11px', display: 'block', opacity: 0.6, marginBottom: '5px' }}>
+                            SEÇİLEN SÜREYE GÖRE TOPLAM TUTAR
+                        </span>
+                        <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fff' }}>
+                            {calculateTotal()} TL
+                        </div>
+                    </div>
+
+                    <div className="modal-actions" style={{ display: 'flex', gap: '10px' }}>
+                        <button className="cancel-btn" onClick={onClose} style={{ flex: 1 }}>İptal</button>
+                        <button className="save-btn" onClick={handleSave} style={{ flex: 2 }}>Kaydet</button>
                     </div>
                 </div>
             </div>

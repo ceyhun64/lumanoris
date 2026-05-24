@@ -1,12 +1,12 @@
 "use client";
 import Image from "next/image";
-import React from "react";
+import {React, useState, useEffect} from "react";
 import smartHelper from "../../../images/smarthelper.png";
 import imageGenBot from "@/images/image-generation-bot.png";
 import assistantBot from "@/images/assistanr.png";
 import { useRouter } from "next/navigation";
 
-const followedBots = [
+/*const followedBots = [
     {
         id: 1,
         name: "SmartHelper AI",
@@ -28,10 +28,34 @@ const followedBots = [
         icon: assistantBot,
         tag: "OFFICIAL"
     },
-];
+];*/
 
 export default function Following() {
+    const [followedBots, setFollowedBots] = useState([]);
     const router = useRouter();
+
+    useEffect(() => {
+        const fetchFollowedBots = async () => {
+            try {
+            const res = await fetch("/api/getfollowedbots.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                data: JSON.stringify({ user_id: 1 }) // aktif kullanıcı ID
+                }),
+            });
+
+            const result = await res.json();
+            if (result.success !== false) {
+                setFollowedBots(result.chatbots || result); 
+            }
+            } catch (err) {
+            console.error("getfollowedbots API error:", err);
+            }
+        };
+
+        fetchFollowedBots();
+    }, []);
 
     return (
         <div className="followed-bots-wrapper">
@@ -44,7 +68,7 @@ export default function Following() {
                     <div
                         key={bot.id}
                         className="followed-bot-card"
-                        onClick={() => router.push("/dashboard/chat")}
+                        onClick={() => router.push("/dashboard/chat/?botid=" + bot.id)}
                         style={{ cursor: "pointer" }}
                     >
                         <div className="shadow">
@@ -66,14 +90,14 @@ export default function Following() {
                             </svg>
                         </div>
                         <div className="icon">
-                            <Image src={bot.icon} alt={bot.name} width={60} height={60} />
+                            <Image src={bot.profil_fotografi} alt={bot.isim} width={60} height={60} />
                         </div>
                         <div className="details">
-                            <h4>{bot.name}</h4>
-                            <p>{bot.description}</p>
-                            <p className="tag">
+                            <h4>{bot.isim}</h4>
+                            <p>{bot.aciklama}</p>
+                            {/* <p className="tag">
                                 {bot.tag}
-                            </p>
+                            </p> */}
                         </div>
                     </div>
                 ))}
