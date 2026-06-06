@@ -48,6 +48,16 @@ function normalizeIlceler(items) {
     return items;
 }
 
+function ddmmyyyyToIso(value) {
+    const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(String(value || ""));
+    return m ? `${m[3]}-${m[2]}-${m[1]}` : "";
+}
+
+function isoToDdmmyyyy(value) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
+    return m ? `${m[3]}.${m[2]}.${m[1]}` : "";
+}
+
 export default function BankInfo({ userId }) {
     const [formData, setFormData] = useState({
         account_type: "",
@@ -58,6 +68,8 @@ export default function BankInfo({ userId }) {
         tax_number: "",
         tax_office: "",
         id_number: "",
+        kisi_dogum_tarihi: "",
+        yetkili_kisi_dogum_tarihi: "",
         phone: "",
         iban: "",
         address: "",
@@ -175,6 +187,20 @@ export default function BankInfo({ userId }) {
         fetchBankInfo();
     }, [userId]);
 
+    const tip = formData.account_type === "Kurumsal Hesap" ? 3
+        : formData.account_type === "Şahıs Şirketi" ? 2
+        : formData.account_type === "Bireysel Hesap" ? 1
+        : 0;
+    const isCorporate = tip === 3;
+    const isSahis = tip === 2;
+
+    const handleDobChange = (e) => {
+        if (!isEditing) return;
+        const v = isoToDdmmyyyy(e.target.value);
+        const key = isCorporate ? "yetkili_kisi_dogum_tarihi" : "kisi_dogum_tarihi";
+        setFormData(prev => ({ ...prev, [key]: v }));
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         if (!isEditing) return;
@@ -205,10 +231,16 @@ export default function BankInfo({ userId }) {
         let newErrors = {};
         const requiredFields = ["id_number", "phone", "address", "il", "ilce", "mahalle", "sokak"];
 
-        if (formData.account_type === "Kurumsal Hesap") {
-            requiredFields.push("authorized_first_name", "authorized_last_name", "company_title", "tax_number", "tax_office");
+        if (isCorporate) {
+            requiredFields.push("authorized_first_name", "authorized_last_name", "company_title", "tax_number", "tax_office", "yetkili_kisi_dogum_tarihi");
+        } else if (isSahis) {
+            requiredFields.push("full_name", "tax_office", "kisi_dogum_tarihi");
         } else {
-            requiredFields.push("full_name");
+            requiredFields.push("full_name", "kisi_dogum_tarihi");
+        }
+
+        if (!formData.account_type) {
+            newErrors.account_type = "Eksik girdi";
         }
 
         requiredFields.forEach(field => {
@@ -328,12 +360,13 @@ export default function BankInfo({ userId }) {
                     {showAccountTypeOptions && isEditing && (
                         <div className="account-type-dropdown">
                             <div className="dropdown-option" onClick={() => { setFormData({...formData, account_type: "Bireysel Hesap"}); setShowAccountTypeOptions(false); }}>Bireysel Hesap</div>
+                            <div className="dropdown-option" onClick={() => { setFormData({...formData, account_type: "Şahıs Şirketi"}); setShowAccountTypeOptions(false); }}>Şahıs Şirketi</div>
                             <div className="dropdown-option" onClick={() => { setFormData({...formData, account_type: "Kurumsal Hesap"}); setShowAccountTypeOptions(false); }}>Kurumsal Hesap</div>
                         </div>
                     )}
                 </div>
 
-                {formData.account_type === "Kurumsal Hesap" ? (
+                {isCorporate ? (
                     <div className="dual-input-row">
                         <input type="text" className="input" name="authorized_first_name" placeholder="YETKİLİ ADI" value={formData.authorized_first_name || ""} onChange={handleChange} disabled={!isEditing} />
                         <input type="text" className="input" name="authorized_last_name" placeholder="YETKİLİ SOYADI" value={formData.authorized_last_name || ""} onChange={handleChange} disabled={!isEditing} />
@@ -344,11 +377,31 @@ export default function BankInfo({ userId }) {
                     </div>
                 )}
 
-                <input type="text" className="input" name="id_number" placeholder="KİMLİK NUMARASI" value={formData.id_number || ""} onChange={handleChange} disabled={!isEditing} />
+                <input type="text" className="input" name="id_number" placeholder={isCorporate ? "YETKİLİ TC KİMLİK NO" : "TC KİMLİK NUMARASI"} value={formData.id_number || ""} onChange={handleChange} disabled={!isEditing} />
                 <input type="text" className="input" name="phone" placeholder="TELEFON NUMARASI" value={formData.phone || ""} onChange={handleChange} disabled={!isEditing} />
             </div>
 
-            {formData.account_type === "Kurumsal Hesap" && (
+            {tip !== 0 && (
+                <div className="dob-field mt-10">
+                    <label className="field-label">{isCorporate ? "YETKİLİ DOĞUM TARİHİ" : "DOĞUM TARİHİ"}</label>
+                    <input
+                        type="date"
+                        className="input"
+                        value={ddmmyyyyToIso(isCorporate ? (formData.yetkili_kisi_dogum_tarihi || "") : (formData.kisi_dogum_tarihi || ""))}
+                        onChange={handleDobChange}
+                        disabled={!isEditing}
+                    />
+                </div>
+            )}
+
+            {isSahis && (
+                <div className="corporate-extra-fields mt-10">
+                    <input type="text" className="input full-width-field" name="company_title" placeholder="TİCARİ ÜNVAN (OPSİYONEL)" value={formData.company_title || ""} onChange={handleChange} disabled={!isEditing} />
+                    <input type="text" className="input full-width-field mt-10" name="tax_office" placeholder="VERGİ DAİRESİ" value={formData.tax_office || ""} onChange={handleChange} disabled={!isEditing} />
+                </div>
+            )}
+
+            {isCorporate && (
                 <div className="corporate-extra-fields mt-10">
                     <input type="text" className="input full-width-field" name="company_title" placeholder="ŞİRKET ÜNVANI" value={formData.company_title || ""} onChange={handleChange} disabled={!isEditing} />
                     <div className="dual-input-row mt-10">
@@ -517,6 +570,8 @@ export default function BankInfo({ userId }) {
             .seller-status-banner .resubmit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
             .seller-status-banner .register-msg { width: 100%; color: #c0bdd0; font-size: 12px; }
             .input-group { display: flex; flex-direction: column; }
+            .dob-field { display: flex; flex-direction: column; }
+            .field-label { font-size: 11px; color: #9a97aa; margin-bottom: 4px; letter-spacing: 0.04em; }
             .address-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
             .dual-input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
             .mt-10 { margin-top: 10px; }

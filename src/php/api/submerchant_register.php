@@ -34,12 +34,17 @@ try {
         throw new Exception('Önce banka ve kimlik bilgilerinizi tamamlayın.');
     }
 
-    $isCorporate = ($bank['account_type'] ?? '') === 'Kurumsal Hesap';
-    $tip = $isCorporate ? 3 : 1;
+    $typeMap = ['Bireysel Hesap' => 1, 'Şahıs Şirketi' => 2, 'Kurumsal Hesap' => 3];
+    $tip = $typeMap[$bank['account_type'] ?? ''] ?? 1;
+    $isCorporate = ($tip === 3);
+    $isSahis = ($tip === 2);
+    $needsVergiDaire = in_array($tip, [2, 3], true);
 
     $required = ['phone', 'iban', 'il_kod', 'ilce_kod'];
-    if ($isCorporate) {
+    if ($tip === 3) {
         $required = array_merge($required, ['authorized_first_name', 'authorized_last_name', 'company_title', 'tax_number', 'tax_office', 'yetkili_kisi_dogum_tarihi']);
+    } elseif ($tip === 2) {
+        $required = array_merge($required, ['full_name', 'id_number', 'tax_office', 'kisi_dogum_tarihi']);
     } else {
         $required = array_merge($required, ['full_name', 'id_number', 'kisi_dogum_tarihi']);
     }
@@ -74,9 +79,10 @@ try {
     $adSoyad = $isCorporate
         ? trim($bank['authorized_first_name'] . ' ' . $bank['authorized_last_name'])
         : trim((string)$bank['full_name']);
-    $unvan = $isCorporate ? trim((string)$bank['company_title']) : $adSoyad;
+    $companyTitle = trim((string)($bank['company_title'] ?? ''));
+    $unvan = $isCorporate ? $companyTitle : (($isSahis && $companyTitle !== '') ? $companyTitle : $adSoyad);
     $tcVn = $isCorporate ? (string)$bank['tax_number'] : (string)$bank['id_number'];
-    $ibanUnvan = $isCorporate ? trim((string)$bank['company_title']) : $adSoyad;
+    $ibanUnvan = $isCorporate ? $companyTitle : $adSoyad;
 
     $addressParts = array_filter([
         $bank['mahalle'] ?? '',
@@ -107,8 +113,11 @@ try {
         'EPosta' => $email,
         'Website' => '',
         'MCC_Kod' => '5815',
-        'Vergi_Daire' => (int)($bank['tax_office'] ?? 0),
     ];
+
+    if ($needsVergiDaire) {
+        $paramParams['Vergi_Daire'] = trim((string)($bank['tax_office'] ?? ''));
+    }
 
     if (!$isCorporate) {
         $paramParams['Kisi_DogumTarihi'] = (string)($bank['kisi_dogum_tarihi'] ?? '');

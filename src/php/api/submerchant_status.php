@@ -39,9 +39,12 @@ try {
     $missing = [];
     if ($bank) {
         $required = ['account_type', 'phone', 'iban', 'il_kod', 'ilce_kod'];
-        $isCorporate = ($bank['account_type'] ?? '') === 'Kurumsal Hesap';
-        if ($isCorporate) {
+        $typeMap = ['Bireysel Hesap' => 1, 'Şahıs Şirketi' => 2, 'Kurumsal Hesap' => 3];
+        $tip = $typeMap[$bank['account_type'] ?? ''] ?? 1;
+        if ($tip === 3) {
             $required = array_merge($required, ['authorized_first_name', 'authorized_last_name', 'company_title', 'tax_number', 'tax_office']);
+        } elseif ($tip === 2) {
+            $required = array_merge($required, ['full_name', 'id_number', 'tax_office']);
         } else {
             $required = array_merge($required, ['full_name', 'id_number']);
         }

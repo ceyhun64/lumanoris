@@ -98,6 +98,7 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
     const [paramError, setParamError] = useState(initialStatus?.lastError || "");
 
     const isCorporate = form.account_type === "Kurumsal Hesap";
+    const isSahis = form.account_type === "Şahıs Şirketi";
 
     useEffect(() => {
         if (!userId) return;
@@ -183,8 +184,12 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
                 ["authorized_first_name", "authorized_last_name", "company_title", "tax_number", "tax_office", "id_number", "yetkili_kisi_dogum_tarihi"].forEach((k) => {
                     if (!form[k]?.toString().trim()) e[k] = true;
                 });
+            } else if (isSahis) {
+                ["full_name", "id_number", "tax_office", "kisi_dogum_tarihi"].forEach((k) => {
+                    if (!form[k]?.toString().trim()) e[k] = true;
+                });
             } else {
-                ["full_name", "id_number", "kisi_dogum_tarihi"].forEach((k) => {
+                ["full_name", "id_number", "tax_office", "kisi_dogum_tarihi"].forEach((k) => {
                     if (!form[k]?.toString().trim()) e[k] = true;
                 });
             }
@@ -297,11 +302,19 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
                         </button>
                         <button
                             type="button"
+                            className={`sw-tip-card ${form.account_type === "Şahıs Şirketi" ? "selected" : ""}`}
+                            onClick={() => update("account_type", "Şahıs Şirketi")}
+                        >
+                            <strong>Şahıs Şirketi</strong>
+                            <span>TC Kimlik no + vergi dairesi ile şahıs şirketi olarak satış yapacağım.</span>
+                        </button>
+                        <button
+                            type="button"
                             className={`sw-tip-card ${form.account_type === "Kurumsal Hesap" ? "selected" : ""}`}
                             onClick={() => update("account_type", "Kurumsal Hesap")}
                         >
                             <strong>Kurumsal</strong>
-                            <span>Vergi numaralı şirket adına satış yapacağım.</span>
+                            <span>Vergi numaralı şirket (Limited/Anonim) adına satış yapacağım.</span>
                         </button>
                     </div>
                 </div>
@@ -321,10 +334,21 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
                                 <input type="date" className="sw-input" value={ddmmyyyyToIso(form.yetkili_kisi_dogum_tarihi)} onChange={(e) => update("yetkili_kisi_dogum_tarihi", isoToDdmmyyyy(e.target.value))} />
                             </label>
                         </>
+                    ) : isSahis ? (
+                        <>
+                            <input className="sw-input" placeholder="Ad Soyad" value={form.full_name} onChange={(e) => update("full_name", e.target.value)} />
+                            <input className="sw-input" placeholder="Ticari Ünvan (opsiyonel)" value={form.company_title} onChange={(e) => update("company_title", e.target.value)} />
+                            <input className="sw-input" placeholder="TC Kimlik No (11 hane)" value={form.id_number} onChange={(e) => update("id_number", e.target.value.replace(/\D/g, "").slice(0, 11))} />
+                            <input className="sw-input" placeholder="Vergi Dairesi" value={form.tax_office} onChange={(e) => update("tax_office", e.target.value)} />
+                            <label className="sw-label">Doğum Tarihi
+                                <input type="date" className="sw-input" value={ddmmyyyyToIso(form.kisi_dogum_tarihi)} onChange={(e) => update("kisi_dogum_tarihi", isoToDdmmyyyy(e.target.value))} />
+                            </label>
+                        </>
                     ) : (
                         <>
                             <input className="sw-input" placeholder="Ad Soyad" value={form.full_name} onChange={(e) => update("full_name", e.target.value)} />
                             <input className="sw-input" placeholder="TC Kimlik No (11 hane)" value={form.id_number} onChange={(e) => update("id_number", e.target.value.replace(/\D/g, "").slice(0, 11))} />
+                            <input className="sw-input" placeholder="Vergi Dairesi" value={form.tax_office} onChange={(e) => update("tax_office", e.target.value)} />
                             <label className="sw-label">Doğum Tarihi
                                 <input type="date" className="sw-input" value={ddmmyyyyToIso(form.kisi_dogum_tarihi)} onChange={(e) => update("kisi_dogum_tarihi", isoToDdmmyyyy(e.target.value))} />
                             </label>
@@ -377,10 +401,19 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
                                 <dt>Yetkili TC</dt><dd>{form.id_number}</dd>
                                 <dt>Yetkili Doğum Tarihi</dt><dd>{form.yetkili_kisi_dogum_tarihi}</dd>
                             </>
+                        ) : isSahis ? (
+                            <>
+                                <dt>Ad Soyad</dt><dd>{form.full_name}</dd>
+                                {form.company_title && (<><dt>Ticari Ünvan</dt><dd>{form.company_title}</dd></>)}
+                                <dt>TC Kimlik No</dt><dd>{form.id_number}</dd>
+                                <dt>Vergi Dairesi</dt><dd>{form.tax_office}</dd>
+                                <dt>Doğum Tarihi</dt><dd>{form.kisi_dogum_tarihi}</dd>
+                            </>
                         ) : (
                             <>
                                 <dt>Ad Soyad</dt><dd>{form.full_name}</dd>
                                 <dt>TC Kimlik No</dt><dd>{form.id_number}</dd>
+                                <dt>Vergi Dairesi</dt><dd>{form.tax_office}</dd>
                                 <dt>Doğum Tarihi</dt><dd>{form.kisi_dogum_tarihi}</dd>
                             </>
                         )}
