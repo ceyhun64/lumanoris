@@ -38,7 +38,6 @@ try {
     $tip = $typeMap[$bank['account_type'] ?? ''] ?? 1;
     $isCorporate = ($tip === 3);
     $isSahis = ($tip === 2);
-    $needsVergiDaire = in_array($tip, [2, 3], true);
 
     $required = ['phone', 'iban', 'il_kod', 'ilce_kod'];
     if ($tip === 3) {
@@ -46,7 +45,7 @@ try {
     } elseif ($tip === 2) {
         $required = array_merge($required, ['full_name', 'id_number', 'tax_office', 'kisi_dogum_tarihi']);
     } else {
-        $required = array_merge($required, ['full_name', 'id_number', 'kisi_dogum_tarihi']);
+        $required = array_merge($required, ['full_name', 'id_number', 'tax_office', 'kisi_dogum_tarihi']);
     }
     $missing = [];
     foreach ($required as $field) {
@@ -104,7 +103,7 @@ try {
         'Ad_Soyad' => $adSoyad,
         'Unvan' => $unvan !== '' ? $unvan : $adSoyad,
         'TC_VN' => preg_replace('/\D+/', '', $tcVn),
-        'GSM_No' => preg_replace('/\D+/', '', (string)$bank['phone']),
+        'GSM_No' => ltrim(preg_replace('/\D+/', '', (string)$bank['phone']), '0'),
         'IBAN_No' => preg_replace('/\s+/', '', strtoupper((string)$bank['iban'])),
         'IBAN_Unvan' => $ibanUnvan !== '' ? $ibanUnvan : $adSoyad,
         'Adres' => $address,
@@ -115,9 +114,7 @@ try {
         'MCC_Kod' => '5815',
     ];
 
-    if ($needsVergiDaire) {
-        $paramParams['Vergi_Daire'] = trim((string)($bank['tax_office'] ?? ''));
-    }
+    $paramParams['Vergi_Daire'] = trim((string)($bank['tax_office'] ?? ''));
 
     if (!$isCorporate) {
         $paramParams['Kisi_DogumTarihi'] = (string)($bank['kisi_dogum_tarihi'] ?? '');
