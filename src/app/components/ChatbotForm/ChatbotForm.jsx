@@ -360,15 +360,28 @@ function ChatbotForm({bot, botId, userId}) {
                 }
             });
 
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
+
             try {
                 const response = await fetch(bot ? '/api/updatechatbot.php' : '/api/savechatbot.php', {
                 method: 'POST',
                 body: formDataToSend,
+                signal: controller.signal,
                 });
-        
+
                 const resultText = await response.text();
-                const result = JSON.parse(resultText);
-        
+
+                let result;
+                try {
+                    result = JSON.parse(resultText);
+                } catch (parseErr) {
+                    console.error("Sunucu JSON olmayan yanıt döndü:", resultText);
+                    alert("Sunucu beklenmeyen bir yanıt döndü. Lütfen tekrar deneyin.\n\nYanıt: " + resultText.slice(0, 300));
+                    setIsSubmitting(false);
+                    return;
+                }
+
                 if (result.success) {
                     if (isTrainingChanged && formData.trainingPrompt)
                     {
@@ -394,11 +407,19 @@ function ChatbotForm({bot, botId, userId}) {
                     alert(bot ? "Başarıyla güncellendi!" : "Başarıyla yayınlandı!");
                     router.push('/dashboard/chatbots');
                     } else {
-                    alert("Hata oluştu: " + result.message);
+                    alert("Hata oluştu: " + (result.message || "Bilinmeyen hata"));
+                    setIsSubmitting(false);
                     }
             } catch (error) {
                 console.error("İstek gönderilirken hata oluştu:", error);
-                alert("Sunucuyla bağlantı kurulamadı.");
+                if (error.name === 'AbortError') {
+                    alert("İstek zaman aşımına uğradı. Görseller çok büyük olabilir, lütfen daha küçük görsellerle tekrar deneyin.");
+                } else {
+                    alert("Sunucuyla bağlantı kurulamadı.");
+                }
+                setIsSubmitting(false);
+            } finally {
+                clearTimeout(timeoutId);
             }
         };
 
