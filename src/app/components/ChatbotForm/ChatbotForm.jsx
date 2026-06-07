@@ -337,7 +337,7 @@ function ChatbotForm({bot, botId, userId}) {
             const formDataToSend = new FormData();
 
             const chatbotData = {
-                id: botId ? botId : bot.id,
+                id: botId ? botId : (bot?.id ?? -1),
                 author_user_id: userId,
                 owner_user_id : userId,
                 isim: formData.botName || "Yeni Chatbot",
