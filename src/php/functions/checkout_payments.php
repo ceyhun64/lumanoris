@@ -70,6 +70,20 @@ function finalizeSubscriptionPayment(Database $database, PDO $conn, string $orde
             return;
         }
 
+        // 3D callback bazen TURKPOS_RETVAL_Islem_ID göndermiyor; ödeme başlatılırken
+        // kaydedilen SanalPOS Islem_ID'sine geri düş. Pazaryeri detayı için zorunlu.
+        $islemId = trim($islemId);
+        if ($islemId === '') {
+            $startRaw = json_decode((string)($payment['param_response_json'] ?? ''), true);
+            $islemId = trim((string)($startRaw['Islem_ID'] ?? ''));
+        }
+        if ($islemId === '') {
+            $islemId = trim((string)($payment['param_transaction_id'] ?? ''));
+        }
+        if ($islemId === '') {
+            throw new Exception('SanalPOS işlem ID bulunamadı; pazaryeri sipariş detayı oluşturulamaz.');
+        }
+
         $items = json_decode($payment['items_json'], true) ?: [];
         $sellerSplits = json_decode($payment['seller_splits_json'], true) ?: [];
         $productAmount = max(0.01, (float)$payment['product_amount']);
