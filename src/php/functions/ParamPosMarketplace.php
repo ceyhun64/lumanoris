@@ -109,12 +109,12 @@ class ParamPosMarketplace
         ];
     }
 
-    public function approveMarketplaceOrder(string $pysiparisGuid): array
+    public function approveMarketplaceOrder(string $pysiparisGuid, int $durum = 1): array
     {
         $result = $this->call($this->config['marketplace_wsdl'], 'Pazaryeri_TP_Siparis_Onay', [
             'G' => $this->securityObject(),
-            'ETS_GUID' => $this->config['marketplace_guid'],
             'PYSiparis_GUID' => $pysiparisGuid,
+            'Durum' => (string)$durum,
         ], 'Pazaryeri_TP_Siparis_OnayResult');
 
         return [
@@ -305,12 +305,17 @@ class ParamPosMarketplace
         return '';
     }
 
-    public function cancelOrRefund(string $pysiparisGuid): array
+    public function cancelOrRefund(string $pysiparisGuid, string $orderId, string $durum = 'IPTAL', float $siparisTutar = 0.0, float $odenecekTutar = 0.0): array
     {
+        // SiparisTutar/OdenecekTutar Double tip, nokta ondalık (örn 30.00). Detay_Ekle'den farklı.
         $result = $this->call($this->config['marketplace_wsdl'], 'Pazaryeri_TP_Iptal_Iade', [
             'G' => $this->securityObject(),
-            'ETS_GUID' => $this->config['marketplace_guid'],
             'PYSiparis_GUID' => $pysiparisGuid,
+            'GUID' => $this->config['guid'],
+            'Durum' => $durum,
+            'Siparis_ID' => $orderId,
+            'SiparisTutar' => number_format($siparisTutar, 2, '.', ''),
+            'OdenecekTutar' => number_format($odenecekTutar, 2, '.', ''),
         ], 'Pazaryeri_TP_Iptal_IadeResult');
 
         return [

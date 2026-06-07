@@ -101,3 +101,22 @@ CREATE TABLE IF NOT EXISTS `param_marketplace_soap_log` (
   KEY `idx_method` (`method`),
   KEY `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ---------------------------------------------------------------------
+-- 5) param_marketplace_refunds (iptal/iade kayıtları)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `param_marketplace_refunds` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `payment_id` INT(11) NOT NULL,
+  `detail_id` INT(11) NOT NULL,
+  `pysiparis_guid` VARCHAR(64) NULL,
+  `amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `reason` TEXT NULL,
+  `requested_by_user_id` INT(11) NULL,
+  `status` VARCHAR(32) NOT NULL DEFAULT 'pending' COMMENT 'completed, failed',
+  `param_response_json` LONGTEXT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_payment_id` (`payment_id`),
+  KEY `idx_detail_id` (`detail_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

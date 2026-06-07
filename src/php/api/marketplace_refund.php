@@ -58,6 +58,9 @@ try {
     $param = new ParamPosMarketplace();
     $param->setOrderContext($orderId);
 
+    // Param kuralı: aynı gün = IPTAL, farklı gün = IADE.
+    $refundDurum = (date('Y-m-d') === date('Y-m-d', strtotime((string)$payment['created_at']))) ? 'IPTAL' : 'IADE';
+
     $results = [];
     $anyFailure = false;
 
@@ -73,7 +76,7 @@ try {
             continue;
         }
 
-        $cancel = $param->cancelOrRefund($detail['pysiparis_guid']);
+        $cancel = $param->cancelOrRefund($detail['pysiparis_guid'], $orderId, $refundDurum);
 
         $refundStatus = $cancel['success'] ? 'completed' : 'failed';
         $database->insert('param_marketplace_refunds', [

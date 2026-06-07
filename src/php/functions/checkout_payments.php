@@ -132,7 +132,10 @@ function finalizeSubscriptionPayment(Database $database, PDO $conn, string $orde
 
             foreach ($createdDetails as $pysiparisGuid) {
                 $approval = $param->approveMarketplaceOrder($pysiparisGuid);
-                if (!$approval['success']) {
+                // Sipariş zaten onaylıysa Param "Onay durumu zaten güncellenmiştir" döner;
+                // hedef durum sağlandığı için başarı say (retry / çift callback idempotency).
+                $alreadyApproved = mb_stripos((string)$approval['message'], 'zaten güncellen') !== false;
+                if (!$approval['success'] && !$alreadyApproved) {
                     throw new Exception('Sipariş onayı başarısız: ' . $approval['message']);
                 }
                 $database->update('param_marketplace_details', ['status' => 'approved'], 'pysiparis_guid = ?', [$pysiparisGuid]);
@@ -165,7 +168,7 @@ function compensateMarketplaceDetails(Database $database, ParamPosMarketplace $p
 {
     foreach ($pysiparisGuids as $pysiparisGuid) {
         try {
-            $cancel = $param->cancelOrRefund($pysiparisGuid);
+            $cancel = $param->cancelOrRefund($pysiparisGuid, $orderId, 'IPTAL');
             $status = $cancel['success'] ? 'cancelled' : 'cancel_failed';
             $database->update('param_marketplace_details', ['status' => $status], 'pysiparis_guid = ?', [$pysiparisGuid]);
 
