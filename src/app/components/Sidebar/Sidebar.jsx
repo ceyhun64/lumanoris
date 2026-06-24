@@ -91,6 +91,13 @@ export default function Sidebar({ isMobileOpen = false }) {
             </Link>
           </li>
 
+          <li className={isActive('/dashboard/purchased') ? 'active' : ''}>
+            <Link href="/dashboard/purchased">
+              <img src={storeIcon.src} alt="satın aldıklarım" />
+              <span>Satın Aldıklarım</span>
+            </Link>
+          </li>
+
           {/* <li className={isActive('/dashboard/market') ? 'active' : ''}>
             <Link href="/dashboard/market">
               <img src={storeIcon.src} alt="satılık" />

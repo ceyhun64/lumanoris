@@ -10418,4 +10418,39 @@ input[type=number] {
 .chatbot-card .seller-inactive-badge { position: absolute; top: 10px; left: 10px; right: 10px; z-index: 3; background: linear-gradient(135deg, rgba(255,102,196,0.95), rgba(70,153,255,0.95)); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 12px; text-align: center; cursor: pointer; font-weight: 500; }
 .chatbot-card .seller-inactive-badge:hover { filter: brightness(1.1); }
 
+/* ===== Satın Aldıklarım sayfası ===== */
+.purchased-wrapper { padding: 24px; width: 100%; }
+.purchased-header h2 { font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 24px; }
+.purchased-loading { color: #cfcfe6; }
+
+.purchased-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 60px 20px; text-align: center; }
+.purchased-empty p { color: #cfcfe6; font-size: 16px; }
+.purchased-empty .create-button { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 10px; background: linear-gradient(135deg, #FF66C4, #4699FF); color: #fff; font-weight: 600; text-decoration: none; }
+.purchased-empty .create-button:hover { filter: brightness(1.08); }
+
+.purchased-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+@media (max-width: 600px) { .purchased-grid { grid-template-columns: 1fr; } }
+
+.purchased-card { position: relative; background: #1b1b2e; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; display: flex; flex-direction: column; }
+.purchased-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(70,153,255,0.18); }
+
+.purchased-card .cover { position: relative; width: 100%; height: 150px; background: #0f0f1c; }
+.purchased-card .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.purchased-card .p-status { position: absolute; top: 10px; right: 10px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; }
+.purchased-card .p-status.active { background: linear-gradient(135deg, #FF66C4, #4699FF); }
+.purchased-card .p-status.expired { background: rgba(0,0,0,0.6); color: #c9c9d6; }
+
+.purchased-card .p-info { display: flex; align-items: center; gap: 10px; padding: 14px 14px 6px; }
+.purchased-card .p-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.purchased-card .p-meta { display: flex; flex-direction: column; min-width: 0; }
+.purchased-card .p-title { color: #fff; font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.purchased-card .p-tag { color: #FF66C4; font-size: 12px; }
+
+.purchased-card .p-footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 16px; margin-top: auto; }
+.purchased-card .p-expiry { color: #9a9ab0; font-size: 12px; }
+.purchased-card .p-chat { color: #4699FF; font-size: 13px; font-weight: 600; }
+
+/* Bakiye/ödeme boş durum metni */
+.transaction-empty { color: #9a9ab0; font-size: 14px; padding: 16px 4px; }
+
 /*# sourceMappingURL=global.css.map */
