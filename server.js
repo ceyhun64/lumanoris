@@ -12,19 +12,15 @@ app.prepare().then(() => {
   const server = express();
 
   // PHP’ye proxy: Admin panel
-  server.use('/admin', createProxyMiddleware({
-    target: PHP_TARGET + "/admin",
-    changeOrigin: true
-  }));
-
-  server.use('/api', createProxyMiddleware({
-    target: PHP_TARGET + "/api",
-    changeOrigin: true
-  }));
-
-  server.use('/assets', createProxyMiddleware({
-    target: PHP_TARGET + "/assets",
-    changeOrigin: true
+  // http-proxy-middleware v4: app.use(path, ...) ile mount edersek Express
+  // path'i request url'inden siler ve orijinal prefix kaybolur. v4'ün
+  // önerdiği yöntem: middleware'i root'a mount edip pathFilter ile
+  // eşleştirmek, böylece /admin, /api, /assets prefix'i korunarak PHP'ye
+  // aynen iletilir.
+  server.use(createProxyMiddleware({
+    target: PHP_TARGET,
+    changeOrigin: true,
+    pathFilter: ['/admin', '/api', '/assets']
   }));
 
   // Next.js sayfaları ve asset’ler
