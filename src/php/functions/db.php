@@ -52,7 +52,7 @@ class Database {
     // Geliştirme (Dev) Ayarları
     private $host_dev = 'localhost:3306';
     private $username_dev = 'root';
-    private $password_dev = '12345678';
+    private $password_dev = 'Ceycey.123';
     private $database_dev = 'lumanoris';
 
     // Üretim (Prod) Ayarları
