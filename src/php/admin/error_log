@@ -1,6 +1,0 @@
-[26-Jan-2026 23:57:41 Europe/Istanbul] PHP Fatal error:  Uncaught Exception: Veritabanı bağlantısı başarısız: SQLSTATE[HY000] [1045] Access denied for user ''@'localhost' (using password: NO) in /home/alperpgu/public_html/admin/functions/db.php:58
-Stack trace:
-#0 /home/alperpgu/public_html/admin/functions/db.php(64): Database->__construct()
-#1 /home/alperpgu/public_html/admin/index.php(6): Database::getInstance()
-#2 {main}
-  thrown in /home/alperpgu/public_html/admin/functions/db.php on line 58

@@ -1,0 +1,83 @@
+<?php
+class TrainingController {
+    public static function updateTrainingChunk(): void {
+        require_method('POST');
+        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        if (!$data || !isset($data['id'], $data['textChunk'])) {
+            JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
+        }
+
+        $id      = InputSanitizer::positiveInt($data['id']);
+        $chunk   = $data['textChunk'];
+        $isFirst = (bool) ($data['isFirst'] ?? false);
+        $conn    = Database::getInstance()->getConnection();
+
+        if ($isFirst) {
+            $stmt = $conn->prepare('UPDATE chatbotlar SET training_prompt = :chunk WHERE id = :id');
+        } else {
+            $stmt = $conn->prepare("UPDATE chatbotlar SET training_prompt = CONCAT(IFNULL(training_prompt, ''), :chunk) WHERE id = :id");
+        }
+        $stmt->bindParam(':chunk', $chunk);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+
+        if ($stmt->execute()) {
+            JsonResponse::success(['message' => 'Parça başarıyla eklendi.']);
+        } else {
+            JsonResponse::error('SQL hatası oluştu.', 500, AppConfig::ERR_SERVER);
+        }
+    }
+
+    public static function getTrainingChunks(): void {
+        $botId  = InputSanitizer::positiveInt($_GET['botId'] ?? 0);
+        $offset = InputSanitizer::positiveInt($_GET['offset'] ?? 0);
+        $limit  = 10000;
+
+        if (!$botId) JsonResponse::error('Bot ID eksik', 400, AppConfig::ERR_VALIDATION);
+
+        $conn  = Database::getInstance()->getConnection();
+        $stmt  = $conn->prepare('SELECT SUBSTRING(training_prompt, :start, :limit) as chunk, LENGTH(training_prompt) as total_length FROM chatbotlar WHERE id = :id');
+        $start = $offset + 1;
+        $stmt->bindParam(':start', $start, PDO::PARAM_INT);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindParam(':id', $botId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($result) {
+            $totalLength = (int) $result['total_length'];
+            JsonResponse::success([
+                'chunk'       => $result['chunk'] ?? '',
+                'totalLength' => $totalLength,
+                'hasMore'     => ($offset + $limit) < $totalLength,
+            ]);
+        } else {
+            JsonResponse::error('Bot bulunamadı', 404, AppConfig::ERR_NOT_FOUND);
+        }
+    }
+
+    public static function readPdf(): void {
+        require_once __DIR__ . '/../../../vendor/autoload.php';
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (!isset($input['base64Data'])) {
+            echo json_encode(['error' => 'base64Data missing']);
+            exit;
+        }
+
+        $pdfBytes = base64_decode($input['base64Data'], true);
+        if ($pdfBytes === false) {
+            JsonResponse::error('Geçersiz base64 verisi.', 400, AppConfig::ERR_VALIDATION);
+        }
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'pdf');
+        file_put_contents($tmpFile, $pdfBytes);
+
+        $parser = new \Smalot\PdfParser\Parser();
+        $pdf    = $parser->parseFile($tmpFile);
+        $text   = $pdf->getText();
+        unlink($tmpFile);
+
+        echo json_encode(['success' => true, 'text' => $text]);
+        exit;
+    }
+}

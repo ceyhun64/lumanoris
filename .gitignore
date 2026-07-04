@@ -1,7 +1,12 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+#
+# NOTE: the actual app lives under web/ (Next.js) and api/ (PHP), not the repo root —
+# patterns below are intentionally unanchored (no leading slash) so they match
+# node_modules/.next/out/vendor no matter how deep they're nested (web/node_modules,
+# api/admin/vendor, etc.), instead of only matching a root-level copy that doesn't exist.
 
-# dependencies
-/node_modules
+# dependencies (JS)
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -10,30 +15,41 @@
 !.yarn/releases
 !.yarn/versions
 
+# dependencies (PHP) — composer.lock stays tracked, only the generated vendor/ folder is ignored
+vendor/
+
 .history
 
 # testing
-/coverage
+coverage/
 
 # next.js
-/.next/
-/out/
+.next/
+out/
 
 # production
-/build
+build/
 
 # misc
 .DS_Store
 *.pem
 
-# debug
+# debug / runtime logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+error_log
+*.log
+
+# PHP local DB dumps / backups — never commit real or scratch data
+db_backup/
+*.sql
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+!*.env.example
 
 # vercel
 .vercel
@@ -41,5 +57,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-src/php/vendor/
-src/php/admin/vendor/

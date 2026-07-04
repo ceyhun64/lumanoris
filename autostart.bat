@@ -1,13 +1,6 @@
-@REM @echo off
-@REM REM Next.js frontend'i başlat
-@REM start cmd /k "npm run dev"
-
-@REM REM PHP backend'i başlat (built-in server)
-@REM start cmd /k "php -S localhost:8000 -t src"
-
 @echo off
-REM PHP backend'i başlat
-start cmd /k "php -S localhost:8000 -t src/php"
+REM PHP backend'i başlat (api/ klasöründen)
+start cmd /k "php -S localhost:8000 -t api"
 
-REM Next.js custom server'i başlat
-start cmd /k "nodemon server.js"
+REM Next.js custom server'i başlat (web/ klasöründen)
+start cmd /k "cd web && nodemon server.js"
