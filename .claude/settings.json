@@ -99,7 +99,9 @@
       "Bash(find . -maxdepth 4 -type f -iname \".env*\" -not -path \"*/node_modules/*\")",
       "Bash(find . -maxdepth 3 -type d -iname \"build\" -not -path \"./web/node_modules/*\")",
       "Bash(find . -maxdepth 3 -iname \"*.log\" -not -path \"*/node_modules/*\")",
-      "Bash(grep -E \"node_modules/|/vendor/|\\\\.next/|web/out/|/error_log$|db_backup/backup\")"
+      "Bash(grep -E \"node_modules/|/vendor/|\\\\.next/|web/out/|/error_log$|db_backup/backup\")",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force --index-filter 'git rm -r --cached --ignore-unmatch -- \"src/images/İndirilenler\"' --prune-empty --tag-name-filter cat -- --all)",
+      "Bash(git commit *)"
     ],
     "additionalDirectories": [
       "\\tmp",
