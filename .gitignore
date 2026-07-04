@@ -51,6 +51,12 @@ db_backup/
 !.env.example
 !*.env.example
 
+# root-level credential/notes files — these held real secrets (Google OAuth client
+# id/secret, server connection info) and must never be committed again
+/google.txt
+/customserver.txt
+/chatbot_table.txt
+
 # vercel
 .vercel
 
