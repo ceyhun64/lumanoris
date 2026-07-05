@@ -1,6 +1,8 @@
-﻿// BuyModal.jsx
+// BuyModal.jsx
 'use client';
 import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
+import { cn } from '@/lib/utils';
 
 const WEEKS_TO_DURATION = { 1: '1_week', 2: '2_weeks', 3: '3_weeks', 4: '1_month' };
 
@@ -14,6 +16,13 @@ function calculateMessageAllowance(totalPaid) {
     const tier = Math.floor(totalPaid / 100);
     return Math.min(COIN_TIER_CAP, COIN_TIER_BASE + (tier - 1) * COIN_TIER_STEP);
 }
+
+const DURATIONS = [
+    { key: '1_week', label: 'Bir Haftalık' },
+    { key: '2_weeks', label: 'İki Haftalık' },
+    { key: '3_weeks', label: 'Üç Haftalık' },
+    { key: '1_month', label: 'Bir Aylık' },
+];
 
 export default function BuyModal({ isOpen, onClose, botData, userId, initialDurationWeeks }) {
     const buyerId = userId;
@@ -79,12 +88,6 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
     // between renders, which React flags/crashes on.
     if (!isOpen || !botData) return null;
 
-    /*const handleFinalBuy = () => {
-        console.log(`Satın alma işlemi seçildi: Süre: ${selectedDuration}, Fiyat: ${price} ${priceType}`);
-        // Müşteri cevabını beklediğiniz aksiyon buraya gelecek.
-        onClose(); // Şimdilik sadece kapatıyoruz.
-    };*/
-
     const handleFinalBuy = async () => {
         const payload = {
             user_id: userId,
@@ -96,7 +99,7 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
         const formData = new FormData();
         formData.append('data', JSON.stringify(payload));
         console.log(formData.get('data'));
-        
+
         try {
           const response = await fetch("/api/marketplace/addtocart.php", {
             method: "POST",
@@ -119,48 +122,32 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
           alert("Bir hata oluştu, lütfen tekrar deneyin.");
         }
     };
-    
-    // Modal dışına tıklama ile kapatma mantığı
-    const handleBackdropClick = (e) => {
-        if (e.target.classList.contains('modal-backdrop')) {
-            onClose();
-        }
-    };
-
-    const DURATIONS = [
-        { key: '1_week', label: 'Bir Haftalık' },
-        { key: '2_weeks', label: 'İki Haftalık' },
-        { key: '3_weeks', label: 'Üç Haftalık' },
-        { key: '1_month', label: 'Bir Aylık' },
-    ];
 
     return (
-        <div className="modal-backdrop" onClick={handleBackdropClick}>
-            <div className="buy-modal">
-                <button className="modal-close" onClick={onClose}>&times;</button>
-                <h2 className="modal-title">Satın Al</h2>
-                <p className="modal-subtitle">{botData.isim || "Bu chatbot"}</p>
-                <p className="modal-description">Chatbotunu satın al, sınırsız kullanımın kilidini aç!</p>
-                <p className="modal-info">Haftalık veya aylık seçeneklerden dilediğini seçerek kullanım süreni bütçene göre belirleyebilirsin.</p>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="max-w-[440px] bg-luma-card border-white/10 p-6 text-center">
+                <DialogTitle className="mb-1 text-xl font-semibold">Satın Al</DialogTitle>
+                <p className="mb-3 font-display text-[15px] font-medium text-indigo-300">{botData.isim || "Bu chatbot"}</p>
+                <DialogDescription className="mb-1 font-sans text-[14px] text-white">
+                    Chatbotunu satın al, sınırsız kullanımın kilidini aç!
+                </DialogDescription>
+                <p className="mb-4 text-[13px] text-white/50">
+                    Haftalık veya aylık seçeneklerden dilediğini seçerek kullanım süreni bütçene göre belirleyebilirsin.
+                </p>
 
-                <div
-                    className="duration-options"
-                    style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', margin: '16px 0' }}
-                >
+                <div className="my-4 grid grid-cols-2 gap-2.5">
                     {DURATIONS.map((d) => {
                         const isActive = selectedDuration === d.key;
                         return (
                             <button
                                 key={d.key}
                                 onClick={() => setSelectedDuration(d.key)}
-                                style={{
-                                    width: '100%', padding: '14px 0', borderRadius: '12px', border: 'none',
-                                    fontSize: '13px', fontWeight: isActive ? 600 : 400, cursor: 'pointer',
-                                    transition: 'all 0.2s ease',
-                                    background: isActive ? 'linear-gradient(90deg, #6366F1 0%, #06B6D4 100%)' : 'rgba(255,255,255,0.06)',
-                                    color: '#fff',
-                                    boxShadow: isActive ? '0 4px 15px rgba(99, 102, 241, 0.30)' : 'none',
-                                }}
+                                className={cn(
+                                    "w-full rounded-xl py-3.5 text-[13px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                    isActive
+                                        ? "bg-gradient-btn font-semibold text-white shadow-glow"
+                                        : "bg-white/[0.06] font-normal text-white hover:bg-white/10",
+                                )}
                             >
                                 {d.label}
                             </button>
@@ -169,35 +156,39 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
                 </div>
 
                 {selectedDuration === '1_month' && (
-                    <div className="monthly-discount">
+                    <div className="mb-3 rounded-xl bg-emerald-500/10 px-4 py-2.5 text-[13px] text-emerald-400">
                         👍 Aylık planı tercih et, haftalık toplam fiyata kıyasla %{Math.round((1 - (botData.ucret_aylik / (botData.ucret_haftalik * 4))) * 100)} kâr sağla.
                     </div>
                 )}
 
-                <div
-                    className="price-display"
-                    style={{
-                        background: 'rgba(255, 255, 255, 0.05)', padding: '15px', borderRadius: '12px',
-                        margin: '12px 0', textAlign: 'center', border: '1px dashed rgba(99, 102, 241, 0.4)',
-                    }}
-                >
-                    <span style={{ fontSize: 11, display: 'block', opacity: 0.6, marginBottom: 5 }}>
+                <div className="my-3 rounded-xl border border-dashed border-indigo-400/40 bg-white/5 p-4 text-center">
+                    <span className="mb-1.5 block text-[11px] text-white/60">
                         {selectedDuration === '1_month' ? 'BİR AYLIK SATIŞ FİYATI' : 'SEÇİLEN SÜREYE GÖRE SATIŞ FİYATI'}
                     </span>
-                    <div style={{ fontSize: 24, fontWeight: 'bold', color: '#fff' }}>{price}{priceType}</div>
+                    <div className="text-2xl font-bold text-white">{price}{priceType}</div>
                 </div>
 
                 {messageAllowance > 0 && (
-                    <div className="message-allowance-preview" style={{ fontSize: 13, opacity: 0.85, marginTop: 6 }}>
+                    <div className="mt-1.5 text-[13px] text-white/85">
                         🎁 Bu chatbotu satın alırsan <b>{messageAllowance} mesaj hakkı</b> kazanırsın (sadece bu chatbotta geçerli).
                     </div>
                 )}
 
-                <div className="modal-actions" style={{ display: 'flex', gap: 10, marginTop: 18 }}>
-                    <button className="btn-cancel" onClick={onClose} style={{ flex: 1 }}>İptal</button>
-                    <button className="btn-buy-final" onClick={handleFinalBuy} style={{ flex: 2 }}>Satın Al</button>
+                <div className="mt-4 flex gap-2.5">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 rounded-xl border-b border-dashed border-indigo-700 bg-white/[0.04] px-4 py-3 font-display text-[15px] font-medium text-white transition-all duration-200 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                        İptal
+                    </button>
+                    <button
+                        onClick={handleFinalBuy}
+                        className="flex-[2] rounded-xl bg-gradient-btn px-4 py-3 font-display text-[15px] font-medium text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                        Satın Al
+                    </button>
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

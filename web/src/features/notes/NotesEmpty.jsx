@@ -1,49 +1,18 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { BookOpen } from "lucide-react";
+import { EmptyState } from "@/shared/ui/empty-state";
 
 export default function NotesEmpty() {
     const router = useRouter();
 
     return (
-        <div className="cart-box">
-            <div className="icon">
-                <div className="shadow">
-                    <svg width="271" height="271" viewBox="0 0 271 271" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g filter="url(#filter0_f_7772_12661)">
-                            <ellipse cx="135.5" cy="135.5" rx="46.5" ry="46.5" fill="url(#paint0_linear_7772_12661)" />
-                        </g>
-                        <defs>
-                            <filter id="filter0_f_7772_12661" x="0.438652" y="0.438652" width="270.123" height="270.123" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-                                <feFlood flood-opacity="0" result="BackgroundImageFix" />
-                                <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
-                                <feGaussianBlur stdDeviation="44.2807" result="effect1_foregroundBlur_7772_12661" />
-                            </filter>
-                            <linearGradient id="paint0_linear_7772_12661" x1="108.023" y1="153.466" x2="155.051" y2="118.063" gradientUnits="userSpaceOnUse">
-                                <stop stop-color="#FF66C4" />
-                                <stop offset="1" stop-color="#4699FF" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
-
-                </div>
-                <svg className="icc" width="88" height="82" viewBox="0 0 88 82" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6.32673 52.305L7.47791 55.2734C10.1903 62.2683 14.7987 68.3484 20.8072 72.8566C22.3343 74.0006 24.148 74.5914 25.9867 74.5914C27.0287 74.5914 28.0778 74.4016 29.0876 74.0167C31.8806 72.9496 33.8983 70.5631 34.4855 67.6358L35.3073 63.5484C45.1597 63.9942 55.0962 63.1474 64.5171 61.0867C69.2777 60.0339 73.0894 56.5374 74.4715 51.9289C76.1491 46.1497 76.9996 40.2307 76.9996 34.3333C76.9996 32.9905 76.9566 31.6495 76.8689 30.3103C76.7364 28.289 74.9872 26.7529 72.9695 26.8907C70.9499 27.0232 69.4192 28.7688 69.5498 30.7901C69.6268 31.9682 69.6662 33.1516 69.6662 34.3333C69.6662 39.5379 68.9143 44.7711 67.4372 49.8521C66.8285 51.886 65.1026 53.4472 62.9416 53.9234C53.5404 55.9841 43.6146 56.7236 33.705 56.1202C31.1931 55.9501 29.0107 57.6832 28.5183 60.1055L27.2955 66.191C27.1701 66.8122 26.7262 67.0683 26.4719 67.1649C26.2177 67.2634 25.7146 67.3673 25.2061 66.9895C20.2987 63.3067 16.5318 58.3384 14.3136 52.62L13.2125 49.8002C10.2369 39.6578 10.2441 28.9353 13.2286 18.8144C13.8373 16.7805 15.5632 15.2193 17.717 14.7431C26.2947 12.8829 35.0943 12.0951 43.9119 12.3834C45.9851 12.455 47.6304 10.8634 47.6985 8.84026C47.7665 6.81714 46.1802 5.12168 44.1553 5.05366C34.7577 4.73495 25.335 5.5872 16.1487 7.57985C11.3881 8.63258 7.5764 12.1292 6.1996 16.7233C2.81043 28.2156 2.80328 40.3686 6.17812 51.8753C6.20675 51.9702 6.28911 52.2101 6.32673 52.305Z" fill="white" />
-                    <path d="M76.5077 2.27326C75.3136 1.0755 73.8311 0.158838 72.2198 -0.380052C68.238 -1.70493 63.9126 -0.696962 60.9495 2.2697L45.547 17.6704C43.642 19.5754 42.3566 21.978 41.8302 24.6152L40.4874 31.3291C40.0971 33.2717 40.7023 35.2697 42.1023 36.6715C43.2249 37.7923 44.727 38.4028 46.2775 38.4028C46.6642 38.4028 47.0545 38.3652 47.443 38.2864L54.1568 36.9437C56.7994 36.4155 59.2003 35.13 61.1035 33.2269L76.5042 17.8244C79.4673 14.8631 80.4824 10.5448 79.1539 6.55405C78.6168 4.94446 77.7001 3.46206 76.5077 2.27326ZM71.3193 12.6377L55.9185 28.042C55.043 28.9175 53.9348 29.5101 52.7173 29.7536L48.0964 30.6774L49.0202 26.0529C49.2637 24.839 49.8546 23.7326 50.7318 22.8553L66.1361 7.45279C66.8344 6.75455 67.76 6.38216 68.7142 6.38216C69.1099 6.38216 69.5092 6.44662 69.8977 6.5773C70.424 6.75275 70.9289 7.06247 71.3228 7.45814C71.7113 7.84666 72.021 8.34973 72.1965 8.87252C72.6423 10.2099 72.3058 11.653 71.3193 12.6377Z" fill="url(#paint0_linear_899_4780)" />
-                    <defs>
-                        <linearGradient id="paint0_linear_899_4780" x1="83.0941" y1="47.6298" x2="40.8988" y2="-7.38282" gradientUnits="userSpaceOnUse">
-                            <stop offset="0.211538" stop-color="#FF66C4" />
-                            <stop offset="1" stop-color="#4699FF" />
-                        </linearGradient>
-                    </defs>
-                </svg>
-
-            </div>
-            <p className="message">
-                Deftere kaydedİlmİş dİyalog bulunmamaktadır.
-            </p>
-            <button onClick={() => router.push("/dashboard/history")} className="explore-btn">
-            Geçmİşe Gözat
-            </button>
-        </div>
+        <EmptyState
+            icon={BookOpen}
+            title="Deftere kaydedilmiş diyalog bulunmamaktadır."
+            description="Sohbetlerinden beğendiğin anları diyalog defterine kaydedip paylaşabilirsin."
+            actionLabel="Geçmişe Gözat"
+            onAction={() => router.push("/dashboard/history")}
+        />
     );
 }

@@ -1,32 +1,39 @@
-﻿"use client";
+"use client";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import SuggestedCard from "@/entities/chatbot/ui/SuggestedCard";
 import avatarBot from "@/images/avatar-bot.jpg";
 import botImage from "@/images/bot-image.png";
 import DeleteConfirmModal from "@/shared/ui/DeleteConfirmModal";
 import BotCard from "@/entities/chatbot/ui/BotCard";
+import { Checkbox } from "@/shared/ui/checkbox";
+import { Trash2, Tag } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const DURATIONS = [
+    { id: 1, label: 'Bir Haftalık' },
+    { id: 2, label: 'İki Haftalık' },
+    { id: 3, label: 'Üç Haftalık' },
+    { id: 4, label: 'Bir Aylık' },
+];
 
 export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
-    const router = useRouter();
     const [deleteTarget, setDeleteTarget] = useState(null);
-    
+
     // Her öğe için seçilen süreyi (1, 2, 3, veya 4 hafta) tutacak state
     const [itemDurations, setItemDurations] = useState({});
-    
+
     const [selectedItems, setSelectedItems] = useState(
         cartItems.map((item) => item.id)
     );
     const [suggestedBots, setSuggestedBots] = useState([]);
-    
+
 
     const fetchSuggestedBots = useCallback(async () => {
         if (!userId) return;
         try {
             const response = await fetch(`/api/chatbot/get_suggested.php?user_id=${userId}`);
             const data = await response.json();
-            
+
             // API'den gelen veriyi SuggestedCard'ın beklediği formata dönüştürelim
             const formattedBots = data.map(bot => ({
                 id: bot.id,
@@ -38,7 +45,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                 image: bot.kapak_fotografi || botImage,
                 badge: { type: "produced", label: "Önerilen" }
             }));
-            
+
             setSuggestedBots(formattedBots);
         } catch (error) {
             console.error("Önerilen botlar yüklenirken hata:", error);
@@ -64,15 +71,15 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
     const calculateTotals = useCallback(() => {
         let newSubtotal = 0;
         const selectedProducts = cartItems.filter((item) => selectedItems.includes(item.id));
-        
+
         selectedProducts.forEach(item => {
             const durationWeeks = itemDurations[item.id] || 4;
             let price = 0;
 
             // Varsayım: item.price haftalık, item.monthlyPrice aylık ücreti tutuyor
-            const weeklyPrice = parseFloat(item.price) || 0; 
+            const weeklyPrice = parseFloat(item.price) || 0;
             // Aylık fiyatı yoksa, haftalık fiyatın 4 katının %95'i olarak hesaplıyoruz (Görüntüdeki mantığı taklit)
-            const monthlyPrice = parseFloat(item.monthlyPrice) || (weeklyPrice * 4); 
+            const monthlyPrice = parseFloat(item.monthlyPrice) || (weeklyPrice * 4);
 
             if (durationWeeks >= 1 && durationWeeks <= 3) {
                 // 1, 2, veya 3 haftalık: Haftalık fiyat * hafta sayısı
@@ -81,7 +88,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                 // Aylık (4 hafta): %5 indirimli aylık fiyat (Görüntüdeki kural)
                 price = monthlyPrice * 0.95;
             }
-            
+
             newSubtotal += price;
         });
 
@@ -103,7 +110,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                 : [...prev, id]
         );
     };
-    
+
     // YENİ: Süre seçimi için
     const handleDurationChange = async (itemId, duration) => {
         // 1. Arayüzü anında güncelle (Kullanıcı gecikme hissetmesin)
@@ -112,13 +119,13 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
         // 2. Veritabanını güncelle
         try {
             const formData = new FormData();
-            
+
             // PHP'nin beklediği "data" formatında JSON objesi oluşturuyoruz
             const updatePayload = {
                 id: itemId,
                 order_weeks: duration
             };
-            
+
             formData.append('data', JSON.stringify(updatePayload));
 
             const response = await fetch('/api/marketplace/updatecart.php', {
@@ -158,118 +165,63 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
     };
 
     return (
-    <div className="cart-full-wrapper">
-        <div className="cart-main">
-            <div className="cart-left">
-                <div className="cart-left-inner">
-                    <div className="shadow">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="263" height="160" viewBox="0 0 263 160" fill="none">
-                            <g filter="url(#filter0_f_7772_12866)">
-                                <ellipse cx="69.3284" cy="-5.00384" rx="69.3284" ry="40.8673" fill="url(#paint0_linear_7772_12866)" />
-                            </g>
-                            <defs>
-                                <filter id="filter0_f_7772_12866" x="-123.746" y="-169.617" width="386.148" height="329.226" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-                                    <feFlood flood-opacity="0" result="BackgroundImageFix" />
-                                    <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
-                                    <feGaussianBlur stdDeviation="61.873" result="effect1_foregroundBlur_7772_12866" />
-                                </filter>
-                                <linearGradient id="paint0_linear_7772_12866" x1="0" y1="-5.00384" x2="138.657" y2="-5.00384" gradientUnits="userSpaceOnUse">
-                                    <stop offset="0.211538" stop-color="#4699FF" />
-                                    <stop offset="0.793269" stop-color="#FF66C4" />
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                    </div>
-                    <label className="checkbox-option">
-                        <input
-                            type="checkbox"
+    <div>
+        <div className="flex flex-col items-start gap-8 md:flex-row">
+            <div className="w-full flex-[2]">
+                <div className="rounded-xl border border-white/10 bg-luma-elevated p-3">
+                    <label className="flex cursor-pointer items-center gap-3 p-2">
+                        <Checkbox
                             checked={selectedItems.length === cartItems.length && cartItems.length > 0}
-                            onChange={(e) => {
-                                if (e.target.checked) {
-                                    setSelectedItems(cartItems.map((item) => item.id));
-                                } else {
-                                    setSelectedItems([]);
-                                }
+                            onCheckedChange={(checked) => {
+                                setSelectedItems(checked ? cartItems.map((item) => item.id) : []);
                             }}
                         />
-                        <span className="custom-check"></span>
+                        <span className="text-sm text-white/70">Tümünü seç</span>
                     </label>
 
-
-                    <div className="seperator" />
+                    <div className="my-3 h-0.5 w-full bg-gradient-to-r from-[#1B1A22] to-[#993D76]" />
 
                     {cartItems.map((item) => {
         const isSelected = selectedItems.includes(item.id);
         const currentDuration = itemDurations[item.id] || 4;
-        
+
         // Fiyat hesaplama mantığı (aynı kalıyor)
         const weeklyPrice = parseFloat(item.price) || 0;
         const monthlyPrice = parseFloat(item.monthlyPrice) || (weeklyPrice * 4);
         let currentPrice = (currentDuration === 4) ? (monthlyPrice * 0.95) : (weeklyPrice * currentDuration);
 
         return (
-            <div className="cart-item" key={item.id} style={{ alignItems: 'flex-start', padding: '20px 0' }}>
-                <label className="checkbox-option" style={{ marginTop: '30px' }}>
-                    <input
-                        type="checkbox"
+            <div className="mb-5 flex items-start gap-3 border-b border-white/5 py-5 last:border-b-0" key={item.id}>
+                <label className="mt-8 flex cursor-pointer items-center">
+                    <Checkbox
                         checked={isSelected}
-                        onChange={() => handleCheckboxChange(item.id)}
+                        onCheckedChange={() => handleCheckboxChange(item.id)}
                     />
-                    <span className="custom-check"></span>
                 </label>
 
-                <div className="image" style={{ marginTop: '10px' }}>
-                    <Image src={item.image} width={80} height={80} alt={item.title} style={{ 
-      objectFit: 'cover', 
-      width: '240px', 
-      height: '240px',
-      flexShrink: 0 // Flexbox içindeyse küçülmesini engeller
-    }} className="rounded-bot" />
+                <div className="mt-2.5 shrink-0 overflow-hidden rounded-lg border border-white/10">
+                    <Image src={item.image} width={100} height={100} alt={item.title} className="h-[100px] w-[100px] object-cover" />
                 </div>
 
-                <div className="cart-content-wrapper" style={{ flex: 1, marginLeft: '15px' }}>
-                    <div className="cart-details">
-                        <h3 style={{ fontSize: '20px', marginBottom: '10px' }}>{item.title}</h3>
-                        <p style={{ fontSize: '16px', opacity: 0.7, marginBottom: '15px' }}>
-                            Kategori: <span style={{ fontSize: '16px', color: '#FF66C4' }}>{item.category || 'Genel'}</span>
-                        </p>
-                    </div>
+                <div className="ml-1 flex-1">
+                    <h3 className="mb-2.5 text-left font-display text-lg font-normal text-white">{item.title}</h3>
+                    <p className="mb-3.5 text-left text-sm text-white/70">
+                        Kategori: <span className="text-pink-400">{item.category || 'Genel'}</span>
+                    </p>
 
-                    {/* Süre Seçim Butonları - 2x2 Grid Tasarımı */}
-                    <div className="duration-grid" style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(2, 1fr)', // 2 sütunlu yapı
-                        gap: '10px', 
-                        marginTop: '15px', 
-                        maxWidth: '320px' 
-                    }}>
-                        {[
-                            { id: 1, label: 'Bir Haftalık' },
-                            { id: 2, label: 'İki Haftalık' },
-                            { id: 3, label: 'Üç Haftalık' },
-                            { id: 4, label: 'Bir Aylık' }
-                        ].map((d) => {
+                    <div className="mt-3.5 grid max-w-[320px] grid-cols-2 gap-2.5">
+                        {DURATIONS.map((d) => {
                             const isActive = currentDuration === d.id;
                             return (
                                 <button
                                     key={d.id}
                                     onClick={() => handleDurationChange(item.id, d.id)}
-                                    className={`duration-btn ${isActive ? 'active' : ''}`}
-                                    style={{
-                                        padding: '12px 0',
-                                        borderRadius: '12px',
-                                        border: 'none',
-                                        fontSize: '13px',
-                                        fontWeight: isActive ? '600' : '400',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        // Aktifken mor gradient, pasifken koyu gri (Ekran görüntüsündeki gibi)
-                                        background: isActive 
-                                            ? 'linear-gradient(90deg, #8B5CF6 0%, #D946EF 100%)' 
-                                            : '#23252B',
-                                        color: '#fff',
-                                        boxShadow: isActive ? '0 4px 15px rgba(139, 92, 246, 0.3)' : 'none'
-                                    }}
+                                    className={cn(
+                                        "rounded-xl py-3 text-[13px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                        isActive
+                                            ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 font-semibold text-white shadow-glow"
+                                            : "bg-luma-input font-normal text-white hover:bg-white/10",
+                                    )}
                                 >
                                     {d.label}
                                 </button>
@@ -278,90 +230,77 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                     </div>
                 </div>
 
-                <div className="right" style={{ textAlign: 'right', minWidth: '100px' }}>
-                    <div className="cart-price" style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                <div className="min-w-[100px] text-right">
+                    <div className="text-lg font-bold text-indigo-400">
                         {currentPrice.toFixed(2)}₺
                     </div>
-                    <button className="remove-btn" onClick={() => setDeleteTarget(item.id)} style={{ marginTop: '40px' }}>
-                        {/* SVG ikonun aynı kalabilir */}
-                        <svg width="20" height="21" viewBox="0 0 20 21" fill="none">...</svg>
+                    <button
+                        className="mt-10 flex items-center justify-center text-white/50 transition-colors hover:text-rose-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+                        onClick={() => setDeleteTarget(item.id)}
+                        aria-label="Sepetten kaldır"
+                    >
+                        <Trash2 className="h-5 w-5" />
                     </button>
                 </div>
             </div>
         );
     })}
-                    </div>
 
-                    <div className="suggested-bots">
-                        <h5>
-                            Önerilen Chatbotlar
-                        </h5>
+                    {suggestedBots.length > 0 && (
+                        <div className="mt-10">
+                            <h5 className="mb-3 font-display text-[15px] font-semibold text-white">
+                                Önerilen Chatbotlar
+                            </h5>
 
-                        <div className="hr">
-                            <div className="hr-inner"></div>
+                            <div className="mb-4 h-px w-full bg-white/10" />
+
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                {suggestedBots.map((bot, i) => (
+                                    <BotCard key={i} bot={bot} onRemove={() => handleRemoveSuggestedBot(i)} />
+                                ))}
+                            </div>
                         </div>
-
-                        <div className="suggested-bots-grid">
-                            {suggestedBots.map((bot, i) => (
-                                <BotCard key={i} bot={bot} onRemove={() => handleRemoveSuggestedBot(i)} />
-                            ))}
-                        </div>
-
-                    </div>
-                </div>
-
-                {/* Sağ Alan - Özet */}
-                <div className="cart-right">
-                    <div className="shadow">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="263" height="160" viewBox="0 0 263 160" fill="none">
-                            <g filter="url(#filter0_f_7772_12866)">
-                                <ellipse cx="69.3284" cy="-5.00384" rx="69.3284" ry="40.8673" fill="url(#paint0_linear_7772_12866)" />
-                            </g>
-                            <defs>
-                                <filter id="filter0_f_7772_12866" x="-123.746" y="-169.617" width="386.148" height="329.226" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-                                    <feFlood flood-opacity="0" result="BackgroundImageFix" />
-                                    <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
-                                    <feGaussianBlur stdDeviation="61.873" result="effect1_foregroundBlur_7772_12866" />
-                                </filter>
-                                <linearGradient id="paint0_linear_7772_12866" x1="0" y1="-5.00384" x2="138.657" y2="-5.00384" gradientUnits="userSpaceOnUse">
-                                    <stop offset="0.211538" stop-color="#4699FF" />
-                                    <stop offset="0.793269" stop-color="#FF66C4" />
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                    </div>
-                    <h4>Sipariş Özeti</h4>
-                    <div className="summary-line">
-                        <span>Ürün Tutarı</span>
-                        <span className="pr">{subtotal.toFixed(2)}₺</span>
-                    </div>
-                    <div className="summary-line total">
-                        <strong>Toplam</strong>
-                        <strong className="pr">{total.toFixed(2)}₺</strong>
-                    </div>
-                    <div className="coupon-input">
-                        <div className="ic">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" fill="#FFF0FF" />
-                                <path d="M12 8V16M16 12H8" stroke="#FF66C4" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="round" />
-                            </svg>
-                        </div>
-                        <input placeholder="İndirim kodu gir" />
-                    </div>
-                    <button className="checkout-btn" onClick={handleFinalConfirm}>
-                        SEPETİ ONAYLA
-                    </button>
+                    )}
                 </div>
             </div>
-            <DeleteConfirmModal
-                isOpen={!!deleteTarget}
-                onClose={() => setDeleteTarget(null)}
-                onConfirm={() => {
-                    onRemove(deleteTarget);
-                    setSelectedItems(prev => prev.filter(id => id !== deleteTarget));
-                    setDeleteTarget(null);
-                }}
-            />
+
+            {/* Sağ Alan - Özet */}
+            <div className="w-full flex-1 rounded-xl border border-white/10 bg-luma-elevated p-3 md:sticky md:top-6">
+                <h4 className="mb-6 font-display text-xl font-medium text-white">Sipariş Özeti</h4>
+                <div className="my-2 flex justify-between font-display text-base font-medium text-white">
+                    <span>Ürün Tutarı</span>
+                    <span className="text-white/50">{subtotal.toFixed(2)}₺</span>
+                </div>
+                <div className="my-2 flex justify-between border-y border-fuchsia-800 py-3 font-display text-base font-medium text-white">
+                    <strong>Toplam</strong>
+                    <strong className="text-white/50">{total.toFixed(2)}₺</strong>
+                </div>
+                <div className="mt-4 flex items-stretch rounded-xl border border-indigo-400 bg-white/10">
+                    <div className="flex items-center p-3.5 text-pink-400">
+                        <Tag className="h-5 w-5" />
+                    </div>
+                    <input
+                        placeholder="İndirim kodu gir"
+                        className="flex-1 bg-transparent py-3.5 pr-3.5 font-display text-base font-medium text-white placeholder:text-white/40 focus:outline-none"
+                    />
+                </div>
+                <button
+                    onClick={handleFinalConfirm}
+                    className="mt-4 w-full rounded-xl border border-white/10 bg-gradient-btn py-3.5 font-display text-sm font-bold uppercase text-white shadow-glow transition-transform duration-200 hover:scale-[1.02] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                    Sepeti Onayla
+                </button>
+            </div>
         </div>
+        <DeleteConfirmModal
+            isOpen={!!deleteTarget}
+            onClose={() => setDeleteTarget(null)}
+            onConfirm={() => {
+                onRemove(deleteTarget);
+                setSelectedItems(prev => prev.filter(id => id !== deleteTarget));
+                setDeleteTarget(null);
+            }}
+        />
+    </div>
     );
 }

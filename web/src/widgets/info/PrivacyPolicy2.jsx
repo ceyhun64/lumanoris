@@ -1,5 +1,5 @@
-﻿"use client";
-import  { React, useState, useEffect } from 'react'
+"use client";
+import { useState, useEffect } from 'react'
 
 function PrivacyPolicy2() {
     const [info, setInfo] = useState('');
@@ -10,7 +10,7 @@ function PrivacyPolicy2() {
             try {
                 const res = await fetch("/api/content/getprivacy.php");
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                
+
                 const result = await res.json();
                 // ✅ Access nested data
                 if (result.success && result.data?.gizlilik_politikasi) {
@@ -30,7 +30,10 @@ function PrivacyPolicy2() {
     }, []);
 
   return (
-    <div className="legal-wrapper" dangerouslySetInnerHTML={{ __html: info }} ></div>
+    <div
+        className="rounded-xl border border-white/10 bg-luma-elevated p-6 text-white [&_h2]:mb-4 [&_h2]:text-xl [&_h4]:mb-2 [&_h4]:mt-5 [&_h4]:text-base [&_h4]:text-indigo-400 [&_li]:mb-1 [&_p]:mb-3 [&_p]:text-sm [&_ul]:pl-5"
+        dangerouslySetInnerHTML={{ __html: info }}
+    ></div>
   )
 }
 

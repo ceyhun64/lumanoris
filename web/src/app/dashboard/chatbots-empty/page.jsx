@@ -1,56 +1,38 @@
-﻿"use client";
+"use client";
 import Link from "next/link";
 import iconSrc from "@/images/ubeyaz.png";
 import Image from "next/image";
-
+import { Plus } from "lucide-react";
 
 export default function Chatbotlarim() {
 
     return (
-        <div className="chatbots-empty-state">
-            <div className="mobile-header">
-                <span>
-                    Home
-                </span>
-            </div>
-            <div className="logo">
-                <Image src={iconSrc} alt="Logo" />
-                <svg width="153" height="153" viewBox="0 0 153 153" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <g filter="url(#filter0_f_7776_8385)">
-                        <circle cx="76.2031" cy="76.7031" r="26.1386" fill="url(#paint0_linear_7776_8385)" />
-                    </g>
-                    <defs>
-                        <filter id="filter0_f_7776_8385" x="0.28228" y="0.78228" width="151.842" height="151.842" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-                            <feFlood floodOpacity="0" result="BackgroundImageFix" />
-                            <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
-                            <feGaussianBlur stdDeviation="24.8911" result="effect1_foregroundBlur_7776_8385" />
-                        </filter>
-                        <linearGradient id="paint0_linear_7776_8385" x1="60.7575" y1="86.8021" x2="87.1932" y2="66.9011" gradientUnits="userSpaceOnUse">
-                            <stop stopColor="#FF66C4" />
-                            <stop offset="1" stopColor="#4699FF" />
-                        </linearGradient>
-                    </defs>
-                </svg>
-
+        <div className="flex min-h-[70vh] flex-col items-center justify-center gap-6 px-4 text-center">
+            <div className="relative flex items-center justify-center">
+                <div className="absolute h-32 w-32 rounded-full bg-gradient-to-br from-indigo-500/20 to-cyan-500/10 blur-2xl" />
+                <Image src={iconSrc} alt="Logo" width={64} height={64} className="relative z-10 drop-shadow-[0_0_20px_rgba(99,102,241,0.6)]" />
             </div>
 
-            <h2>Sohbet Botlarım</h2>
+            <h2 className="bg-gradient-to-r from-indigo-300 to-cyan-300 bg-clip-text font-display text-2xl font-bold text-transparent">
+                Sohbet Botlarım
+            </h2>
 
-            <div>
-                <p>
-                    Hayalinizdeki sohbet botunu sadece <span className="highlight">birkaç basit adımda</span> hayata geçirin.
+            <div className="flex max-w-md flex-col gap-2">
+                <p className="text-[15px] leading-relaxed text-white/55">
+                    Hayalinizdeki sohbet botunu sadece <span className="font-semibold text-indigo-300">birkaç basit adımda</span> hayata geçirin.
                 </p>
-                <p>
-                    Bilgi paylaşın, eğlendirin ya da iş süreçlerini kolaylaştırın <br />
-
+                <p className="text-[15px] leading-relaxed text-white/55">
+                    Bilgi paylaşın, eğlendirin ya da iş süreçlerini kolaylaştırın —
+                    <span className="font-semibold text-indigo-300"> hepsi sizin elinizde!</span>
                 </p>
-                <p className="highlight">hepsi sizin elinizde!</p>
             </div>
 
-            <Link href="/dashboard/chatbots/create" className="create-button">
-                <span><svg xmlns="http://www.w3.org/2000/svg" width="26" height="25" viewBox="0 0 26 25" fill="none">
-                    <path d="M13 5.20117V19.7842M5.7085 12.4927H20.2915" stroke="#FF66C4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg></span> İlk Sohbet Botunuzu Oluşturun
+            <Link
+                href="/dashboard/chatbots/create"
+                className="flex items-center gap-2 rounded-xl bg-gradient-btn px-6 py-3.5 font-display text-[14px] font-semibold text-white shadow-glow transition-all duration-200 hover:-translate-y-0.5 hover:brightness-110"
+            >
+                <Plus className="h-5 w-5" />
+                İlk Sohbet Botunuzu Oluşturun
             </Link>
         </div>
     );

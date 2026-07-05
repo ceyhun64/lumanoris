@@ -1,6 +1,8 @@
-﻿"use client";
+"use client";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from 'next/navigation';
+import { Search, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Explore() {
     const router = useRouter();
@@ -8,11 +10,11 @@ export default function Explore() {
     const [selectedBots, setSelectedBots] = useState([]);
     const [isFromList, setIsFromList] = useState(false);
     const [listName, setListName] = useState("");
-    const [loading, setLoading] = useState(true); 
-    const [error, setError] = useState(null); 
-    
-    const [categories, setCategories] = useState([{ id: 0, kategori_adi_tr: "Tümü" }]); 
-    const [apiBots, setApiBots] = useState([]); 
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const [categories, setCategories] = useState([{ id: 0, kategori_adi_tr: "Tümü" }]);
+    const [apiBots, setApiBots] = useState([]);
     const [searchTerm, setSearchTerm] = useState(""); // Bu state şimdi hem URL'den okunacak hem de filtrelemede kullanılacak
 
     const [sortType, setSortType] = useState("populer");
@@ -33,15 +35,15 @@ export default function Explore() {
     // --- Kategori Çekme (Aynı) ---
     const fetchCategories = useCallback(async () => {
         try {
-            const response = await fetch("/api/content/getcategories.php"); 
+            const response = await fetch("/api/content/getcategories.php");
             if (!response.ok) throw new Error(`Kategori HTTP error! status: ${response.status}`);
-            
+
             const data = await response.json();
             if (data.success === false) throw new Error(data.message || "Kategori API'sinden hata alındı.");
 
             const allCategories = [{ id: 0, kategori_adi_tr: "Tümü" }, ...data];
             setCategories(allCategories);
-            
+
         } catch (e) {
             console.warn("Kategoriler yüklenemedi. Sadece 'Tümü' gösterilecek.", e);
         }
@@ -53,20 +55,20 @@ export default function Explore() {
         setError(null);
         try {
             // ARAMA PARAMETRESİ OLMAYAN/BOŞ ARAMA İÇİN ÇEKİYORUZ
-            const response = await fetch(`/api/chatbot/getchatbots.php?search=`); 
-            
+            const response = await fetch(`/api/chatbot/getchatbots.php?search=`);
+
             if (!response.ok) throw new Error(`Bot HTTP error! status: ${response.status}`);
-            
+
             const data = await response.json();
             if (data.success === false) throw new Error(data.message || "Bot API'sinden hata alındı.");
 
-            setApiBots(data); 
-            setSelectedBots([]); 
+            setApiBots(data);
+            setSelectedBots([]);
 
         } catch (e) {
             console.error("Botlar çekilirken hata oluştu:", e);
             setError(e.message);
-            setApiBots([]); 
+            setApiBots([]);
         } finally {
             setLoading(false);
         }
@@ -84,9 +86,9 @@ export default function Explore() {
     const addBotsToList = (listName, botIds) => {
         const lists = getUserLists();
         const selectedBotData = botIds.map(id => apiBots.find(bot => bot.id === id)).filter(Boolean);
-        
+
         const existingListIndex = lists.findIndex(list => list.name === listName);
-        
+
         if (existingListIndex >= 0) {
             lists[existingListIndex].bots = [...lists[existingListIndex].bots, ...selectedBotData];
         } else {
@@ -96,7 +98,7 @@ export default function Explore() {
                 createdAt: new Date().toISOString()
             });
         }
-        
+
         localStorage.setItem('userLists', JSON.stringify(lists));
         console.log(`"${listName}" listesine ${selectedBotData.length} bot eklendi`);
     };
@@ -111,13 +113,13 @@ export default function Explore() {
 
             setIsFromList(from === "list");
             setListName(name || '');
-            
+
             // 1. URL'den gelen değeri searchTerm state'ine set et
-            setSearchTerm(urlSearchTerm); 
+            setSearchTerm(urlSearchTerm);
             // 2. Input'un değerini de bu state'e bağladığımız için input da güncellenecek.
         }
     }, []);
-    
+
     // İlk yüklemede sadece kategorileri çek.
     useEffect(() => {
         fetchCategories();
@@ -133,7 +135,7 @@ export default function Explore() {
 
       // Dinleyiciyi ekle
       document.addEventListener("mousedown", handleClickOutside);
-      
+
       // Bileşen kapandığında dinleyiciyi temizle (Memory leak önlemek için)
       return () => {
           document.removeEventListener("mousedown", handleClickOutside);
@@ -161,7 +163,7 @@ export default function Explore() {
             if (selectedCategory) {
                 matchesCategory = Number(bot.kategori_id) === Number(selectedCategory.id);
             } else {
-                matchesCategory = false; 
+                matchesCategory = false;
             }
         }
 
@@ -170,7 +172,7 @@ export default function Explore() {
             const lowerCaseSearchTerm = searchTerm.toLowerCase();
             matchesSearch = bot.isim.toLowerCase().includes(lowerCaseSearchTerm);
         }
-        
+
         return matchesCategory && matchesSearch;
     })
     .sort((a, b) => {
@@ -222,55 +224,34 @@ export default function Explore() {
             router.push(`/dashboard/chat?botId=${bot.id}`);
         }
     };
-    
+
     if (loading) {
-        return <div className="explore-wrapper">Yükleniyor...</div>;
+        return <div className="flex h-full w-full flex-col gap-6 px-4 py-6 text-white md:px-16">Yükleniyor...</div>;
     }
 
     if (error) {
-        return <div className="explore-wrapper"><p style={{color: 'red'}}>Veri yüklenemedi: {error}</p></div>;
+        return <div className="flex h-full w-full flex-col gap-6 px-4 py-6 text-white md:px-16"><p className="text-rose-400">Veri yüklenemedi: {error}</p></div>;
     }
 
     return (
-      <div className="explore-wrapper">
+      <div className="flex h-full w-full flex-col gap-6 px-4 py-6 text-white md:px-16">
 
-        <div className="input-ctr">
+        <div className="flex items-center rounded-xl bg-luma-input transition-shadow duration-300 hover:shadow-[0_0_0_2px_rgba(99,102,241,0.3)]">
           <input
             type="search"
             placeholder="Sohbet botu, uygulama veya kişi ara"
             value={searchTerm}
-            // ARTIK onChange SADECE STATE'İ GÜNCELLEYECEK, BU DA ALTTOPRAĞI FİLTİLEME İÇİN TETİKLEYECEK
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 bg-transparent px-5 py-6 font-display text-[15px] text-white placeholder:text-white/40 focus:outline-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
           />
-          <button>
-            {/* SVG KODU */}
-            <svg
-              width="24"
-              height="25"
-              viewBox="0 0 24 25"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M11 17.5625C14.3137 17.5625 17 14.8762 17 11.5625C17 8.24879 14.3137 5.5625 11 5.5625C7.68629 5.5625 5 8.24879 5 11.5625C5 14.8762 7.68629 17.5625 11 17.5625Z"
-                fill="#FA9FFC"
-                fillOpacity="0.12"
-                stroke="#FF66C4"
-                strokeWidth="1.2"
-              />
-              <path
-                d="M20 20.5625L17 17.5625"
-                stroke="#FF66C4"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-              />
-            </svg>
+          <button className="flex items-center justify-center px-5 py-1 transition-transform duration-200 hover:scale-110">
+            <Search className="h-5 w-5 text-pink-400" />
           </button>
 
           {/* Filtre Butonu Birebir */}
-          <div className="relative" ref={sortMenuRef}>
+          <div className="relative mr-2" ref={sortMenuRef}>
             <button
-              className="flex items-center gap-2 bg-transparent border border-dashed border-indigo-400 px-3 py-1.5 rounded-2xl text-white whitespace-nowrap hover:border-indigo-300 transition-colors text-[13px] font-sans cursor-pointer"
+              className="flex items-center gap-2 whitespace-nowrap rounded-2xl border border-dashed border-indigo-400 bg-transparent px-3 py-1.5 font-sans text-[13px] text-white transition-colors hover:border-indigo-300"
               onClick={() => setShowSortMenu((v) => !v)}
             >
               <svg width="14" height="14" viewBox="-4 -4 24 24" fill="none">
@@ -281,11 +262,14 @@ export default function Explore() {
               </span>
             </button>
             {showSortMenu && (
-              <div className="absolute top-[calc(100%+10px)] right-0 w-[220px] bg-[#1a1a23] rounded-xl py-2 shadow-[0px_10px_30px_rgba(0,0,0,0.5)] z-[999] flex flex-col">
+              <div className="absolute right-0 top-[calc(100%+10px)] z-[999] flex w-[220px] flex-col rounded-xl bg-[#1a1a23] py-2 shadow-[0px_10px_30px_rgba(0,0,0,0.5)]">
                 {sortOptions.map((opt) => (
                   <div
                     key={opt.value}
-                    className={`flex items-center justify-between px-4 py-3 cursor-pointer text-[13px] font-display hover:bg-indigo-500/10 transition-colors ${sortType === opt.value ? 'text-indigo-400' : 'text-[#e0e0e0]'}`}
+                    className={cn(
+                      "flex items-center justify-between px-4 py-3 cursor-pointer text-[13px] font-display transition-colors hover:bg-indigo-500/10",
+                      sortType === opt.value ? 'text-indigo-400' : 'text-[#e0e0e0]',
+                    )}
                     onClick={() => {
                       setSortType(opt.value);
                       setShowSortMenu(false);
@@ -307,132 +291,59 @@ export default function Explore() {
           </div>
         </div>
 
-        {/* <div className="input-ctr">
-                <input
-                    type="search"
-                    placeholder="Sohbet botu, uygulama veya kişi ara"
-                    value={searchTerm}
-                    // ARTIK onChange SADECE STATE'İ GÜNCELLEYECEK, BU DA ALTTOPRAĞI FİLTRELEME İÇİN TETİKLEYECEK
-                    onChange={(e) => setSearchTerm(e.target.value)} 
-                />
-                <button>
-                    <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M11 17.5625C14.3137 17.5625 17 14.8762 17 11.5625C17 8.24879 14.3137 5.5625 11 5.5625C7.68629 5.5625 5 8.24879 5 11.5625C5 14.8762 7.68629 17.5625 11 17.5625Z" fill="#FA9FFC" fillOpacity="0.12" stroke="#FF66C4" strokeWidth="1.2" />
-                        <path d="M20 20.5625L17 17.5625" stroke="#FF66C4" strokeWidth="1.2" strokeLinecap="round" />
-                    </svg>
-                </button>
-            </div> */}
-
-        <div className="category-buttons">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5 max-md:flex max-md:h-12 max-md:flex-nowrap max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden">
           {categories.map((cat, idx) => (
             <button
               key={idx}
-              className={`category-button ${
-                activeCategory === cat.kategori_adi_tr ? "active" : ""
-              }`}
               onClick={() => setActiveCategory(cat.kategori_adi_tr)}
+              className={cn(
+                "rounded-lg bg-luma-elevated px-3 py-3 text-center font-display text-sm text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#1d1b29] max-md:h-12 max-md:min-w-[200px]",
+                activeCategory === cat.kategori_adi_tr && "bg-gradient-btn",
+              )}
             >
               {cat.kategori_adi_tr}
             </button>
           ))}
         </div>
 
-        <div className="bot-list">
+        <div className="flex w-full flex-col items-start gap-2 pb-24">
           {filteredAndSortedBots.length === 0 && !loading && (
-            <p>Bu kategoriye/aramaya uygun bot bulunamadı.</p>
+            <p className="text-white/60">Bu kategoriye/aramaya uygun bot bulunamadı.</p>
           )}
 
           {filteredAndSortedBots.map((bot) => {
             const isSelected = selectedBots.includes(bot.id);
-            const botDescription =
-              bot.aciklama ||
-              `Kategori ID: ${bot.kategori_id} | Yayın Tarihi: ${bot.yayimlanma_tarih}`;
 
             return (
               <div
-                className={`bot-card ${isFromList ? "selectable" : ""}`}
                 key={bot.id}
                 onClick={() => handleCardClick(bot)}
+                className="flex w-full cursor-pointer items-start justify-between gap-6 rounded-lg border border-white/10 bg-luma-elevated p-2 pb-3 transition-all duration-300 hover:-translate-y-1 hover:border-indigo-400/25 hover:bg-gradient-to-br hover:from-[#13121c] hover:to-[#1a1925] hover:shadow-[0_10px_25px_rgba(99,102,241,0.12),0_4px_12px_rgba(6,182,212,0.15)] max-md:flex-col"
               >
-                {/* ... KART İÇERİĞİ ... */}
-                <div className="shadow">
-                  {/* SVG Kodu */}
-                  <svg
-                    width="201"
-                    height="133"
-                    viewBox="0 0 201 133"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <g filter="url(#filter0_f_7772_10081)">
-                      <ellipse
-                        cx="15.5"
-                        cy="61.7625"
-                        rx="66.5"
-                        ry="39.2"
-                        fill="url(#paint0_linear_7772_10081)"
-                      />
-                    </g>
-                    <defs>
-                      <filter
-                        id="filter0_f_7772_10081"
-                        x="-169.698"
-                        y="-96.1351"
-                        width="370.395"
-                        height="315.796"
-                        filterUnits="userSpaceOnUse"
-                        color-interpolation-filters="sRGB"
-                      >
-                        <feFlood
-                          flood-opacity="0"
-                          result="BackgroundImageFix"
-                        />
-                        <feBlend
-                          mode="normal"
-                          in="SourceGraphic"
-                          in2="BackgroundImageFix"
-                          result="shape"
-                        />
-                        <feGaussianBlur
-                          stdDeviation="59.3488"
-                          result="effect1_foregroundBlur_7772_10081"
-                        />
-                      </filter>
-                      <linearGradient
-                        id="paint0_linear_7772_10081"
-                        x1="-51"
-                        y1="61.7625"
-                        x2="82"
-                        y2="61.7625"
-                        gradientUnits="userSpaceOnUse"
-                      >
-                        <stop offset="0.211538" stop-color="#4699FF" />
-                        <stop offset="0.793269" stop-color="#FF66C4" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-                <div className="bot-card-left">
-                  <div className="icon">
+                <div className="flex items-start gap-4 max-md:flex-col">
+                  <div className="relative flex items-center justify-center">
                     <img
                       src={bot.profil_fotografi || "fallback_icon_url"}
                       alt={bot.isim}
-                      className="bot-image"
+                      className="aspect-square h-[120px] w-[120px] rounded-md object-cover"
                     />
                     {isFromList && (
                       <div
-                        className={`checkbox ${isSelected ? "checked" : ""}`}
+                        className={cn(
+                          "absolute bottom-2 right-2 z-[2] flex h-5 w-5 items-center justify-center rounded border-2 border-indigo-400 bg-white text-indigo-400",
+                          isSelected && "bg-indigo-400 text-white",
+                        )}
                       >
-                        {isSelected && <span className="checkmark">✓</span>}
+                        {isSelected && <Check className="h-3.5 w-3.5" />}
                       </div>
                     )}
                   </div>
-                  <div className="bot-info">
-                    <h4 className="bot-title">{bot.isim}</h4>
-                    <p className="bot-description">{bot.aciklama}</p>
+                  <div className="flex flex-col items-start gap-4">
+                    <h4 className="font-display text-base font-medium capitalize text-white">{bot.isim}</h4>
+                    <p className="font-display text-sm capitalize text-white">{bot.aciklama}</p>
                   </div>
                 </div>
-                <span className="user-count">
+                <span className="flex items-center justify-center whitespace-nowrap rounded-md bg-white/10 px-3 font-display text-sm text-white">
                   {(bot.toplam_chats || 0).toLocaleString()} Toplam Sohbet
                 </span>
               </div>
@@ -441,14 +352,14 @@ export default function Explore() {
         </div>
 
         {isFromList && selectedBots.length > 0 && (
-          <div className="save-popup">
-            <p>{selectedBots.length} bot seçildi</p>
+          <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-xl border border-white/10 bg-luma-elevated px-6 py-4 shadow-modal">
+            <p className="text-sm text-white">{selectedBots.length} bot seçildi</p>
             <button
-              className="save-button"
               onClick={() => {
                 addBotsToList(listName, selectedBots);
                 router.push("/dashboard/list");
               }}
+              className="rounded-xl bg-gradient-btn px-5 py-2.5 font-display text-sm font-semibold text-white shadow-glow transition-transform hover:scale-[1.03]"
             >
               Kaydet ve Listeye Ekle
             </button>

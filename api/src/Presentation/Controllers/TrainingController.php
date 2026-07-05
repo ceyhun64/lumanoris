@@ -36,6 +36,12 @@ class TrainingController {
     }
 
     public static function getTrainingChunks(): void {
+        // Any logged-in user needs read access here — chat/page.jsx loads a
+        // bot's full training_prompt client-side for every conversation, not
+        // just the bot's own owner — but it was previously reachable with no
+        // session at all, letting anyone scrape any bot's full system prompt
+        // by looping botId with zero authentication.
+        AuthMiddleware::requireAuth();
         $botId  = InputSanitizer::positiveInt($_GET['botId'] ?? 0);
         $offset = InputSanitizer::positiveInt($_GET['offset'] ?? 0);
         $limit  = 10000;

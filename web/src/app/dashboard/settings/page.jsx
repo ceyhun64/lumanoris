@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import BankInfo from "@/features/wallet/BankInfo";
 import ContactForm from "@/features/contact/ContactForm";
 import EditableField from "@/features/settings/EditableField";
@@ -9,10 +9,10 @@ import PrivacyPolicy2 from "@/widgets/info/PrivacyPolicy2";
 import ProfileImageEdit from "@/features/settings/ProfileImageEdit";
 import TermsOfUse from "@/widgets/info/TermsOfUse";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
 
 export default function Settings() {
-    // const [activeTab, setActiveTab] = useState("user");
     const [userId, setUserId] = useState(null);
     const [userInfo, setUserInfo] = useState({
         ad: "",
@@ -118,7 +118,6 @@ export default function Settings() {
     };
 
     const tabs = [
-        /* { key: "accountPoints", label: "Hesap Puanı" }, */
         { key: "user", label: "Kullanıcı" },
         { key: "security", label: "Banka ve güvenlik" },
         { key: "email", label: "E-posta" },
@@ -130,44 +129,39 @@ export default function Settings() {
     ];
 
     return (
-        <div className="settings-wrapper">
+        <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
 
-            <div className="settings-header">
-                <h2>Ayarlar</h2>
+            <div className="mb-10 flex items-center justify-between">
+                <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
+                    Ayarlar
+                </h2>
             </div>
 
-            <div className="settings-top">
-                <div className="subscribe-info">
-                    <p>
-                        Abonelik
-                    </p>
-                    <span>
-                        Ücretsiz Plan
-                    </span>
+            <div className="mb-3.5 flex flex-col items-stretch gap-3 md:flex-row md:justify-between">
+                <div className="flex flex-1 items-center justify-between rounded-xl border-b border-dashed border-white/12 bg-white/[0.06] px-6 py-3 transition-colors duration-300 hover:bg-white/[0.09]">
+                    <p className="font-display text-base font-medium text-indigo-400">Abonelik</p>
+                    <span className="font-display text-base font-medium text-white">Ücretsiz Plan</span>
                 </div>
-                <div className="right">
-                    <button onClick={() => {
-                        router.push("/dashboard/upgrade")
-                    }}>
+                <div className="flex items-stretch justify-center">
+                    <button
+                        onClick={() => router.push("/dashboard/upgrade")}
+                        className="w-full rounded-xl border border-white/20 bg-gradient-btn px-3 py-3 font-display text-sm font-medium text-white shadow-glow transition-transform duration-200 hover:-translate-y-px hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:w-auto"
+                    >
                         Abonelik seçeneklerini görüntüle
                     </button>
                 </div>
             </div>
-            <div className="tab-buttons">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.key}
-                        className={`tab-button ${activeTab === tab.key ? "active" : ""}`}
-                        onClick={() => setActiveTab(tab.key)}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
 
-            <div className="tab-content">
-                {/* {activeTab === "accountPoints" && <AccountPoints />} */}
-                {activeTab === "user" && <>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="mb-3.5 h-auto w-full flex-wrap justify-start gap-1">
+                    {tabs.map((tab) => (
+                        <TabsTrigger key={tab.key} value={tab.key}>
+                            {tab.label}
+                        </TabsTrigger>
+                    ))}
+                </TabsList>
+
+                <TabsContent value="user" className="flex flex-col gap-6">
                     <ProfileImageEdit
                     onChange={file => handleChange(file)}
                     onRemove={() => handleRemove()}
@@ -228,18 +222,15 @@ export default function Settings() {
                             }
                         }}
                     />
-                </>}
-                {activeTab === "security" && <BankInfo userId={userId} />}
-                {activeTab === "email" && <EmailEditor userId={userId} />}
-                {activeTab === "phone" && <PhoneEditor userId={userId} />}
-                {activeTab === "language" && <LanguageSelector />}
-                {activeTab === "privacy" && <PrivacyPolicy2 />}
-                {activeTab === "terms" && <TermsOfUse />}
-                {activeTab === "contact" && <ContactForm />}
-
-            </div>
-
-
+                </TabsContent>
+                <TabsContent value="security"><BankInfo userId={userId} /></TabsContent>
+                <TabsContent value="email"><EmailEditor userId={userId} /></TabsContent>
+                <TabsContent value="phone"><PhoneEditor userId={userId} /></TabsContent>
+                <TabsContent value="language"><LanguageSelector /></TabsContent>
+                <TabsContent value="privacy"><PrivacyPolicy2 /></TabsContent>
+                <TabsContent value="terms"><TermsOfUse /></TabsContent>
+                <TabsContent value="contact"><ContactForm /></TabsContent>
+            </Tabs>
         </div>
     );
 }

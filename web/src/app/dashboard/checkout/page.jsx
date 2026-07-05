@@ -86,12 +86,14 @@ export default function Checkout() {
         setStep(2);
     };
 
-    if (loading) return <div className="checkout-wrapper"><p>Yükleniyor...</p></div>;
+    if (loading) return <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16"><p className="text-white/60">Yükleniyor...</p></div>;
 
     return (
-        <div className="checkout-wrapper">
-            <div className="checkout-header">
-                {step === 1 ? <h2>Sepetim</h2> : <h2>Onayla</h2>}
+        <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
+            <div className="mb-10 flex items-center justify-between">
+                <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
+                    {step === 1 ? "Sepetim" : "Onayla"}
+                </h2>
             </div>
 
             {cartItems.length === 0 ? (

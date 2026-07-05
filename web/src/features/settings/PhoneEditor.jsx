@@ -1,5 +1,6 @@
 ﻿"use client";
 import React, { useState, useEffect } from "react";
+import { Input } from "@/shared/ui/input";
 
 export default function PhoneEditor({ userId }) {
   const [currentPhone, setCurrentPhone] = useState("");
@@ -53,7 +54,7 @@ export default function PhoneEditor({ userId }) {
         const res = await fetch(`/api/user/getuserphone.php?id=${userId}`);
         const result = await res.json();
         if (result.success) {
-          setCurrentPhone(result.phone);
+          setCurrentPhone(result.telefon || "");
         } else {
           console.error(result.message);
         }
@@ -77,7 +78,7 @@ export default function PhoneEditor({ userId }) {
     try {
       const formData = new FormData();
       formData.append("id", userId);
-      formData.append("phone", newPhone.trim());
+      formData.append("telefon", newPhone.trim());
 
       const res = await fetch("/api/user/updateuserphone.php", {
         method: "POST",
@@ -106,22 +107,22 @@ export default function PhoneEditor({ userId }) {
   };
 
   return (
-    <div className="phone-editor-wrapper">
-      <input
+    <div className="flex flex-col items-stretch gap-3 rounded-xl border border-white/10 p-4 sm:flex-row sm:items-center">
+      <Input
         type="text"
-        className="phone-input"
+        className="flex-1 uppercase"
         value={isEditing ? newPhone : currentPhone || "Telefon numarası eklenmemiş"}
         onChange={isEditing ? handlePhoneChange : undefined}
         disabled={!isEditing}
         placeholder={isEditing ? "TELEFON NUMARASI GİRİN" : "MEVCUT TELEFON"}
       />
       <button
-        className="phone-submit-btn"
         onClick={isEditing ? handleAddPhone : handleEditClick}
+        className="min-w-[100px] shrink-0 rounded-xl border border-white/70 bg-gradient-btn px-3 py-2.5 font-display text-sm font-medium text-white shadow-glow transition-all duration-300 hover:scale-[1.03] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {isEditing ? "Kaydet" : currentPhone ? "Düzenle" : "Ekle"}
       </button>
-      {isEditing && phoneError && <div className="phone-error">{phoneError}</div>}
+      {isEditing && phoneError && <div className="text-xs text-pink-400 sm:basis-full">{phoneError}</div>}
     </div>
   );
 }

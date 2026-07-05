@@ -1,7 +1,11 @@
-﻿"use client";
+"use client";
 import React, { useEffect, useRef, useState } from "react";
 import DeleteConfirmModal from "@/shared/ui/DeleteConfirmModal";
 import useSellerStatus from "@/shared/hooks/useSellerStatus";
+import { Input } from "@/shared/ui/input";
+import { Textarea } from "@/shared/ui/textarea";
+import { Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function parseDiffgramRows(xmlString) {
     if (typeof xmlString !== "string" || !xmlString) return [];
@@ -57,6 +61,16 @@ function isoToDdmmyyyy(value) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
     return m ? `${m[3]}.${m[2]}.${m[1]}` : "";
 }
+
+const SELLER_BANNER_STYLES = {
+    active: "border border-cyan-400 bg-cyan-400/10 text-cyan-100",
+    rejected: "border border-pink-400 bg-pink-400/10 text-pink-100",
+    kyc_filled: "border border-amber-400/45 bg-amber-400/10 text-amber-200",
+    not_started: "border border-white/10 bg-white/5 text-white/70",
+    pending: "border border-white/10 bg-white/5 text-white/70",
+};
+
+const selectClass = "flex h-11 w-full rounded-xl border border-indigo-400/14 bg-luma-input px-4 py-2 text-sm text-white font-sans transition-all duration-200 focus:outline-none focus:border-indigo-500/55 focus:ring-2 focus:ring-indigo-500/15 disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function BankInfo({ userId }) {
     const [formData, setFormData] = useState({
@@ -144,17 +158,13 @@ export default function BankInfo({ userId }) {
     };
 
     const [errors, setErrors] = useState({});
-    
+
     const [cards, setCards] = useState([]);
-    const [savedCard, setSavedCard] = useState(null);
     const [showAccountTypeOptions, setShowAccountTypeOptions] = useState(false);
     const accountTypeRef = useRef(null);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [formError, setFormError] = useState("");
-    const [ibanError, setIbanError] = useState("");
-    const [idNumberError, setIdNumberError] = useState("");
-    const [phoneError, setPhoneError] = useState("");
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -222,7 +232,6 @@ export default function BankInfo({ userId }) {
             if (raw.length > 0 && !raw.startsWith('TR')) raw = 'TR' + raw;
             const grouped = raw.replace(/(.{4})/g, "$1 ").trim();
             setFormData(prev => ({ ...prev, [name]: grouped }));
-            // validateIban(grouped); // Gerekirse aktif et
             return;
         }
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -253,23 +262,6 @@ export default function BankInfo({ userId }) {
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
-    
-    /*const isBankInfoComplete = () => {
-        const { account_type, full_name, authorized_first_name, authorized_last_name, company_title, tax_number, tax_office, id_number, phone, address } = formData;
-        
-        const commonFields = id_number?.trim() && phone?.trim() && address?.trim();
-
-        if (account_type === "Kurumsal Hesap") {
-            return commonFields && 
-                   authorized_first_name?.trim() && 
-                   authorized_last_name?.trim() && 
-                   company_title?.trim() && 
-                   tax_number?.trim() && 
-                   tax_office?.trim();
-        }
-
-        return commonFields && full_name?.trim();
-    };*/
 
     const handleSubmit = async () => {
         if (isEditing) {
@@ -281,10 +273,10 @@ export default function BankInfo({ userId }) {
             // Mevcut IBAN'ı veya yeni girileni belirle
             const currentIban = formData.iban.trim() !== "" ? formData.iban : (cards[0] || "");
 
-            const payload = { 
-                ...formData, 
+            const payload = {
+                ...formData,
                 user_id: userId,
-                iban: currentIban 
+                iban: currentIban
             };
 
             const fData = new FormData();
@@ -296,7 +288,7 @@ export default function BankInfo({ userId }) {
                     body: fData
                 });
                 const result = await res.json();
-                
+
                 if (result.success) {
                     if (currentIban) setCards([currentIban]);
                     setFormData(prev => ({ ...prev, iban: "" }));
@@ -315,21 +307,26 @@ export default function BankInfo({ userId }) {
         }
     };
 
-    if (loading) return <div>Yükleniyor...</div>;
+    if (loading) return <div className="text-sm text-white/60">Yükleniyor...</div>;
 
     return (
-        <div className="bank-info-wrapper">
-            <h3>Banka Bilgileri</h3>
+        <div className="flex flex-col rounded-xl border border-white/10 p-4">
+            <h3 className="mb-6 font-display text-base font-normal text-white">Banka Bilgileri</h3>
 
             {!sellerStatus.loading && (
-                <div className={`seller-status-banner ${sellerStatus.status}`}>
+                <div className={cn("mb-4 flex flex-wrap items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-[13px]", SELLER_BANNER_STYLES[sellerStatus.status])}>
                     {sellerStatus.status === "active" && (
-                        <span>Pazaryeri Satıcısı ✓ <small>GUID: {sellerStatus.guid}</small></span>
+                        <span>Pazaryeri Satıcısı ✓ <small className="opacity-70">GUID: {sellerStatus.guid}</small></span>
                     )}
                     {sellerStatus.status === "rejected" && (
                         <>
                             <span>Pazaryeri başvurunuz reddedildi: <em>{sellerStatus.lastError || "—"}</em></span>
-                            <button type="button" onClick={handleResubmit} disabled={registering} className="resubmit-btn">
+                            <button
+                                type="button"
+                                onClick={handleResubmit}
+                                disabled={registering}
+                                className="rounded-md bg-gradient-to-r from-pink-400 to-cyan-400 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                            >
                                 {registering ? "Gönderiliyor..." : "Yeniden Gönder"}
                             </button>
                         </>
@@ -337,7 +334,12 @@ export default function BankInfo({ userId }) {
                     {sellerStatus.status === "kyc_filled" && (
                         <>
                             <span>Bilgileriniz hazır, henüz Param'a gönderilmedi.</span>
-                            <button type="button" onClick={handleResubmit} disabled={registering} className="resubmit-btn">
+                            <button
+                                type="button"
+                                onClick={handleResubmit}
+                                disabled={registering}
+                                className="rounded-md bg-gradient-to-r from-pink-400 to-cyan-400 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                            >
                                 {registering ? "Gönderiliyor..." : "Pazaryeri Kaydını Tamamla"}
                             </button>
                         </>
@@ -346,48 +348,51 @@ export default function BankInfo({ userId }) {
                         <span>Bilgileri tamamlayın, ardından chatbot oluştururken Pazaryeri kaydınız başlatılır.</span>
                     )}
                     {sellerStatus.status === "pending" && <span>Param onayı bekleniyor...</span>}
-                    {registerMsg && <small className="register-msg">{registerMsg}</small>}
+                    {registerMsg && <small className="w-full text-xs text-white/60">{registerMsg}</small>}
                 </div>
             )}
-            <div className="form-grid">
-                <div className="account-type-select" ref={accountTypeRef}>
-                    <input
-                        type="text" className="input" placeholder="HESAP TÜRÜ"
+            <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="relative" ref={accountTypeRef}>
+                    <Input
+                        type="text" placeholder="HESAP TÜRÜ"
                         value={formData.account_type || ""}
                         onFocus={() => isEditing && setShowAccountTypeOptions(true)}
                         readOnly
-                        style={{ cursor: isEditing ? "pointer" : "not-allowed", background: !isEditing ? "#15141b" : undefined }}
+                        className={cn("uppercase", isEditing ? "cursor-pointer" : "cursor-not-allowed")}
                     />
                     {showAccountTypeOptions && isEditing && (
-                        <div className="account-type-dropdown">
-                            <div className="dropdown-option" onClick={() => { setFormData({...formData, account_type: "Bireysel Hesap"}); setShowAccountTypeOptions(false); }}>Bireysel Hesap</div>
-                            <div className="dropdown-option" onClick={() => { setFormData({...formData, account_type: "Şahıs Şirketi"}); setShowAccountTypeOptions(false); }}>Şahıs Şirketi</div>
-                            <div className="dropdown-option" onClick={() => { setFormData({...formData, account_type: "Kurumsal Hesap"}); setShowAccountTypeOptions(false); }}>Kurumsal Hesap</div>
+                        <div className="absolute left-0 right-0 top-full z-10 mt-0.5 overflow-hidden rounded-lg bg-luma-panel shadow-modal">
+                            {["Bireysel Hesap", "Şahıs Şirketi", "Kurumsal Hesap"].map((opt) => (
+                                <div
+                                    key={opt}
+                                    className="cursor-pointer border-b border-white/10 px-3 py-3 text-[13px] text-white last:border-b-0 hover:bg-indigo-500/10"
+                                    onClick={() => { setFormData({...formData, account_type: opt}); setShowAccountTypeOptions(false); }}
+                                >
+                                    {opt}
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
 
                 {isCorporate ? (
-                    <div className="dual-input-row">
-                        <input type="text" className="input" name="authorized_first_name" placeholder="YETKİLİ ADI" value={formData.authorized_first_name || ""} onChange={handleChange} disabled={!isEditing} />
-                        <input type="text" className="input" name="authorized_last_name" placeholder="YETKİLİ SOYADI" value={formData.authorized_last_name || ""} onChange={handleChange} disabled={!isEditing} />
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                        <Input type="text" name="authorized_first_name" placeholder="YETKİLİ ADI" value={formData.authorized_first_name || ""} onChange={handleChange} disabled={!isEditing} className="uppercase" />
+                        <Input type="text" name="authorized_last_name" placeholder="YETKİLİ SOYADI" value={formData.authorized_last_name || ""} onChange={handleChange} disabled={!isEditing} className="uppercase" />
                     </div>
                 ) : (
-                    <div className="input-with-error">
-                        <input type="text" className="input" name="full_name" placeholder="AD SOYAD" value={formData.full_name || ""} onChange={handleChange} disabled={!isEditing} />
-                    </div>
+                    <Input type="text" name="full_name" placeholder="AD SOYAD" value={formData.full_name || ""} onChange={handleChange} disabled={!isEditing} className="uppercase" />
                 )}
 
-                <input type="text" className="input" name="id_number" placeholder={isCorporate ? "YETKİLİ TC KİMLİK NO" : "TC KİMLİK NUMARASI"} value={formData.id_number || ""} onChange={handleChange} disabled={!isEditing} />
-                <input type="text" className="input" name="phone" placeholder="TELEFON NUMARASI" value={formData.phone || ""} onChange={handleChange} disabled={!isEditing} />
+                <Input type="text" name="id_number" placeholder={isCorporate ? "YETKİLİ TC KİMLİK NO" : "TC KİMLİK NUMARASI"} value={formData.id_number || ""} onChange={handleChange} disabled={!isEditing} className="uppercase" />
+                <Input type="text" name="phone" placeholder="TELEFON NUMARASI" value={formData.phone || ""} onChange={handleChange} disabled={!isEditing} className="uppercase" />
             </div>
 
             {tip !== 0 && (
-                <div className="dob-field mt-10">
-                    <label className="field-label">{isCorporate ? "YETKİLİ DOĞUM TARİHİ" : "DOĞUM TARİHİ"}</label>
-                    <input
+                <div className="mt-2.5 flex flex-col">
+                    <label className="mb-1 text-[11px] tracking-wide text-white/55">{isCorporate ? "YETKİLİ DOĞUM TARİHİ" : "DOĞUM TARİHİ"}</label>
+                    <Input
                         type="date"
-                        className="input"
                         value={ddmmyyyyToIso(isCorporate ? (formData.yetkili_kisi_dogum_tarihi || "") : (formData.kisi_dogum_tarihi || ""))}
                         onChange={handleDobChange}
                         disabled={!isEditing}
@@ -396,49 +401,49 @@ export default function BankInfo({ userId }) {
             )}
 
             {isSahis && (
-                <div className="corporate-extra-fields mt-10">
-                    <input type="text" className="input full-width-field" name="company_title" placeholder="TİCARİ ÜNVAN (OPSİYONEL)" value={formData.company_title || ""} onChange={handleChange} disabled={!isEditing} />
-                    <input type="text" className="input full-width-field mt-10" name="tax_office" placeholder="VERGİ DAİRESİ" value={formData.tax_office || ""} onChange={handleChange} disabled={!isEditing} />
+                <div className="mt-2.5 flex flex-col gap-2.5">
+                    <Input type="text" name="company_title" placeholder="TİCARİ ÜNVAN (OPSİYONEL)" value={formData.company_title || ""} onChange={handleChange} disabled={!isEditing} className="uppercase" />
+                    <Input type="text" name="tax_office" placeholder="VERGİ DAİRESİ" value={formData.tax_office || ""} onChange={handleChange} disabled={!isEditing} className="uppercase" />
                 </div>
             )}
 
             {isCorporate && (
-                <div className="corporate-extra-fields mt-10">
-                    <input type="text" className="input full-width-field" name="company_title" placeholder="ŞİRKET ÜNVANI" value={formData.company_title || ""} onChange={handleChange} disabled={!isEditing} />
-                    <div className="dual-input-row mt-10">
-                        <input type="text" className="input" name="tax_number" placeholder="VERGİ NUMARASI" value={formData.tax_number || ""} onChange={handleChange} disabled={!isEditing} />
-                        <input type="text" className="input" name="tax_office" placeholder="VERGİ DAİRESİ" value={formData.tax_office || ""} onChange={handleChange} disabled={!isEditing} />
+                <div className="mt-2.5 flex flex-col gap-2.5">
+                    <Input type="text" name="company_title" placeholder="ŞİRKET ÜNVANI" value={formData.company_title || ""} onChange={handleChange} disabled={!isEditing} className="uppercase" />
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                        <Input type="text" name="tax_number" placeholder="VERGİ NUMARASI" value={formData.tax_number || ""} onChange={handleChange} disabled={!isEditing} className="uppercase" />
+                        <Input type="text" name="tax_office" placeholder="VERGİ DAİRESİ" value={formData.tax_office || ""} onChange={handleChange} disabled={!isEditing} className="uppercase" />
                     </div>
                 </div>
             )}
 
-            <div className="input-with-error mt-10" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <input
+            <div className="mt-2.5 flex items-center gap-2">
+                <Input
                     type="text"
-                    className="input"
                     name="iban"
                     placeholder="TR IBAN NUMARASI"
                     value={formData.iban || cards[0] || ""}
                     onChange={handleChange}
                     disabled={!isEditing}
-                    style={{ flex: 1 }}
+                    className="flex-1 uppercase"
                 />
                 {!isEditing && cards.length > 0 && (
                     <button
                         type="button"
-                        className="delete-btn"
                         onClick={() => { setDeleteTarget('iban'); setDeleteModalVisible(true); }}
+                        className="flex items-center justify-center rounded-lg p-2 text-white/50 transition-colors hover:text-rose-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        aria-label="IBAN'ı sil"
                     >
-                        Sil
+                        <Trash2 className="h-4 w-4" />
                     </button>
                 )}
             </div>
-            
-            <div className="address-grid mt-10">
+
+            <div className="mt-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {/* İl Alanı (Param) */}
-                <div className="input-group">
+                <div className="flex flex-col">
                     <select
-                        className={`input ${errors.il ? "error-border" : ""}`}
+                        className={cn(selectClass, errors.il && "border-rose-500")}
                         name="il_kod"
                         value={formData.il_kod || ""}
                         disabled={!isEditing}
@@ -456,13 +461,13 @@ export default function BankInfo({ userId }) {
                             return <option key={kod} value={kod}>{ad}</option>;
                         })}
                     </select>
-                    {errors.il && <span className="error-msg">{errors.il}</span>}
+                    {errors.il && <span className="mt-0.5 text-[11px] text-pink-400">{errors.il}</span>}
                 </div>
 
                 {/* İlçe Alanı (Param) */}
-                <div className="input-group">
+                <div className="flex flex-col">
                     <select
-                        className={`input ${errors.ilce ? "error-border" : ""}`}
+                        className={cn(selectClass, errors.ilce && "border-rose-500")}
                         name="ilce_kod"
                         value={formData.ilce_kod || ""}
                         disabled={!isEditing || !formData.il_kod}
@@ -480,68 +485,46 @@ export default function BankInfo({ userId }) {
                             return <option key={kod} value={kod}>{ad}</option>;
                         })}
                     </select>
-                    {errors.ilce && <span className="error-msg">{errors.ilce}</span>}
+                    {errors.ilce && <span className="mt-0.5 text-[11px] text-pink-400">{errors.ilce}</span>}
                 </div>
 
-                {/* Mahalle Alanı */}
-                <div className="input-group">
-                    <input 
-                        type="text" 
-                        className={`input ${errors.mahalle ? "error-border" : ""}`} 
-                        name="mahalle" 
-                        placeholder="MAHALLE" 
-                        value={formData.mahalle || ""} 
-                        onChange={handleChange} 
-                        disabled={!isEditing} 
-                    />
-                    {errors.mahalle && <span className="error-msg">{errors.mahalle}</span>}
+                <div className="flex flex-col">
+                    <Input type="text" className={cn("uppercase", errors.mahalle && "border-rose-500")} name="mahalle" placeholder="MAHALLE" value={formData.mahalle || ""} onChange={handleChange} disabled={!isEditing} />
+                    {errors.mahalle && <span className="mt-0.5 text-[11px] text-pink-400">{errors.mahalle}</span>}
                 </div>
-                
-                {/* Cadde Alanı */}
-                <div className="input-group">
-                    <input 
-                        type="text" 
-                        className="input" 
-                        name="cadde" 
-                        placeholder="CADDE" 
-                        value={formData.cadde || ""} 
-                        onChange={handleChange} 
-                        disabled={!isEditing} 
-                    />
+
+                <div className="flex flex-col">
+                    <Input type="text" className="uppercase" name="cadde" placeholder="CADDE" value={formData.cadde || ""} onChange={handleChange} disabled={!isEditing} />
                 </div>
-                
-                {/* Sokak Alanı */}
-                <div className="input-group">
-                    <input 
-                        type="text" 
-                        className={`input ${errors.sokak ? "error-border" : ""}`} 
-                        name="sokak" 
-                        placeholder="SOKAK" 
-                        value={formData.sokak || ""} 
-                        onChange={handleChange} 
-                        disabled={!isEditing} 
-                    />
-                    {errors.sokak && <span className="error-msg">{errors.sokak}</span>}
+
+                <div className="flex flex-col">
+                    <Input type="text" className={cn("uppercase", errors.sokak && "border-rose-500")} name="sokak" placeholder="SOKAK" value={formData.sokak || ""} onChange={handleChange} disabled={!isEditing} />
+                    {errors.sokak && <span className="mt-0.5 text-[11px] text-pink-400">{errors.sokak}</span>}
                 </div>
-                
-                <div className="input-group">
-                    <input type="text" className="input" name="bina_no" placeholder="BİNA NO" value={formData.bina_no || ""} onChange={handleChange} disabled={!isEditing} />
+
+                <div className="flex flex-col">
+                    <Input type="text" className="uppercase" name="bina_no" placeholder="BİNA NO" value={formData.bina_no || ""} onChange={handleChange} disabled={!isEditing} />
                 </div>
-                
-                <div className="input-group">
-                    <input type="text" className="input" name="kapi_no" placeholder="KAPI NO" value={formData.kapi_no || ""} onChange={handleChange} disabled={!isEditing} />
+
+                <div className="flex flex-col">
+                    <Input type="text" className="uppercase" name="kapi_no" placeholder="KAPI NO" value={formData.kapi_no || ""} onChange={handleChange} disabled={!isEditing} />
                 </div>
-                
-                <div className="input-group">
-                    <input type="text" className="input" name="posta_kodu" placeholder="POSTA KODU" value={formData.posta_kodu || ""} onChange={handleChange} disabled={!isEditing} />
+
+                <div className="flex flex-col">
+                    <Input type="text" className="uppercase" name="posta_kodu" placeholder="POSTA KODU" value={formData.posta_kodu || ""} onChange={handleChange} disabled={!isEditing} />
                 </div>
             </div>
 
-            <textarea name="address" className="textarea mt-10" placeholder="ADRES BİLGİLERİ" value={formData.address || ""} onChange={handleChange} disabled={!isEditing}></textarea>
+            <Textarea name="address" className="mt-2.5 min-h-[100px] uppercase" placeholder="ADRES BİLGİLERİ" value={formData.address || ""} onChange={handleChange} disabled={!isEditing}></Textarea>
 
-            <div className="form-actions">
-                {formError && <div className="error-text" style={{color: '#FF66C4', fontSize: '13px'}}>{formError}</div>}
-                <button onClick={handleSubmit}>{isEditing ? "Kaydet" : "Düzenle"}</button>
+            <div className="mt-4 flex flex-col items-start gap-2.5">
+                {formError && <div className="text-[13px] text-pink-400">{formError}</div>}
+                <button
+                    onClick={handleSubmit}
+                    className="rounded-xl border border-white/70 bg-gradient-btn px-5 py-2.5 font-display text-sm font-medium text-white shadow-glow transition-all duration-300 hover:scale-[1.02] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                    {isEditing ? "Kaydet" : "Düzenle"}
+                </button>
             </div>
 
             <DeleteConfirmModal
@@ -555,33 +538,6 @@ export default function BankInfo({ userId }) {
                     setDeleteModalVisible(false);
                 }}
             />
-
-            <style jsx>{`
-                .dual-input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-                .mt-10 { margin-top: 10px; }
-                .full-width-field { width: 100%; }
-                @media (max-width: 768px) { .dual-input-row { grid-template-columns: 1fr; } }
-            `}</style>
-            <style jsx>{`
-            .error-border { border: 1px solid #FF66C4 !important; }
-            .error-msg { color: #FF66C4; font-size: 11px; margin-top: 2px; display: block; }
-            .seller-status-banner { padding: 10px 14px; border-radius: 8px; margin: 10px 0 18px; font-size: 13px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-            .seller-status-banner.active { background: rgba(70,153,255,0.08); border: 1px solid #4699FF; color: #b9d8ff; }
-            .seller-status-banner.rejected { background: rgba(255,102,196,0.08); border: 1px solid #FF66C4; color: #ffb4dd; }
-            .seller-status-banner.kyc_filled { background: rgba(255,200,80,0.08); border: 1px solid rgba(255,200,80,0.45); color: #ffd980; }
-            .seller-status-banner.not_started, .seller-status-banner.pending { background: #1a1923; border: 1px solid #25232f; color: #c0bdd0; }
-            .seller-status-banner .resubmit-btn { padding: 6px 12px; background: linear-gradient(135deg, #FF66C4, #4699FF); border: none; color: #fff; border-radius: 6px; font-size: 12px; cursor: pointer; }
-            .seller-status-banner .resubmit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-            .seller-status-banner .register-msg { width: 100%; color: #c0bdd0; font-size: 12px; }
-            .input-group { display: flex; flex-direction: column; }
-            .dob-field { display: flex; flex-direction: column; }
-            .field-label { font-size: 11px; color: #9a97aa; margin-bottom: 4px; letter-spacing: 0.04em; }
-            .address-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-            .dual-input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-            .mt-10 { margin-top: 10px; }
-            .full-width-field { width: 100%; }
-            @media (max-width: 768px) { .dual-input-row, .address-grid { grid-template-columns: 1fr; } }
-        `}</style>
         </div>
     );
 }

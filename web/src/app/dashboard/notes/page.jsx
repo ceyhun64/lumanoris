@@ -111,10 +111,11 @@ export default function DialoguePage() {
             try
             {
                 const data = await res.json();
-                if(Array.isArray(data))
+                // gethide.php returns {success, hidden: [chatbotId, ...]} —
+                // a flat id array under a wrapper key, not bare objects.
+                if(Array.isArray(data?.hidden))
                 {
-                    const ids = data.map(item => item.chatbot_id);
-                    setHiddenBotIds(ids);
+                    setHiddenBotIds(data.hidden.map(Number));
                 }
             }
             catch (e) { console.error("Hide list error:", e); }

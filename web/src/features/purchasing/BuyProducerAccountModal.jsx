@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 import { useState } from 'react';
+import { Dialog, DialogContent, DialogTitle } from '@/shared/ui/dialog';
+import { Input } from '@/shared/ui/input';
 
-// Not: Bu bir ödeme formu. Görsel tasarımı şimdilik sade/işlevsel — Figma
-// tasarımı geldiğinde sadece görünüm güncellenecek.
 export default function BuyProducerAccountModal({ isOpen, onClose, userId, onPurchased }) {
     const [cardNumber, setCardNumber] = useState('');
     const [holderName, setHolderName] = useState('');
@@ -12,8 +12,6 @@ export default function BuyProducerAccountModal({ isOpen, onClose, userId, onPur
     const [errorMsg, setErrorMsg] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
-
-    if (!isOpen) return null;
 
     const handleSubmit = async () => {
         setErrorMsg('');
@@ -68,61 +66,66 @@ export default function BuyProducerAccountModal({ isOpen, onClose, userId, onPur
     };
 
     return (
-        <div className="modal-backdrop" onClick={(e) => { if (e.target.classList.contains('modal-backdrop')) onClose(); }}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-            <div style={{ background: '#16151c', borderRadius: 16, padding: '28px 24px', maxWidth: 380, width: '100%', color: '#fff' }}>
-                <h3 style={{ marginBottom: 8 }}>Lumanoris Üretici Hesabı</h3>
-                <p style={{ fontSize: 13, opacity: 0.8, marginBottom: 16 }}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="max-w-[400px] bg-luma-card border-white/10 p-6">
+                <DialogTitle className="mb-1 text-[17px]">Lumanoris Üretici Hesabı</DialogTitle>
+                <p className="mb-4 text-[13px] text-white/70">
                     750₺/ay — 5 herkese açık + 2 bağımsız chatbot oluşturma hakkı.
                 </p>
 
                 {successMsg ? (
-                    <div style={{ color: '#7CFC8A', fontSize: 14, marginBottom: 12 }}>{successMsg}</div>
+                    <div className="text-[14px] text-emerald-400">{successMsg}</div>
                 ) : (
                     <>
-                        <input
+                        <Input
                             type="text" placeholder="KART ÜZERİNDEKİ İSİM" value={holderName}
                             onChange={(e) => setHolderName(e.target.value)}
-                            style={{ width: '100%', marginBottom: 10, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: '#0f0e14', color: '#fff' }}
+                            className="mb-2.5"
                         />
-                        <input
+                        <Input
                             type="text" placeholder="KART NUMARASI" value={cardNumber} maxLength={19}
                             onChange={(e) => setCardNumber(e.target.value)}
-                            style={{ width: '100%', marginBottom: 10, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: '#0f0e14', color: '#fff' }}
+                            className="mb-2.5"
                         />
-                        <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-                            <input
+                        <div className="mb-2.5 flex gap-2.5">
+                            <Input
                                 type="text" placeholder="AA/YY" value={expiry} maxLength={5}
                                 onChange={(e) => setExpiry(e.target.value)}
-                                style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: '#0f0e14', color: '#fff' }}
+                                className="flex-1"
                             />
-                            <input
+                            <Input
                                 type="text" placeholder="CVV" value={cvv} maxLength={4}
                                 onChange={(e) => setCvv(e.target.value)}
-                                style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: '#0f0e14', color: '#fff' }}
+                                className="flex-1"
                             />
                         </div>
-                        <input
+                        <Input
                             type="text" placeholder="TELEFON" value={phone}
                             onChange={(e) => setPhone(e.target.value)}
-                            style={{ width: '100%', marginBottom: 16, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: '#0f0e14', color: '#fff' }}
+                            className="mb-4"
                         />
 
-                        {errorMsg && <div style={{ color: '#FF66C4', fontSize: 13, marginBottom: 12 }}>{errorMsg}</div>}
+                        {errorMsg && <div className="mb-3 text-[13px] text-pink-400">{errorMsg}</div>}
 
-                        <div style={{ display: 'flex', gap: 10 }}>
-                            <button onClick={onClose} disabled={submitting}
-                                style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#2a2933', color: '#fff', cursor: 'pointer' }}>
+                        <div className="flex gap-2.5">
+                            <button
+                                onClick={onClose}
+                                disabled={submitting}
+                                className="flex-1 rounded-xl bg-white/[0.06] px-4 py-2.5 font-display text-[14px] font-medium text-white transition-all duration-200 hover:bg-white/10 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
                                 İptal
                             </button>
-                            <button onClick={handleSubmit} disabled={submitting}
-                                style={{ flex: 2, padding: '10px 0', borderRadius: 8, border: 'none', background: 'linear-gradient(90deg,#8B5CF6,#D946EF)', color: '#fff', cursor: 'pointer' }}>
+                            <button
+                                onClick={handleSubmit}
+                                disabled={submitting}
+                                className="flex-[2] rounded-xl bg-gradient-btn px-4 py-2.5 font-display text-[14px] font-medium text-white shadow-glow transition-all duration-200 hover:brightness-110 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
                                 {submitting ? 'İşleniyor...' : '750₺ Öde'}
                             </button>
                         </div>
                     </>
                 )}
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

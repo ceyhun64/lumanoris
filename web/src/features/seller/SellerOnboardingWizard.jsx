@@ -1,5 +1,8 @@
-﻿"use client";
+"use client";
 import { useEffect, useMemo, useState } from "react";
+import { Input } from "@/shared/ui/input";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const STEP_LABELS = ["Hesap Tipi", "Kimlik & Banka", "Adres", "Önizleme"];
 
@@ -83,6 +86,8 @@ function isoToDdmmyyyy(value) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
     return m ? `${m[3]}.${m[2]}.${m[1]}` : "";
 }
+
+const selectClass = "flex h-11 w-full rounded-xl border border-indigo-400/14 bg-luma-input px-4 py-2 text-sm text-white font-sans transition-all duration-200 focus:outline-none focus:border-indigo-500/55 focus:ring-2 focus:ring-indigo-500/15 disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function SellerOnboardingWizard({ userId, initialStatus, onComplete }) {
     const [step, setStep] = useState(0);
@@ -266,105 +271,116 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
     );
 
     if (bootstrapping) {
-        return <div className="seller-wizard"><p>Yükleniyor...</p></div>;
+        return <div className="rounded-2xl border border-white/10 bg-luma-elevated p-6"><p className="text-white/60">Yükleniyor...</p></div>;
     }
 
     return (
-        <div className="seller-wizard">
-            <div className="sw-header">
-                <h2>Pazaryeri Satıcı Kaydı</h2>
-                <p className="sw-subtitle">Chatbot satabilmek için Param pazaryerine satıcı olarak kaydolun.</p>
+        <div className="flex flex-col gap-6 rounded-2xl border border-white/10 bg-luma-elevated p-6">
+            <div>
+                <h2 className="font-display text-xl font-semibold text-white">Pazaryeri Satıcı Kaydı</h2>
+                <p className="mt-1 text-sm text-white/55">Chatbot satabilmek için Param pazaryerine satıcı olarak kaydolun.</p>
             </div>
 
-            <div className="sw-steps">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
                 {STEP_LABELS.map((label, idx) => (
-                    <div key={label} className={`sw-step ${idx === step ? "active" : ""} ${idx < step ? "done" : ""}`}>
-                        <span className="sw-step-num">{idx + 1}</span>
-                        <span className="sw-step-label">{label}</span>
+                    <div key={label} className="flex items-center gap-2">
+                        <div
+                            className={cn(
+                                "flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium font-display whitespace-nowrap transition-colors duration-200",
+                                idx === step
+                                    ? "border-transparent bg-gradient-btn text-white shadow-glow"
+                                    : idx < step
+                                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                                        : "border-white/10 bg-white/5 text-white/45",
+                            )}
+                        >
+                            {idx < step ? <Check className="h-3.5 w-3.5" /> : <span>{idx + 1}</span>}
+                            {label}
+                        </div>
+                        {idx < STEP_LABELS.length - 1 && <div className="h-px w-4 shrink-0 bg-white/10" />}
                     </div>
                 ))}
             </div>
 
             {paramError && (
-                <div className="sw-banner error">
+                <div className="rounded-xl border border-pink-400 bg-pink-400/10 px-4 py-3 text-sm text-pink-100">
                     <strong>Önceki başvuru reddedildi:</strong> {paramError}
                 </div>
             )}
 
             {step === 0 && (
-                <div className="sw-body">
-                    <p>Satıcı türünüzü seçin.</p>
-                    <div className="sw-tip-grid">
-                        <button
-                            type="button"
-                            className={`sw-tip-card ${form.account_type === "Bireysel Hesap" ? "selected" : ""}`}
-                            onClick={() => update("account_type", "Bireysel Hesap")}
-                        >
-                            <strong>Bireysel</strong>
-                            <span>TC Kimlik no ile şahıs olarak satış yapacağım.</span>
-                        </button>
-                        <button
-                            type="button"
-                            className={`sw-tip-card ${form.account_type === "Şahıs Şirketi" ? "selected" : ""}`}
-                            onClick={() => update("account_type", "Şahıs Şirketi")}
-                        >
-                            <strong>Şahıs Şirketi</strong>
-                            <span>TC Kimlik no + vergi dairesi ile şahıs şirketi olarak satış yapacağım.</span>
-                        </button>
-                        <button
-                            type="button"
-                            className={`sw-tip-card ${form.account_type === "Kurumsal Hesap" ? "selected" : ""}`}
-                            onClick={() => update("account_type", "Kurumsal Hesap")}
-                        >
-                            <strong>Kurumsal</strong>
-                            <span>Vergi numaralı şirket (Limited/Anonim) adına satış yapacağım.</span>
-                        </button>
+                <div className="flex flex-col gap-4">
+                    <p className="text-sm text-white/70">Satıcı türünüzü seçin.</p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        {[
+                            { value: "Bireysel Hesap", title: "Bireysel", desc: "TC Kimlik no ile şahıs olarak satış yapacağım." },
+                            { value: "Şahıs Şirketi", title: "Şahıs Şirketi", desc: "TC Kimlik no + vergi dairesi ile şahıs şirketi olarak satış yapacağım." },
+                            { value: "Kurumsal Hesap", title: "Kurumsal", desc: "Vergi numaralı şirket (Limited/Anonim) adına satış yapacağım." },
+                        ].map((opt) => (
+                            <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => update("account_type", opt.value)}
+                                className={cn(
+                                    "flex flex-col items-start gap-1.5 rounded-xl border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                    form.account_type === opt.value
+                                        ? "border-indigo-400/50 bg-indigo-500/10 shadow-glow"
+                                        : "border-white/10 bg-luma-input hover:border-indigo-400/25",
+                                )}
+                            >
+                                <strong className="font-display text-sm font-semibold text-white">{opt.title}</strong>
+                                <span className="text-xs text-white/60">{opt.desc}</span>
+                            </button>
+                        ))}
                     </div>
                 </div>
             )}
 
             {step === 1 && (
-                <div className="sw-body">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {isCorporate ? (
                         <>
-                            <input className="sw-input" placeholder="Yetkili Adı" value={form.authorized_first_name} onChange={(e) => update("authorized_first_name", e.target.value)} />
-                            <input className="sw-input" placeholder="Yetkili Soyadı" value={form.authorized_last_name} onChange={(e) => update("authorized_last_name", e.target.value)} />
-                            <input className="sw-input" placeholder="Şirket Ünvanı" value={form.company_title} onChange={(e) => update("company_title", e.target.value)} />
-                            <input className="sw-input" placeholder="Vergi Numarası (10 hane)" value={form.tax_number} onChange={(e) => update("tax_number", e.target.value.replace(/\D/g, "").slice(0, 10))} />
-                            <input className="sw-input" placeholder="Vergi Dairesi" value={form.tax_office} onChange={(e) => update("tax_office", e.target.value)} />
-                            <input className="sw-input" placeholder="Yetkilinin TC Kimlik No (11 hane)" value={form.id_number} onChange={(e) => update("id_number", e.target.value.replace(/\D/g, "").slice(0, 11))} />
-                            <label className="sw-label">Yetkili Doğum Tarihi
-                                <input type="date" className="sw-input" value={ddmmyyyyToIso(form.yetkili_kisi_dogum_tarihi)} onChange={(e) => update("yetkili_kisi_dogum_tarihi", isoToDdmmyyyy(e.target.value))} />
+                            <Input placeholder="Yetkili Adı" value={form.authorized_first_name} onChange={(e) => update("authorized_first_name", e.target.value)} />
+                            <Input placeholder="Yetkili Soyadı" value={form.authorized_last_name} onChange={(e) => update("authorized_last_name", e.target.value)} />
+                            <Input placeholder="Şirket Ünvanı" value={form.company_title} onChange={(e) => update("company_title", e.target.value)} className="sm:col-span-2" />
+                            <Input placeholder="Vergi Numarası (10 hane)" value={form.tax_number} onChange={(e) => update("tax_number", e.target.value.replace(/\D/g, "").slice(0, 10))} />
+                            <Input placeholder="Vergi Dairesi" value={form.tax_office} onChange={(e) => update("tax_office", e.target.value)} />
+                            <Input placeholder="Yetkilinin TC Kimlik No (11 hane)" value={form.id_number} onChange={(e) => update("id_number", e.target.value.replace(/\D/g, "").slice(0, 11))} />
+                            <label className="flex flex-col gap-1.5 text-xs text-white/55">
+                                Yetkili Doğum Tarihi
+                                <Input type="date" value={ddmmyyyyToIso(form.yetkili_kisi_dogum_tarihi)} onChange={(e) => update("yetkili_kisi_dogum_tarihi", isoToDdmmyyyy(e.target.value))} />
                             </label>
                         </>
                     ) : isSahis ? (
                         <>
-                            <input className="sw-input" placeholder="Ad Soyad" value={form.full_name} onChange={(e) => update("full_name", e.target.value)} />
-                            <input className="sw-input" placeholder="Ticari Ünvan (opsiyonel)" value={form.company_title} onChange={(e) => update("company_title", e.target.value)} />
-                            <input className="sw-input" placeholder="TC Kimlik No (11 hane)" value={form.id_number} onChange={(e) => update("id_number", e.target.value.replace(/\D/g, "").slice(0, 11))} />
-                            <input className="sw-input" placeholder="Vergi Dairesi" value={form.tax_office} onChange={(e) => update("tax_office", e.target.value)} />
-                            <label className="sw-label">Doğum Tarihi
-                                <input type="date" className="sw-input" value={ddmmyyyyToIso(form.kisi_dogum_tarihi)} onChange={(e) => update("kisi_dogum_tarihi", isoToDdmmyyyy(e.target.value))} />
+                            <Input placeholder="Ad Soyad" value={form.full_name} onChange={(e) => update("full_name", e.target.value)} className="sm:col-span-2" />
+                            <Input placeholder="Ticari Ünvan (opsiyonel)" value={form.company_title} onChange={(e) => update("company_title", e.target.value)} className="sm:col-span-2" />
+                            <Input placeholder="TC Kimlik No (11 hane)" value={form.id_number} onChange={(e) => update("id_number", e.target.value.replace(/\D/g, "").slice(0, 11))} />
+                            <Input placeholder="Vergi Dairesi" value={form.tax_office} onChange={(e) => update("tax_office", e.target.value)} />
+                            <label className="flex flex-col gap-1.5 text-xs text-white/55 sm:col-span-2">
+                                Doğum Tarihi
+                                <Input type="date" value={ddmmyyyyToIso(form.kisi_dogum_tarihi)} onChange={(e) => update("kisi_dogum_tarihi", isoToDdmmyyyy(e.target.value))} />
                             </label>
                         </>
                     ) : (
                         <>
-                            <input className="sw-input" placeholder="Ad Soyad" value={form.full_name} onChange={(e) => update("full_name", e.target.value)} />
-                            <input className="sw-input" placeholder="TC Kimlik No (11 hane)" value={form.id_number} onChange={(e) => update("id_number", e.target.value.replace(/\D/g, "").slice(0, 11))} />
-                            <input className="sw-input" placeholder="Vergi Dairesi" value={form.tax_office} onChange={(e) => update("tax_office", e.target.value)} />
-                            <label className="sw-label">Doğum Tarihi
-                                <input type="date" className="sw-input" value={ddmmyyyyToIso(form.kisi_dogum_tarihi)} onChange={(e) => update("kisi_dogum_tarihi", isoToDdmmyyyy(e.target.value))} />
+                            <Input placeholder="Ad Soyad" value={form.full_name} onChange={(e) => update("full_name", e.target.value)} className="sm:col-span-2" />
+                            <Input placeholder="TC Kimlik No (11 hane)" value={form.id_number} onChange={(e) => update("id_number", e.target.value.replace(/\D/g, "").slice(0, 11))} />
+                            <Input placeholder="Vergi Dairesi" value={form.tax_office} onChange={(e) => update("tax_office", e.target.value)} />
+                            <label className="flex flex-col gap-1.5 text-xs text-white/55 sm:col-span-2">
+                                Doğum Tarihi
+                                <Input type="date" value={ddmmyyyyToIso(form.kisi_dogum_tarihi)} onChange={(e) => update("kisi_dogum_tarihi", isoToDdmmyyyy(e.target.value))} />
                             </label>
                         </>
                     )}
-                    <input className="sw-input" placeholder="Telefon" value={form.phone} onChange={(e) => update("phone", e.target.value)} />
-                    <input className="sw-input" placeholder="TR ile başlayan IBAN (26 karakter)" value={form.iban} onChange={(e) => handleIbanChange(e.target.value)} />
+                    <Input placeholder="Telefon" value={form.phone} onChange={(e) => update("phone", e.target.value)} />
+                    <Input placeholder="TR ile başlayan IBAN (26 karakter)" value={form.iban} onChange={(e) => handleIbanChange(e.target.value)} />
                 </div>
             )}
 
             {step === 2 && (
-                <div className="sw-body">
-                    <select className="sw-input" value={form.il_kod} onChange={(e) => { update("il_kod", e.target.value); update("ilce_kod", ""); }}>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <select className={selectClass} value={form.il_kod} onChange={(e) => { update("il_kod", e.target.value); update("ilce_kod", ""); }}>
                         <option value="">{loadingIller ? "İl listesi yükleniyor..." : "İl seçin"}</option>
                         {iller.map((il) => {
                             const kod = il.IL_Kodu ?? il.Il_Kodu ?? il.IL_KOD ?? il.kod;
@@ -372,7 +388,7 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
                             return <option key={kod} value={kod}>{ad}</option>;
                         })}
                     </select>
-                    <select className="sw-input" value={form.ilce_kod} onChange={(e) => update("ilce_kod", e.target.value)} disabled={!form.il_kod}>
+                    <select className={selectClass} value={form.ilce_kod} onChange={(e) => update("ilce_kod", e.target.value)} disabled={!form.il_kod}>
                         <option value="">{loadingIlceler ? "İlçeler yükleniyor..." : "İlçe seçin"}</option>
                         {ilceler.map((il) => {
                             const kod = il.Ilce_Kodu ?? il.ILCE_Kodu ?? il.kod;
@@ -380,21 +396,21 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
                             return <option key={kod} value={kod}>{ad}</option>;
                         })}
                     </select>
-                    <input className="sw-input" placeholder="Mahalle" value={form.mahalle} onChange={(e) => update("mahalle", e.target.value)} />
-                    <input className="sw-input" placeholder="Cadde" value={form.cadde} onChange={(e) => update("cadde", e.target.value)} />
-                    <input className="sw-input" placeholder="Sokak" value={form.sokak} onChange={(e) => update("sokak", e.target.value)} />
-                    <div className="sw-row">
-                        <input className="sw-input" placeholder="Bina No" value={form.bina_no} onChange={(e) => update("bina_no", e.target.value)} />
-                        <input className="sw-input" placeholder="Kapı No" value={form.kapi_no} onChange={(e) => update("kapi_no", e.target.value)} />
-                        <input className="sw-input" placeholder="Posta Kodu" value={form.posta_kodu} onChange={(e) => update("posta_kodu", e.target.value)} />
+                    <Input placeholder="Mahalle" value={form.mahalle} onChange={(e) => update("mahalle", e.target.value)} />
+                    <Input placeholder="Cadde" value={form.cadde} onChange={(e) => update("cadde", e.target.value)} />
+                    <Input placeholder="Sokak" value={form.sokak} onChange={(e) => update("sokak", e.target.value)} />
+                    <div className="grid grid-cols-3 gap-3 sm:col-span-2">
+                        <Input placeholder="Bina No" value={form.bina_no} onChange={(e) => update("bina_no", e.target.value)} />
+                        <Input placeholder="Kapı No" value={form.kapi_no} onChange={(e) => update("kapi_no", e.target.value)} />
+                        <Input placeholder="Posta Kodu" value={form.posta_kodu} onChange={(e) => update("posta_kodu", e.target.value)} />
                     </div>
                 </div>
             )}
 
             {step === 3 && (
-                <div className="sw-body sw-preview">
-                    <h3>Bilgileri Kontrol Edin</h3>
-                    <dl className="sw-summary">
+                <div className="flex flex-col gap-4">
+                    <h3 className="font-display text-base font-semibold text-white">Bilgileri Kontrol Edin</h3>
+                    <dl className="grid grid-cols-[auto,1fr] gap-x-4 gap-y-2 rounded-xl bg-luma-input p-4 text-sm [&_dt]:text-white/50 [&_dd]:text-white">
                         <dt>Hesap Tipi</dt><dd>{form.account_type}</dd>
                         {isCorporate ? (
                             <>
@@ -425,20 +441,38 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
                         <dt>İl / İlçe</dt><dd>{selectedIl ? (selectedIl.IL_Adi ?? selectedIl.Il_Adi ?? form.il_kod) : form.il_kod} / {form.ilce_kod}</dd>
                         <dt>Adres</dt><dd>{[form.mahalle, form.cadde, form.sokak, form.bina_no && `No: ${form.bina_no}`, form.kapi_no && `Daire: ${form.kapi_no}`, form.posta_kodu].filter(Boolean).join(" ")}</dd>
                     </dl>
-                    <p className="sw-hint">Onayladığınızda Param tarafına gönderilir ve aktivasyon başlatılır.</p>
+                    <p className="text-xs text-white/50">Onayladığınızda Param tarafına gönderilir ve aktivasyon başlatılır.</p>
                 </div>
             )}
 
-            {errorMsg && <div className="sw-banner warn">{errorMsg}</div>}
+            {errorMsg && <div className="rounded-xl border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">{errorMsg}</div>}
 
-            <div className="sw-actions">
+            <div className="flex items-center justify-end gap-3">
                 {step > 0 && (
-                    <button type="button" className="sw-btn ghost" onClick={back} disabled={submitting}>Geri</button>
+                    <button
+                        type="button"
+                        onClick={back}
+                        disabled={submitting}
+                        className="rounded-xl bg-white/[0.06] px-5 py-2.5 font-display text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                        Geri
+                    </button>
                 )}
                 {step < STEP_LABELS.length - 1 ? (
-                    <button type="button" className="sw-btn primary" onClick={next}>Devam</button>
+                    <button
+                        type="button"
+                        onClick={next}
+                        className="rounded-xl bg-gradient-btn px-5 py-2.5 font-display text-sm font-medium text-white shadow-glow transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                        Devam
+                    </button>
                 ) : (
-                    <button type="button" className="sw-btn primary" onClick={submit} disabled={submitting}>
+                    <button
+                        type="button"
+                        onClick={submit}
+                        disabled={submitting}
+                        className="rounded-xl bg-gradient-btn px-5 py-2.5 font-display text-sm font-medium text-white shadow-glow transition-transform hover:scale-[1.02] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
                         {submitting ? "Gönderiliyor..." : "Pazaryeri Kaydını Tamamla"}
                     </button>
                 )}

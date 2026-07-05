@@ -35,10 +35,16 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface {
         );
     }
 
-    public function findByGoogleId(string $googleId): ?array {
+    public function findByGoogleId(string $googleId, string $email): ?array {
+        // Matches by google_id (returning user) OR by email (a user who
+        // originally registered the traditional way, signing in with Google
+        // for the first time) — previously this compared `eposta` against
+        // the Google sub-id itself, which never matches a real email, so an
+        // existing traditional account was never found and the subsequent
+        // insert crashed on the eposta UNIQUE constraint.
         return self::one(
             'SELECT id, google_id FROM `' . self::T . '` WHERE google_id = ? OR eposta = ?',
-            [$googleId, $googleId]
+            [$googleId, $email]
         );
     }
 

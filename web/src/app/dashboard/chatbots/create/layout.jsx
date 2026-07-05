@@ -6,7 +6,7 @@ export const metadata = {
 export default function DashboardChatbotCreate({ children }) {
     return (
         <>
-            <div className="dashboard-inner-layout-inr">
+            <div className="h-full w-full">
                 {children}
             </div>
         </>

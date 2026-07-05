@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState,useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 
 export default function ProfileImageEdit({ onChange, onRemove, userId }) {
     const [image, setImage] = useState(null);
@@ -21,27 +21,17 @@ export default function ProfileImageEdit({ onChange, onRemove, userId }) {
         fetchProfilePhoto();
     }, [userId]);
 
-
-    /*useEffect(() => {
-        if (typeof window !== "undefined") {
-            const savedImage = localStorage.getItem('userProfileImage');
-            if (savedImage) {
-                setImage(savedImage);
-            }
-        }
-    }, []);*/
-
     const handleImageChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             const reader = new FileReader();
-            
+
             reader.onload = (event) => {
                 const base64String = event.target.result;
                 setImage(base64String);
                 setIsEditing(true);
             };
-            
+
             reader.readAsDataURL(file);
         }
     };
@@ -73,14 +63,14 @@ export default function ProfileImageEdit({ onChange, onRemove, userId }) {
     };
 
     return (
-        <div className="profile-edit">
+        <div className="mb-8 flex items-center gap-2.5">
             {/* Avatar */}
-            <div className="profile-edit__avatar">
+            <div className="mr-2.5 flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full bg-luma-input">
                 {image ? (
                     <img
                         src={image}
                         alt="avatar"
-                        className="profile-edit__img"
+                        className="h-full w-full object-cover"
                     />
                 ) : (
                     <svg width="36" height="44" viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -91,34 +81,40 @@ export default function ProfileImageEdit({ onChange, onRemove, userId }) {
                 <input
                     type="file"
                     accept="image/*"
-                    style={{ display: "none" }}
+                    className="hidden"
                     ref={inputRef}
                     onChange={handleImageChange}
                 />
             </div>
             {/* Butonlar */}
-            <div className="profile-edit__buttons">
+            <div className="flex gap-2.5">
                 {isEditing ? (
                     <>
-                        <button className="editable-submit-btn" onClick={handleSave}>
+                        <button
+                            onClick={handleSave}
+                            className="min-w-[100px] rounded-xl border border-white/70 bg-gradient-btn px-3 py-3 font-display text-sm font-medium text-white shadow-glow transition-all duration-300 hover:scale-[1.03] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
                             Kaydet
                         </button>
                         <button
-                            className="editable-cancel-btn"
                             onClick={handleRemove}
+                            className="min-w-[100px] rounded-xl border border-white/70 bg-white/10 px-3 py-3 font-display text-sm font-medium text-white transition-all duration-300 hover:scale-[1.03] hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             İptal
                         </button>
                     </>
                 ) : (
                     <>
-                        <button className="editable-submit-btn" onClick={handleClick}>
+                        <button
+                            onClick={handleClick}
+                            className="min-w-[100px] rounded-xl border border-white/70 bg-gradient-btn px-3 py-3 font-display text-sm font-medium text-white shadow-glow transition-all duration-300 hover:scale-[1.03] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
                             Değiştir
                         </button>
                         {image && (
                             <button
-                                className="editable-cancel-btn"
                                 onClick={handleRemove}
+                                className="min-w-[100px] rounded-xl border border-white/70 bg-white/10 px-3 py-3 font-display text-sm font-medium text-white transition-all duration-300 hover:scale-[1.03] hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
                                 Kaldır
                             </button>

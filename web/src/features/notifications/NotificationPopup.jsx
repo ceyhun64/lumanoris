@@ -66,8 +66,8 @@ export default function NotificationPopup({ onClose, userId }) {
             try {
                 const res = await fetch(`/api/notification/getnotification.php?user_id=${userId}`);
                 const result = await res.json();
-                if (result.success) {
-                    setNotifications(result.data);
+                if (result.success && Array.isArray(result.notifications)) {
+                    setNotifications(result.notifications);
                 }
             } catch (error) {
                 console.error("Bildirimler yüklenemedi:", error);

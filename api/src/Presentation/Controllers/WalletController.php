@@ -141,12 +141,19 @@ class WalletController {
     public static function getMySubscriptions(): void {
         $userId = AuthMiddleware::requireAuth();
 
+        // dashboard/purchased/page.jsx renders both an "Aktif" and a "Süresi
+        // Doldu" state, so this must return the full purchase history, not
+        // just currently-active ones (the previous `status = 1 AND
+        // expiry_date > NOW()` filter made the expired state unreachable).
+        // Field names match what that page reads: isim, kapak_fotografi,
+        // profil_fotografi, kategori_id, is_active.
         $rows = Database::getInstance()->selectMulti(
             "us.id, us.chatbot_id, us.expiry_date, us.status,
-             c.isim AS chatbot_name, c.profil_fotografi
+             c.isim, c.kapak_fotografi, c.profil_fotografi, c.kategori_id,
+             (us.status = 1 AND us.expiry_date > NOW()) AS is_active
              FROM user_subscriptions us
              JOIN chatbotlar c ON c.id = us.chatbot_id
-             WHERE us.user_id = ? AND us.status = 1 AND us.expiry_date > NOW()
+             WHERE us.user_id = ?
              ORDER BY us.expiry_date DESC",
             [$userId]
         );

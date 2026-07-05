@@ -76,10 +76,16 @@ export default function Dashboard() {
                 const hideData = hideRes ? await hideRes.json() : [];
                 const listsData = listsRes ? await listsRes.json() : [];
 
-                const uninterestedCategoryIds = Array.isArray(unData)
-                    ? unData.map(item => Number(item.category_id)) : [];
-                const hiddenBotIds = Array.isArray(hideData)
-                    ? hideData.map(item => Number(item.chatbot_id || item.id)) : [];
+                // getuninterest.php / gethide.php both return
+                // {success, categories/hidden: [rawId, ...]} — a flat id
+                // array under a wrapper key, not a bare array of objects.
+                // The old Array.isArray(unData)/Array.isArray(hideData)
+                // checks were always false against that shape, so neither
+                // filter ever actually removed anything from the feed.
+                const uninterestedCategoryIds = Array.isArray(unData?.categories)
+                    ? unData.categories.map(Number) : [];
+                const hiddenBotIds = Array.isArray(hideData?.hidden)
+                    ? hideData.hidden.map(Number) : [];
 
                 if (Array.isArray(botsData)) {
                     const mapped = botsData
@@ -100,7 +106,7 @@ export default function Dashboard() {
                                 type: bot.durum == 0 ? "sold" : "produced",
                                 label: bot.durum == 1 ? "Daha önce satıldı" : "Üretildi"
                             },
-                            userLists: Array.isArray(listsData) ? listsData : []
+                            userLists: Array.isArray(listsData?.lists) ? listsData.lists : []
                         }));
                     setAllBots(mapped);
                     setBots(mapped);

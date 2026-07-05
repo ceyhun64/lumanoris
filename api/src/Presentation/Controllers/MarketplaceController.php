@@ -84,24 +84,17 @@ class MarketplaceController {
         JsonResponse::success(['message' => 'Sepet güncellendi.', 'id' => $id]);
     }
 
+    /**
+     * No frontend caller exists (the real purchase flow is createSubscription,
+     * which grants time-limited access — it never transfers ownership). This
+     * method used to reassign chatbotlar.owner_user_id to whoever called it
+     * for any chatbot_ids, with no payment, cart, or for-sale check at all —
+     * a live, session-authenticated "steal any bot for free" endpoint. There
+     * being no legitimate ownership-transfer flow to preserve, the endpoint
+     * is disabled outright rather than patched.
+     */
     public static function buyChatbot(): void {
-        require_method('POST');
-        $userId = AuthMiddleware::requireAuth();
-        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
-        if (!$data || !isset($data['chatbot_ids']) || !is_array($data['chatbot_ids'])) {
-            JsonResponse::error('Geçersiz veri formatı veya eksik parametre!', 400, AppConfig::ERR_VALIDATION);
-        }
-
-        $chatbotIds = array_map('intval', $data['chatbot_ids']);
-        $db         = Database::getInstance();
-
-        foreach ($chatbotIds as $botId) {
-            if ($botId <= 0) continue;
-            $db->update('chatbotlar', ['owner_user_id' => $userId], 'id = ?', [$botId]);
-            $db->delete('user_cart', 'chatbot_id = ? AND user_id = ?', [$botId, $userId]);
-        }
-
-        JsonResponse::success(['message' => 'Tüm ürünler başarıyla satın alındı ve hesabınıza tanımlandı.']);
+        JsonResponse::error('Bu işlem artık desteklenmiyor.', 410, AppConfig::ERR_VALIDATION);
     }
 
     public static function createSubscription(): void {

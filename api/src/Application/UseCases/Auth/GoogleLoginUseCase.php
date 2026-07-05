@@ -8,7 +8,7 @@ class GoogleLoginUseCase {
      * @throws AuthException
      */
     public function execute(string $googleId, string $email, string $name): int {
-        $user = $this->users->findByGoogleId($googleId);
+        $user = $this->users->findByGoogleId($googleId, $email);
 
         if (!$user || (int) ($user['id'] ?? 0) === 0) {
             $userId = $this->users->create([

@@ -1,9 +1,36 @@
-﻿"use client";
+"use client";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { format } from 'date-fns';
 import PurchaseSuccessModal from "@/features/purchasing/PurchaseSuccessModal";
 import { useRouter } from "next/navigation";
+import { Checkbox } from "@/shared/ui/checkbox";
+import { Input } from "@/shared/ui/input";
+import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
+import { Tag } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+function GradientBlob() {
+    return (
+        <div className="pointer-events-none absolute -top-11 left-0 opacity-60" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="263" height="160" viewBox="0 0 263 160" fill="none">
+                <g filter="url(#cartconfirm_blur)">
+                    <ellipse cx="69.3284" cy="-5.00384" rx="69.3284" ry="40.8673" fill="url(#cartconfirm_grad)" />
+                </g>
+                <defs>
+                    <filter id="cartconfirm_blur" x="-123.746" y="-169.617" width="386.148" height="329.226" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                        <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+                        <feGaussianBlur stdDeviation="61.873" result="effect1_foregroundBlur" />
+                    </filter>
+                    <linearGradient id="cartconfirm_grad" x1="0" y1="-5.00384" x2="138.657" y2="-5.00384" gradientUnits="userSpaceOnUse">
+                        <stop offset="0.211538" stopColor="#4699FF" />
+                        <stop offset="0.793269" stopColor="#FF66C4" />
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+    );
+}
 
 export default function CartConfirm({ cartItems }) {
     const [sendInvoice, setSendInvoice] = useState(false);
@@ -70,7 +97,7 @@ export default function CartConfirm({ cartItems }) {
     const getItemPrice = (item) => {
         const weeklyPrice = parseFloat(item.price) || 0;
         const monthlyPrice = parseFloat(item.monthlyPrice) || (weeklyPrice * 4);
-        
+
         if (item.duration_weeks === 4) {
             return (monthlyPrice * 0.95); // %5 İndirimli aylık
         }
@@ -190,33 +217,6 @@ export default function CartConfirm({ cartItems }) {
     };
 
     const { subtotal, serviceFee, total } = calculateTotal();
-
-    // Ödeme onaylandığında kartı kaydet ve modal'ı aç
-    // const handlePaymentConfirm = async () => {
-    //     const itemsPayload = cartItems.map(item => ({
-    //         chatbot_id: item.chatbot_id,
-    //         duration_weeks: item.duration_weeks
-    //     }));
-
-    //     const payload = {
-    //         user_id: userId,
-    //         items: itemsPayload
-    //     };
-
-    //     const formData = new FormData();
-    //     formData.append('data', JSON.stringify(payload));
-
-    //     try {
-    //         const res = await fetch('/api/marketplace/createsubscription.php', {
-    //             method: 'POST',
-    //             body: formData
-    //         });
-    //         const result = await res.json();
-    //         // ... modal ve yönlendirme işlemleri ...
-    //     } catch (error) {
-    //         console.error("Ödeme hatası:", error);
-    //     }
-    // };
 
     const handlePaymentConfirm = async () => {
         if (!userId) {
@@ -375,154 +375,93 @@ export default function CartConfirm({ cartItems }) {
         return `${masked} ${lastFour}`;
     };
 
-
-
-    const selectedProducts = cartItems.filter((item) => selectedItems.includes(item.id));
-    /*const subtotal = selectedProducts.reduce((sum, item) => sum + item.price, 0);
-    const serviceFee = selectedProducts.length > 0 ? 5 : 0;
-    const total = subtotal + serviceFee;*/
-
     return (
-        <div className="cart-full-wrapper">
-            <div className="cart-main">
-                <div className="cart-left">
-                    <div className="confirm-section">
-                        <div className="shadow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="263" height="160" viewBox="0 0 263 160" fill="none">
-                                <g filter="url(#filter0_f_7772_13035)">
-                                    <ellipse cx="69.3284" cy="-5.00384" rx="69.3284" ry="40.8673" fill="url(#paint0_linear_7772_13035)" />
-                                </g>
-                                <defs>
-                                    <filter id="filter0_f_7772_13035" x="-123.746" y="-169.617" width="386.148" height="329.226" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-                                        <feFlood flood-opacity="0" result="BackgroundImageFix" />
-                                        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
-                                        <feGaussianBlur stdDeviation="61.873" result="effect1_foregroundBlur_7772_13035" />
-                                    </filter>
-                                    <linearGradient id="paint0_linear_7772_13035" x1="0" y1="-5.00384" x2="138.657" y2="-5.00384" gradientUnits="userSpaceOnUse">
-                                        <stop offset="0.211538" stop-color="#4699FF" />
-                                        <stop offset="0.793269" stop-color="#FF66C4" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                        </div>
-                        <h3>Satın Alınacak Sohbet ({cartItems.length})</h3>
+        <div>
+            <div className="flex flex-col items-start gap-8 md:flex-row">
+                <div className="w-full flex-[2]">
+                    <div className="relative mb-8 overflow-hidden rounded-xl border border-white/10 bg-luma-elevated p-3">
+                        <GradientBlob />
+                        <h3 className="mb-3 border-b border-fuchsia-800 bg-gradient-to-br from-cyan-400 to-indigo-400 bg-clip-text pb-3 font-display text-2xl font-semibold text-transparent">
+                            Satın Alınacak Sohbet ({cartItems.length})
+                        </h3>
                         {cartItems.map(item => (
-                            <div key={item.id} className="confirm-product">
-                                <Image 
-                                    src={item.image} 
-                                    width={80} 
-                                    height={80} 
-                                    alt={item.title} 
-                                    className="cart-item-img" 
+                            <div key={item.id} className="mb-3 flex items-center gap-3">
+                                <Image
+                                    src={item.image}
+                                    width={120}
+                                    height={120}
+                                    alt={item.title}
+                                    className="aspect-square w-[120px] rounded-lg border border-white/55 object-cover"
                                 />
-                                <div>
-                                    <p>{item.title}</p>
-                                    <span className="duration-info">{item.duration_weeks === 4 ? '1 Aylık Paket' : `${item.duration_weeks} Haftalık Paket`}</span>
-                                    <span style={{fontWeight: 'bold'}}>{getItemPrice(item).toFixed(2)} ₺</span>
+                                <div className="flex flex-col items-start gap-3">
+                                    <p className="text-sm text-white">{item.title}</p>
+                                    <span className="text-sm text-white/70">{item.duration_weeks === 4 ? '1 Aylık Paket' : `${item.duration_weeks} Haftalık Paket`}</span>
+                                    <span className="text-sm font-bold text-white">{getItemPrice(item).toFixed(2)} ₺</span>
                                 </div>
                             </div>
                         ))}
                     </div>
 
                     {/* Erişim Bilgisi */}
-                    <div className="confirm-section">
-                        <div className="shadow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="263" height="160" viewBox="0 0 263 160" fill="none">
-                                <g filter="url(#filter0_f_7772_13035)">
-                                    <ellipse cx="69.3284" cy="-5.00384" rx="69.3284" ry="40.8673" fill="url(#paint0_linear_7772_13035)" />
-                                </g>
-                                <defs>
-                                    <filter id="filter0_f_7772_13035" x="-123.746" y="-169.617" width="386.148" height="329.226" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-                                        <feFlood flood-opacity="0" result="BackgroundImageFix" />
-                                        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
-                                        <feGaussianBlur stdDeviation="61.873" result="effect1_foregroundBlur_7772_13035" />
-                                    </filter>
-                                    <linearGradient id="paint0_linear_7772_13035" x1="0" y1="-5.00384" x2="138.657" y2="-5.00384" gradientUnits="userSpaceOnUse">
-                                        <stop offset="0.211538" stop-color="#4699FF" />
-                                        <stop offset="0.793269" stop-color="#FF66C4" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                        </div>
-                        <h4>Erişim Bilgisi</h4>
-                        <p className="dsc">Kullanıcı: {((useSavedCard && savedCard?.holderName) || cardInfo.holderName || "-")}</p>
-                        <p className="dsc">E-posta: {userEmail || "-"}</p>
-                        <div className="input-group" style={{ margin: '10px 0' }}>
-                            <label style={{ fontSize: 12, opacity: 0.7, display: 'block', marginBottom: 5 }}>FATURA ADRESİ</label>
-                            <input
+                    <div className="relative mb-8 overflow-hidden rounded-xl border border-white/10 bg-luma-elevated p-3">
+                        <GradientBlob />
+                        <h4 className="mb-3 border-b border-fuchsia-800 bg-gradient-to-br from-cyan-400 to-indigo-400 bg-clip-text pb-3 font-display text-xs font-semibold text-transparent">
+                            Erişim Bilgisi
+                        </h4>
+                        <p className="mb-3 text-sm font-semibold text-white">Kullanıcı: {((useSavedCard && savedCard?.holderName) || cardInfo.holderName || "-")}</p>
+                        <p className="mb-3 text-sm font-semibold text-white">E-posta: {userEmail || "-"}</p>
+                        <div className="my-2.5">
+                            <label className="mb-1.5 block text-xs text-white/70">FATURA ADRESİ</label>
+                            <Input
                                 type="text"
-                                className="input"
                                 placeholder="Fatura adresi"
                                 value={invoiceAddress}
                                 onChange={(e) => setInvoiceAddress(e.target.value)}
                             />
                         </div>
-                        <label className="checkbox-option">
-                            <input
-                                type="checkbox"
+                        <label className="flex cursor-pointer items-center gap-3 py-2 text-sm text-white">
+                            <Checkbox
                                 checked={sendInvoice}
-                                onChange={() => setSendInvoice(!sendInvoice)}
+                                onCheckedChange={() => setSendInvoice(!sendInvoice)}
                             />
-                            <span className="custom-check">
-
-                            </span>
                             Faturamı bu e-posta adresine gönder
                         </label>
                     </div>
 
                     {/* Ödeme Bilgileri */}
-                    <div className="confirm-section">
+                    <div className="relative mb-8 overflow-hidden rounded-xl border border-white/10 bg-luma-elevated p-3">
+                        <GradientBlob />
+                        <h4 className="mb-3 border-b border-fuchsia-800 bg-gradient-to-br from-cyan-400 to-indigo-400 bg-clip-text pb-3 font-display text-xs font-semibold text-transparent">
+                            Ödeme Bilgileri
+                        </h4>
 
-                        <div className="shadow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="263" height="160" viewBox="0 0 263 160" fill="none">
-                                <g filter="url(#filter0_f_7772_13035)">
-                                    <ellipse cx="69.3284" cy="-5.00384" rx="69.3284" ry="40.8673" fill="url(#paint0_linear_7772_13035)" />
-                                </g>
-                                <defs>
-                                    <filter id="filter0_f_7772_13035" x="-123.746" y="-169.617" width="386.148" height="329.226" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-                                        <feFlood flood-opacity="0" result="BackgroundImageFix" />
-                                        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
-                                        <feGaussianBlur stdDeviation="61.873" result="effect1_foregroundBlur_7772_13035" />
-                                    </filter>
-                                    <linearGradient id="paint0_linear_7772_13035" x1="0" y1="-5.00384" x2="138.657" y2="-5.00384" gradientUnits="userSpaceOnUse">
-                                        <stop offset="0.211538" stop-color="#4699FF" />
-                                        <stop offset="0.793269" stop-color="#FF66C4" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                        </div>
-                        <h4>Ödeme Bilgileri</h4>
-                        
                         {/* Kayıtlı Kart Seçeneği */}
                         {savedCard && (
-                            <div className="saved-card-option">
-                                <label className="checkbox-option">
-                                    <input
-                                        type="checkbox"
+                            <div className="mb-3">
+                                <label className="flex cursor-pointer items-center gap-3 py-2 text-sm text-white">
+                                    <Checkbox
                                         checked={useSavedCard}
-                                        onChange={() => setUseSavedCard(!useSavedCard)}
+                                        onCheckedChange={() => setUseSavedCard(!useSavedCard)}
                                     />
-                                    <span className="custom-check"></span>
-                                    <div className="saved-card-info">
-                                        <span className="card-number">{maskCardNumber(savedCard.number)}</span>
-                                        <span className="card-details">
+                                    <div className="flex flex-col">
+                                        <span className="font-medium text-white">{maskCardNumber(savedCard.number)}</span>
+                                        <span className="text-xs text-white/50">
                                             {savedCard.holderName} • {savedCard.expiry}
                                         </span>
                                     </div>
                                 </label>
                             </div>
                         )}
-                        
+
                         {/* Yeni Kart Girişi - Kayıtlı kart kullanılmıyorsa göster */}
                         {(!savedCard || !useSavedCard) && (
                             <>
-                                <input
+                                <Input
                                     type="text"
-                                    className={`input ${holderNameError ? 'error' : ''}`}
+                                    className={cn("mb-3 uppercase", holderNameError && "border-rose-500")}
                                     placeholder="KART ÜZERİNDEKİ İSİM"
                                     value={cardInfo.holderName}
                                     autoComplete="cc-name"
-                                    style={{ marginBottom: holderNameError ? 4 : 12 }}
                                     onChange={(e) => {
                                         const value = e.target.value.replace(/[^a-zA-ZçÇğĞıİöÖşŞüÜ\s'-]/g, "").toLocaleUpperCase("tr-TR");
                                         setCardInfo(prev => ({ ...prev, holderName: value }));
@@ -535,13 +474,12 @@ export default function CartConfirm({ cartItems }) {
                                     maxLength={50}
                                 />
                                 {holderNameError && (
-                                    <div style={{ color: "#FF66C4", fontSize: 12, marginBottom: 12 }}>
+                                    <div className="mb-3 text-xs text-pink-400">
                                         {holderNameError}
                                     </div>
                                 )}
-                                <input
+                                <Input
                                     type="text"
-                                    className="input"
                                     placeholder="KART NUMARASI"
                                     value={cardInfo.number}
                                     inputMode="numeric"
@@ -551,23 +489,23 @@ export default function CartConfirm({ cartItems }) {
                             </>
                         )}
                         {cardNumberError && (
-                            <div style={{ color: "#FF66C4", fontSize: 12, marginTop: 4 }}>
+                            <div className="mt-1 text-xs text-pink-400">
                                 {cardNumberError}
                             </div>
                         )}
-                        
+
                         {/* Tarih ve CVV - Kayıtlı kart kullanılmıyorsa göster */}
                         {(!savedCard || !useSavedCard) && (
-                            <div className="int-ctr">
-                                <input
+                            <div className="my-3 grid grid-cols-2 gap-3">
+                                <Input
                                     type="text"
-                                    className={`input ${expiryError ? 'error' : ''}`}
+                                    className={expiryError ? "border-rose-500" : ""}
                                     placeholder="AA/YY"
                                     value={cardInfo.expiry || ''}
                                     onChange={(e) => {
                                         const formatted = formatExpiryDate(e.target.value);
                                         setCardInfo(prev => ({ ...prev, expiry: formatted }));
-                                        
+
                                         if (formatted.length === 5) { // MM/YY formatında
                                             if (isValidExpiryDate(formatted)) {
                                                 setExpiryError('');
@@ -580,99 +518,65 @@ export default function CartConfirm({ cartItems }) {
                                     }}
                                     maxLength={5}
                                 />
-                                <input
+                                <Input
                                     type="text"
-                                    className="input"
                                     maxLength={4}
                                     placeholder="CVV"
                                     value={cardInfo.cvv}
                                     onChange={handleCVVChange}
                                 />
                                 {cvvError && (
-                                    <div style={{ color: "#FF66C4", fontSize: 12, marginTop: 4 }}>
+                                    <div className="col-span-2 mt-1 text-xs text-pink-400">
                                         {cvvError}
                                     </div>
                                 )}
                             </div>
                         )}
-                        <label className="checkbox-option">
-                            <input
-                                type="checkbox"
+                        <label className="flex cursor-pointer items-center gap-3 py-2 text-sm text-white">
+                            <Checkbox
                                 checked={use3DSecure}
-                                onChange={() => setUse3DSecure(!use3DSecure)}
+                                onCheckedChange={() => setUse3DSecure(!use3DSecure)}
                             />
-                            <span className="custom-check">
-
-                            </span>
                             3D Secure ile ödeme yap
                         </label>
-                        <label className="checkbox-option">
-                            <input
-                                type="checkbox"
+                        <label className="flex cursor-pointer items-center gap-3 py-2 text-sm text-white">
+                            <Checkbox
                                 checked={addCard}
-                                onChange={() => setAddCard(!addCard)}
+                                onCheckedChange={() => setAddCard(!addCard)}
                             />
-                            <span className="custom-check">
-
-                            </span>
                             Kartımı Ekle
                         </label>
-                        {/* <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                            <button
-                                className="add-card-btn"
-                                onClick={() => {/ }}
-                            >
-                                Kartımı Ekle
-                            </button>
-                        </div> */}
                     </div>
                 </div>
 
                 {/* Sağ Alan - Özet */}
-                <div className="cart-right-2">
-                    <div className="cart-right-2-inner">
-                        <div className="shadow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="263" height="160" viewBox="0 0 263 160" fill="none">
-                                <g filter="url(#filter0_f_7772_12866)">
-                                    <ellipse cx="69.3284" cy="-5.00384" rx="69.3284" ry="40.8673" fill="url(#paint0_linear_7772_12866)" />
-                                </g>
-                                <defs>
-                                    <filter id="filter0_f_7772_12866" x="-123.746" y="-169.617" width="386.148" height="329.226" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-                                        <feFlood flood-opacity="0" result="BackgroundImageFix" />
-                                        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
-                                        <feGaussianBlur stdDeviation="61.873" result="effect1_foregroundBlur_7772_12866" />
-                                    </filter>
-                                    <linearGradient id="paint0_linear_7772_12866" x1="0" y1="-5.00384" x2="138.657" y2="-5.00384" gradientUnits="userSpaceOnUse">
-                                        <stop offset="0.211538" stop-color="#4699FF" />
-                                        <stop offset="0.793269" stop-color="#FF66C4" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                        </div>
-                        <h4>Sipariş Özeti</h4>
-                        <div className="summary-line">
+                <div className="flex w-full flex-1 flex-col items-start">
+                    <div className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-luma-elevated p-3">
+                        <GradientBlob />
+                        <h4 className="mb-6 font-display text-xl font-medium text-white">Sipariş Özeti</h4>
+                        <div className="my-2 flex justify-between font-display text-base font-medium text-white">
                             <span>Ürün Tutarı</span>
-                            <span className="pr">{subtotal}₺</span>
+                            <span className="text-white/50">{subtotal}₺</span>
                         </div>
-                        <div className="summary-line">
+                        <div className="my-2 flex justify-between font-display text-base font-medium text-white">
                             <span>Hizmet Bedeli</span>
-                            <span className="pr">{serviceFee}₺</span>
+                            <span className="text-white/50">{serviceFee}₺</span>
                         </div>
-                        <div className="summary-line total">
+                        <div className="my-2 flex justify-between border-y border-fuchsia-800 py-3 font-display text-base font-medium text-white">
                             <strong>Toplam</strong>
-                            <strong className="pr">{total}TL</strong>
+                            <strong className="text-white/50">{total}TL</strong>
                         </div>
-                        <div className="coupon-input">
-                            <div className="ic">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                    <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" fill="#FFF0FF" />
-                                    <path d="M12 8V16M16 12H8" stroke="#FF66C4" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="round" />
-                                </svg>
+                        <div className="mt-4 flex items-stretch rounded-xl border border-indigo-400 bg-white/10">
+                            <div className="flex items-center p-3.5 text-pink-400">
+                                <Tag className="h-5 w-5" />
                             </div>
-                            <input placeholder="İndirim kodu gir" />
+                            <input
+                                placeholder="İndirim kodu gir"
+                                className="flex-1 bg-transparent py-3.5 pr-3.5 font-display text-base font-medium text-white placeholder:text-white/40 focus:outline-none"
+                            />
                         </div>
                         <button
-                            className="checkout-btn"
+                            className="mt-4 w-full rounded-xl border border-white/10 bg-gradient-btn py-3.5 font-display text-sm font-bold uppercase text-white shadow-glow transition-transform duration-200 hover:scale-[1.02] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             disabled={
                                 (!useSavedCard && (
                                     !isValidCardNumber(cardInfo.number) ||
@@ -685,168 +589,139 @@ export default function CartConfirm({ cartItems }) {
                             }
                             onClick={handlePaymentConfirm}
                         >
-                            ÖDEMEYİ ONAYLA
+                            Ödemeyi Onayla
                         </button>
                     </div>
 
-                    <div className="front">
-                        <div className="shadow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="263" height="68" viewBox="0 0 263 68" fill="none">
-                                <g filter="url(#filter0_f_7772_13079)">
-                                    <ellipse cx="69.3284" cy="-5.00384" rx="69.3284" ry="40.8673" fill="url(#paint0_linear_7772_13079)" />
-                                </g>
-                                <defs>
-                                    <filter id="filter0_f_7772_13079" x="-123.746" y="-169.617" width="386.148" height="329.226" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-                                        <feFlood flood-opacity="0" result="BackgroundImageFix" />
-                                        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
-                                        <feGaussianBlur stdDeviation="61.873" result="effect1_foregroundBlur_7772_13079" />
-                                    </filter>
-                                    <linearGradient id="paint0_linear_7772_13079" x1="0" y1="-5.00384" x2="138.657" y2="-5.00384" gradientUnits="userSpaceOnUse">
-                                        <stop offset="0.211538" stop-color="#4699FF" />
-                                        <stop offset="0.793269" stop-color="#FF66C4" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                        </div>
-                        <label className="checkbox-option">
-                            <input
-                                type="checkbox"
+                    <div className="relative mt-8 w-full overflow-hidden rounded-xl border border-white/10 bg-luma-elevated p-3">
+                        <GradientBlob />
+                        <label className="flex cursor-pointer items-start gap-3 text-sm">
+                            <Checkbox
                                 checked={aggrementCheck}
-                                onChange={() => setAggrementCheck(!aggrementCheck)}
+                                onCheckedChange={() => setAggrementCheck(!aggrementCheck)}
+                                className="mt-0.5"
                             />
-                            <span className="custom-check">
-
-                            </span>
-                            <p>
-                                <span className="knm" onClick={() => openPolicy("terms")}>Ön Bilgilendirme Metni</span> ve <span className="knm" onClick={() => openPolicy("privacy")}>Hizmet Sözleşmesi’ni</span> okudum, kabul ediyorum.
+                            <p className="text-white/85">
+                                <span className="cursor-pointer text-white underline" onClick={() => openPolicy("terms")}>Ön Bilgilendirme Metni</span> ve <span className="cursor-pointer text-white underline" onClick={() => openPolicy("privacy")}>Hizmet Sözleşmesi'ni</span> okudum, kabul ediyorum.
                             </p>
                         </label>
                     </div>
 
                 </div>
             </div>
-            {isPolicyOpen && (
-                <div className="policy-overlay" onClick={closePolicy}>
-                    <div className="policy-panel" onClick={(e) => e.stopPropagation()}>
-                        <div className="policy-header">
-                            <h3>{activePolicy === "terms" ? "Ön Bilgilendirme Metni" : "Hizmet Sözleşmesi"}</h3>
-                            <button onClick={closePolicy}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12.0008 13.4008L7.10078 18.3008C6.91745 18.4841 6.68411 18.5758 6.40078 18.5758C6.11745 18.5758 5.88411 18.4841 5.70078 18.3008C5.51745 18.1174 5.42578 17.8841 5.42578 17.6008C5.42578 17.3174 5.51745 17.0841 5.70078 16.9008L10.6008 12.0008L5.70078 7.10078C5.51745 6.91745 5.42578 6.68411 5.42578 6.40078C5.42578 6.11745 5.51745 5.88411 5.70078 5.70078C5.88411 5.51745 6.11745 5.42578 6.40078 5.42578C6.68411 5.42578 6.91745 5.51745 7.10078 5.70078L12.0008 10.6008L16.9008 5.70078C17.0841 5.51745 17.3174 5.42578 17.6008 5.42578C17.8841 5.42578 18.1174 5.51745 18.3008 5.70078C18.4841 5.88411 18.5758 6.11745 18.5758 6.40078C18.5758 6.68411 18.4841 6.91745 18.3008 7.10078L13.4008 12.0008L18.3008 16.9008C18.4841 17.0841 18.5758 17.3174 18.5758 17.6008C18.5758 17.8841 18.4841 18.1174 18.3008 18.3008C18.1174 18.4841 17.8841 18.5758 17.6008 18.5758C17.3174 18.5758 17.0841 18.4841 16.9008 18.3008L12.0008 13.4008Z" fill="#FF99D6" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div className="policy-content">
-                            <h1>Ön Bilgilendirme Metni</h1>
-                            <p><strong>Son Güncelleme:</strong> 24 Temmuz 2025</p>
+            <Dialog open={isPolicyOpen} onOpenChange={(open) => !open && closePolicy()}>
+                <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto bg-luma-card border-white/10 p-6">
+                    <DialogTitle className="mb-4">
+                        {activePolicy === "terms" ? "Ön Bilgilendirme Metni" : "Hizmet Sözleşmesi"}
+                    </DialogTitle>
+                    <div className="flex flex-col gap-4 text-sm leading-relaxed text-white/80 [&_a]:text-indigo-400 [&_a]:underline [&_h1]:mt-4 [&_h1]:font-display [&_h1]:text-xl [&_h1]:font-semibold [&_h1]:text-white [&_h2]:mt-3 [&_h2]:font-display [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-white [&_li]:ml-5 [&_li]:list-disc [&_strong]:text-white [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1">
+                        <h1>Ön Bilgilendirme Metni</h1>
+                        <p><strong>Son Güncelleme:</strong> 24 Temmuz 2025</p>
 
-                            <p>Bu metin, 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği gereğince kullanıcıların bilgilendirilmesi amacıyla hazırlanmıştır.</p>
+                        <p>Bu metin, 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği gereğince kullanıcıların bilgilendirilmesi amacıyla hazırlanmıştır.</p>
 
-                            <h2>1. Hizmet Sağlayıcı Bilgileri</h2>
-                            <ul>
-                                <li><strong>Unvan:</strong> LUMANORIS Dijital Hizmetler Platformu</li>
-                                <li><strong>Web Adresi:</strong> <a href="https://www.lumanoris.com" target="_blank">www.lumanoris.com</a></li>
-                                <li><strong>E-Posta:</strong> <a href="mailto:info@lumanoris.com">info@lumanoris.com</a></li>
-                                <li><strong>Merkez Adres:</strong> Ankara/Altındağ</li>
-                            </ul>
+                        <h2>1. Hizmet Sağlayıcı Bilgileri</h2>
+                        <ul>
+                            <li><strong>Unvan:</strong> LUMANORIS Dijital Hizmetler Platformu</li>
+                            <li><strong>Web Adresi:</strong> <a href="https://www.lumanoris.com" target="_blank">www.lumanoris.com</a></li>
+                            <li><strong>E-Posta:</strong> <a href="mailto:info@lumanoris.com">info@lumanoris.com</a></li>
+                            <li><strong>Merkez Adres:</strong> Ankara/Altındağ</li>
+                        </ul>
 
-                            <h2>2. Sunulan Hizmetler</h2>
-                            <p>
-                                LUMANORIS, kullanıcılara yapay zekâ sohbet modelleri oluşturma, yayınlama, keşfetme ve bunlar üzerinden gelir elde etme imkanı sunan dijital bir platformdur.
-                                Platform üzerinden sunulan tüm hizmetler tamamen dijital niteliktedir ve anlık olarak sunulmaktadır.
-                            </p>
+                        <h2>2. Sunulan Hizmetler</h2>
+                        <p>
+                            LUMANORIS, kullanıcılara yapay zekâ sohbet modelleri oluşturma, yayınlama, keşfetme ve bunlar üzerinden gelir elde etme imkanı sunan dijital bir platformdur.
+                            Platform üzerinden sunulan tüm hizmetler tamamen dijital niteliktedir ve anlık olarak sunulmaktadır.
+                        </p>
 
-                            <h2>3. Fiyatlandırma ve Ödeme</h2>
-                            <ul>
-                                <li>Hizmet bedelleri, kullanıcıya platform arayüzünde açıkça belirtilir.</li>
-                                <li>Ödeme, üçüncü taraf ödeme altyapısı aracılığıyla güvenli biçimde tahsil edilir.</li>
-                                <li>İçerik üreticilerine yapılan ödemeler, kullanıcıya ait banka hesap bilgileri üzerinden gerçekleştirilir.</li>
-                            </ul>
+                        <h2>3. Fiyatlandırma ve Ödeme</h2>
+                        <ul>
+                            <li>Hizmet bedelleri, kullanıcıya platform arayüzünde açıkça belirtilir.</li>
+                            <li>Ödeme, üçüncü taraf ödeme altyapısı aracılığıyla güvenli biçimde tahsil edilir.</li>
+                            <li>İçerik üreticilerine yapılan ödemeler, kullanıcıya ait banka hesap bilgileri üzerinden gerçekleştirilir.</li>
+                        </ul>
 
-                            <h2>4. Teslimat ve İfa</h2>
-                            <ul>
-                                <li>Dijital hizmetler, ödeme sonrası anında kullanıcı hesabına tanımlanır ve kullanılabilir hale gelir.</li>
-                                <li>Abonelikler otomatik olarak tanımlanır ve belirtilen süre boyunca geçerlidir.</li>
-                            </ul>
+                        <h2>4. Teslimat ve İfa</h2>
+                        <ul>
+                            <li>Dijital hizmetler, ödeme sonrası anında kullanıcı hesabına tanımlanır ve kullanılabilir hale gelir.</li>
+                            <li>Abonelikler otomatik olarak tanımlanır ve belirtilen süre boyunca geçerlidir.</li>
+                        </ul>
 
-                            <h2>5. Cayma Hakkı</h2>
-                            <p>
-                                Tüketici, dijital içerik hizmetinin anında sunulması nedeniyle cayma hakkını kullanamayacağını kabul eder.
-                                Bu durum, 6502 sayılı Kanun'un 15. maddesi gereğince istisna kapsamındadır.
-                                Kullanıcı, bu bilgilendirme ile cayma hakkından feragat etmiş sayılır.
-                            </p>
+                        <h2>5. Cayma Hakkı</h2>
+                        <p>
+                            Tüketici, dijital içerik hizmetinin anında sunulması nedeniyle cayma hakkını kullanamayacağını kabul eder.
+                            Bu durum, 6502 sayılı Kanun'un 15. maddesi gereğince istisna kapsamındadır.
+                            Kullanıcı, bu bilgilendirme ile cayma hakkından feragat etmiş sayılır.
+                        </p>
 
-                            <h2>6. Uyuşmazlık Çözümü</h2>
-                            <p>Uyuşmazlık durumlarında, kullanıcı bulunduğu yerdeki Tüketici Hakem Heyetlerine veya Tüketici Mahkemelerine başvurabilir.</p>
+                        <h2>6. Uyuşmazlık Çözümü</h2>
+                        <p>Uyuşmazlık durumlarında, kullanıcı bulunduğu yerdeki Tüketici Hakem Heyetlerine veya Tüketici Mahkemelerine başvurabilir.</p>
 
+                        <h1>Hizmet Sözleşmesi (Mesafeli Satış Sözleşmesi)</h1>
+                        <p><strong>Son Güncelleme:</strong> 24 Temmuz 2025</p>
 
+                        <h2>1. Taraflar</h2>
+                        <ul>
+                            <li><strong>Hizmet Sağlayıcı:</strong> LUMANORIS</li>
+                            <li><strong>Kullanıcı:</strong> Platforma üye olan ve hizmetlerden faydalanan kişi</li>
+                        </ul>
 
-                            <h1>Hizmet Sözleşmesi (Mesafeli Satış Sözleşmesi)</h1>
-                            <p><strong>Son Güncelleme:</strong> 24 Temmuz 2025</p>
+                        <h2>2. Sözleşmenin Konusu</h2>
+                        <p>
+                            İşbu sözleşme, LUMANORIS tarafından sunulan dijital hizmetlerin; kullanım koşullarını, ödeme şartlarını ve tarafların hak ve yükümlülüklerini belirler.
+                        </p>
 
-                            <h2>1. Taraflar</h2>
-                            <ul>
-                                <li><strong>Hizmet Sağlayıcı:</strong> LUMANORIS</li>
-                                <li><strong>Kullanıcı:</strong> Platforma üye olan ve hizmetlerden faydalanan kişi</li>
-                            </ul>
+                        <h2>3. Hizmetin Özellikleri</h2>
+                        <ul>
+                            <li>Kullanıcı, platformda AI model oluşturabilir, kullanabilir ve gelir elde edebilir.</li>
+                            <li>Bazı hizmetler ücretsizdir, bazıları ise abonelik ya da kullanım bazlı ücretlendirmeye tabidir.</li>
+                            <li>Dijital içerik, fiziksel bir ürün teslimatı içermemektedir.</li>
+                        </ul>
 
-                            <h2>2. Sözleşmenin Konusu</h2>
-                            <p>
-                                İşbu sözleşme, LUMANORIS tarafından sunulan dijital hizmetlerin; kullanım koşullarını, ödeme şartlarını ve tarafların hak ve yükümlülüklerini belirler.
-                            </p>
+                        <h2>4. Ücretlendirme ve Ödeme</h2>
+                        <ul>
+                            <li>Hizmet bedelleri ilgili sayfalarda açıkça belirtilmiştir.</li>
+                            <li>Kullanıcı, seçtiği hizmete uygun ödeme yöntemini kullanarak işlemi tamamlar.</li>
+                            <li>Ödeme sonrası hizmet anında aktif edilir.</li>
+                        </ul>
 
-                            <h2>3. Hizmetin Özellikleri</h2>
-                            <ul>
-                                <li>Kullanıcı, platformda AI model oluşturabilir, kullanabilir ve gelir elde edebilir.</li>
-                                <li>Bazı hizmetler ücretsizdir, bazıları ise abonelik ya da kullanım bazlı ücretlendirmeye tabidir.</li>
-                                <li>Dijital içerik, fiziksel bir ürün teslimatı içermemektedir.</li>
-                            </ul>
+                        <h2>5. Cayma Hakkı ve İade</h2>
+                        <ul>
+                            <li>Kullanıcı, dijital içeriğin anında ifası nedeniyle, cayma hakkını kullanamayacağını kabul eder.</li>
+                            <li>Hizmetler kullanıldıktan veya indirildikten sonra iptal/iade yapılmaz.</li>
+                            <li>Aksi belirtilmedikçe abonelik iptali bir sonraki dönem için geçerli olur.</li>
+                        </ul>
 
-                            <h2>4. Ücretlendirme ve Ödeme</h2>
-                            <ul>
-                                <li>Hizmet bedelleri ilgili sayfalarda açıkça belirtilmiştir.</li>
-                                <li>Kullanıcı, seçtiği hizmete uygun ödeme yöntemini kullanarak işlemi tamamlar.</li>
-                                <li>Ödeme sonrası hizmet anında aktif edilir.</li>
-                            </ul>
+                        <h2>6. Kullanıcının Yükümlülükleri</h2>
+                        <ul>
+                            <li>Kullanıcı, verdiği bilgilerin doğru olduğunu beyan eder.</li>
+                            <li>Hizmeti kötüye kullanamaz, yasa dışı faaliyetlerde bulunamaz.</li>
+                            <li>AI modelleriyle elde edilen içeriklerin sorumluluğu kullanıcıya aittir.</li>
+                        </ul>
 
-                            <h2>5. Cayma Hakkı ve İade</h2>
-                            <ul>
-                                <li>Kullanıcı, dijital içeriğin anında ifası nedeniyle, cayma hakkını kullanamayacağını kabul eder.</li>
-                                <li>Hizmetler kullanıldıktan veya indirildikten sonra iptal/iade yapılmaz.</li>
-                                <li>Aksi belirtilmedikçe abonelik iptali bir sonraki dönem için geçerli olur.</li>
-                            </ul>
+                        <h2>7. Hizmet Sağlayıcının Yükümlülükleri</h2>
+                        <ul>
+                            <li>Platformun çalışmasını sağlamak ve kullanıcı desteği sunmak</li>
+                            <li>Ücretli hizmetlerde, ödeme sonrası kullanımın teknik olarak sağlanması</li>
+                            <li>Verilerin güvenliğini sağlamak</li>
+                        </ul>
 
-                            <h2>6. Kullanıcının Yükümlülükleri</h2>
-                            <ul>
-                                <li>Kullanıcı, verdiği bilgilerin doğru olduğunu beyan eder.</li>
-                                <li>Hizmeti kötüye kullanamaz, yasa dışı faaliyetlerde bulunamaz.</li>
-                                <li>AI modelleriyle elde edilen içeriklerin sorumluluğu kullanıcıya aittir.</li>
-                            </ul>
+                        <h2>8. Fesih</h2>
+                        <ul>
+                            <li>Her iki taraf da sözleşmeyi feshedebilir.</li>
+                            <li>LUMANORIS, kurallara aykırı kullanım durumunda kullanıcı hesabını askıya alabilir veya sonlandırabilir.</li>
+                        </ul>
 
-                            <h2>7. Hizmet Sağlayıcının Yükümlülükleri</h2>
-                            <ul>
-                                <li>Platformun çalışmasını sağlamak ve kullanıcı desteği sunmak</li>
-                                <li>Ücretli hizmetlerde, ödeme sonrası kullanımın teknik olarak sağlanması</li>
-                                <li>Verilerin güvenliğini sağlamak</li>
-                            </ul>
-
-                            <h2>8. Fesih</h2>
-                            <ul>
-                                <li>Her iki taraf da sözleşmeyi feshedebilir.</li>
-                                <li>LUMANORIS, kurallara aykırı kullanım durumunda kullanıcı hesabını askıya alabilir veya sonlandırabilir.</li>
-                            </ul>
-
-                            <h2>9. Uyuşmazlıkların Çözümü</h2>
-                            <p>
-                                Taraflar arasında doğabilecek uyuşmazlıklarda <strong>Ankara Mahkemeleri ve İcra Daireleri</strong> yetkilidir.
-                                Kullanıcı ayrıca <strong>Tüketici Hakem Heyeti</strong>’ne başvurabilir.
-                            </p>
-                        </div>
+                        <h2>9. Uyuşmazlıkların Çözümü</h2>
+                        <p>
+                            Taraflar arasında doğabilecek uyuşmazlıklarda <strong>Ankara Mahkemeleri ve İcra Daireleri</strong> yetkilidir.
+                            Kullanıcı ayrıca <strong>Tüketici Hakem Heyeti</strong>'ne başvurabilir.
+                        </p>
                     </div>
-                </div>
-            )}
+                </DialogContent>
+            </Dialog>
 
-            <PurchaseSuccessModal 
+            <PurchaseSuccessModal
                 isOpen={showSuccessModal}
                 onClose={() => setShowSuccessModal(false)}
                 chatbotName={cartItems[0]?.title || "Travel Planner AI"}

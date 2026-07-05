@@ -51,7 +51,7 @@ export default function Wallet() {
         fetchBalance();
         fetch(`/api/wallet/getmypayments.php?user_id=${userId}`)
             .then(r => r.json())
-            .then(data => { if (Array.isArray(data)) setPayments(data); })
+            .then(data => { if (data?.success && Array.isArray(data.payments)) setPayments(data.payments); })
             .catch(err => console.error("Ödemeler yüklenemedi:", err));
     }, [userId]);
 
@@ -61,14 +61,31 @@ export default function Wallet() {
             amount: tx.amount,
             description: tx.created_at ? `${tx.description} · ${formatDate(tx.created_at)}` : tx.description,
         }))
-        : payments.map((p, i) => {
-            const names = (p.titles?.length) ? p.titles.join(", ") : "Sohbet botu";
-            const refunded = p.status === "refunded" || p.status === "partial_refund";
-            let desc = `${names} satın alındı`;
-            if (p.created_at) desc += ` · ${formatDate(p.created_at)}`;
-            if (refunded) desc += " · İade edildi";
-            return { key: `p-${i}`, amount: -Math.abs(p.amount), description: desc };
-        });
+        : (() => {
+            // getmypayments.php returns one row per (order × purchased bot) —
+            // group back into one line per order_id so a multi-bot purchase
+            // shows as a single transaction listing every bot's title.
+            const orders = new Map();
+            for (const row of payments) {
+                if (!orders.has(row.order_id)) {
+                    orders.set(row.order_id, {
+                        amount: row.total_amount,
+                        status: row.status,
+                        created_at: row.created_at,
+                        titles: [],
+                    });
+                }
+                if (row.chatbot_title) orders.get(row.order_id).titles.push(row.chatbot_title);
+            }
+            return Array.from(orders.values()).map((p, i) => {
+                const names = p.titles.length ? p.titles.join(", ") : "Sohbet botu";
+                const refunded = p.status === "refunded" || p.status === "partial_refund";
+                let desc = `${names} satın alındı`;
+                if (p.created_at) desc += ` · ${formatDate(p.created_at)}`;
+                if (refunded) desc += " · İade edildi";
+                return { key: `p-${i}`, amount: -Math.abs(p.amount), description: desc };
+            });
+        })();
 
     return (
         <div className="flex flex-col gap-5 px-6 py-5">

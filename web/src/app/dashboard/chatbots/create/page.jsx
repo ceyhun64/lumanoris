@@ -6,6 +6,7 @@ import SellerOnboardingWizard from "@/features/seller/SellerOnboardingWizard";
 import BuyProducerAccountModal from "@/features/purchasing/BuyProducerAccountModal";
 import useSellerStatus from "@/shared/hooks/useSellerStatus";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export default function CreateChatbot() {
     // İlk adım gizli, direkt form göster
@@ -73,7 +74,7 @@ export default function CreateChatbot() {
     }, [userId]);
 
     if (botId !== -1 && !bot) {
-        return <div>Bot bilgileri yükleniyor...</div>;
+        return <div className="px-4 py-6 text-white/60 md:px-16">Bot bilgileri yükleniyor...</div>;
     }
 
     return <CreateChatbotInner userId={userId} bot={bot} botId={botId} selectedCard={selectedCard} />;
@@ -107,34 +108,35 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
     }, [isEditing, userId]);
 
     if (!userId || (!isEditing && !limits)) {
-        return <div className="chatbot-create-wrapper"><p>Yükleniyor...</p></div>;
+        return <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16"><p className="text-white/60">Yükleniyor...</p></div>;
     }
 
     // Yeni bot oluşturuluyor ve henüz seçim yapılmadıysa: iki seçenekli ekran.
     if (!isEditing && choice === null) {
         return (
-            <div className="chatbot-create-wrapper">
-                <div className="chatbot-create-header">
-                    <h2>Oluştur</h2>
+            <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
+                <div className="mb-10 flex items-center justify-between">
+                    <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
+                        Oluştur
+                    </h2>
                 </div>
-                <div className="create-choice-screen" style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 560 }}>
+                <div className="flex max-w-[560px] flex-col gap-4">
                     <button
                         type="button"
                         disabled={!limits.can_create_independent}
                         onClick={() => setChoice('independent')}
-                        style={{
-                            textAlign: 'left', padding: '20px', borderRadius: 14, border: '1px solid rgba(255,255,255,0.12)',
-                            background: '#16151c', color: '#fff', cursor: limits.can_create_independent ? 'pointer' : 'not-allowed',
-                            opacity: limits.can_create_independent ? 1 : 0.5,
-                        }}
+                        className={cn(
+                            "rounded-2xl border border-white/10 bg-luma-elevated p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-400/25",
+                            limits.can_create_independent ? "cursor-pointer" : "cursor-not-allowed opacity-50",
+                        )}
                     >
-                        <h3 style={{ marginBottom: 6 }}>Pazaryeri Sistemine Kayıt Olmadan Devam Et</h3>
-                        <p style={{ fontSize: 13, opacity: 0.8, margin: 0 }}>
+                        <h3 className="mb-1.5 font-display text-base font-semibold text-white">Pazaryeri Sistemine Kayıt Olmadan Devam Et</h3>
+                        <p className="text-[13px] text-white/70">
                             Bu seçeneği seçtiğinizde oluşturduğunuz chatbot yalnızca sizin erişiminize açık olacaktır.
                             Chatbotunuzu daha sonra istediğiniz zaman herkese açık olarak yayınlayabilirsiniz.
                         </p>
                         {!limits.can_create_independent && (
-                            <p style={{ fontSize: 12, color: '#FF66C4', marginTop: 8 }}>
+                            <p className="mt-2 text-xs text-pink-400">
                                 Ücretsiz bağımsız chatbot hakkınızı ({limits.independent_limit}) kullandınız.
                             </p>
                         )}
@@ -144,10 +146,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                         <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); setShowBuyPlan(true); }}
-                            style={{
-                                textAlign: 'center', padding: '14px', borderRadius: 14, border: 'none',
-                                background: 'linear-gradient(90deg,#8B5CF6,#D946EF)', color: '#fff', cursor: 'pointer', fontWeight: 600,
-                            }}
+                            className="rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 p-3.5 text-center font-semibold text-white shadow-glow transition-transform duration-200 hover:scale-[1.02]"
                         >
                             750₺ ile Üretici Hesabı Satın Al (5 herkese açık + 2 bağımsız chatbot hakkı)
                         </button>
@@ -157,19 +156,18 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                         type="button"
                         disabled={!limits.can_create_public}
                         onClick={() => setChoice('public')}
-                        style={{
-                            textAlign: 'left', padding: '20px', borderRadius: 14, border: '1px solid rgba(255,255,255,0.12)',
-                            background: '#16151c', color: '#fff', cursor: limits.can_create_public ? 'pointer' : 'not-allowed',
-                            opacity: limits.can_create_public ? 1 : 0.5,
-                        }}
+                        className={cn(
+                            "rounded-2xl border border-white/10 bg-luma-elevated p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-400/25",
+                            limits.can_create_public ? "cursor-pointer" : "cursor-not-allowed opacity-50",
+                        )}
                     >
-                        <h3 style={{ marginBottom: 6 }}>Herkese Açık Yayınlamak İstiyorum</h3>
-                        <p style={{ fontSize: 13, opacity: 0.8, margin: 0 }}>
+                        <h3 className="mb-1.5 font-display text-base font-semibold text-white">Herkese Açık Yayınlamak İstiyorum</h3>
+                        <p className="text-[13px] text-white/70">
                             Bu seçeneği seçtiğinizde chatbotunuz pazaryerinde yayınlanır, herkes tarafından erişilebilir
                             hale gelir ve gelir elde etmeye başlayabilirsiniz.
                         </p>
                         {!limits.can_create_public && (
-                            <p style={{ fontSize: 12, color: '#FF66C4', marginTop: 8 }}>
+                            <p className="mt-2 text-xs text-pink-400">
                                 Ücretsiz herkese açık chatbot hakkınızı ({limits.public_limit}) kullandınız.
                             </p>
                         )}
@@ -192,9 +190,11 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
     // pazaryeri satıcı kaydını gerektirir.
     if (!independentMode && !seller.loading && seller.status !== "active") {
         return (
-            <div className="chatbot-create-wrapper">
-                <div className="chatbot-create-header">
-                    <h2>Satıcı Kaydı Gerekli</h2>
+            <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
+                <div className="mb-10 flex items-center justify-between">
+                    <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
+                        Satıcı Kaydı Gerekli
+                    </h2>
                 </div>
                 <SellerOnboardingWizard
                     userId={userId}
@@ -206,13 +206,15 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
     }
 
     if (!independentMode && seller.loading) {
-        return <div className="chatbot-create-wrapper"><p>Yükleniyor...</p></div>;
+        return <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16"><p className="text-white/60">Yükleniyor...</p></div>;
     }
 
     return (
-        <div className="chatbot-create-wrapper">
-            <div className="chatbot-create-header">
-                <h2>Oluştur</h2>
+        <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
+            <div className="mb-10 flex items-center justify-between">
+                <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
+                    Oluştur
+                </h2>
             </div>
             {bot
                 ? <ChatbotForm selectedCard={selectedCard} bot={bot} botId={botId} userId={userId} independentMode={independentMode} />

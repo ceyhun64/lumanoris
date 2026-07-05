@@ -12,6 +12,6 @@ interface UserRepositoryInterface {
     public function existsByUsername(string $username): bool;
     public function getProfilePhoto(int $id): ?string;
     public function updateProfilePhoto(int $id, string $path): void;
-    public function findByGoogleId(string $googleId): ?array;
+    public function findByGoogleId(string $googleId, string $email): ?array;
     public function linkGoogleId(int $id, string $googleId): void;
 }
