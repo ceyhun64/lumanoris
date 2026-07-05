@@ -31,4 +31,9 @@ class ParamPosMarketplace {
         error_log('[ParamPosMarketplace-stub] listIller');
         return ['success' => false, 'message' => 'İl listesi bu ortamda alınamıyor (dev stub).', 'items' => []];
     }
+
+    public function listIlceler(int $ilKodu): array {
+        error_log('[ParamPosMarketplace-stub] listIlceler: ' . $ilKodu);
+        return ['success' => false, 'message' => 'İlçe listesi bu ortamda alınamıyor (dev stub).', 'items' => []];
+    }
 }

@@ -81,10 +81,10 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
             setCoverImage(bot.chatbot.kapak_fotografi || null);
             setProfileImage(bot.chatbot.profil_fotografi || null);
             
-            if (bot.kategori_id) {
-                setSelectedCategory({ 
-                    id: bot.chatbot.kategori_id, 
-                    kategori_adi_tr: bot.chatbot.kategori_adi_tr || 'Kategori Seçili' 
+            if (bot.chatbot.kategori_id) {
+                setSelectedCategory({
+                    id: bot.chatbot.kategori_id,
+                    kategori_adi_tr: bot.chatbot.kategori_adi_tr || 'Kategori Seçili'
                 });
             }
         }

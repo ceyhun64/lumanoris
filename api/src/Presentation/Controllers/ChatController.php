@@ -2,17 +2,19 @@
 class ChatController {
     public static function addChat(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
+        $data['user_id'] = $userId;
         $id = Database::getInstance()->insert('chatbot_chats', $data);
         JsonResponse::success(['message' => 'Mesaj kaydedildi!', 'id' => $id]);
     }
 
     public static function getChat(): void {
         $chatbotId = InputSanitizer::positiveInt($_GET['chatbot_id'] ?? 0);
-        $userId    = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
-        if (!$chatbotId || !$userId) JsonResponse::error('chatbot_id ve user_id gereklidir.', 400, AppConfig::ERR_VALIDATION);
+        $userId    = AuthMiddleware::requireAuth();
+        if (!$chatbotId) JsonResponse::error('chatbot_id gereklidir.', 400, AppConfig::ERR_VALIDATION);
 
         $results = Database::getInstance()->selectMulti(
             'message, sent_by FROM chatbot_chats WHERE chatbot_id = ? AND user_id = ?',
@@ -24,24 +26,28 @@ class ChatController {
 
     public static function addConversation(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
+        $data['user_id'] = $userId;
         $id = Database::getInstance()->insert('chatbot_conversations', $data);
         JsonResponse::success(['message' => 'Yeni sohbet başarıyla başlatıldı!', 'id' => $id]);
     }
 
     public static function getConversation(): void {
         $chatbotId = InputSanitizer::positiveInt($_GET['chatbot_id'] ?? 0);
-        $userId    = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
+        $userId    = AuthMiddleware::requireAuth();
         $convId    = InputSanitizer::positiveInt($_GET['convId'] ?? 0);
 
-        if (!$chatbotId || !$userId) JsonResponse::error('chatbot_id ve user_id gereklidir.', 400, AppConfig::ERR_VALIDATION);
+        if (!$chatbotId) JsonResponse::error('chatbot_id gereklidir.', 400, AppConfig::ERR_VALIDATION);
 
         $db = Database::getInstance();
 
         if ($convId) {
-            $result = $db->selectSingle('id, conversation_name FROM chatbot_conversations WHERE id = ?', [$convId]);
+            // Previously looked up by id alone — anyone could read another
+            // user's conversation_name by guessing/incrementing convId.
+            $result = $db->selectSingle('id, conversation_name FROM chatbot_conversations WHERE id = ? AND user_id = ?', [$convId, $userId]);
             if (empty($result)) {
                 $result = $db->selectSingle(
                     'id, conversation_name FROM chatbot_conversations WHERE chatbot_id = ? AND user_id = ? ORDER BY id DESC LIMIT 1',
@@ -49,7 +55,13 @@ class ChatController {
                 );
             }
             if (empty($result)) {
-                $result = [['id' => 0, 'conversation_name' => 'Yeni Sohbet']];
+                // Flat shape, matching the successful-lookup branch above —
+                // this used to be array-wrapped ([[...]]), which meant
+                // getconversation.php returned an inconsistent shape
+                // depending on whether a row was found, and chat/page.jsx's
+                // consumption of `conversation.id`/`conversation.chatbot_id`
+                // silently broke on the not-found path.
+                $result = ['id' => 0, 'conversation_name' => 'Yeni Sohbet'];
             }
         } else {
             $result = $db->selectSingle(
@@ -57,7 +69,13 @@ class ChatController {
                 [$chatbotId, $userId]
             );
             if (empty($result)) {
-                $result = [['id' => 0, 'conversation_name' => 'Yeni Sohbet']];
+                // Flat shape, matching the successful-lookup branch above —
+                // this used to be array-wrapped ([[...]]), which meant
+                // getconversation.php returned an inconsistent shape
+                // depending on whether a row was found, and chat/page.jsx's
+                // consumption of `conversation.id`/`conversation.chatbot_id`
+                // silently broke on the not-found path.
+                $result = ['id' => 0, 'conversation_name' => 'Yeni Sohbet'];
             }
         }
 
@@ -67,12 +85,20 @@ class ChatController {
 
     public static function updateConversation(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data || !isset($data['id'])) JsonResponse::error('Veri veya ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
         $id = InputSanitizer::positiveInt($data['id']);
-        unset($data['id']);
-        $updated = Database::getInstance()->update('chatbot_conversations', $data, 'id = ?', [$id]);
+        unset($data['id'], $data['user_id']);
+
+        $db = Database::getInstance();
+        // Previously had no ownership check — anyone could rename any conversation by id.
+        if (!$db->selectSingle('id FROM chatbot_conversations WHERE id = ? AND user_id = ?', [$id, $userId])) {
+            JsonResponse::error('Bu sohbet üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
+        }
+
+        $updated = $db->update('chatbot_conversations', $data, 'id = ?', [$id]);
 
         if ($updated) {
             JsonResponse::success(['message' => 'Sohbet başarıyla güncellendi!', 'id' => $id]);
@@ -83,23 +109,48 @@ class ChatController {
 
     public static function deleteConversation(): void {
         require_method('POST');
-        $id = InputSanitizer::positiveInt($_POST['id'] ?? 0);
+        $userId = AuthMiddleware::requireAuth();
+        $id     = InputSanitizer::positiveInt($_POST['id'] ?? 0);
         if (!$id) JsonResponse::error("Silinecek sohbet ID'si belirtilmedi.", 400, AppConfig::ERR_VALIDATION);
 
-        $db = Database::getInstance();
+        $db   = Database::getInstance();
+        // Previously had no ownership check — anyone could delete any
+        // conversation (and, transitively, wipe that bot's chat history) by id.
+        $conv = $db->selectSingle('chatbot_id, user_id FROM chatbot_conversations WHERE id = ? AND user_id = ?', [$id, $userId]);
+        if (!$conv) {
+            JsonResponse::error('Bu sohbet üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
+        }
+
         $db->delete('chatbot_conversations', 'id = ?', [$id]);
-        $db->delete('chatbot_chats', 'chatbot_id = ?', [$id]);
+
+        // chatbot_chats has no per-conversation column (rows are keyed by
+        // chatbot_id + user_id only), so this can only scope to "this user's
+        // messages with this bot" — not the single conversation. That's still
+        // correct in the common case of one conversation per bot per user.
+        // Previously this used the conversation's own id as if it were the
+        // chatbot's id, which could wipe an unrelated bot's messages for
+        // every user that happened to share that numeric id.
+        if ($conv) {
+            $db->delete('chatbot_chats', 'chatbot_id = ? AND user_id = ?', [$conv['chatbot_id'], $conv['user_id']]);
+        }
+
         JsonResponse::success(['message' => 'Sohbet başarıyla silindi.', 'deleted_id' => $id]);
     }
 
     public static function getHistory(): void {
-        $userId = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
-        if (!$userId) JsonResponse::error('user_id gereklidir.', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
+        // chatbot_chats has no per-conversation column (rows are keyed by
+        // chatbot_id + user_id only — see the same note in
+        // deleteConversation), so "latest message" can only be scoped to
+        // "this user's messages with this bot", not the single conversation.
+        // Previously this used the conversation's own id (cc.id) as if it
+        // were the chatbot id, so the subquery never matched anything and
+        // latest_message/latest_sent_time were always null.
         $results = Database::getInstance()->selectMulti(
             "cc.id, cc.chatbot_id, cc.conversation_name, cb.profil_fotografi,
-             (SELECT bc_inner.message FROM chatbot_chats bc_inner WHERE bc_inner.chatbot_id = cc.id ORDER BY bc_inner.sent_time DESC LIMIT 1) AS latest_message,
-             (SELECT bc_inner.sent_time FROM chatbot_chats bc_inner WHERE bc_inner.chatbot_id = cc.id ORDER BY bc_inner.sent_time DESC LIMIT 1) AS latest_sent_time
+             (SELECT bc_inner.message FROM chatbot_chats bc_inner WHERE bc_inner.chatbot_id = cc.chatbot_id AND bc_inner.user_id = cc.user_id ORDER BY bc_inner.sent_time DESC LIMIT 1) AS latest_message,
+             (SELECT bc_inner.sent_time FROM chatbot_chats bc_inner WHERE bc_inner.chatbot_id = cc.chatbot_id AND bc_inner.user_id = cc.user_id ORDER BY bc_inner.sent_time DESC LIMIT 1) AS latest_sent_time
              FROM chatbot_conversations cc
              INNER JOIN chatbotlar cb ON cc.chatbot_id = cb.id
              WHERE cc.user_id = ? ORDER BY cc.id DESC",

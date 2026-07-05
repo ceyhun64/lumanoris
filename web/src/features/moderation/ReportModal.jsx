@@ -22,6 +22,13 @@ export default function ReportModal({ isOpen, repId, onClose }) {
     },[]);
 
     useEffect(() => {
+        fetch("/api/auth/sessioncheck.php", { credentials: "include" })
+            .then((res) => res.json())
+            .then((result) => { if (result.authenticated) setUserId(result.user_id); })
+            .catch((err) => console.error("Session check error:", err));
+    }, []);
+
+    useEffect(() => {
         const closeOnEsc = (e) => e.key === 'Escape' && onClose();
         if (isOpen) document.addEventListener('keydown', closeOnEsc);
         return () => document.removeEventListener('keydown', closeOnEsc);

@@ -21,11 +21,18 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
         return self::insert(self::T, $data);
     }
 
-    public function update(int $id, array $data): bool {
+    /**
+     * Named updateById/deleteById (not update/delete) to avoid shadowing
+     * BaseRepository's static update()/delete() with an incompatible
+     * non-static signature — PHP forbids changing staticness when a method
+     * name collides with the parent's, which previously made this whole
+     * class fatal to even autoload.
+     */
+    public function updateById(int $id, array $data): bool {
         return self::update(self::T, $data, 'id = :_id', ['_id' => $id]) > 0;
     }
 
-    public function delete(int $id): bool {
+    public function deleteById(int $id): bool {
         return self::delete(self::T, 'id = ?', [$id]) > 0;
     }
 

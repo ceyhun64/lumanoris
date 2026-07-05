@@ -1,8 +1,7 @@
 <?php
 class WalletController {
     public static function getMyBalance(): void {
-        $userId = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
-        if (!$userId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
         $db = Database::getInstance();
 
@@ -52,8 +51,7 @@ class WalletController {
     }
 
     public static function getIban(): void {
-        $userId = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
-        if (!$userId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
         $row = Database::getInstance()->selectSingle('iban FROM banka_bilgileri WHERE user_id = ?', [$userId]);
         JsonResponse::success(['iban' => $row['iban'] ?? null]);
@@ -61,13 +59,14 @@ class WalletController {
 
     public static function withdraw(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
-        if (!$data || !isset($data['user_id'], $data['iban'], $data['amount'])) {
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
+        if (!$data || !isset($data['iban'], $data['amount'])) {
             JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
         }
 
         $id = Database::getInstance()->insert('para_cekme_talepleri', [
-            'user_id' => InputSanitizer::positiveInt($data['user_id']),
+            'user_id' => $userId,
             'iban'    => InputSanitizer::string($data['iban'], 40),
             'miktar'  => InputSanitizer::price($data['amount']),
             'durum'   => 'beklemede',
@@ -77,8 +76,7 @@ class WalletController {
     }
 
     public static function getBankInfo(): void {
-        $userId = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
-        if (!$userId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
         $row = Database::getInstance()->selectSingle('* FROM banka_bilgileri WHERE user_id = ?', [$userId]);
         JsonResponse::success(['bank_info' => $row]);
@@ -86,15 +84,24 @@ class WalletController {
 
     public static function saveBankInfo(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
-        if (!$data || !isset($data['user_id'])) {
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
+        if (!$data) {
             JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
         }
 
-        $userId = InputSanitizer::positiveInt($data['user_id']);
         $db     = Database::getInstance();
 
-        $allowed  = ['user_id', 'ad_soyad', 'iban', 'banka_adi', 'sube_kodu', 'hesap_no', 'tc_kimlik'];
+        // Whitelist matches the real banka_bilgileri schema (verified via live
+        // DESCRIBE — the old list referenced columns like ad_soyad/sube_kodu/
+        // hesap_no that don't exist, so every save silently dropped almost
+        // every field except iban).
+        $allowed  = [
+            'user_id', 'account_type', 'full_name', 'authorized_first_name', 'authorized_last_name',
+            'company_title', 'tax_number', 'tax_office', 'id_number', 'phone', 'iban', 'address',
+            'il', 'ilce', 'il_kod', 'ilce_kod', 'mahalle', 'cadde', 'sokak', 'bina_no', 'kapi_no',
+            'posta_kodu', 'kisi_dogum_tarihi', 'yetkili_kisi_dogum_tarihi',
+        ];
         $filtered = array_intersect_key($data, array_flip($allowed));
         $filtered['user_id'] = $userId;
 
@@ -111,17 +118,18 @@ class WalletController {
     }
 
     public static function getMyPayments(): void {
-        $userId = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
-        if (!$userId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
+        // Real column names are user_id/amount, not buyer_user_id/total_amount
+        // (confirmed via live DESCRIBE — see MarketplaceController::createSubscription).
         $rows = Database::getInstance()->selectMulti(
-            "p.id, p.order_id, p.total_amount, p.status, p.created_at,
+            "p.id, p.order_id, p.amount AS total_amount, p.status, p.created_at,
              d.chatbot_id, d.payable_amount AS item_amount, d.status AS item_status,
              c.isim AS chatbot_title
              FROM param_marketplace_payments p
              JOIN param_marketplace_details d ON d.payment_id = p.id
              LEFT JOIN chatbotlar c ON c.id = d.chatbot_id
-             WHERE p.buyer_user_id = ?
+             WHERE p.user_id = ?
                AND p.status IN ('paid', 'refunded', 'partial_refund')
              ORDER BY p.created_at DESC",
             [$userId]
@@ -131,8 +139,7 @@ class WalletController {
     }
 
     public static function getMySubscriptions(): void {
-        $userId = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
-        if (!$userId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
         $rows = Database::getInstance()->selectMulti(
             "us.id, us.chatbot_id, us.expiry_date, us.status,
@@ -200,11 +207,11 @@ class WalletController {
 
     public static function upgradePlan(): void {
         require_method('POST');
+        $userId   = AuthMiddleware::requireAuth();
         $data     = json_decode($_POST['data'] ?? '', true) ?? null;
-        $userId   = InputSanitizer::positiveInt($data['user_id'] ?? 0);
         $planName = InputSanitizer::string($data['plan_name'] ?? '', 30);
 
-        if (!$userId || !$planName) {
+        if (!$planName) {
             JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
         }
 
@@ -226,10 +233,10 @@ class WalletController {
     }
 
     public static function getSubscription(): void {
-        $userId    = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
+        $userId    = AuthMiddleware::requireAuth();
         $chatbotId = InputSanitizer::positiveInt($_GET['chatbot_id'] ?? 0);
 
-        if (!$userId || !$chatbotId) {
+        if (!$chatbotId) {
             JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
         }
 

@@ -2,12 +2,20 @@
 class TrainingController {
     public static function updateTrainingChunk(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data || !isset($data['id'], $data['textChunk'])) {
             JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
         }
 
-        $id      = InputSanitizer::positiveInt($data['id']);
+        $id = InputSanitizer::positiveInt($data['id']);
+
+        // Previously had no ownership check — anyone who knew a chatbot's id
+        // could overwrite or append to its training prompt.
+        if (!(new ChatbotRepository())->findByIdAndOwner($id, $userId)) {
+            JsonResponse::error('Bu chatbot üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
+        }
+
         $chunk   = $data['textChunk'];
         $isFirst = (bool) ($data['isFirst'] ?? false);
         $conn    = Database::getInstance()->getConnection();

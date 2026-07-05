@@ -140,12 +140,13 @@ export default function Explore() {
       };
   }, [showSortMenu]);
 
-    // İlk yüklemede tüm botları çek (veya searchTerm değiştiğinde)
+    // Botlar sadece ilk yüklemede çekilir — arama/filtreleme tamamen client-side
+    // (filteredAndSortedBots) yapıldığı için searchTerm değiştiğinde tekrar fetch
+    // etmek gereksizdi ve her tuş vuruşunda "loading" ekranını tetikleyip arama
+    // kutusunu unmount ederek input'un fokusunu/imlecini kaybettiriyordu.
     useEffect(() => {
-        // Eğer searchTerm state'i güncellendiyse (URL'den geldiği için veya kullanıcı yazdığı için),
-        // sadece o anki searchTerm değerine göre filtreleme yapacak.
-        fetchAllBots(); // **HEM İLK YÜKLEMEDE HEM DE SEARCHTERM DEĞİŞTİĞİNDE ÇALIŞACAK**
-    }, [fetchAllBots, searchTerm]); // Buraya searchTerm'i ekleyerek, searchTerm değiştiğinde tüm botları tekrar çekeriz.
+        fetchAllBots();
+    }, [fetchAllBots]);
 
 
     // *** KATEGORİ, ARAMA VE SIRALAMA İLE İSTEMCİ TARAFINDA İŞLEMLER ***
@@ -207,32 +208,6 @@ export default function Explore() {
                 return 0;
         }
     });
-
-    // *** KATEGORİ VE ARAMA İLE İSTEMCİ TARAFINDA FİLTRELEME ***
-    const filteredBots = apiBots.filter(bot => {
-        let matchesCategory = true;
-        let matchesSearch = true;
-
-        // 1. Kategori Filtreleme
-        if (activeCategory !== "Tümü") {
-            const selectedCategory = categories.find(cat => cat.kategori_adi_tr === activeCategory);
-            if (selectedCategory) {
-                matchesCategory = bot.kategori_id === selectedCategory.id;
-            } else {
-                matchesCategory = false; 
-            }
-        }
-
-        // 2. Arama Filtreleme (searchTerm state'ini kullanıyoruz)
-        if (searchTerm !== "") {
-            const lowerCaseSearchTerm = searchTerm.toLowerCase();
-            matchesSearch = bot.isim.toLowerCase().includes(lowerCaseSearchTerm);
-        }
-        
-        // Hem kategori hem de arama kriterleri EŞLEŞMELİ
-        return matchesCategory && matchesSearch;
-    });
-
 
     const toggleBotSelection = (botId) => {
         setSelectedBots((prev) =>
@@ -458,7 +433,7 @@ export default function Explore() {
                   </div>
                 </div>
                 <span className="user-count">
-                  {bot.toplam_chats.toLocaleString()} Toplam Sohbet
+                  {(bot.toplam_chats || 0).toLocaleString()} Toplam Sohbet
                 </span>
               </div>
             );

@@ -105,7 +105,11 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
         (async () => {
             try {
                 const res = await fetch(`/api/wallet/get_bank_info.php?userId=${userId}`);
-                const data = await res.json();
+                const result = await res.json();
+                // get_bank_info.php returns {success, bank_info}; unwrap it
+                // (previously the wrapper itself was spread, so none of the
+                // real fields ever reached the form).
+                const data = result?.bank_info;
                 if (!cancelled && data && typeof data === "object") {
                     setForm((prev) => ({
                         ...prev,

@@ -122,6 +122,7 @@ export default function List() {
                 //const randomDialogCount = Math.floor(Math.random() * 200) + 1;
 
                 const formattedList = {
+                    id: result.listId,
                     title: name,
                     username: "@kullanıcı",
                     summary: "0 bot içeriyor",

@@ -24,9 +24,13 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount, userId, 
                 setLoading(true);
                 try {
                     const res = await fetch(`/api/wallet/getiban.php?userId=${userId}`);
-                    const data = await res.json();
-                    if (data) {
-                        setIban(data);
+                    const result = await res.json();
+                    // getiban.php returns {success, iban}; iban can be null.
+                    // Previously the whole wrapper object was stored as the
+                    // iban state, which crashed the render below (`{iban}`)
+                    // the instant this modal opened.
+                    if (result.success && result.iban) {
+                        setIban(result.iban);
                         setIbanError('');
                     } else {
                         setIbanError('Para çekebilmek için önce Ayarlar > Banka ve Güvenlik bölümünden IBAN kaydetmelisiniz.');
@@ -99,14 +103,15 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount, userId, 
         setLoading(true);
 
         try {
+            // withdraw.php reads $_POST['data'] as JSON (form-encoded body),
+            // not a raw application/json request body — the previous
+            // JSON.stringify + Content-Type: application/json meant $_POST
+            // was always empty and this request could never succeed.
+            const formData = new FormData();
+            formData.append('data', JSON.stringify({ iban, amount: pendingPayload.amount }));
             const res = await fetch('/api/wallet/withdraw.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId,
-                    iban,
-                    amount: pendingPayload.amount,
-                }),
+                body: formData,
             });
             const result = await res.json();
 

@@ -13,29 +13,31 @@ class ChatbotController {
             JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
         }
 
-        $authorUserId  = InputSanitizer::positiveInt($data['author_user_id'] ?? 0);
+        // Identity comes from the session, never from the client-supplied
+        // author_user_id — otherwise anyone could create bots "as" another
+        // user, or dodge their own free-tier limit by claiming someone else's id.
+        $authorUserId  = AuthMiddleware::requireAuth();
         $isIndependent = !empty($data['is_independent']) ? 1 : 0;
         $data['is_independent'] = $isIndependent;
+        $data['author_user_id'] = $authorUserId;
 
         $repo = new ChatbotRepository();
 
-        if ($authorUserId > 0) {
-            $db    = Database::getInstance();
-            $limit = $isIndependent ? getIndependentBotLimit($db, $authorUserId) : getPublicBotLimit($db, $authorUserId);
-            $counts = $repo->countByOwner($authorUserId);
-            $used  = $isIndependent ? $counts['independent'] : $counts['public'];
+        $db    = Database::getInstance();
+        $limit = $isIndependent ? getIndependentBotLimit($db, $authorUserId) : getPublicBotLimit($db, $authorUserId);
+        $counts = $repo->countByOwner($authorUserId);
+        $used  = $isIndependent ? $counts['independent'] : $counts['public'];
 
-            if ($used >= $limit) {
-                JsonResponse::error(
-                    $isIndependent
-                        ? 'Ücretsiz bağımsız chatbot hakkınızı kullandınız.'
-                        : 'Ücretsiz herkese açık chatbot hakkınızı kullandınız.',
-                    422, AppConfig::ERR_LIMIT_REACHED
-                );
-            }
+        if ($used >= $limit) {
+            JsonResponse::error(
+                $isIndependent
+                    ? 'Ücretsiz bağımsız chatbot hakkınızı kullandınız.'
+                    : 'Ücretsiz herkese açık chatbot hakkınızı kullandınız.',
+                422, AppConfig::ERR_LIMIT_REACHED
+            );
         }
 
-        if ($authorUserId > 0 && !$isIndependent) {
+        if (!$isIndependent) {
             $sellerStatus = $repo->getSellerStatus($authorUserId);
             if ($sellerStatus !== 'active') {
                 JsonResponse::error('Önce Pazaryeri satıcı kaydınızı tamamlayın.', 422, AppConfig::ERR_SELLER_INACTIVE);
@@ -59,7 +61,7 @@ class ChatbotController {
 
     public static function getChatbot(): void {
         $id     = InputSanitizer::positiveInt($_GET['id'] ?? 0);
-        $userId = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
+        $userId = AuthMiddleware::optionalAuth();
 
         if (!$id) {
             JsonResponse::error('Chatbot ID gerekli.', 400, AppConfig::ERR_VALIDATION);
@@ -88,7 +90,7 @@ class ChatbotController {
     }
 
     public static function getChatbotsV2(): void {
-        $userId = InputSanitizer::positiveInt($_GET['userId'] ?? 0);
+        $userId = AuthMiddleware::optionalAuth();
         $search = InputSanitizer::string($_GET['search'] ?? '');
         $repo   = new ChatbotRepository();
         echo json_encode($repo->getPublishedV2($userId, ['search' => $search !== '' ? $search : null]));
@@ -97,33 +99,48 @@ class ChatbotController {
 
     public static function updateChatbot(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
 
         if (!$data || !isset($data['id'])) {
             JsonResponse::error('Veri veya ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
         }
 
-        $data['owner_user_id'] = $data['author_user_id'] ?? $data['owner_user_id'] ?? null;
+        $id   = (int) $data['id'];
+        $repo = new ChatbotRepository();
+
+        // Previously this had no ownership check at all — anyone who knew a
+        // chatbot's id could overwrite its data.
+        if (!$repo->findByIdAndOwner($id, $userId)) {
+            JsonResponse::error('Bu chatbot üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
+        }
+
+        unset($data['id'], $data['author_user_id'], $data['owner_user_id']);
         $data = self::handleImageUploads($data);
 
-        $id = (int) $data['id'];
-        unset($data['id']);
-
-        $repo = new ChatbotRepository();
-        $repo->update($id, $data);
+        $repo->updateById($id, $data);
         JsonResponse::success(['message' => 'Chatbot başarıyla güncellendi!', 'id' => $id]);
     }
 
     public static function deleteChatbot(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? [];
-        $id   = InputSanitizer::positiveInt($data['id'] ?? $_POST['id'] ?? 0);
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? [];
+        $id     = InputSanitizer::positiveInt($data['id'] ?? $_POST['id'] ?? 0);
 
         if (!$id) {
             JsonResponse::error('ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
         }
 
-        (new ChatbotRepository())->delete($id);
+        $repo = new ChatbotRepository();
+
+        // Previously this had no ownership check at all — anyone who knew a
+        // chatbot's id could delete it.
+        if (!$repo->findByIdAndOwner($id, $userId)) {
+            JsonResponse::error('Bu chatbot üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
+        }
+
+        $repo->deleteById($id);
         JsonResponse::success(['message' => 'Chatbot silindi.']);
     }
 
@@ -131,13 +148,13 @@ class ChatbotController {
         require_method('POST');
         require_once __DIR__ . '/../../../functions/chatbot_limits.php';
 
+        $userId  = AuthMiddleware::requireAuth();
         $data    = json_decode($_POST['data'] ?? '', true) ?? null;
         $id      = InputSanitizer::positiveInt($data['id'] ?? 0);
-        $userId  = InputSanitizer::positiveInt($data['user_id'] ?? 0);
         $weekly  = isset($data['ucret_haftalik']) ? (float) $data['ucret_haftalik'] : 0;
         $monthly = isset($data['ucret_aylik'])    ? (float) $data['ucret_aylik']    : 0;
 
-        if (!$data || !$id || !$userId) {
+        if (!$data || !$id) {
             JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
         }
         if ($weekly <= 0 || $monthly <= 0) {
@@ -166,17 +183,17 @@ class ChatbotController {
             JsonResponse::error('Önce Pazaryeri satıcı kaydınızı tamamlayın.', 422, AppConfig::ERR_SELLER_INACTIVE);
         }
 
-        $repo->update($id, ['is_independent' => 0, 'ucret_haftalik' => $weekly, 'ucret_aylik' => $monthly]);
+        $repo->updateById($id, ['is_independent' => 0, 'ucret_haftalik' => $weekly, 'ucret_aylik' => $monthly]);
         JsonResponse::success(['message' => 'Chatbot herkese açık olarak yayınlandı!']);
     }
 
     public static function unpublishChatbot(): void {
         require_method('POST');
+        $userId = AuthMiddleware::requireAuth();
         $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         $id     = InputSanitizer::positiveInt($data['id'] ?? 0);
-        $userId = InputSanitizer::positiveInt($data['user_id'] ?? 0);
 
-        if (!$data || !$id || !$userId) {
+        if (!$data || !$id) {
             JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
         }
 
@@ -192,7 +209,7 @@ class ChatbotController {
     }
 
     public static function getChatbotsMenu(): void {
-        $userId = InputSanitizer::positiveInt($_GET['id'] ?? 0);
+        $userId = AuthMiddleware::requireAuth();
         $repo   = new ChatbotRepository();
         echo json_encode($repo->getMenuItems($userId));
         exit;
@@ -200,11 +217,7 @@ class ChatbotController {
 
     public static function getChatbotLimits(): void {
         require_once __DIR__ . '/../../../functions/chatbot_limits.php';
-        $userId = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
-
-        if (!$userId) {
-            JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
-        }
+        $userId = AuthMiddleware::requireAuth();
 
         $db               = Database::getInstance();
         $repo             = new ChatbotRepository();
@@ -223,7 +236,7 @@ class ChatbotController {
     }
 
     public static function getSuggested(): void {
-        $userId = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
+        $userId = AuthMiddleware::optionalAuth();
         $limit  = InputSanitizer::positiveInt($_GET['limit'] ?? 3);
 
         if (!$userId) {
@@ -256,7 +269,8 @@ class ChatbotController {
 
     public static function updateChatbotPrice(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
 
         if (!$data || !isset($data['id'])) {
             JsonResponse::error('Veri veya Chatbot ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
@@ -267,6 +281,13 @@ class ChatbotController {
         $monthly = InputSanitizer::price($data['ucret_aylik'] ?? 0);
 
         $repo = new ChatbotRepository();
+
+        // Previously had no ownership check at all — anyone who knew a
+        // chatbot's id could change its price.
+        if (!$repo->findByIdAndOwner($id, $userId)) {
+            JsonResponse::error('Bu chatbot üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
+        }
+
         $ok   = $repo->updatePrice($id, $weekly, $monthly);
 
         if ($ok) {

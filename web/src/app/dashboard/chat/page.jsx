@@ -218,7 +218,7 @@ export default function Chat() {
     const handleConversationData = async (data) => {
         setConversation(data);
 
-        if (data[0]?.id == 0 && prompt.trim() !== "") {
+        if (data?.id == 0 && prompt.trim() !== "") {
           const words = prompt.trim().split(/\s+/);
           let convName = words.slice(0, 5).join(" ");
           if (words.length > 5) {
@@ -268,7 +268,7 @@ export default function Chat() {
     // otomatik devam ettirmek yerine her zaman yeni ve temiz bir sohbet
     // başlatılır.
     if (conversationId < 1) {
-      handleConversationData([{ id: 0, conversation_name: "Yeni Sohbet" }]);
+      handleConversationData({ id: 0, conversation_name: "Yeni Sohbet" });
       return;
     }
 

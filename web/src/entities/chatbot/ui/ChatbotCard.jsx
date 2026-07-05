@@ -72,25 +72,21 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
     };
 
     useEffect(() => {
+        if (!id) return;
+        // Both endpoints read $_GET (session provides identity) — previously
+        // sent as a POST body, so $_GET was always empty and the "did I
+        // already react" check never resolved.
         const checkLike = async () => {
             try {
-                const res = await fetch("/api/social/diduserlike.php", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: new URLSearchParams({ data: JSON.stringify({ user_id: userId, chatbot_id: id }) }),
-                });
-                const result = JSON.parse(await res.text());
+                const res = await fetch(`/api/social/diduserlike.php?chatbot_id=${id}`);
+                const result = await res.json();
                 if (result.success) setLiked(result.didLike);
             } catch (err) { console.error("diduserlike API error:", err); }
         };
         const checkDislike = async () => {
             try {
-                const res = await fetch("/api/social/diduserdislike.php", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: new URLSearchParams({ data: JSON.stringify({ user_id: userId, chatbot_id: id }) }),
-                });
-                const result = JSON.parse(await res.text());
+                const res = await fetch(`/api/social/diduserdislike.php?chatbot_id=${id}`);
+                const result = await res.json();
                 if (result.success) setDisliked(result.didDisLike);
             } catch (err) { console.error("diduserdislike API error:", err); }
         };
@@ -131,14 +127,23 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
     return (
         <>
             <div
+                role="button"
+                tabIndex={0}
                 className={cn(
                     'relative flex items-stretch gap-0 rounded-2xl overflow-hidden cursor-pointer',
                     'bg-gradient-to-r from-[#111120] to-[#0D0D1A]',
                     'border border-indigo-400/10 transition-all duration-300',
                     'hover:-translate-y-0.5 hover:border-indigo-400/22 hover:shadow-[0_6px_24px_rgba(99,102,241,0.13)]',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
                     isInactiveSeller ? 'opacity-70 saturate-50' : '',
                 )}
                 onClick={() => router.push('/dashboard/chat?botId=' + id)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        router.push('/dashboard/chat?botId=' + id);
+                    }
+                }}
             >
                 {/* Inactive seller banner */}
                 {isInactiveSeller && (
@@ -211,7 +216,8 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
                         {/* 3-dot menu */}
                         <div className="relative shrink-0 ml-1" ref={menuRef}>
                             <button
-                                className="flex items-center justify-center w-7 h-7 rounded-lg text-white/40 hover:text-white/80 hover:bg-indigo-500/10 transition-all"
+                                aria-label="Chatbot menüsü"
+                                className="flex items-center justify-center w-7 h-7 rounded-lg text-white/40 hover:text-white/80 hover:bg-indigo-500/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base"
                                 onClick={(e) => { e.stopPropagation(); setCardMenuOpen(v => !v); }}
                             >
                                 <svg width="4" height="14" viewBox="0 0 4 16" fill="currentColor">
@@ -224,7 +230,7 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     <button
-                                        className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[12.5px] text-rose-400 hover:bg-rose-500/10 transition-colors"
+                                        className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[12.5px] text-rose-400 hover:bg-rose-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmDeleteOpen(true); setCardMenuOpen(false); }}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 20 21" fill="currentColor" className="opacity-80">
@@ -234,7 +240,7 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
                                     </button>
                                     {isOwn && !isIndependent && (
                                         <button
-                                            className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[12.5px] text-white/70 hover:bg-indigo-500/10 hover:text-white transition-colors"
+                                            className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[12.5px] text-white/70 hover:bg-indigo-500/10 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setUnpublishConfirmOpen(true); setCardMenuOpen(false); }}
                                         >
                                             Yayından Kaldır
@@ -336,7 +342,8 @@ function StatBtn({ active, activeClass, onClick, children }) {
     return (
         <button
             className={cn(
-                'flex items-center gap-1.5 text-[12px] transition-colors px-0',
+                'flex items-center gap-1.5 text-[12px] transition-colors px-0 rounded-md',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
                 active ? (activeClass ?? 'text-indigo-300') : 'text-white/45 hover:text-white/75',
             )}
             onClick={onClick}
@@ -349,7 +356,7 @@ function StatBtn({ active, activeClass, onClick, children }) {
 function ActionBtn({ onClick, children }) {
     return (
         <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/8 border border-indigo-400/18 text-indigo-300 text-[11.5px] font-semibold hover:bg-indigo-500/15 hover:border-indigo-400/35 transition-all duration-150"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/8 border border-indigo-400/18 text-indigo-300 text-[11.5px] font-semibold hover:bg-indigo-500/15 hover:border-indigo-400/35 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base"
             onClick={onClick}
         >
             {children}

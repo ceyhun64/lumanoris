@@ -1,8 +1,7 @@
 <?php
 class UserController {
     public static function getUserHeader(): void {
-        $userId = InputSanitizer::positiveInt($_GET['id'] ?? 0);
-        if (!$userId) JsonResponse::error('ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
         $repo = new UserRepository();
         $user = $repo->findById($userId);
@@ -19,8 +18,7 @@ class UserController {
     }
 
     public static function getUserNames(): void {
-        $userId = InputSanitizer::positiveInt($_GET['id'] ?? 0);
-        if (!$userId) JsonResponse::error('ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
         $repo = new UserRepository();
         $user = $repo->findById($userId);
@@ -31,8 +29,7 @@ class UserController {
 
     public static function updateUserNames(): void {
         require_method('POST');
-        $userId = InputSanitizer::positiveInt($_POST['id'] ?? 0);
-        if (!$userId) JsonResponse::error('ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
         $adSoyad      = InputSanitizer::string($_POST['ad_soyad'] ?? '', 100);
         $kullaniciAdi = InputSanitizer::string($_POST['kullanici_adi'] ?? '', 60);
@@ -50,8 +47,7 @@ class UserController {
     }
 
     public static function getUserEmail(): void {
-        $userId = InputSanitizer::positiveInt($_GET['id'] ?? 0);
-        if (!$userId) JsonResponse::error('ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
         $user = (new UserRepository())->findById($userId);
         if (!$user) JsonResponse::error('Kullanıcı bulunamadı.', 404, AppConfig::ERR_NOT_FOUND);
@@ -61,10 +57,9 @@ class UserController {
 
     public static function updateUserEmail(): void {
         require_method('POST');
-        $userId   = InputSanitizer::positiveInt($_POST['id'] ?? 0);
+        $userId   = AuthMiddleware::requireAuth();
         $newEmail = InputSanitizer::email($_POST['email'] ?? '');
 
-        if (!$userId)   JsonResponse::error('ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
         if (!$newEmail) JsonResponse::error('Yeni e-posta adresi zorunludur!', 400, AppConfig::ERR_VALIDATION);
         if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
             JsonResponse::error('Geçerli bir e-posta adresi girin.', 400, AppConfig::ERR_VALIDATION);
@@ -79,8 +74,7 @@ class UserController {
     }
 
     public static function getUserPhone(): void {
-        $userId = InputSanitizer::positiveInt($_GET['id'] ?? 0);
-        if (!$userId) JsonResponse::error('ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
         $user = (new UserRepository())->findById($userId);
         if (!$user) JsonResponse::error('Kullanıcı bulunamadı.', 404, AppConfig::ERR_NOT_FOUND);
@@ -90,10 +84,9 @@ class UserController {
 
     public static function updateUserPhone(): void {
         require_method('POST');
-        $userId  = InputSanitizer::positiveInt($_POST['id'] ?? 0);
+        $userId  = AuthMiddleware::requireAuth();
         $telefon = InputSanitizer::string($_POST['telefon'] ?? '', 20);
 
-        if (!$userId)  JsonResponse::error('ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
         if (!$telefon) JsonResponse::error('Telefon numarası zorunludur!', 400, AppConfig::ERR_VALIDATION);
 
         $ok = (new UserRepository())->updateById($userId, ['telefon' => $telefon]);
@@ -106,13 +99,15 @@ class UserController {
 
     public static function uploadProfilePhoto(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
-        $userId = InputSanitizer::positiveInt($data['id'] ?? 0);
         $avatar = $data['avatar'] ?? null;
 
-        if (!$userId || !$avatar) {
+        // avatar === "" is a valid request meaning "remove my photo" — only a
+        // truly missing key should be rejected.
+        if ($avatar === null) {
             JsonResponse::error('Eksik alanlar!', 400, AppConfig::ERR_VALIDATION);
         }
 
@@ -125,8 +120,7 @@ class UserController {
     }
 
     public static function getProfilePhoto(): void {
-        $userId = InputSanitizer::positiveInt($_GET['id'] ?? 0);
-        if (!$userId) JsonResponse::error('ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
         $user   = (new UserRepository())->findById($userId);
         $avatar = isset($user['avatar']) ? preg_replace('/\s+/', '', $user['avatar']) : null;

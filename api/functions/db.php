@@ -11,9 +11,9 @@ class Database {
     private $database;
 
     // Geliştirme (Dev) Ayarları
-    private $host_dev = 'localhost:3307';
+    private $host_dev = 'localhost:3306';
     private $username_dev = 'root';
-    private $password_dev = '';
+    private $password_dev = 'Ceycey.123';
     private $database_dev = 'lumanoris';
 
     // Üretim (Prod) Ayarları

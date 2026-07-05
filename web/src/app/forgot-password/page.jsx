@@ -10,12 +10,10 @@ export default function ForgotPassword() {
     const [showPassword, setShowPassword] = useState(false);
     const [showPasswordRepeat, setShowPasswordRepeat] = useState(false);
     const [email, setEmail] = useState("");
-    const [verificationCode, setVerificationCode] = useState(""); // *** YENİ: Doğrulama kodu state'i ***
+    const [verificationCode, setVerificationCode] = useState("");
     const [password, setPassword] = useState("");
     const [passwordRepeat, setPasswordRepeat] = useState("");
     const [alert, setAlert] = useState({ show: false, message: "", type: "warning" });
-    const [generatedCode, setGeneratedCode] = useState(""); // *** YENİ: Oluşturulan kod (TEST AMAÇLI) ***
-    const [userId, setUserId] = useState(null);
 
     // Email validation
     const validateEmail = (email) => {
@@ -42,11 +40,6 @@ export default function ForgotPassword() {
         setAlert({ show: false, message: "", type: "warning" });
     };
 
-    // Doğrulama kodu oluşturma (TEST AMAÇLI)
-    const generateRandomCode = () => {
-        return Math.floor(100000 + Math.random() * 900000).toString();
-    };
-
     // Handle step 1 - Send code
     const handleSendCode = async () => {
         if (!email.trim()) {
@@ -59,31 +52,21 @@ export default function ForgotPassword() {
             return;
         }
 
-        // Kod oluşturuluyor ve state'e atanıyor
-        const code = generateRandomCode();
-        setGeneratedCode(code);
-
         try {
-            // Backend'e POST isteği atıyoruz
+            // Kod sunucu tarafında üretilip saklanır; istemci sadece e-postayı gönderir.
             const formData = new FormData();
             formData.append("email", email);
-            formData.append("resetCode", code);
 
             const res = await fetch("/api/auth/passresetmail.php", {
             method: "POST",
             body: formData,
             });
 
-            const resultText = await res.text();
-            console.log(resultText);
-            const result = JSON.parse(resultText);
-            // const result = await res.json();
-            // console.log("API result:", result);
+            const result = await res.json();
 
             if (result.success) {
             setStep(2);
             showAlert("Doğrulama kodu e-posta adresinize gönderildi.", "success");
-            setUserId(result.user_id);
             } else {
             showAlert(result.message || "Kod gönderilemedi.");
             }
@@ -95,14 +78,10 @@ export default function ForgotPassword() {
 
     // Handle password save
     const handleSavePassword = async () => {
-        // Kod kontrolü
+        // Kod kontrolü artık sunucu tarafında yapılıyor (updateuserpass.php),
+        // burada sadece boş bırakılmadığını kontrol ediyoruz.
         if (!verificationCode.trim()) {
             showAlert("Doğrulama kodu boş olamaz.");
-            return;
-        }
-
-        if (verificationCode !== generatedCode) {
-            showAlert("Girilen doğrulama kodu hatalı.");
             return;
         }
 
@@ -129,9 +108,10 @@ export default function ForgotPassword() {
         }
 
         try {
-            // Backend'e isteği gönderiyoruz
+            // Backend'e isteği gönderiyoruz — kimlik e-posta + kod ile doğrulanır
             const formData = new FormData();
-            formData.append("id", userId); // şifre sıfırlanan kullanıcının id'si
+            formData.append("email", email);
+            formData.append("code", verificationCode);
             formData.append("password", password);
             formData.append("password_confirm", passwordRepeat);
 

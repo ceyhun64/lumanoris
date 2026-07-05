@@ -2,23 +2,29 @@
 class NoteController {
     public static function addDialogBook(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
+        $data['user_id'] = $userId;
         $id = Database::getInstance()->insert('user_dialog_books', $data);
         JsonResponse::success(['message' => 'Yeni sohbet başarıyla başlatıldı!', 'id' => $id]);
     }
 
     public static function getDialogues(): void {
+        // user_dialog_books.chatbot_id is already the real chatbot id (see
+        // addDialogBook / DialogNotebookModal.jsx) — the previous query
+        // joined it against chatbot_conversations.id as if it were a
+        // conversation id, so every chatbot_isim/photo/category/owner field
+        // always came back null.
         $results = Database::getInstance()->selectMulti(
             "udb.*,
-             cc.chatbot_id AS conversation_chatbot_id,
+             udb.chatbot_id AS conversation_chatbot_id,
              c.owner_user_id, c.isim AS chatbot_isim, c.kategori_id AS chatbot_kategori_id,
              c.profil_fotografi AS chatbot_profil_fotografi,
              k.kullanici_adi AS owner_kullanici_adi
              FROM user_dialog_books udb
-             LEFT JOIN chatbot_conversations cc ON udb.chatbot_id = cc.id
-             LEFT JOIN chatbotlar c ON cc.chatbot_id = c.id
+             LEFT JOIN chatbotlar c ON udb.chatbot_id = c.id
              LEFT JOIN kullanicilar k ON c.owner_user_id = k.id
              ORDER BY RAND() LIMIT 100",
             []
@@ -53,19 +59,21 @@ class NoteController {
 
     public static function addComment(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
+        $data['user_id'] = $userId;
         $id = Database::getInstance()->insert('dialog_comments', $data);
         JsonResponse::success(['message' => 'Yorum eklendi.', 'id' => $id]);
     }
 
     public static function likeDialog(): void {
         require_method('POST');
+        $userId   = AuthMiddleware::requireAuth();
         $data     = json_decode($_POST['data'] ?? '', true) ?? null;
-        $userId   = InputSanitizer::positiveInt($data['user_id'] ?? 0);
         $dialogId = InputSanitizer::positiveInt($data['dialog_id'] ?? 0);
-        if (!$data || !$userId || !$dialogId) JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
+        if (!$data || !$dialogId) JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
 
         $db       = Database::getInstance();
         $existing = $db->selectSingle('id FROM dialog_likes WHERE user_id = ? AND dialog_id = ?', [$userId, $dialogId]);
@@ -82,10 +90,10 @@ class NoteController {
 
     public static function dislikeDialog(): void {
         require_method('POST');
+        $userId   = AuthMiddleware::requireAuth();
         $data     = json_decode($_POST['data'] ?? '', true) ?? null;
-        $userId   = InputSanitizer::positiveInt($data['user_id'] ?? 0);
         $dialogId = InputSanitizer::positiveInt($data['dialog_id'] ?? 0);
-        if (!$data || !$userId || !$dialogId) JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
+        if (!$data || !$dialogId) JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
 
         $db       = Database::getInstance();
         $existing = $db->selectSingle('id FROM dialog_dislikes WHERE user_id = ? AND dialog_id = ?', [$userId, $dialogId]);
@@ -101,18 +109,18 @@ class NoteController {
     }
 
     public static function didUserLike(): void {
-        $userId   = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
+        $userId   = AuthMiddleware::optionalAuth();
         $dialogId = InputSanitizer::positiveInt($_GET['dialog_id'] ?? 0);
-        if (!$userId || !$dialogId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        if (!$dialogId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
 
         $row = Database::getInstance()->selectSingle('id FROM dialog_likes WHERE user_id = ? AND dialog_id = ?', [$userId, $dialogId]);
         JsonResponse::success(['didLike' => (bool) $row]);
     }
 
     public static function didUserDislike(): void {
-        $userId   = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
+        $userId   = AuthMiddleware::optionalAuth();
         $dialogId = InputSanitizer::positiveInt($_GET['dialog_id'] ?? 0);
-        if (!$userId || !$dialogId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        if (!$dialogId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
 
         $row = Database::getInstance()->selectSingle('id FROM dialog_dislikes WHERE user_id = ? AND dialog_id = ?', [$userId, $dialogId]);
         JsonResponse::success(['didDisLike' => (bool) $row]);

@@ -101,15 +101,19 @@ class AuthController {
         JsonResponse::success(['user_id' => $userId, 'message' => 'Login successful']);
     }
 
+    /**
+     * SECURITY: the reset code is generated and stored (hashed) here on the
+     * server — it must never be accepted from the client. A client-supplied
+     * code would let anyone request a "reset" for any email and just tell
+     * the server what the "correct" code is, defeating verification entirely.
+     */
     public static function sendPasswordResetMail(): void {
         require_method('POST');
         require_once __DIR__ . '/../../../functions/phpmailer.php';
 
-        $email     = InputSanitizer::email($_POST['email'] ?? '');
-        $resetCode = InputSanitizer::string($_POST['resetCode'] ?? '', 20);
-
-        if (!$email || !$resetCode) {
-            JsonResponse::error('Email ve kod zorunludur!', 400, AppConfig::ERR_VALIDATION);
+        $email = InputSanitizer::email($_POST['email'] ?? '');
+        if (!$email) {
+            JsonResponse::error('Email zorunludur!', 400, AppConfig::ERR_VALIDATION);
         }
 
         $users = new UserRepository();
@@ -118,28 +122,60 @@ class AuthController {
             JsonResponse::error('Bu e-posta ile kayıtlı bir kullanıcı bulunamadı.', 404, AppConfig::ERR_NOT_FOUND);
         }
 
+        $code     = (string) random_int(100000, 999999);
+        $codeHash = hash('sha256', $code);
+
+        $db   = Database::getInstance();
+        $conn = $db->getConnection();
+        $conn->exec(
+            'CREATE TABLE IF NOT EXISTS password_resets (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                code_hash VARCHAR(64) NOT NULL,
+                expires_at DATETIME NOT NULL,
+                INDEX (user_id)
+            )'
+        );
+        // Only one active reset code per user at a time.
+        $db->delete('password_resets', 'user_id = ?', [$user['id']]);
+        // expires_at is computed by MySQL itself (NOW() + INTERVAL), not PHP's
+        // date() — the app server and DB server can run in different
+        // timezones (seen locally: PHP=UTC, MySQL=UTC+3), and comparing a
+        // PHP-computed timestamp against MySQL's NOW() in a later query would
+        // silently treat every code as already expired.
+        $stmt = $conn->prepare(
+            'INSERT INTO password_resets (user_id, code_hash, expires_at) VALUES (?, ?, NOW() + INTERVAL 15 MINUTE)'
+        );
+        $stmt->execute([$user['id'], $codeHash]);
+
         $name    = htmlspecialchars($user['ad_soyad'] ?? '', ENT_QUOTES, 'UTF-8');
         $subject = 'Şifre Sıfırlama Kodu';
         $body    = "<p>Merhaba <strong>$name</strong>,</p>
                     <p>Şifrenizi sıfırlamak için kullanmanız gereken kod:</p>
-                    <h2 style='color:#2c3e50;'>$resetCode</h2>
-                    <p>Bu kodu şifre sıfırlama ekranına girerek yeni şifrenizi belirleyebilirsiniz.</p>
+                    <h2 style='color:#2c3e50;'>$code</h2>
+                    <p>Bu kod 15 dakika geçerlidir.</p>
                     <p>Eğer bu talebi siz yapmadıysanız, lütfen bu e-postayı dikkate almayın.</p>";
 
-        $result            = sendEmail(AppConfig::noreplyEmail(), 'Sistem', $email, $subject, $body);
-        $result['user_id'] = $user['id'];
+        $result = sendEmail(AppConfig::noreplyEmail(), 'Sistem', $email, $subject, $body);
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
         exit;
     }
 
+    /**
+     * SECURITY: identity is derived from a valid, unexpired (email, code)
+     * pair — never from a client-supplied user id. Previously this endpoint
+     * accepted an arbitrary `id` with no verification at all, allowing
+     * anyone to overwrite any account's password.
+     */
     public static function updatePassword(): void {
         require_method('POST');
-        $userId          = InputSanitizer::positiveInt($_POST['id'] ?? 0);
+        $email           = InputSanitizer::email($_POST['email'] ?? '');
+        $code            = InputSanitizer::string($_POST['code'] ?? '', 10);
         $password        = $_POST['password'] ?? null;
         $passwordConfirm = $_POST['password_confirm'] ?? null;
 
-        if (!$userId) {
-            JsonResponse::error('ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
+        if (!$email || !$code) {
+            JsonResponse::error('E-posta ve doğrulama kodu zorunludur!', 400, AppConfig::ERR_VALIDATION);
         }
         if (!$password || !$passwordConfirm) {
             JsonResponse::error('Şifre ve doğrulama zorunludur!', 400, AppConfig::ERR_VALIDATION);
@@ -148,14 +184,26 @@ class AuthController {
             JsonResponse::error('Şifreler eşleşmiyor!', 400, AppConfig::ERR_VALIDATION);
         }
 
-        $hashed = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
-        $users  = new UserRepository();
-        $ok     = $users->updateById($userId, ['sifre' => $hashed]);
-
-        if ($ok) {
-            JsonResponse::success(['message' => 'Şifre güncellendi.']);
-        } else {
-            JsonResponse::error('Şifre güncellenemedi veya kullanıcı bulunamadı.', 400);
+        $users = new UserRepository();
+        $user  = $users->findByEmail($email);
+        if (!$user) {
+            JsonResponse::error('Kod geçersiz veya süresi dolmuş.', 400, AppConfig::ERR_VALIDATION);
         }
+
+        $db  = Database::getInstance();
+        $row = $db->selectSingle(
+            '* FROM password_resets WHERE user_id = ? AND expires_at > NOW() ORDER BY id DESC LIMIT 1',
+            [$user['id']]
+        );
+
+        if (!$row || !hash_equals($row['code_hash'], hash('sha256', $code))) {
+            JsonResponse::error('Kod geçersiz veya süresi dolmuş.', 400, AppConfig::ERR_VALIDATION);
+        }
+
+        $hashed = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+        $users->updateById($user['id'], ['sifre' => $hashed]);
+        $db->delete('password_resets', 'user_id = ?', [$user['id']]);
+
+        JsonResponse::success(['message' => 'Şifre güncellendi.']);
     }
 }

@@ -80,10 +80,18 @@ function parse_get_data(): array {
 // ─── Global exception → JSON response ────────────────────────────────────────
 
 set_exception_handler(function (Throwable $e) {
+    error_log('[uncaught] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+
     http_response_code(500);
+    // Only leak the real exception message when APP_DEBUG=true is set (local
+    // dev). Otherwise it can expose DB schema, file paths, and other internals
+    // to any client that triggers a 500 — full detail is still in error_log.
+    $debug   = strtolower((string) ($_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG') ?: '')) === 'true';
+    $message = $debug ? ('Sunucu hatası: ' . $e->getMessage()) : 'Sunucu hatası oluştu.';
+
     echo json_encode([
         'success' => false,
-        'message' => 'Sunucu hatası: ' . $e->getMessage(),
+        'message' => $message,
     ], JSON_UNESCAPED_UNICODE);
     exit;
 });

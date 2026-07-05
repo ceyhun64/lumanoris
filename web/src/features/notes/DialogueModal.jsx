@@ -45,25 +45,16 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
       }
     }
 
+    // Both endpoints read $_GET (session provides identity) — previously
+    // sent as a POST body, so $_GET was always empty and the "did I already
+    // react" check never resolved.
     const checkUserLike = async () => {
       try {
-        const res = await fetch("/api/note/diduserlike2.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            data: JSON.stringify({
-              user_id: userId,
-              dialog_id: selectedHistory.id,
-            }),
-          }),
-        });
-
-        const resultText = await res.text();
-        //console.log(resultText);
-        const result = JSON.parse(resultText);
+        const res = await fetch(`/api/note/diduserlike2.php?dialog_id=${selectedHistory.id}`);
+        const result = await res.json();
 
         if (result.success) {
-          setLiked(result.didLike); // backend'den gelen boolean
+          setLiked(result.didLike);
         }
       } catch (err) {
         console.error("diduserlike API error:", err);
@@ -72,23 +63,11 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
 
     const checkUserDisLike = async () => {
       try {
-        const res = await fetch("/api/note/diduserdislike2.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            data: JSON.stringify({
-              user_id: userId,
-              dialog_id: selectedHistory.id,
-            }),
-          }),
-        });
-
-        const resultText = await res.text();
-        //console.log(resultText);
-        const result = JSON.parse(resultText);
+        const res = await fetch(`/api/note/diduserdislike2.php?dialog_id=${selectedHistory.id}`);
+        const result = await res.json();
 
         if (result.success) {
-          setDisliked(result.didDisLike); // backend'den gelen boolean
+          setDisliked(result.didDisLike);
         }
       } catch (err) {
         console.error("diduserdislike API error:", err);
@@ -97,29 +76,32 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
 
     useEffect(() => {
         checkSession();
-        //console.log("History to display: ",selectedHistory);
+    }, []);
+
+    useEffect(() => {
         const dialogId = selectedHistory.id;
         if (dialogId) {
             fetch(`/api/note/getdialoginteracts.php?id=${dialogId}`)
                 .then((response) => response.json())
                 .then((data) => {
-                    //console.log(data);
                     setLikeCount(data.dialog.likes);
                     setDislikeCount(data.dialog.dislikes);
                     setComments(data.comments);
                     setCommentCount(data.comments.length);
-                    /*setLiked(data.liked);
-                    setDisliked(data.disliked);*/
-
                 })
                 .catch((error) => {
                     console.error("Hata:", error);
                 });
         }
+
+        // userId sessioncheck'ten asenkron gelir; gelmeden bu kontrolleri
+        // çalıştırmak her zaman "beğenilmemiş/beğenilmemiş" göstermeye
+        // neden oluyordu ve userId geldiğinde effect tekrar çalışmıyordu.
+        if (!userId) return;
         checkUserLike();
         checkUserDisLike();
 
-    },[selectedHistory]);
+    },[selectedHistory, userId]);
 
     useEffect(() => {
         const closeOnEsc = (e) => e.key === 'Escape' && onClose();

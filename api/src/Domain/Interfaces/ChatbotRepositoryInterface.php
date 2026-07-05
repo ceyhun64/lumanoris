@@ -3,8 +3,8 @@ interface ChatbotRepositoryInterface {
     public function findById(int $id): ?array;
     public function findByIdAndOwner(int $id, int $ownerId): ?array;
     public function create(array $data): int;
-    public function update(int $id, array $data): bool;
-    public function delete(int $id): bool;
+    public function updateById(int $id, array $data): bool;
+    public function deleteById(int $id): bool;
     public function getByOwner(int $ownerId): array;
     public function getPublished(array $filters = []): array;
     public function getPublishedV2(int $userId, array $filters = []): array;

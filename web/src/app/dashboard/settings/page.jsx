@@ -79,18 +79,9 @@ export default function Settings() {
   console.log("userInfo değişti:", userInfo);
 }, [userInfo]);
 
-    const toBase64 = (file) =>
-    new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file); // File veya Blob bekler
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = (error) => reject(error);
-    });
-
+    // ProfileImageEdit dosyayı kendi içinde base64'e çevirip onChange'e geçiyor,
+    // burada "file" parametresi zaten bir base64 data URL string'idir.
     const handleChange = async (file) => {
-        console.log("Yüklenen dosya", file);
-        //const base64 = await toBase64(file);
-
         const formData = new FormData();
         formData.append(
         "data",
@@ -102,16 +93,13 @@ export default function Settings() {
         body: formData,
         });
         const result = await res.json();
-        console.log(result);
 
-        if (result.success) {
-        setPreview(file); // önizleme için
+        if (!result.success) {
+        console.error("Profil fotoğrafı güncellenemedi:", result.message);
         }
     };
 
     const handleRemove = async () => {
-        console.log("Resim kaldırıldı");
-
         const formData = new FormData();
         formData.append(
         "data",
@@ -123,10 +111,9 @@ export default function Settings() {
         body: formData,
         });
         const result = await res.json();
-        console.log(result);
 
-        if (result.success) {
-        setPreview(null);
+        if (!result.success) {
+        console.error("Profil fotoğrafı kaldırılamadı:", result.message);
         }
     };
 

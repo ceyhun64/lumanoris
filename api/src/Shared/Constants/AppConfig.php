@@ -56,8 +56,8 @@ final class AppConfig {
     const TABLE_BANK_INFO      = 'banka_bilgileri';
     const TABLE_SELLERS        = 'param_marketplace_sellers';
     const TABLE_DIALOG_BOOKS   = 'user_dialog_books';
-    const TABLE_COIN_BALANCES  = 'user_coin_balances';
-    const TABLE_PURCHASE_CREDITS = 'user_purchase_credits';
+    const TABLE_COIN_BALANCES  = 'user_coin_balance';
+    const TABLE_PURCHASE_CREDITS = 'chatbot_purchase_credits';
 
     // ── Error codes ────────────────────────────────────────────────────────
     const ERR_VALIDATION       = 'VALIDATION_ERROR';

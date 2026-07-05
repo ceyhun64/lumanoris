@@ -4,11 +4,11 @@ class SocialController {
 
     public static function likeChatbot(): void {
         require_method('POST');
+        $userId    = AuthMiddleware::requireAuth();
         $data      = json_decode($_POST['data'] ?? '', true) ?? null;
-        $userId    = InputSanitizer::positiveInt($data['user_id'] ?? 0);
         $chatbotId = InputSanitizer::positiveInt($data['chatbot_id'] ?? 0);
 
-        if (!$data || !$userId || !$chatbotId) JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
+        if (!$data || !$chatbotId) JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
 
         $db       = Database::getInstance();
         $existing = $db->selectSingle('id FROM chatbot_likes WHERE user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
@@ -25,11 +25,11 @@ class SocialController {
 
     public static function dislikeChatbot(): void {
         require_method('POST');
+        $userId    = AuthMiddleware::requireAuth();
         $data      = json_decode($_POST['data'] ?? '', true) ?? null;
-        $userId    = InputSanitizer::positiveInt($data['user_id'] ?? 0);
         $chatbotId = InputSanitizer::positiveInt($data['chatbot_id'] ?? 0);
 
-        if (!$data || !$userId || !$chatbotId) JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
+        if (!$data || !$chatbotId) JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
 
         $db       = Database::getInstance();
         $existing = $db->selectSingle('id FROM chatbot_dislikes WHERE user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
@@ -45,18 +45,18 @@ class SocialController {
     }
 
     public static function didUserLike(): void {
-        $userId    = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
+        $userId    = AuthMiddleware::optionalAuth();
         $chatbotId = InputSanitizer::positiveInt($_GET['chatbot_id'] ?? 0);
-        if (!$userId || !$chatbotId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        if (!$chatbotId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
 
         $row = Database::getInstance()->selectSingle('id FROM chatbot_likes WHERE user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
         JsonResponse::success(['didLike' => (bool) $row]);
     }
 
     public static function didUserDislike(): void {
-        $userId    = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
+        $userId    = AuthMiddleware::optionalAuth();
         $chatbotId = InputSanitizer::positiveInt($_GET['chatbot_id'] ?? 0);
-        if (!$userId || !$chatbotId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        if (!$chatbotId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
 
         $row = Database::getInstance()->selectSingle('id FROM chatbot_dislikes WHERE user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
         JsonResponse::success(['didDisLike' => (bool) $row]);
@@ -66,11 +66,11 @@ class SocialController {
 
     public static function followChatbot(): void {
         require_method('POST');
+        $userId    = AuthMiddleware::requireAuth();
         $data      = json_decode($_POST['data'] ?? '', true) ?? null;
-        $userId    = InputSanitizer::positiveInt($data['user_id'] ?? 0);
         $chatbotId = InputSanitizer::positiveInt($data['chatbot_id'] ?? 0);
 
-        if (!$data || !$userId || !$chatbotId) JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
+        if (!$data || !$chatbotId) JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
 
         $db       = Database::getInstance();
         $existing = $db->selectSingle('id FROM chatbot_follows WHERE user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
@@ -85,9 +85,9 @@ class SocialController {
     }
 
     public static function didUserFollow(): void {
-        $userId    = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
+        $userId    = AuthMiddleware::optionalAuth();
         $chatbotId = InputSanitizer::positiveInt($_GET['chatbot_id'] ?? 0);
-        if (!$userId || !$chatbotId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        if (!$chatbotId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
 
         $row = Database::getInstance()->selectSingle('id FROM chatbot_follows WHERE user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
         JsonResponse::success(['didFollow' => (bool) $row]);
@@ -97,9 +97,11 @@ class SocialController {
 
     public static function addComment(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
+        $data['user_id'] = $userId;
         $id = Database::getInstance()->insert('chatbot_comments', $data);
         JsonResponse::success(['message' => 'Yorum başarıyla eklendi', 'id' => $id]);
     }
@@ -123,15 +125,15 @@ class SocialController {
 
     public static function addReport(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
-        $userId      = InputSanitizer::positiveInt($data['user_id'] ?? 0);
         $chatbotId   = InputSanitizer::positiveInt($data['chatbot_id'] ?? 0);
         $reportedFor = is_array($data['reported_for'] ?? null) ? $data['reported_for'] : [];
         $detail      = InputSanitizer::text($data['report_detail'] ?? '', 2000);
 
-        if (!$userId || !$chatbotId || empty($reportedFor)) {
+        if (!$chatbotId || empty($reportedFor)) {
             JsonResponse::error('Eksik parametreler!', 400, AppConfig::ERR_VALIDATION);
         }
 
@@ -149,24 +151,36 @@ class SocialController {
 
     public static function addUserList(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
+        $data['user_id'] = $userId;
         $id = Database::getInstance()->insert('user_lists', $data);
         JsonResponse::success(['message' => 'Liste eklendi!', 'listId' => $id]);
     }
 
     public static function addBotToList(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
-        if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
+        if (!$data || !isset($data['list_id'])) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
-        $id = Database::getInstance()->insert('chatbot_in_list', $data);
+        $listId = InputSanitizer::positiveInt($data['list_id']);
+        $db     = Database::getInstance();
+
+        // Previously anyone could add a bot to any list_id — verify it's the caller's own list.
+        if (!$db->selectSingle('id FROM user_lists WHERE id = ? AND user_id = ?', [$listId, $userId])) {
+            JsonResponse::error('Bu liste üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
+        }
+
+        $id = $db->insert('chatbot_in_list', $data);
         JsonResponse::success(['message' => 'Bot listeye eklendi.', 'id' => $id]);
     }
 
     public static function deleteBotFromList(): void {
         require_method('POST');
+        $userId    = AuthMiddleware::requireAuth();
         $data      = json_decode($_POST['data'] ?? '', true) ?? null;
         $chatbotId = InputSanitizer::positiveInt($data['chatbot_id'] ?? 0);
         $listId    = InputSanitizer::positiveInt($data['list_id'] ?? 0);
@@ -175,22 +189,27 @@ class SocialController {
             JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
         }
 
-        Database::getInstance()->delete('chatbot_in_list', 'chatbot_id = ? AND list_id = ?', [$chatbotId, $listId]);
+        $db = Database::getInstance();
+        // Previously anyone could remove bots from any list_id — verify ownership first.
+        if (!$db->selectSingle('id FROM user_lists WHERE id = ? AND user_id = ?', [$listId, $userId])) {
+            JsonResponse::error('Bu liste üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
+        }
+
+        $db->delete('chatbot_in_list', 'chatbot_id = ? AND list_id = ?', [$chatbotId, $listId]);
         JsonResponse::success(['message' => 'Bot listeden kaldırıldı.']);
     }
 
     public static function getUserLists(): void {
-        $userId = InputSanitizer::positiveInt($_GET['userId'] ?? 0);
-        if (!$userId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
         $lists = Database::getInstance()->selectMulti('id, name FROM user_lists WHERE user_id = ?', [$userId]);
         JsonResponse::success(['lists' => $lists]);
     }
 
     public static function getBotLists(): void {
-        $userId = InputSanitizer::positiveInt($_GET['userId'] ?? 0);
+        $userId = AuthMiddleware::requireAuth();
         $botId  = InputSanitizer::positiveInt($_GET['botId'] ?? 0);
-        if (!$userId || !$botId) JsonResponse::error('userId ve botId gereklidir.', 400, AppConfig::ERR_VALIDATION);
+        if (!$botId) JsonResponse::error('botId gereklidir.', 400, AppConfig::ERR_VALIDATION);
 
         $lists = Database::getInstance()->selectMulti(
             'ul.id, ul.name,
@@ -222,8 +241,7 @@ class SocialController {
     }
 
     public static function getFollowedBots(): void {
-        $userId = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
-        if (!$userId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
         $bots = Database::getInstance()->selectMulti(
             "c.id, c.isim, c.aciklama, c.profil_fotografi, c.ucret_haftalik
@@ -238,11 +256,18 @@ class SocialController {
 
     public static function deleteUserList(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? [];
-        $id   = InputSanitizer::positiveInt($data['id'] ?? $_POST['id'] ?? 0);
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? [];
+        $id     = InputSanitizer::positiveInt($data['id'] ?? $_POST['id'] ?? 0);
         if (!$id) JsonResponse::error('ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
         $db = Database::getInstance();
+
+        // Previously anyone could delete any list_id — verify ownership first.
+        if (!$db->selectSingle('id FROM user_lists WHERE id = ? AND user_id = ?', [$id, $userId])) {
+            JsonResponse::error('Bu liste üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
+        }
+
         $db->delete('chatbot_in_list', 'list_id = ?', [$id]);
         $db->delete('user_lists', 'id = ?', [$id]);
         JsonResponse::success(['message' => 'Liste silindi.']);
@@ -252,16 +277,17 @@ class SocialController {
 
     public static function addHide(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
+        $data['user_id'] = $userId;
         $id = Database::getInstance()->insert('chatbot_hide', $data);
         JsonResponse::success(['message' => 'Chatbot gizlendi.', 'id' => $id]);
     }
 
     public static function getHide(): void {
-        $userId = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
-        if (!$userId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
         $rows = Database::getInstance()->selectMulti('chatbot_id FROM chatbot_hide WHERE user_id = ?', [$userId]);
         JsonResponse::success(['hidden' => array_column($rows, 'chatbot_id')]);
@@ -269,16 +295,17 @@ class SocialController {
 
     public static function addUninterest(): void {
         require_method('POST');
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
+        $userId = AuthMiddleware::requireAuth();
+        $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
+        $data['user_id'] = $userId;
         $id = Database::getInstance()->insert('chatbot_uninterested', $data);
         JsonResponse::success(['message' => 'Kategori ilgi dışı olarak işaretlendi.', 'id' => $id]);
     }
 
     public static function getUninterest(): void {
-        $userId = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
-        if (!$userId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        $userId = AuthMiddleware::requireAuth();
 
         $rows = Database::getInstance()->selectMulti('category_id FROM chatbot_uninterested WHERE user_id = ?', [$userId]);
         JsonResponse::success(['categories' => array_column($rows, 'category_id')]);

@@ -77,7 +77,6 @@ const initialItems = [
 export default function History() {
     const router = useRouter();
     const [editingId, setEditingId] = useState(null);
-    //const [editedTitle, setEditedTitle] = useState("");
     const [historyItems, setHistoryItems] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeMenuId, setActiveMenuId] = useState(null);
@@ -324,20 +323,11 @@ export default function History() {
                                 {editingId === item.id ? (
                                     <input
                                         type="text"
-                                        defaultValue={item.conversation_name/*editedTitle*/}
+                                        defaultValue={item.conversation_name}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                         }}
-                                        //onChange={(e) => setEditedTitle(e.target.value)}
-                                        onBlur={() => handleUpdateTitle(item.id, editedTitle)}
-                                        /*onBlur={() => {
-                                            setHistoryItems(prev =>
-                                                prev.map(i =>
-                                                    i.id === item.id ? { ...i, title: editedTitle } : i
-                                                )
-                                            );
-                                            setEditingId(null);
-                                        }}*/
+                                        onBlur={(e) => handleUpdateTitle(item.id, e.target.value)}
                                         onKeyDown={(e) => {
                                             if (e.key === "Enter") {
                                                 handleUpdateTitle(item.id, e.target.value);

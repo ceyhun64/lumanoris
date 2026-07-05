@@ -26,6 +26,22 @@ class AuthMiddleware {
         return self::tryRememberMe() ?? 0;
     }
 
+    /**
+     * Admins are a separate identity from regular users — the legacy admin
+     * panel (api/admin/ajax/giris.php) authenticates against the `adminler`
+     * table and sets $_SESSION['admin'], not $_SESSION['user_id']. Reuses
+     * that same session (same cookie, same session_start()) rather than
+     * inventing a parallel role system.
+     */
+    public static function requireAdmin(): string {
+        if (isset($_SESSION['admin'])) {
+            return (string) $_SESSION['admin'];
+        }
+
+        JsonResponse::error('Yönetici girişi gerekiyor.', 403, AppConfig::ERR_PERMISSION);
+        exit; // unreachable but satisfies static analysis
+    }
+
     private static function tryRememberMe(): ?int {
         if (!isset($_COOKIE['remember_me'])) {
             return null;

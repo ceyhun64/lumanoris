@@ -16,8 +16,6 @@ function calculateMessageAllowance(totalPaid) {
 }
 
 export default function BuyModal({ isOpen, onClose, botData, userId, initialDurationWeeks }) {
-    // botData'nın null/undefined olma ihtimaline karşı güvenlik önlemi
-    if (!botData) return null;
     const buyerId = userId;
 
     // Sepette zaten bir süre seçilmişse onu, yoksa 'Bir Aylık'ı varsayılan al
@@ -74,7 +72,12 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
         }
     }, [selectedDuration, botData]);
 
-    if (!isOpen) return null;
+    // Both guards must come after every hook above — botData/isOpen start
+    // null/false and populate later via an async fetch in both real call
+    // sites (ProfileCard.jsx, chat/page.jsx). Returning early before the
+    // hooks ran (as this used to do for !botData) changes the hook count
+    // between renders, which React flags/crashes on.
+    if (!isOpen || !botData) return null;
 
     /*const handleFinalBuy = () => {
         console.log(`Satın alma işlemi seçildi: Süre: ${selectedDuration}, Fiyat: ${price} ${priceType}`);

@@ -3,9 +3,9 @@ class MessageController {
     public static function checkMessageAllowance(): void {
         require_once __DIR__ . '/../../../functions/coin_engine.php';
 
-        $userId    = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
+        $userId    = AuthMiddleware::requireAuth();
         $chatbotId = InputSanitizer::positiveInt($_GET['chatbot_id'] ?? 0);
-        if (!$userId || !$chatbotId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        if (!$chatbotId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
 
         $db      = Database::getInstance();
         $credit  = getActivePurchaseCredit($db, $userId, $chatbotId);
@@ -22,12 +22,12 @@ class MessageController {
 
     public static function consumeMessage(): void {
         require_method('POST');
+        $userId = AuthMiddleware::requireAuth();
         require_once __DIR__ . '/../../../functions/coin_engine.php';
 
         $data      = json_decode($_POST['data'] ?? '', true) ?? null;
-        $userId    = InputSanitizer::positiveInt($data['user_id'] ?? 0);
         $chatbotId = InputSanitizer::positiveInt($data['chatbot_id'] ?? 0);
-        if (!$userId || !$chatbotId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+        if (!$chatbotId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
 
         $result = consumeMessage(Database::getInstance(), $userId, $chatbotId);
         echo json_encode(array_merge(['success' => true], $result));

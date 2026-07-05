@@ -2,17 +2,17 @@
 class SellerController {
     public static function register(): void {
         require_method('POST');
+        $userId = AuthMiddleware::requireAuth();
         require_once __DIR__ . '/../../../functions/ParamPosMarketplace.php';
         require_once __DIR__ . '/../../../functions/checkout_payments.php';
 
         $data = json_decode($_POST['data'] ?? '', true) ?? null;
-        if (!$data || empty($data['user_id'])) {
+        if (!$data) {
             JsonResponse::error('Eksik veri.', 400, AppConfig::ERR_VALIDATION);
         }
 
         $db     = Database::getInstance();
         $conn   = $db->getConnection();
-        $userId = InputSanitizer::positiveInt($data['user_id']);
 
         ensureParamMarketplaceTables($conn);
 
@@ -108,6 +108,7 @@ class SellerController {
 
     public static function list(): void {
         require_method('GET');
+        AuthMiddleware::requireAdmin();
         $rows = Database::getInstance()->selectMulti(
             'pms.id, pms.user_id, pms.guid_altuyeisyeri, pms.created_at, pms.updated_at, k.kullanici_adi, k.ad_soyad, k.eposta
              FROM param_marketplace_sellers pms LEFT JOIN kullanicilar k ON k.id = pms.user_id ORDER BY pms.created_at DESC',
@@ -118,6 +119,7 @@ class SellerController {
     }
 
     public static function listRemote(): void {
+        AuthMiddleware::requireAdmin();
         require_once __DIR__ . '/../../../functions/ParamPosMarketplace.php';
         $result = (new ParamPosMarketplace())->listSubMerchants();
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
@@ -125,6 +127,8 @@ class SellerController {
     }
 
     public static function update(): void {
+        require_method('POST');
+        AuthMiddleware::requireAdmin();
         require_once __DIR__ . '/../../../functions/ParamPosMarketplace.php';
         $data   = json_decode($_POST['data'] ?? '', true) ?? [];
         $result = (new ParamPosMarketplace())->updateSubMerchant($data);
@@ -133,6 +137,8 @@ class SellerController {
     }
 
     public static function delete(): void {
+        require_method('POST');
+        AuthMiddleware::requireAdmin();
         require_once __DIR__ . '/../../../functions/ParamPosMarketplace.php';
         $data   = json_decode($_POST['data'] ?? '', true) ?? [];
         $param  = new ParamPosMarketplace();
@@ -150,10 +156,8 @@ class SellerController {
 
     public static function status(): void {
         require_method('GET');
+        $userId = AuthMiddleware::requireAuth();
         require_once __DIR__ . '/../../../functions/checkout_payments.php';
-
-        $userId = InputSanitizer::positiveInt($_GET['user_id'] ?? 0);
-        if (!$userId) JsonResponse::error('Geçerli bir user_id gönderilmedi.', 400, AppConfig::ERR_VALIDATION);
 
         $db   = Database::getInstance();
         $conn = $db->getConnection();
@@ -205,6 +209,8 @@ class SellerController {
     }
 
     public static function refund(): void {
+        require_method('POST');
+        AuthMiddleware::requireAdmin();
         require_once __DIR__ . '/../../../functions/ParamPosMarketplace.php';
         require_once __DIR__ . '/../../../functions/checkout_payments.php';
         $data = json_decode($_POST['data'] ?? file_get_contents('php://input'), true) ?? null;
@@ -246,7 +252,8 @@ class SellerController {
 
     public static function listIlceler(): void {
         require_once __DIR__ . '/../../../functions/ParamPosMarketplace.php';
-        $ilKodu    = InputSanitizer::positiveInt($_GET['il_kodu'] ?? 0);
+        // Frontend (BankInfo.jsx, SellerOnboardingWizard.jsx) sends `il`, not `il_kodu`.
+        $ilKodu    = InputSanitizer::positiveInt($_GET['il'] ?? 0);
         $cacheFile = sys_get_temp_dir() . '/param_ilceler_' . $ilKodu . '.json';
         $cacheTtl  = 900;
 

@@ -10,6 +10,14 @@
 require_once __DIR__ . '/../functions/bootstrap.php';
 require_once __DIR__ . '/../functions/validators.php';
 
+// AppException.php defines 8 exception classes in one file (AppException,
+// AuthException, ValidationException, NotFoundException, PermissionException,
+// LimitReachedException, DuplicateException, PaymentException) — the
+// autoloader below only matches one class per file by filename, so any of
+// the 7 siblings would throw "Class not found" if referenced before
+// AppException itself happened to be autoloaded first. Load unconditionally.
+require_once __DIR__ . '/Shared/Exceptions/AppException.php';
+
 spl_autoload_register(function (string $class): void {
     static $searchDirs = null;
     if ($searchDirs === null) {

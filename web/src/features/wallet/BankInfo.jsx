@@ -164,10 +164,14 @@ export default function BankInfo({ userId }) {
         const fetchBankInfo = async () => {
             try {
                 const res = await fetch(`/api/wallet/get_bank_info.php?userId=${userId}`);
-                const data = await res.json();
-                
-                if (data) {
-                    // PHP'den gelen veriler zaten snake_case olduğu için direkt eşleşir
+                const result = await res.json();
+
+                // get_bank_info.php returns {success, bank_info}; bank_info is
+                // false when no row exists yet. Previously the whole wrapper
+                // object was spread into formData instead of bank_info itself,
+                // so the form always rendered blank even when data existed.
+                if (result.success && result.bank_info) {
+                    const data = result.bank_info;
                     setFormData({ ...data });
                     if (data.iban) setCards([data.iban]);
                     setIsEditing(false);
