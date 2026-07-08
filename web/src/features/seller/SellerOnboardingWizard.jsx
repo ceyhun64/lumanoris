@@ -303,7 +303,7 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
             </div>
 
             {paramError && (
-                <div className="rounded-xl border border-pink-400 bg-pink-400/10 px-4 py-3 text-sm text-pink-100">
+                <div className="rounded-xl border border-rose-400 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
                     <strong>Önceki başvuru reddedildi:</strong> {paramError}
                 </div>
             )}

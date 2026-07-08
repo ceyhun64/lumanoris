@@ -41,7 +41,6 @@ export default function ContactForm() {
             });
 
             const result = await res.json();
-            //console.log("API result:", result);
             alert(result.message);
         } catch (err) {
             console.error("Form gönderim hatası:", err);
@@ -92,7 +91,7 @@ export default function ContactForm() {
                         onChange={handleChange}
                         hidden
                     />
-                    <Paperclip className="h-4 w-4 text-pink-400" />
+                    <Paperclip className="h-4 w-4 text-indigo-400" />
                     Dosya Ekle
                 </label>
 

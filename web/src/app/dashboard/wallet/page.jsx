@@ -3,7 +3,8 @@ import WithdrawalModal from "@/features/wallet/WithdrawalModal";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { ArrowDownToLine } from "lucide-react";
+import { ArrowDownToLine, Receipt } from "lucide-react";
+import { EmptyState } from "@/shared/ui/empty-state";
 
 function formatDate(value) {
     if (!value) return "";
@@ -90,7 +91,7 @@ export default function Wallet() {
     return (
         <div className="flex flex-col gap-5 px-6 py-5">
             {/* Page title */}
-            <h2 className="text-xl font-display font-bold bg-gradient-to-r from-indigo-300 to-cyan-300 bg-clip-text text-transparent">
+            <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
                 Bakiyem
             </h2>
 
@@ -119,13 +120,13 @@ export default function Wallet() {
                         <span className="text-[11px] font-display font-semibold uppercase tracking-[0.1em] text-white/40">
                             Toplam Bakiye
                         </span>
-                        <p className="text-3xl font-display font-bold bg-gradient-to-r from-indigo-300 to-cyan-300 bg-clip-text text-transparent leading-none">
+                        <p className="text-3xl font-display font-bold bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text text-transparent leading-none">
                             {balance} ₺
                         </p>
                     </div>
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-btn text-white font-display font-semibold text-[13px] tracking-wide shadow-glow hover:-translate-y-0.5 hover:brightness-110 transition-all duration-200"
+                        className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-btn text-white font-display font-semibold text-[13px] tracking-wide shadow-glow hover:-translate-y-0.5 hover:brightness-110 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                         <ArrowDownToLine className="w-4 h-4" />
                         PARA ÇEK
@@ -143,7 +144,7 @@ export default function Wallet() {
                         key={key}
                         onClick={() => setActiveTab(key)}
                         className={cn(
-                            'px-4 py-2 rounded-lg text-[13px] font-medium transition-all duration-200',
+                            'px-4 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                             activeTab === key
                                 ? 'bg-gradient-btn text-white shadow-glow font-semibold'
                                 : 'text-white/50 hover:text-white/80',
@@ -157,9 +158,10 @@ export default function Wallet() {
             {/* Transactions */}
             <div className="flex flex-col gap-2">
                 {transactions.length === 0 ? (
-                    <p className="text-center py-10 text-white/38 text-[14px]">
-                        {activeTab === "bakiye" ? "Henüz bakiye işlemi yok." : "Henüz bir ödeme yok."}
-                    </p>
+                    <EmptyState
+                        icon={Receipt}
+                        title={activeTab === "bakiye" ? "Henüz bakiye işlemi yok." : "Henüz bir ödeme yok."}
+                    />
                 ) : (
                     transactions.map((tx) => {
                         const positive = tx.amount >= 0;

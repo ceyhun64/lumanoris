@@ -13,7 +13,7 @@ export default function Chatbotlarim() {
                 <Image src={iconSrc} alt="Logo" width={64} height={64} className="relative z-10 drop-shadow-[0_0_20px_rgba(99,102,241,0.6)]" />
             </div>
 
-            <h2 className="bg-gradient-to-r from-indigo-300 to-cyan-300 bg-clip-text font-display text-2xl font-bold text-transparent">
+            <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-bold text-transparent">
                 Sohbet Botlarım
             </h2>
 

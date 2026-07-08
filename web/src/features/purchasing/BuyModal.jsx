@@ -94,11 +94,8 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
             chatbot_id: botData.id, // botData içinden chatbot ID'sini alıyoruz
             order_weeks: durationIndex, // Opsiyonel: Sepette süreyi de tutmak istersen
         };
-        console.log(payload);
-
         const formData = new FormData();
         formData.append('data', JSON.stringify(payload));
-        console.log(formData.get('data'));
 
         try {
           const response = await fetch("/api/marketplace/addtocart.php", {
@@ -110,7 +107,6 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
 
           if (result.success) {
             // Başarılıysa Checkout sayfasına yönlendir
-            console.log("Başarılı:", result.message);
             window.dispatchEvent(new Event('cartUpdated'));
             window.location.href = "/dashboard/checkout";
           } else {

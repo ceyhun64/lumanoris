@@ -91,7 +91,7 @@ export default function Chatbotlarim() {
                 </div>
 
                 <div className="flex flex-col gap-2 max-w-md">
-                    <h2 className="text-2xl font-display font-bold bg-gradient-to-r from-indigo-300 to-cyan-300 bg-clip-text text-transparent">
+                    <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
                         Sohbet Botlarım
                     </h2>
                     <p className="text-white/55 text-[15px] leading-relaxed">
@@ -120,7 +120,7 @@ export default function Chatbotlarim() {
         <div className="flex flex-col gap-5 px-6 py-5">
             {/* Header */}
             <div className="flex items-center justify-between gap-4">
-                <h2 className="text-xl font-display font-bold bg-gradient-to-r from-indigo-300 to-cyan-300 bg-clip-text text-transparent">
+                <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
                     Chatbotlarım
                 </h2>
                 <Link

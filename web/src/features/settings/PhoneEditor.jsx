@@ -122,7 +122,7 @@ export default function PhoneEditor({ userId }) {
       >
         {isEditing ? "Kaydet" : currentPhone ? "Düzenle" : "Ekle"}
       </button>
-      {isEditing && phoneError && <div className="text-xs text-pink-400 sm:basis-full">{phoneError}</div>}
+      {isEditing && phoneError && <div className="text-xs text-rose-400 sm:basis-full">{phoneError}</div>}
     </div>
   );
 }

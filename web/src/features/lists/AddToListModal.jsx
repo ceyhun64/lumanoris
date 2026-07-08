@@ -136,7 +136,7 @@ export default function AddToListModal({ userId, botId, isOpen, onClose, header 
                     />
                     <button
                         onClick={handleAddNewList}
-                        className="flex items-center justify-center rounded-lg p-1 text-pink-400 transition-colors hover:bg-pink-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="flex items-center justify-center rounded-lg p-1 text-indigo-400 transition-colors hover:bg-indigo-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         aria-label="Yeni liste ekle"
                     >
                         <Plus className="h-5 w-5" />

@@ -6,8 +6,14 @@ $conn = $database->getConnection();
 session_start();
 header('Content-Type: application/json');
 
+if (empty($_SESSION['admin'])) {
+    http_response_code(403);
+    echo json_encode(["status" => "error", "message" => "Yetkisiz erişim."]);
+    exit;
+}
+
 $action = $_POST['action'] ?? '';
-$id = $_POST['id'] ?? 0;
+$id = (int) ($_POST['id'] ?? 0);
 $kullanici_adi = $_POST['kullanici_adi'] ?? '';
 $sifre = $_POST['sifre'] ?? '';
 

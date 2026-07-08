@@ -1,8 +1,9 @@
 "use client";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from 'next/navigation';
-import { Search, Check } from "lucide-react";
+import { Search, Check, SearchX } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/shared/ui/empty-state";
 
 export default function Explore() {
     const router = useRouter();
@@ -100,7 +101,6 @@ export default function Explore() {
         }
 
         localStorage.setItem('userLists', JSON.stringify(lists));
-        console.log(`"${listName}" listesine ${selectedBotData.length} bot eklendi`);
     };
 
     // --- URL PARAMETRELERİNİ OKUMA VE STATE'E YÜKLEME (BURADA DEĞİŞİKLİK VAR) ---
@@ -229,12 +229,12 @@ export default function Explore() {
         return <div className="flex h-full w-full flex-col gap-6 px-4 py-6 text-white md:px-16">Yükleniyor...</div>;
     }
 
-    if (error) {
-        return <div className="flex h-full w-full flex-col gap-6 px-4 py-6 text-white md:px-16"><p className="text-rose-400">Veri yüklenemedi: {error}</p></div>;
-    }
-
     return (
       <div className="flex h-full w-full flex-col gap-6 px-4 py-6 text-white md:px-16">
+
+        {error && (
+          <p className="text-rose-400">Veri yüklenemedi: {error}</p>
+        )}
 
         <div className="flex items-center rounded-xl bg-luma-input transition-shadow duration-300 hover:shadow-[0_0_0_2px_rgba(99,102,241,0.3)]">
           <input
@@ -244,8 +244,8 @@ export default function Explore() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="flex-1 bg-transparent px-5 py-6 font-display text-[15px] text-white placeholder:text-white/40 focus:outline-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
           />
-          <button className="flex items-center justify-center px-5 py-1 transition-transform duration-200 hover:scale-110">
-            <Search className="h-5 w-5 text-pink-400" />
+          <button className="flex items-center justify-center px-5 py-1 transition-transform duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg" aria-label="Ara">
+            <Search className="h-5 w-5 text-indigo-400" />
           </button>
 
           {/* Filtre Butonu Birebir */}
@@ -255,7 +255,7 @@ export default function Explore() {
               onClick={() => setShowSortMenu((v) => !v)}
             >
               <svg width="14" height="14" viewBox="-4 -4 24 24" fill="none">
-                <path d="M0.32 3.328L6.4 9.728V15.618L9.6 13.618V9.728L15.68 3.328V0.32H0.32V3.328ZM0.96 0.96H15.04V3.073L8.96 9.473V13.263L7.04 14.463V9.473L0.96 3.073V0.96Z" fill="#FF66C4"/>
+                <path d="M0.32 3.328L6.4 9.728V15.618L9.6 13.618V9.728L15.68 3.328V0.32H0.32V3.328ZM0.96 0.96H15.04V3.073L8.96 9.473V13.263L7.04 14.463V9.473L0.96 3.073V0.96Z" fill="#818CF8"/>
               </svg>
               <span>
                 {sortOptions.find((o) => o.value === sortType)?.label || "Filtrele"}
@@ -308,7 +308,11 @@ export default function Explore() {
 
         <div className="flex w-full flex-col items-start gap-2 pb-24">
           {filteredAndSortedBots.length === 0 && !loading && (
-            <p className="text-white/60">Bu kategoriye/aramaya uygun bot bulunamadı.</p>
+            <EmptyState
+              icon={SearchX}
+              title="Bu kategoriye/aramaya uygun bot bulunamadı."
+              className="w-full"
+            />
           )}
 
           {filteredAndSortedBots.map((bot) => {

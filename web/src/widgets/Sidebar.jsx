@@ -96,7 +96,7 @@ export default function Sidebar({ isMobileOpen = false }) {
           onClick={() => router.push('/dashboard/chatbots/create')}
           className={cn(
             'w-full flex items-center justify-between mb-1',
-            'border border-indigo-400/20 bg-indigo-500/7 rounded-[10px]',
+            'border border-indigo-400/20 bg-indigo-500/7 rounded-xl',
             'hover:bg-indigo-500/14 hover:border-indigo-400/40 hover:shadow-glow hover:-translate-y-0.5',
             'transition-all duration-200',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
@@ -109,7 +109,7 @@ export default function Sidebar({ isMobileOpen = false }) {
             </span>
           )}
           <span className={cn(
-            'flex items-center justify-center bg-gradient-btn rounded-[6px]',
+            'flex items-center justify-center bg-gradient-btn rounded-md',
             collapsed ? 'w-7 h-7' : 'w-6 h-6',
           )}>
             <Plus className="w-3.5 h-3.5 text-white" />
@@ -127,7 +127,7 @@ export default function Sidebar({ isMobileOpen = false }) {
               <Link
                 href={href}
                 className={cn(
-                  'flex items-center gap-3.5 w-full rounded-[10px] no-underline',
+                  'flex items-center gap-3.5 w-full rounded-xl no-underline',
                   'text-[15px] font-sans leading-snug',
                   'transition-all duration-200',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
@@ -166,7 +166,7 @@ export default function Sidebar({ isMobileOpen = false }) {
       {/* Bottom: settings + upgrade */}
       <div className="flex flex-col gap-2.5 px-4 pb-5">
         <div className={cn(
-          'rounded-[14px] border border-indigo-400/10 bg-indigo-500/4 overflow-hidden relative',
+          'rounded-2xl border border-indigo-400/10 bg-indigo-500/4 overflow-hidden relative',
         )}>
           <div className="absolute -top-5 -left-5 opacity-30 pointer-events-none">
             <svg xmlns="http://www.w3.org/2000/svg" width="80" height="60" viewBox="0 0 134 96" fill="none">

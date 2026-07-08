@@ -2,6 +2,12 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
+if (empty($_SESSION['admin'])) {
+    http_response_code(403);
+    echo json_encode(['status' => 'error', 'message' => 'Yetkisiz erişim.']);
+    exit;
+}
+
 // Basit CSRF kontrolü (isteğe bağlı)
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode([

@@ -1,4 +1,11 @@
 <?php
+session_start();
+if (empty($_SESSION['admin'])) {
+    http_response_code(403);
+    echo json_encode(["success" => false, "message" => "Yetkisiz erişim."]);
+    exit;
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     require '../../functions/db.php';
     $database = Database::getInstance();
@@ -14,7 +21,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
+    if (stripos($table, 'adminler') !== false) {
+        echo json_encode([
+            "success" => false,
+            "message" => "Bu tabloya bu uç noktadan erişilemez."
+        ]);
+        exit;
+    }
+
     try {
+        Database::assertAllowedAdminTable($table);
+
         foreach ($_FILES as $key => $file) {
             if ($file['error'] === UPLOAD_ERR_OK) {
                 // "kapak_fotografi_file" -> "kapak_fotografi"

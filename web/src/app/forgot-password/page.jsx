@@ -122,7 +122,6 @@ export default function ForgotPassword() {
             });
 
             const result = await res.json();
-            console.log("API result:", result);
 
             if (result.success) {
             showAlert("Şifreniz başarıyla güncellendi.", "success");

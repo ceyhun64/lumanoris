@@ -59,7 +59,6 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
     // Başlangıçta tüm öğeleri aylık (4 hafta) olarak ayarla
     useEffect(() => {
         const initialDurations = {};
-        console.log(cartItems);
         cartItems.forEach(item => {
             initialDurations[item.id] = item.order_weeks ? parseInt(item.order_weeks) : 4; // Varsayılan: Aylık (4 hafta)
         });
@@ -179,7 +178,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                         <span className="text-sm text-white/70">Tümünü seç</span>
                     </label>
 
-                    <div className="my-3 h-0.5 w-full bg-gradient-to-r from-[#1B1A22] to-[#993D76]" />
+                    <div className="my-3 h-0.5 w-full bg-gradient-to-r from-[#1B1A22] to-[#6366F1]" />
 
                     {cartItems.map((item) => {
         const isSelected = selectedItems.includes(item.id);
@@ -206,7 +205,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                 <div className="ml-1 flex-1">
                     <h3 className="mb-2.5 text-left font-display text-lg font-normal text-white">{item.title}</h3>
                     <p className="mb-3.5 text-left text-sm text-white/70">
-                        Kategori: <span className="text-pink-400">{item.category || 'Genel'}</span>
+                        Kategori: <span className="text-indigo-400">{item.category || 'Genel'}</span>
                     </p>
 
                     <div className="mt-3.5 grid max-w-[320px] grid-cols-2 gap-2.5">
@@ -219,7 +218,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                                     className={cn(
                                         "rounded-xl py-3 text-[13px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                         isActive
-                                            ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 font-semibold text-white shadow-glow"
+                                            ? "bg-gradient-btn font-semibold text-white shadow-glow"
                                             : "bg-luma-input font-normal text-white hover:bg-white/10",
                                     )}
                                 >
@@ -271,12 +270,12 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                     <span>Ürün Tutarı</span>
                     <span className="text-white/50">{subtotal.toFixed(2)}₺</span>
                 </div>
-                <div className="my-2 flex justify-between border-y border-fuchsia-800 py-3 font-display text-base font-medium text-white">
+                <div className="my-2 flex justify-between border-y border-white/10 py-3 font-display text-base font-medium text-white">
                     <strong>Toplam</strong>
                     <strong className="text-white/50">{total.toFixed(2)}₺</strong>
                 </div>
                 <div className="mt-4 flex items-stretch rounded-xl border border-indigo-400 bg-white/10">
-                    <div className="flex items-center p-3.5 text-pink-400">
+                    <div className="flex items-center p-3.5 text-indigo-400">
                         <Tag className="h-5 w-5" />
                     </div>
                     <input

@@ -32,8 +32,9 @@ export default function CategoryFilter({ categories, onSelect, selected: externa
         <button
             onClick={onClick}
             disabled={disabled}
+            aria-label={direction === 'left' ? 'Önceki kategoriler' : 'Sonraki kategoriler'}
             className={cn(
-                'flex items-center justify-center w-8 h-8 rounded-lg border transition-all duration-150',
+                'flex items-center justify-center w-8 h-8 rounded-lg border transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 disabled
                     ? 'border-white/8 text-white/18 cursor-not-allowed'
                     : 'border-indigo-400/20 text-indigo-400 hover:bg-indigo-500/10 hover:border-indigo-400/40',
@@ -105,9 +106,9 @@ export default function CategoryFilter({ categories, onSelect, selected: externa
                                     <button
                                         onClick={() => handleClick(cat)}
                                         className={cn(
-                                            'w-full px-4 py-2 rounded-xl text-[14px] font-sans font-medium whitespace-nowrap transition-all duration-200',
+                                            'w-full px-4 py-2 rounded-xl text-[14px] font-sans font-medium whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                                             isActive
-                                                ? 'bg-[rgba(99,102,241,0.22)] text-[#a5b4fc] border border-indigo-400/40 shadow-[0_2px_12px_rgba(99,102,241,0.20)]'
+                                                ? 'bg-[rgba(99,102,241,0.22)] text-indigo-300 border border-indigo-400/40 shadow-[0_2px_12px_rgba(99,102,241,0.20)]'
                                                 : 'bg-transparent text-white/55 border border-white/8 hover:bg-indigo-500/8 hover:text-white/80 hover:border-indigo-400/18',
                                         )}
                                     >

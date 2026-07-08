@@ -178,7 +178,7 @@ export default function Dashboard() {
                         {selectedCategory !== "Tümü" && (
                             <button
                                 onClick={() => setSelectedCategory("Tümü")}
-                                className="text-[13px] text-white/30 hover:text-white/60 font-sans transition-colors flex items-center gap-1"
+                                className="text-[13px] text-white/30 hover:text-white/60 font-sans transition-colors flex items-center gap-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
                                 <span>×</span> Filtreyi temizle
                             </button>

@@ -12,8 +12,8 @@ export default function TermsOfUse() {
 
                     const result = await res.json();
                     // ✅ Access nested data
-                    if (result.success && result.data?.kullanim_kosullari) {
-                        setInfo(result.data.kullanim_kosullari);
+                    if (result.success && result.content?.kullanim_kosullari) {
+                        setInfo(result.content.kullanim_kosullari);
                     } else {
                         console.warn("Unexpected API response:", result);
                         setInfo(null);

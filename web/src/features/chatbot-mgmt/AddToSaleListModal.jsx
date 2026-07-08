@@ -112,7 +112,7 @@ export default function AddToSaleListModal({
                 </DialogDescription>
 
                 <div className="mb-4 text-left">
-                    <label className="mb-1.5 block text-xs font-semibold text-pink-400">HAFTALIK BİRİM FİYAT</label>
+                    <label className="mb-1.5 block text-xs font-semibold text-indigo-400">HAFTALIK BİRİM FİYAT</label>
                     <div className="flex items-center justify-between gap-2 rounded-xl bg-luma-input px-5 py-4">
                         <input
                             type="number"
@@ -121,7 +121,7 @@ export default function AddToSaleListModal({
                             placeholder="0.00"
                             className="w-full bg-transparent font-display text-[15px] text-white placeholder:text-white/40 focus:outline-none"
                         />
-                        <span className="font-bold text-pink-400">TL</span>
+                        <span className="font-bold text-indigo-400">TL</span>
                     </div>
                 </div>
 
@@ -145,7 +145,7 @@ export default function AddToSaleListModal({
                 </div>
 
                 {errorMsg && (
-                    <div className="mb-4 text-left text-[13px] text-pink-400">
+                    <div className="mb-4 text-left text-[13px] text-rose-400">
                         {errorMsg}
                     </div>
                 )}
@@ -163,7 +163,7 @@ export default function AddToSaleListModal({
                                 className={cn(
                                     "w-full rounded-xl py-3.5 text-[13px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                     isActive
-                                        ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 font-semibold text-white shadow-glow"
+                                        ? "bg-gradient-btn font-semibold text-white shadow-glow"
                                         : "bg-luma-input font-normal text-white hover:bg-white/10",
                                 )}
                             >
@@ -173,7 +173,7 @@ export default function AddToSaleListModal({
                     })}
                 </div>
 
-                <div className="mb-5 rounded-xl border border-dashed border-pink-400/50 bg-white/5 p-4 text-center">
+                <div className="mb-5 rounded-xl border border-dashed border-indigo-400/50 bg-white/5 p-4 text-center">
                     <span className="mb-1.5 block text-[11px] text-white/60">
                         SEÇİLEN SÜREYE GÖRE TOPLAM TUTAR
                     </span>

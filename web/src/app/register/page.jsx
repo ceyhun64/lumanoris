@@ -30,18 +30,12 @@ export default function Register() {
                 action: "google_login",
                 google_token: credentialResponse.credential
             }));
-            for (const [key, value] of dataToSend.entries()) {
-                console.log(key, value);
-            }
-
-
             const res = await fetch("/api/auth/login-google.php", { // PHP dosyanın yolu
                 method: "POST",
                 body: dataToSend,
             });
 
             const resultText = await res.text();
-            console.log(resultText);
             const result = JSON.parse(resultText);
             //const result = await res.json();
             if (result.success) {
@@ -82,9 +76,7 @@ export default function Register() {
             });
 
             const resultText = await res.text();
-            console.log(resultText);
             const result = JSON.parse(resultText);
-            //const result = await res.json();
 
             if (result.success) {
                 alert("Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz.");
@@ -107,7 +99,6 @@ export default function Register() {
                         credentials: "include", // cookie'yi gönder
                         });
                         const resultText = await res.text();
-                        console.log(resultText);
                         const result = JSON.parse(resultText);
 
                         if (result.authenticated) {

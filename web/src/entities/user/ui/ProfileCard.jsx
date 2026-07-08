@@ -52,7 +52,6 @@ export default function ProfileCard({bot, comments}) {
     };
     useEffect(() => {
         if (bot) {
-            //console.log(bot);
         setProfile({
             id: bot.id,
             title: bot.isim,
@@ -146,7 +145,6 @@ export default function ProfileCard({bot, comments}) {
                 const res = await fetch(`/api/social/diduserlike.php?chatbot_id=${bot.id}`);
 
                 const resultText = await res.text();
-                //console.log(resultText);
                 const result = JSON.parse(resultText);
 
                 if (result.success) {
@@ -162,7 +160,6 @@ export default function ProfileCard({bot, comments}) {
                 const res = await fetch(`/api/social/diduserdislike.php?chatbot_id=${bot.id}`);
 
                 const resultText = await res.text();
-                //console.log(resultText);
                 const result = JSON.parse(resultText);
 
                 if (result.success) {
@@ -178,7 +175,6 @@ export default function ProfileCard({bot, comments}) {
             const res = await fetch(`/api/social/diduserfollow.php?chatbot_id=${bot.id}`);
 
             const result = await res.json();
-            //console.log("Follow API result:", result);
 
             if (result.success) {
                 setIsFollowing(result.didFollow); // backend'den gelen boolean
@@ -285,7 +281,6 @@ export default function ProfileCard({bot, comments}) {
             });
 
             const resultText = await response.text();
-            //console.log(resultText);
             const result = JSON.parse(resultText);
             //const result = await response.json();
 
@@ -307,7 +302,7 @@ export default function ProfileCard({bot, comments}) {
             {/* Üst Bilgi */}
             <div className="flex w-full flex-col items-center justify-between gap-8 md:flex-row">
                 <div className="flex w-full flex-col items-center gap-8 md:w-auto md:flex-row md:items-start">
-                    <div className="mx-auto h-[120px] w-[120px] shrink-0 overflow-hidden rounded-[6px] md:mx-0">
+                    <div className="mx-auto h-[120px] w-[120px] shrink-0 overflow-hidden rounded-md md:mx-0">
                         {profile.image && <img src={profile.image} alt="" className="h-full w-full object-cover" />}
                     </div>
                     <div className='flex flex-col items-start gap-3'>
@@ -321,8 +316,8 @@ export default function ProfileCard({bot, comments}) {
                         className={cn(
                             "flex h-12 min-w-[220px] items-center justify-center rounded-lg border-[3px] border-transparent px-4 font-display text-xs font-bold text-white transition-all duration-200 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                             isFollowing
-                                ? "bg-origin-border [background-clip:padding-box,border-box] [background-image:linear-gradient(#18171F,#18171F),linear-gradient(150deg,#993D76,#c05396)] scale-[1.03]"
-                                : "bg-origin-border [background-clip:padding-box,border-box] [background-image:linear-gradient(#18171F,#18171F),linear-gradient(150deg,rgba(10,65,132,0.66),rgba(84,16,58,0.66))] hover:border-[#993D76]",
+                                ? "bg-origin-border [background-clip:padding-box,border-box] [background-image:linear-gradient(#18171F,#18171F),linear-gradient(150deg,#6366F1,#818CF8)] scale-[1.03]"
+                                : "bg-origin-border [background-clip:padding-box,border-box] [background-image:linear-gradient(#18171F,#18171F),linear-gradient(150deg,rgba(99,102,241,0.5),rgba(6,182,212,0.4))] hover:border-[#6366F1]",
                         )}
                         onClick={async () => {
                             if (!userId) { router.push('/login'); return; }
@@ -377,7 +372,7 @@ export default function ProfileCard({bot, comments}) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setNotificationsEnabled(true)}>
-                                <Bell className="text-pink-400" />
+                                <Bell className="text-indigo-400" />
                                 Tümünü Aç
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
@@ -499,7 +494,7 @@ export default function ProfileCard({bot, comments}) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={handleNotInterested}>
-                            <EyeOff className="text-pink-400" />
+                            <EyeOff className="text-indigo-400" />
                             İlgilenmiyorum
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setReportOpen(true)}>
@@ -520,7 +515,7 @@ export default function ProfileCard({bot, comments}) {
                     <ShoppingCart className="h-5 w-5" />
                 </button>
                 <button
-                    className="relative z-0 flex h-[47px] min-w-[130px] items-center justify-center rounded-[33px] bg-[linear-gradient(329deg,#3730A3_-2.05%,rgba(6,182,212,0)_178.12%)] px-7 font-display text-[15px] font-medium text-white shadow-[inset_0_0_0_1.5px_rgba(99,102,241,0.31)] transition-all duration-300 hover:bg-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="relative z-0 flex h-[47px] min-w-[130px] items-center justify-center rounded-full bg-[linear-gradient(329deg,#3730A3_-2.05%,rgba(6,182,212,0)_178.12%)] px-7 font-display text-[15px] font-medium text-white shadow-[inset_0_0_0_1.5px_rgba(99,102,241,0.31)] transition-all duration-300 hover:bg-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={handleBuy}
                 >
                     Satın Al - ₺{bot.ucret_haftalik}
@@ -555,10 +550,8 @@ export default function ProfileCard({bot, comments}) {
                         body: formData
                     });
                     const resultText = await res.text();
-                    //console.log(resultText);
                     const result = JSON.parse(resultText);
                     if (result.success) {
-                        //console.log("Yeni yorum eklendi:", result);
                         // yorum listesini güncelle
                         setCommentCount(prev => prev + 1);
                     } else {

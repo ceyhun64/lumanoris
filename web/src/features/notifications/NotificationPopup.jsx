@@ -1,5 +1,9 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogTitle } from '@/shared/ui/dialog';
+import { cn } from '@/lib/utils';
+import { Bell } from 'lucide-react';
+import { EmptyState } from '@/shared/ui/empty-state';
 
 // İkonları merkezi bir yerden yönetiyoruz
 const ICONS = {
@@ -25,7 +29,7 @@ const ICONS = {
     default: (
         <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 4.5C10.4087 4.5 8.88258 5.13214 7.75736 6.25736C6.63214 7.38258 6 8.9087 6 10.5V18.5H18V10.5C18 8.9087 17.3679 7.38258 16.2426 6.25736C15.1174 5.13214 13.5913 4.5 12 4.5Z" fill="#E7D8D8" fillOpacity="0.16" />
-            <path d="M12 4.5C10.4087 4.5 8.88258 5.13214 7.75736 6.25736C6.63214 7.38258 6 8.9087 6 10.5V18.5H18V10.5C18 8.9087 17.3679 7.38258 16.2426 6.25736C15.1174 5.13214 13.5913 4.5 12 4.5ZM12 4.5C12.2652 4.5 12.5196 4.39464 12.7071 4.20711C12.8946 4.01957 13 3.76522 13 3.5C13 3.23478 12.8946 2.98043 12.7071 2.79289C12.5196 2.60536 12.2652 2.5 12 2.5C11.7348 2.5 11.4804 2.60536 11.2929 2.79289C11.1054 2.98043 11 3.23478 11 3.5C11 3.76522 11.1054 4.01957 11.2929 4.20711C11.4804 4.39464 11.7348 4.5 12 4.5ZM20 18.5H4M14 20.5C14 21.0304 13.7893 21.5391 13.4142 21.9142C13.0391 22.2893 12.5304 22.5 12 22.5C11.4696 22.5 10.9609 22.2893 10.5858 21.9142C10.2107 21.5391 10 21.0304 10 20.5" stroke="#FF66C4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M12 4.5C10.4087 4.5 8.88258 5.13214 7.75736 6.25736C6.63214 7.38258 6 8.9087 6 10.5V18.5H18V10.5C18 8.9087 17.3679 7.38258 16.2426 6.25736C15.1174 5.13214 13.5913 4.5 12 4.5ZM12 4.5C12.2652 4.5 12.5196 4.39464 12.7071 4.20711C12.8946 4.01957 13 3.76522 13 3.5C13 3.23478 12.8946 2.98043 12.7071 2.79289C12.5196 2.60536 12.2652 2.5 12 2.5C11.7348 2.5 11.4804 2.60536 11.2929 2.79289C11.1054 2.98043 11 3.23478 11 3.5C11 3.76522 11.1054 4.01957 11.2929 4.20711C11.4804 4.39464 11.7348 4.5 12 4.5ZM20 18.5H4M14 20.5C14 21.0304 13.7893 21.5391 13.4142 21.9142C13.0391 22.2893 12.5304 22.5 12 22.5C11.4696 22.5 10.9609 22.2893 10.5858 21.9142C10.2107 21.5391 10 21.0304 10 20.5" stroke="#818CF8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
     ),
     pop: (
@@ -43,11 +47,6 @@ const ICONS = {
 export default function NotificationPopup({ onClose, userId }) {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    // Overlay'e tıklayınca kapatma
-    const handleOverlayClick = (e) => {
-        if (e.target.className === 'notification-overlay') onClose();
-    };
 
     const formatTime = (dateString) => {
         if (!dateString) return '';
@@ -89,41 +88,48 @@ export default function NotificationPopup({ onClose, userId }) {
         return types[type] || 'default';
     };
 
+    const itemBgByType = {
+        success: 'bg-emerald-500/10',
+        info: 'bg-white/[0.04]',
+        discount: 'bg-rose-500/15',
+        pop: 'bg-amber-400/5',
+        default: 'bg-white/[0.04]',
+    };
+
     return (
-        <div className="notification-overlay" onClick={handleOverlayClick}>
-            <div className="notification-popup">
-                <div className="notification-header">
-                    <h2>Bildirimler</h2>
-                    <button onClick={onClose} className="close-btn" aria-label="Kapat">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12.0008 13.4008L7.10078 18.3008C6.91745 18.4841 6.68411 18.5758 6.40078 18.5758C6.11745 18.5758 5.88411 18.4841 5.70078 18.3008C5.51745 18.1174 5.42578 17.8841 5.42578 17.6008C5.42578 17.3174 5.51745 17.0841 5.70078 16.9008L10.6008 12.0008L5.70078 7.10078C5.51745 6.91745 5.42578 6.68411 5.42578 6.40078C5.42578 6.11745 5.51745 5.88411 5.70078 5.70078C5.88411 5.51745 6.11745 5.42578 6.40078 5.42578C6.68411 5.42578 6.91745 5.51745 7.10078 5.70078L12.0008 10.6008L16.9008 5.70078C17.0841 5.51745 17.3174 5.42578 17.6008 5.42578C17.8841 5.42578 18.1174 5.51745 18.3008 5.70078C18.4841 5.88411 18.5758 6.11745 18.5758 6.40078C18.5758 6.68411 18.4841 6.91745 18.3008 7.10078L13.4008 12.0008L18.3008 16.9008C18.4841 17.0841 18.5758 17.3174 18.5758 17.6008C18.5758 17.8841 18.4841 18.1174 18.3008 18.3008C18.1174 18.4841 17.8841 18.5758 17.6008 18.5758C17.3174 18.5758 17.0841 18.4841 16.9008 18.3008L12.0008 13.4008Z" fill="#FF99D6" />
-                        </svg>
-                    </button>
-                </div>
+        <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="max-w-[500px] bg-luma-card border-white/10 p-6">
+                <DialogTitle className="mb-4 text-[16px]">Bildirimler</DialogTitle>
 
                 {loading ? (
-                    <div className="notification-empty"><p>Yükleniyor...</p></div>
+                    <div className="flex flex-col items-center justify-center py-14 text-white/50">
+                        <p className="text-xs font-semibold">Yükleniyor...</p>
+                    </div>
                 ) : notifications.length > 0 ? (
-                    <div className="notification-list">
+                    <div className="flex max-h-[60vh] flex-col gap-3 overflow-y-auto pr-1">
                         {notifications.map((notif) => (
-                            <div key={notif.id} className={`notification-item ${getClassByType(notif.type)}`}>
-                                <div className="icon">
+                            <div
+                                key={notif.id}
+                                className={cn(
+                                    'relative flex items-center gap-4 rounded-2xl p-3 transition-transform duration-200 hover:scale-[1.01]',
+                                    itemBgByType[getClassByType(notif.type)]
+                                )}
+                            >
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10">
                                     {ICONS[notif.type] || ICONS.default}
                                 </div>
-                                <div className="content">
-                                    <h4>{notif.title_tr}</h4>
-                                    <p>{notif.message_tr}</p>
+                                <div className="min-w-0 flex-1">
+                                    <h4 className="mb-1 font-display text-[15px] font-semibold text-white">{notif.title_tr}</h4>
+                                    <p className="text-sm text-white/70">{notif.message_tr}</p>
                                 </div>
-                                <span className="time">{formatTime(notif.created_at)}</span>
+                                <span className="shrink-0 self-start text-xs text-white/40">{formatTime(notif.created_at)}</span>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <div className="notification-empty">
-                        <p>Henüz bildiriminiz yok.</p>
-                    </div>
+                    <EmptyState icon={Bell} title="Henüz bildiriminiz yok." />
                 )}
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

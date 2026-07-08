@@ -105,7 +105,7 @@ export default function BuyProducerAccountModal({ isOpen, onClose, userId, onPur
                             className="mb-4"
                         />
 
-                        {errorMsg && <div className="mb-3 text-[13px] text-pink-400">{errorMsg}</div>}
+                        {errorMsg && <div className="mb-3 text-[13px] text-rose-400">{errorMsg}</div>}
 
                         <div className="flex gap-2.5">
                             <button

@@ -1,5 +1,13 @@
 <?php
 
+session_start();
+if (empty($_SESSION['admin'])) {
+    http_response_code(403);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(["status" => "error", "message" => "Yetkisiz erişim."]);
+    exit;
+}
+
 require_once '../../functions/db.php';
 $database = Database::getInstance();
 $conn = $database->getConnection();

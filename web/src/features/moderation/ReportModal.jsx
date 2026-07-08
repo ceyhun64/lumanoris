@@ -51,7 +51,6 @@ export default function ReportModal({ isOpen, repId, onClose }) {
             report_detail: extraDetail
         };
 
-        //console.log(payload);
 
         const formData = new FormData();
         formData.append('data', JSON.stringify(payload));

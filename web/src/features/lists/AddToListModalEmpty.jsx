@@ -37,7 +37,7 @@ export default function AddToListModalEmpty({ isOpen, onClose, onCreate, header 
                     />
                     <button
                         onClick={handleSubmit}
-                        className="flex items-center justify-center rounded-lg p-1 text-pink-400 transition-colors hover:bg-pink-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="flex items-center justify-center rounded-lg p-1 text-indigo-400 transition-colors hover:bg-indigo-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         aria-label="Liste oluştur"
                     >
                         <Plus className="h-5 w-5" />

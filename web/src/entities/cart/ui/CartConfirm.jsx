@@ -23,8 +23,8 @@ function GradientBlob() {
                         <feGaussianBlur stdDeviation="61.873" result="effect1_foregroundBlur" />
                     </filter>
                     <linearGradient id="cartconfirm_grad" x1="0" y1="-5.00384" x2="138.657" y2="-5.00384" gradientUnits="userSpaceOnUse">
-                        <stop offset="0.211538" stopColor="#4699FF" />
-                        <stop offset="0.793269" stopColor="#FF66C4" />
+                        <stop offset="0.211538" stopColor="#818CF8" />
+                        <stop offset="0.793269" stopColor="#22D3EE" />
                     </linearGradient>
                 </defs>
             </svg>
@@ -381,7 +381,7 @@ export default function CartConfirm({ cartItems }) {
                 <div className="w-full flex-[2]">
                     <div className="relative mb-8 overflow-hidden rounded-xl border border-white/10 bg-luma-elevated p-3">
                         <GradientBlob />
-                        <h3 className="mb-3 border-b border-fuchsia-800 bg-gradient-to-br from-cyan-400 to-indigo-400 bg-clip-text pb-3 font-display text-2xl font-semibold text-transparent">
+                        <h3 className="mb-3 border-b border-white/10 bg-gradient-to-br from-cyan-400 to-indigo-400 bg-clip-text pb-3 font-display text-2xl font-semibold text-transparent">
                             Satın Alınacak Sohbet ({cartItems.length})
                         </h3>
                         {cartItems.map(item => (
@@ -405,7 +405,7 @@ export default function CartConfirm({ cartItems }) {
                     {/* Erişim Bilgisi */}
                     <div className="relative mb-8 overflow-hidden rounded-xl border border-white/10 bg-luma-elevated p-3">
                         <GradientBlob />
-                        <h4 className="mb-3 border-b border-fuchsia-800 bg-gradient-to-br from-cyan-400 to-indigo-400 bg-clip-text pb-3 font-display text-xs font-semibold text-transparent">
+                        <h4 className="mb-3 border-b border-white/10 bg-gradient-to-br from-cyan-400 to-indigo-400 bg-clip-text pb-3 font-display text-xs font-semibold text-transparent">
                             Erişim Bilgisi
                         </h4>
                         <p className="mb-3 text-sm font-semibold text-white">Kullanıcı: {((useSavedCard && savedCard?.holderName) || cardInfo.holderName || "-")}</p>
@@ -431,7 +431,7 @@ export default function CartConfirm({ cartItems }) {
                     {/* Ödeme Bilgileri */}
                     <div className="relative mb-8 overflow-hidden rounded-xl border border-white/10 bg-luma-elevated p-3">
                         <GradientBlob />
-                        <h4 className="mb-3 border-b border-fuchsia-800 bg-gradient-to-br from-cyan-400 to-indigo-400 bg-clip-text pb-3 font-display text-xs font-semibold text-transparent">
+                        <h4 className="mb-3 border-b border-white/10 bg-gradient-to-br from-cyan-400 to-indigo-400 bg-clip-text pb-3 font-display text-xs font-semibold text-transparent">
                             Ödeme Bilgileri
                         </h4>
 
@@ -474,7 +474,7 @@ export default function CartConfirm({ cartItems }) {
                                     maxLength={50}
                                 />
                                 {holderNameError && (
-                                    <div className="mb-3 text-xs text-pink-400">
+                                    <div className="mb-3 text-xs text-rose-400">
                                         {holderNameError}
                                     </div>
                                 )}
@@ -489,7 +489,7 @@ export default function CartConfirm({ cartItems }) {
                             </>
                         )}
                         {cardNumberError && (
-                            <div className="mt-1 text-xs text-pink-400">
+                            <div className="mt-1 text-xs text-rose-400">
                                 {cardNumberError}
                             </div>
                         )}
@@ -526,7 +526,7 @@ export default function CartConfirm({ cartItems }) {
                                     onChange={handleCVVChange}
                                 />
                                 {cvvError && (
-                                    <div className="col-span-2 mt-1 text-xs text-pink-400">
+                                    <div className="col-span-2 mt-1 text-xs text-rose-400">
                                         {cvvError}
                                     </div>
                                 )}
@@ -562,12 +562,12 @@ export default function CartConfirm({ cartItems }) {
                             <span>Hizmet Bedeli</span>
                             <span className="text-white/50">{serviceFee}₺</span>
                         </div>
-                        <div className="my-2 flex justify-between border-y border-fuchsia-800 py-3 font-display text-base font-medium text-white">
+                        <div className="my-2 flex justify-between border-y border-white/10 py-3 font-display text-base font-medium text-white">
                             <strong>Toplam</strong>
                             <strong className="text-white/50">{total}TL</strong>
                         </div>
                         <div className="mt-4 flex items-stretch rounded-xl border border-indigo-400 bg-white/10">
-                            <div className="flex items-center p-3.5 text-pink-400">
+                            <div className="flex items-center p-3.5 text-indigo-400">
                                 <Tag className="h-5 w-5" />
                             </div>
                             <input
@@ -602,7 +602,7 @@ export default function CartConfirm({ cartItems }) {
                                 className="mt-0.5"
                             />
                             <p className="text-white/85">
-                                <span className="cursor-pointer text-white underline" onClick={() => openPolicy("terms")}>Ön Bilgilendirme Metni</span> ve <span className="cursor-pointer text-white underline" onClick={() => openPolicy("privacy")}>Hizmet Sözleşmesi'ni</span> okudum, kabul ediyorum.
+                                <span className="cursor-pointer text-white underline transition-colors hover:text-indigo-300" onClick={() => openPolicy("terms")}>Ön Bilgilendirme Metni</span> ve <span className="cursor-pointer text-white underline transition-colors hover:text-indigo-300" onClick={() => openPolicy("privacy")}>Hizmet Sözleşmesi'ni</span> okudum, kabul ediyorum.
                             </p>
                         </label>
                     </div>

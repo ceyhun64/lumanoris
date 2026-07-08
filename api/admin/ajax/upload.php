@@ -1,4 +1,11 @@
 <?php
+session_start();
+if (empty($_SESSION['admin'])) {
+    http_response_code(403);
+    echo json_encode(["success" => false, "message" => "Yetkisiz erişim."]);
+    exit;
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
     $baseDir = "../uploads/";
     $subdir  = $_POST['subdir'] ?? ""; // örn: "avatars", "docs", "2025/12"

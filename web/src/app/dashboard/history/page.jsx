@@ -43,7 +43,6 @@ export default function History() {
             credentials: "include", // cookie'yi gönder
           });
           const resultText = await res.text();
-          console.log(resultText);
           const result = JSON.parse(resultText);
 
           if (result.authenticated) {
@@ -103,7 +102,6 @@ export default function History() {
             return response.json();
         })
         .then(data => {
-            console.log("API Yanıtı:", data);
             setHistoryItems(data.results);
         })
         .catch(error => {
@@ -130,7 +128,6 @@ export default function History() {
             if (result.success) {
                 // Veritabanında silindiği onaylanınca arayüzden de kaldırıyoruz
                 setHistoryItems(prev => prev.filter(item => item.id !== deleteTargetId));
-                console.log("Sohbet silindi:", result.deleted_id);
             } else {
                 // API hata döndürürse kullanıcıya bilgi verebilirsin
                 alert("Hata: " + result.message);
@@ -159,9 +156,9 @@ export default function History() {
         if (!searchQuery.trim()) return true;
         const q = searchQuery.toLowerCase();
         return (
-            item.conversation_name.toLowerCase().includes(q) ||
-            item.latest_message.toLowerCase().includes(q) ||
-            item.latest_sent_time.toLowerCase().includes(q)
+            (item.conversation_name || '').toLowerCase().includes(q) ||
+            (item.latest_message || '').toLowerCase().includes(q) ||
+            (item.latest_sent_time || '').toLowerCase().includes(q)
         );
     });
 
@@ -186,7 +183,7 @@ export default function History() {
                         <button
                             aria-label="Ara"
                             onClick={(e) => e.preventDefault()}
-                            className="flex items-center justify-center px-5 py-1 text-pink-400 transition-transform duration-200 hover:scale-110"
+                            className="flex items-center justify-center px-5 py-1 text-indigo-400 transition-transform duration-200 hover:scale-110"
                         >
                             <Search className="h-5 w-5" />
                         </button>
@@ -257,7 +254,7 @@ export default function History() {
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onClick={() => { setEditingId(item.id); setActiveMenuId(null); }}>
-                                            <Pencil className="text-pink-400" />
+                                            <Pencil className="text-indigo-400" />
                                             Başlığı Düzenle
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>

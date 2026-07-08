@@ -117,13 +117,11 @@ export default function Chat() {
                 hasMore = data.hasMore;
                 
                 // Debug için log ekleyelim
-                console.log(`Parça yüklendi: ${accumulatedPrompt.length} / ${data.totalLength}`);
             } else {
                 hasMore = false;
             }
         }
         setFullTrainingPrompt(accumulatedPrompt);
-        console.log("Eğitim verisi tamamen yüklendi, Toplam Uzunluk:", accumulatedPrompt.length);
     } catch (error) {
         console.error("Eğitim verisi yüklenirken hata:", error);
     }
@@ -135,7 +133,6 @@ export default function Chat() {
         credentials: "include", // cookie'yi gönder
       });
       const resultText = await res.text();
-      //console.log(resultText);
       const result = JSON.parse(resultText);
 
       if (result.authenticated) {
@@ -183,11 +180,9 @@ export default function Chat() {
     let botIdd = 0;
     const params = new URLSearchParams(window.location.search);
     botIdd = params.get("botId") || 0;
-    console.log(botIdd);
     setBotId(botIdd);
     const initialPrompt = params.get("prompt") || "";
     const conversationIdd = params.get("convId") || 0;
-    //console.log(conversationIdd);
     setConversationId(conversationIdd);
     setPrompt(initialPrompt);
 
@@ -241,22 +236,17 @@ export default function Chat() {
               }),
             });
             const result = await res.json();
-            //console.log("Yeni sohbet eklendi:", result);
-            //console.log("Id: ",Number(result.id));
             const newConversation = {
               id: Number(result.id), // backend’den dönen id
               conversation_name: convName, // frontend’de oluşturduğun isim
             };
-            console.log(newConversation);
 
             setConversation(newConversation);
             setConversationId(result.id);
-            console.log(conversationId);
             const firstPrompt = {
               text: prompt,
               convId: newConversation.id,
             };
-            console.log(firstPrompt);
             handleSendMessage(firstPrompt);
           } catch (err) {
             console.error("Yeni sohbet eklenirken hata:", err);
@@ -290,7 +280,6 @@ export default function Chat() {
     // bot bilgisinin de geldiğinden emin oluyoruz (başlangıç mesajı için)
     if (!conversation || !userId || !bot) return;
     
-    console.log("Conversation: ", conversation);
 
     // Eğer zaten mesaj varsa ve bu var olan bir sohbetse tekrar yükleme
     if (messages.length > 0 && conversationIdRef.current > 0) {
@@ -377,9 +366,6 @@ export default function Chat() {
 
   /*const handleResetChat = () => {
     setMessages([]);
-    console.log(conversationId);
-    console.log("User: ",userId);
-    console.log("Bot: ",botId);
     setTimeout(() => {
       if (messagesEndRef.current) {
         messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -388,13 +374,9 @@ export default function Chat() {
   };*/
 
   const handleResetChat = async () => {
-    console.log("Conversation:", conversation);
     setMessages([]);
     const newConvId = conversation.id + 1;
     const bot_id = conversation.chatbot_id;
-    console.log("Conversation ID:", newConvId);
-    console.log("User:", userId);
-    console.log("Bot:", conversation.chatbot_id);
     const payload = {
       chatbot_id: bot_id,
       user_id: userId,
@@ -415,7 +397,6 @@ export default function Chat() {
         id: Number(result.id), // backend’den dönen id
         conversation_name: "Yeni Sohbet", // frontend’de oluşturduğun isim
       };
-      console.log(newConversation);
 
       setConversation(newConversation);
       setConversationId(result.id);
@@ -773,7 +754,6 @@ export default function Chat() {
         isOpen={isDialogModalOpen}
         onClose={() => setIsDialogModalOpen(false)}
         onPublish={(title) => {
-          console.log("Diyalog başlığı:", title);
         }}
       />
 
@@ -792,7 +772,7 @@ export default function Chat() {
               </svg>
             </div>
 
-            <h3 className="mb-2 bg-gradient-to-r from-indigo-300 to-cyan-300 bg-clip-text text-lg font-display font-bold text-transparent">
+            <h3 className="mb-2 bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text text-lg font-display font-bold text-transparent">
               Sınır Aşıldı
             </h3>
             <p className="mb-1 text-[14px] text-white/70">
@@ -814,7 +794,7 @@ export default function Chat() {
               </button>
               <button
                 onClick={() => { setLimitReached(false); setShowLimitBuyModal(true); }}
-                className="rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-6 py-2.5 text-[13px] font-semibold text-white shadow-[0_4px_15px_rgba(99,102,241,0.35)] transition-transform hover:scale-[1.03]"
+                className="rounded-xl bg-gradient-btn px-6 py-2.5 text-[13px] font-semibold text-white shadow-glow transition-transform hover:scale-[1.03]"
               >
                 Satın Al
               </button>

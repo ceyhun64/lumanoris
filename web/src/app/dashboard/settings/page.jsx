@@ -63,7 +63,6 @@ export default function Settings() {
                 soyad: soyad || "",
                 kullaniciAdi: result.username || ""
             });
-            console.log(userInfo);
             }
         } catch (err) {
             console.error("Kullanıcı bilgisi alınamadı:", err);
@@ -74,10 +73,6 @@ export default function Settings() {
         fetchUserInfo();
         }
     }, [userId]);
-
-    useEffect(() => {
-  console.log("userInfo değişti:", userInfo);
-}, [userInfo]);
 
     // ProfileImageEdit dosyayı kendi içinde base64'e çevirip onChange'e geçiyor,
     // burada "file" parametresi zaten bir base64 data URL string'idir.
@@ -183,7 +178,6 @@ export default function Settings() {
                                 body: formData,
                             });
                             const result = await res.json();
-                            console.log("Username updated:", result);
 
                             if (result.success) {
                                 setUserInfo((prev) => ({ ...prev, kullaniciAdi: data.username }));
@@ -212,7 +206,6 @@ export default function Settings() {
                                 body: formData,
                             });
                             const result = await res.json();
-                            console.log("Name updated:", result);
 
                             if (result.success) {
                                 setUserInfo((prev) => ({ ...prev, ad: data.firstName, soyad: data.lastName }));

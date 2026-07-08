@@ -150,7 +150,7 @@ export default function Header({ userId }) {
             <header className="sticky top-0 z-[100] flex items-center justify-between px-6 py-3 bg-[rgba(9,9,15,0.80)] backdrop-blur-xl border-b border-indigo-400/8">
                 {/* Search */}
                 <div className="flex items-center gap-2 flex-1 max-w-[440px]">
-                    <div className="flex items-center w-full rounded-[14px] bg-[rgba(15,15,34,0.90)] border border-indigo-400/12 overflow-hidden focus-within:border-indigo-500/45 focus-within:shadow-[0_0_0_2px_rgba(99,102,241,0.10)] transition-all duration-200">
+                    <div className="flex items-center w-full rounded-2xl bg-[rgba(15,15,34,0.90)] border border-indigo-400/12 overflow-hidden focus-within:border-indigo-500/45 focus-within:shadow-[0_0_0_2px_rgba(99,102,241,0.10)] transition-all duration-200">
                         <input
                             type="text"
                             placeholder="KEŞFET"

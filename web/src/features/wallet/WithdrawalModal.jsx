@@ -132,10 +132,10 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount, userId, 
                                 Kayıtlı IBAN: <strong className="text-white">{iban}</strong>
                             </div>
                         ) : (
-                            ibanError && <div className="mb-3 text-[13px] text-pink-400">{ibanError}</div>
+                            ibanError && <div className="mb-3 text-[13px] text-rose-400">{ibanError}</div>
                         )}
 
-                        {submitError && <div className="mb-3 text-[13px] text-pink-400">{submitError}</div>}
+                        {submitError && <div className="mb-3 text-[13px] text-rose-400">{submitError}</div>}
 
                         <div className="rounded-xl bg-luma-input px-4 py-3">
                             <input
@@ -156,7 +156,7 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount, userId, 
                                 className="w-full bg-transparent font-display text-[15px] text-white placeholder:text-white/40 focus:outline-none disabled:opacity-50"
                             />
                         </div>
-                        {amountError && <div className="mt-1 text-[13px] text-pink-400">{amountError}</div>}
+                        {amountError && <div className="mt-1 text-[13px] text-rose-400">{amountError}</div>}
 
                         <div className="mt-4 flex flex-col">
                             {options.map((label) => (
@@ -191,7 +191,7 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount, userId, 
                     <div className="mb-6 rounded-xl border border-white/5 bg-white/[0.04] p-4">
                         <p className="flex justify-between">
                             <span className="text-white/50">Tutar:</span>
-                            <strong className="text-pink-400">{pendingPayload?.amount} ₺</strong>
+                            <strong className="text-indigo-400">{pendingPayload?.amount} ₺</strong>
                         </p>
                     </div>
 

@@ -72,7 +72,6 @@ export default function List() {
                     credentials: "include", // cookie'yi gönder
                     });
                     const resultText = await res.text();
-                    console.log(resultText);
                     const result = JSON.parse(resultText);
 
                     if (result.authenticated) {
@@ -90,7 +89,6 @@ export default function List() {
         }, [router]);
 
     const handleCreateList = async (name) => {
-        console.log("Yeni liste oluşturuluyor:", name);
 
         // 1. PHP'ye gönderilecek veriyi hazırla
         const payload = {
@@ -108,7 +106,6 @@ export default function List() {
                 body: formData
             });
             const resultText = await response.text();
-            console.log(resultText);
             const result = JSON.parse(resultText);
 
             if (result.success) {
@@ -157,13 +154,11 @@ export default function List() {
             });
 
             const resultText = await response.text();
-            console.log(resultText);
             const result = JSON.parse(resultText);
 
             if (result.success) {
                 // Veritabanından başarıyla silindiyse state'den de kaldır
                 setListData(prev => prev.filter((_, index) => index !== indexToRemove));
-                console.log("Silindi:", result.message);
             } else {
                 alert("Silme hatası: " + result.message);
             }
@@ -229,7 +224,7 @@ export default function List() {
                         onClick={() => setModalVisible2(true)}
                         className="flex items-center gap-2.5 rounded-xl border border-dashed border-indigo-400/12 bg-luma-input px-5 py-4 font-display text-[15px] text-white transition-colors duration-300 hover:border-indigo-400 hover:bg-[#13132A]"
                     >
-                        <Plus className="h-5 w-5 text-pink-400" /> İlk listenizi oluşturun
+                        <Plus className="h-5 w-5 text-indigo-400" /> İlk listenizi oluşturun
                     </button>
                 </div>
             )}
@@ -284,7 +279,7 @@ export default function List() {
                                             className="absolute left-0 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full transition-colors hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                             aria-label="Önceki"
                                         >
-                                            <ChevronLeft className="h-5 w-5 text-pink-400" />
+                                            <ChevronLeft className="h-5 w-5 text-indigo-400" />
                                         </button>
                                         <button
                                             onClick={(e) => {
@@ -294,7 +289,7 @@ export default function List() {
                                             className="absolute right-0 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full transition-colors hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                             aria-label="Sonraki"
                                         >
-                                            <ChevronRight className="h-5 w-5 text-pink-400" />
+                                            <ChevronRight className="h-5 w-5 text-indigo-400" />
                                         </button>
                                     </div>
                                 </div>

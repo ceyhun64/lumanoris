@@ -13,7 +13,7 @@ export default function NavbarMobile() {
         <>
             <div className="flex items-center justify-between px-4 py-3 bg-luma-base border-b border-white/5">
                 <div
-                    className="flex items-center gap-2 cursor-pointer select-none"
+                    className="flex items-center gap-2 cursor-pointer select-none transition-opacity hover:opacity-80"
                     onClick={() => router.push('/dashboard')}
                 >
                     {logo?.src && <img src={logo.src} alt="logo" className="w-7 h-7 object-contain" />}
@@ -21,8 +21,9 @@ export default function NavbarMobile() {
                 </div>
 
                 <button
-                    className="p-2 rounded-lg text-white hover:bg-white/5 transition-colors active:bg-white/10"
+                    className="p-2 rounded-lg text-white hover:bg-white/5 transition-colors active:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
+                    aria-label={sidebarOpen ? "Menüyü kapat" : "Menüyü aç"}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
                         <path d="M4.00001 18.0002C3.86797 18.0032 3.73672 17.9792 3.61429 17.9297C3.49186 17.8802 3.38083 17.8062 3.28801 17.7122C3.19406 17.6194 3.12006 17.5084 3.07053 17.386C3.02101 17.2635 2.99701 17.1323 3.00001 17.0002C3.00001 16.7176 3.09601 16.4802 3.28801 16.2882C3.38083 16.1943 3.49186 16.1203 3.61429 16.0708C3.73672 16.0213 3.86797 15.9973 4.00001 16.0002H15C15.2833 16.0002 15.521 16.0962 15.713 16.2882C15.8068 16.3812 15.8806 16.4922 15.9299 16.6147C15.9793 16.7371 16.0031 16.8683 16 17.0002C16 17.2829 15.9043 17.5202 15.713 17.7122C15.6201 17.8063 15.5089 17.8804 15.3863 17.9299C15.2637 17.9794 15.1322 18.0034 15 18.0002H4.00001Z" fill="white" />

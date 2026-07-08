@@ -105,17 +105,6 @@ export default function PricingPlans() {
         );
     }
 
-    if (error) {
-        return (
-            <div className="flex h-full w-full flex-col px-4 py-6 font-display text-white md:px-16">
-                <div className="mb-10 flex items-center justify-between">
-                    <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text text-2xl font-semibold text-transparent md:text-4xl">Ödeme Planları</h2>
-                </div>
-                <p className="text-rose-400">API Hatası: {error}. Başlangıç verileri kullanılıyor.</p>
-            </div>
-        );
-    }
-
     return (
         <div className="flex h-full w-full flex-col px-4 py-6 font-display text-white md:px-16">
             <div className="mb-10 flex items-center justify-between">
@@ -125,6 +114,11 @@ export default function PricingPlans() {
             </div>
 
             <div>
+                {error && (
+                    <p className="mb-4 text-center text-[13px] text-rose-400">
+                        API Hatası: {error}. Başlangıç verileri kullanılıyor.
+                    </p>
+                )}
                 {upgradedPlan && (
                     <p className="mb-4 text-center text-[13px] text-cyan-400">
                         "{upgradedPlan}" paketi seçildi.
@@ -161,7 +155,7 @@ export default function PricingPlans() {
                                 disabled={plan.title === "Ücretsiz" || upgrading === index}
                                 onClick={() => handleChoosePlan(plan.title, index)}
                                 className={cn(
-                                    "mb-6 w-full rounded-lg py-3 text-xs font-semibold transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-60",
+                                    "mb-6 w-full rounded-lg py-3 text-xs font-semibold transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                     plan.buttonType === "primary"
                                         ? "bg-violet-500 text-white hover:bg-violet-600"
                                         : "border border-white/5 bg-[#1c1c1c] text-white hover:bg-[#333]",

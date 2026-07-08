@@ -34,7 +34,6 @@ export default function CreateChatbot() {
                             credentials: "include", // cookie'yi gönder
                             });
                             const resultText = await res.text();
-                            console.log(resultText);
                             const result = JSON.parse(resultText);
             
                             if (result.authenticated) {
@@ -65,7 +64,6 @@ export default function CreateChatbot() {
                 if(botData)
                 {
                     setBot(botData);
-                    console.log("Bot geldi!");
                 }
             })
             .catch(err => console.error("Bot fetch error:", err));
@@ -126,7 +124,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                         disabled={!limits.can_create_independent}
                         onClick={() => setChoice('independent')}
                         className={cn(
-                            "rounded-2xl border border-white/10 bg-luma-elevated p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-400/25",
+                            "rounded-2xl border border-white/10 bg-luma-elevated p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-400/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                             limits.can_create_independent ? "cursor-pointer" : "cursor-not-allowed opacity-50",
                         )}
                     >
@@ -136,7 +134,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                             Chatbotunuzu daha sonra istediğiniz zaman herkese açık olarak yayınlayabilirsiniz.
                         </p>
                         {!limits.can_create_independent && (
-                            <p className="mt-2 text-xs text-pink-400">
+                            <p className="mt-2 text-xs text-rose-400">
                                 Ücretsiz bağımsız chatbot hakkınızı ({limits.independent_limit}) kullandınız.
                             </p>
                         )}
@@ -146,7 +144,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                         <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); setShowBuyPlan(true); }}
-                            className="rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 p-3.5 text-center font-semibold text-white shadow-glow transition-transform duration-200 hover:scale-[1.02]"
+                            className="rounded-2xl bg-gradient-btn p-3.5 text-center font-semibold text-white shadow-glow transition-transform duration-200 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             750₺ ile Üretici Hesabı Satın Al (5 herkese açık + 2 bağımsız chatbot hakkı)
                         </button>
@@ -157,7 +155,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                         disabled={!limits.can_create_public}
                         onClick={() => setChoice('public')}
                         className={cn(
-                            "rounded-2xl border border-white/10 bg-luma-elevated p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-400/25",
+                            "rounded-2xl border border-white/10 bg-luma-elevated p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-400/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                             limits.can_create_public ? "cursor-pointer" : "cursor-not-allowed opacity-50",
                         )}
                     >
@@ -167,7 +165,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                             hale gelir ve gelir elde etmeye başlayabilirsiniz.
                         </p>
                         {!limits.can_create_public && (
-                            <p className="mt-2 text-xs text-pink-400">
+                            <p className="mt-2 text-xs text-rose-400">
                                 Ücretsiz herkese açık chatbot hakkınızı ({limits.public_limit}) kullandınız.
                             </p>
                         )}

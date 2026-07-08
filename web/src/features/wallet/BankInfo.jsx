@@ -64,7 +64,7 @@ function isoToDdmmyyyy(value) {
 
 const SELLER_BANNER_STYLES = {
     active: "border border-cyan-400 bg-cyan-400/10 text-cyan-100",
-    rejected: "border border-pink-400 bg-pink-400/10 text-pink-100",
+    rejected: "border border-rose-400 bg-rose-400/10 text-rose-100",
     kyc_filled: "border border-amber-400/45 bg-amber-400/10 text-amber-200",
     not_started: "border border-white/10 bg-white/5 text-white/70",
     pending: "border border-white/10 bg-white/5 text-white/70",
@@ -325,7 +325,7 @@ export default function BankInfo({ userId }) {
                                 type="button"
                                 onClick={handleResubmit}
                                 disabled={registering}
-                                className="rounded-md bg-gradient-to-r from-pink-400 to-cyan-400 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                                className="rounded-md bg-gradient-btn px-3 py-1.5 text-xs font-medium text-white shadow-glow disabled:opacity-60"
                             >
                                 {registering ? "Gönderiliyor..." : "Yeniden Gönder"}
                             </button>
@@ -338,7 +338,7 @@ export default function BankInfo({ userId }) {
                                 type="button"
                                 onClick={handleResubmit}
                                 disabled={registering}
-                                className="rounded-md bg-gradient-to-r from-pink-400 to-cyan-400 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                                className="rounded-md bg-gradient-btn px-3 py-1.5 text-xs font-medium text-white shadow-glow disabled:opacity-60"
                             >
                                 {registering ? "Gönderiliyor..." : "Pazaryeri Kaydını Tamamla"}
                             </button>
@@ -358,7 +358,7 @@ export default function BankInfo({ userId }) {
                         value={formData.account_type || ""}
                         onFocus={() => isEditing && setShowAccountTypeOptions(true)}
                         readOnly
-                        className={cn("uppercase", isEditing ? "cursor-pointer" : "cursor-not-allowed")}
+                        className={cn("uppercase transition-colors", isEditing ? "cursor-pointer hover:border-indigo-400/40" : "cursor-not-allowed")}
                     />
                     {showAccountTypeOptions && isEditing && (
                         <div className="absolute left-0 right-0 top-full z-10 mt-0.5 overflow-hidden rounded-lg bg-luma-panel shadow-modal">
@@ -461,7 +461,7 @@ export default function BankInfo({ userId }) {
                             return <option key={kod} value={kod}>{ad}</option>;
                         })}
                     </select>
-                    {errors.il && <span className="mt-0.5 text-[11px] text-pink-400">{errors.il}</span>}
+                    {errors.il && <span className="mt-0.5 text-[11px] text-rose-400">{errors.il}</span>}
                 </div>
 
                 {/* İlçe Alanı (Param) */}
@@ -485,12 +485,12 @@ export default function BankInfo({ userId }) {
                             return <option key={kod} value={kod}>{ad}</option>;
                         })}
                     </select>
-                    {errors.ilce && <span className="mt-0.5 text-[11px] text-pink-400">{errors.ilce}</span>}
+                    {errors.ilce && <span className="mt-0.5 text-[11px] text-rose-400">{errors.ilce}</span>}
                 </div>
 
                 <div className="flex flex-col">
                     <Input type="text" className={cn("uppercase", errors.mahalle && "border-rose-500")} name="mahalle" placeholder="MAHALLE" value={formData.mahalle || ""} onChange={handleChange} disabled={!isEditing} />
-                    {errors.mahalle && <span className="mt-0.5 text-[11px] text-pink-400">{errors.mahalle}</span>}
+                    {errors.mahalle && <span className="mt-0.5 text-[11px] text-rose-400">{errors.mahalle}</span>}
                 </div>
 
                 <div className="flex flex-col">
@@ -499,7 +499,7 @@ export default function BankInfo({ userId }) {
 
                 <div className="flex flex-col">
                     <Input type="text" className={cn("uppercase", errors.sokak && "border-rose-500")} name="sokak" placeholder="SOKAK" value={formData.sokak || ""} onChange={handleChange} disabled={!isEditing} />
-                    {errors.sokak && <span className="mt-0.5 text-[11px] text-pink-400">{errors.sokak}</span>}
+                    {errors.sokak && <span className="mt-0.5 text-[11px] text-rose-400">{errors.sokak}</span>}
                 </div>
 
                 <div className="flex flex-col">
@@ -518,7 +518,7 @@ export default function BankInfo({ userId }) {
             <Textarea name="address" className="mt-2.5 min-h-[100px] uppercase" placeholder="ADRES BİLGİLERİ" value={formData.address || ""} onChange={handleChange} disabled={!isEditing}></Textarea>
 
             <div className="mt-4 flex flex-col items-start gap-2.5">
-                {formError && <div className="text-[13px] text-pink-400">{formError}</div>}
+                {formError && <div className="text-[13px] text-rose-400">{formError}</div>}
                 <button
                     onClick={handleSubmit}
                     className="rounded-xl border border-white/70 bg-gradient-btn px-5 py-2.5 font-display text-sm font-medium text-white shadow-glow transition-all duration-300 hover:scale-[1.02] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

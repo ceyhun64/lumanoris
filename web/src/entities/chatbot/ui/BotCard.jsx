@@ -129,8 +129,9 @@ export default function BotCard({ bot, userId, onRemove }) {
                     {/* Context menu trigger */}
                     <div className="relative shrink-0" ref={menuRef}>
                         <button
-                            className="flex items-center justify-center w-7 h-7 rounded-lg text-white/40 hover:text-white/80 hover:bg-indigo-500/10 transition-all"
+                            className="flex items-center justify-center w-7 h-7 rounded-lg text-white/40 hover:text-white/80 hover:bg-indigo-500/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             onClick={(e) => { e.stopPropagation(); toggleMenu(); }}
+                            aria-label="Diğer seçenekler"
                         >
                             <svg width="16" height="16" viewBox="0 0 18 18" fill="currentColor">
                                 <path d="M9 12.4a1.4 1.4 0 1 1 0 2.8A1.4 1.4 0 0 1 9 12.4ZM9 7.5a1.4 1.4 0 1 1 0 2.8A1.4 1.4 0 0 1 9 7.5ZM9 2.6a1.4 1.4 0 1 1 0 2.8A1.4 1.4 0 0 1 9 2.6Z" />

@@ -3,6 +3,8 @@ import Image from "next/image";
 import { React, useState, useEffect } from "react";
 import smartHelper from "@/images/smarthelper.png";
 import { useRouter } from "next/navigation";
+import { Users } from "lucide-react";
+import { EmptyState } from "@/shared/ui/empty-state";
 
 export default function Following() {
     const [followedBots, setFollowedBots] = useState([]);
@@ -40,15 +42,17 @@ export default function Following() {
 
     return (
         <div className="flex flex-col gap-5 px-6 py-5">
-            <h2 className="text-xl font-display font-bold bg-gradient-to-r from-indigo-300 to-cyan-300 bg-clip-text text-transparent">
+            <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
                 Takip Edilenler
             </h2>
 
             <div className="flex flex-col gap-3">
                 {followedBots.length === 0 && (
-                    <p className="text-center py-10 text-white/38 text-[14px]">
-                        Henüz takip ettiğiniz bir bot yok.
-                    </p>
+                    <EmptyState
+                        icon={Users}
+                        title="Henüz takip ettiğiniz bir bot yok."
+                        description="Beğendiğiniz sohbet botlarını takip ederek burada görün."
+                    />
                 )}
                 {followedBots.map((bot) => (
                     <div

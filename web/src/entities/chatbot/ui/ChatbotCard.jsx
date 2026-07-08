@@ -98,7 +98,7 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
         if (!id) return;
         fetch(`/api/social/getchatbotcomments.php?chatbot_id=${id}`)
             .then(r => r.json())
-            .then(data => setCommentList(data.list || []))
+            .then(data => setCommentList(data.comments || []))
             .catch(err => console.error("Yorumlar alınamadı:", err));
     }, [id]);
 
@@ -148,7 +148,7 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
                 {/* Inactive seller banner */}
                 {isInactiveSeller && (
                     <div
-                        className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center gap-2 py-1.5 bg-amber-500/20 border-b border-amber-500/25 cursor-pointer"
+                        className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center gap-2 py-1.5 bg-amber-500/20 border-b border-amber-500/25 cursor-pointer transition-colors hover:bg-amber-500/30"
                         onClick={(e) => { e.stopPropagation(); router.push('/dashboard/chatbots/create'); }}
                     >
                         <span className="text-[11px] text-amber-300 font-semibold">Yayında Değil — Pazaryeri kaydını tamamla</span>

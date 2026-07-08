@@ -110,7 +110,7 @@ export default function CommentModal({ isOpen, onClose, comments = [], onSend })
                     />
                     <button
                         onClick={handleSend}
-                        className="shrink-0 text-sm font-semibold text-pink-400 hover:text-pink-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="shrink-0 text-sm font-semibold text-indigo-400 hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                         Gönder
                     </button>

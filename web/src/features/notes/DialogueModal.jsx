@@ -31,7 +31,6 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
           credentials: "include", // cookie'yi gönder
         });
         const resultText = await res.text();
-        //console.log(resultText);
         const result = JSON.parse(resultText);
 
         if (result.authenticated) {
@@ -108,7 +107,6 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
         const text = ref.current.innerText;
         navigator.clipboard.writeText(text)
             .then(() => {
-                //console.log('Kopyalandı:', text);
             })
             .catch((err) => {
                 console.error('Kopyalama başarısız:', err);
@@ -119,12 +117,12 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
         <svg width="15" height="15" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g clipPath="url(#clip0_7960_14766)">
                 <path d="M14.1667 6.375H7.79167C7.00926 6.375 6.375 7.00926 6.375 7.79167V14.1667C6.375 14.9491 7.00926 15.5833 7.79167 15.5833H14.1667C14.9491 15.5833 15.5833 14.9491 15.5833 14.1667V7.79167C15.5833 7.00926 14.9491 6.375 14.1667 6.375Z" stroke="url(#paint0_linear_7960_14766)" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M3.54102 10.6243H2.83268C2.45696 10.6243 2.09662 10.4751 1.83095 10.2094C1.56527 9.94374 1.41602 9.58341 1.41602 9.20768V2.83268C1.41602 2.45696 1.56527 2.09662 1.83095 1.83095C2.09662 1.56527 2.45696 1.41602 2.83268 1.41602H9.20768C9.58341 1.41602 9.94374 1.56527 10.2094 1.83095C10.4751 2.09662 10.6243 2.45696 10.6243 2.83268V3.54102" stroke="#FFE6F2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M3.54102 10.6243H2.83268C2.45696 10.6243 2.09662 10.4751 1.83095 10.2094C1.56527 9.94374 1.41602 9.58341 1.41602 9.20768V2.83268C1.41602 2.45696 1.56527 2.09662 1.83095 1.83095C2.09662 1.56527 2.45696 1.41602 2.83268 1.41602H9.20768C9.58341 1.41602 9.94374 1.56527 10.2094 1.83095C10.4751 2.09662 10.6243 2.45696 10.6243 2.83268V3.54102" stroke="#818CF8" strokeLinecap="round" strokeLinejoin="round" />
             </g>
             <defs>
                 <linearGradient id="paint0_linear_7960_14766" x1="16.3709" y1="17.7422" x2="6.4982" y2="4.87085" gradientUnits="userSpaceOnUse">
-                    <stop offset="0.211538" stopColor="#FF66C4" />
-                    <stop offset="1" stopColor="#4699FF" />
+                    <stop offset="0.211538" stopColor="#22D3EE" />
+                    <stop offset="1" stopColor="#818CF8" />
                 </linearGradient>
                 <clipPath id="clip0_7960_14766">
                     <rect width="17" height="17" fill="white" />
@@ -359,7 +357,6 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
                             body: formData
                         });
                         const resultText = await res.text();
-                        //console.log(resultText);
                         const result = JSON.parse(resultText);
                         if (result.success)
                         {
@@ -375,7 +372,6 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
                         alert("Yorum eklenemedi: " + err.message);
                     }
                 }}
-                /*onSend={(comment) => console.log("Yeni yorum:", comment)}*/
             />
         </>
     );

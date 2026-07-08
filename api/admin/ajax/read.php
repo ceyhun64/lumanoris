@@ -1,4 +1,11 @@
 <?php
+session_start();
+if (empty($_SESSION['admin'])) {
+    http_response_code(403);
+    echo json_encode(["success" => false, "message" => "Yetkisiz erişim."]);
+    exit;
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     require '../../functions/db.php';
     $database = Database::getInstance();
@@ -17,7 +24,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
+    if (stripos($table, 'adminler') !== false) {
+        echo json_encode([
+            "success" => false,
+            "message" => "Bu tabloya bu uç noktadan erişilemez."
+        ]);
+        exit;
+    }
+
     try {
+        Database::assertAllowedAdminTable($table, true);
+        Database::assertSafeWhereFragment($columns); // columns is spliced into the SQL too — same injection surface as $where
+        if (!empty($where)) {
+            Database::assertSafeWhereFragment($where);
+        }
+
         // Sorgu oluştur
         $sql = "$columns FROM $table";
         if (!empty($where)) {

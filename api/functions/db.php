@@ -115,6 +115,55 @@ class Database {
     }
 
     /**
+     * Defense-in-depth blocklist for the legacy admin CRUD engine's raw $where
+     * fragments (api/admin/ajax/{read,update,delete}.php). Those endpoints
+     * accept a client-built "column = value" fragment rather than a fully
+     * parameterized clause, so this rejects classic injection payloads
+     * (statement termination, comments, UNION/stacked queries, file/schema
+     * exfiltration) without breaking the simple/compound equality and
+     * ORDER BY suffixes those admin pages legitimately send.
+     * Throws on anything suspicious; call before using $where in a query.
+     */
+    public static function assertSafeWhereFragment($where) {
+        $blocked = '/(;|--|\/\*|\bunion\b|\binto\s+outfile\b|\binto\s+dumpfile\b|\bload_file\b|\binformation_schema\b|\bsleep\s*\(|\bbenchmark\s*\(|\bxp_)/i';
+        if (preg_match($blocked, $where)) {
+            throw new Exception('Geçersiz koşul ifadesi.');
+        }
+    }
+
+    /**
+     * Exact whitelist of tables/joins the legacy admin CRUD engine
+     * (api/admin/ajax/{create,read,update,delete}.php) is allowed to touch.
+     * $table used to be interpolated straight into the SQL (only wrapped in
+     * backticks, which does not escape an embedded backtick) with no
+     * validation beyond an "adminler" substring block — a client could send
+     * any string as the table name and inject arbitrary SQL. Derived from
+     * every literal `table` value the admin pages actually send (grepped
+     * across api/admin/*.php); anything else is rejected.
+     */
+    private const ADMIN_ALLOWED_PLAIN_TABLES = [
+        'plans', 'plan_icerikler', 'chatbotlar', 'chatbot_kategoriler',
+        'kullanicilar', 'chatbot_reports', 'chatbot_visits', 'chatbot_likes',
+        'chatbot_dislikes', 'chatbot_follows', 'chatbot_chats',
+    ];
+
+    // read.php is the only endpoint that ever sends a joined "table" (to pull
+    // in the creator's display name); create/update/delete never do.
+    private const ADMIN_ALLOWED_READ_JOINS = [
+        'chatbotlar c JOIN kullanicilar k ON c.author_user_id = k.id',
+    ];
+
+    public static function assertAllowedAdminTable($table, $allowJoins = false) {
+        if (in_array($table, self::ADMIN_ALLOWED_PLAIN_TABLES, true)) {
+            return;
+        }
+        if ($allowJoins && in_array($table, self::ADMIN_ALLOWED_READ_JOINS, true)) {
+            return;
+        }
+        throw new Exception('Geçersiz tablo.');
+    }
+
+    /**
      * @deprecated Use BaseRepository::exists() in new code.
      * Kept for legacy admin scripts only.
      * WARNING: $where must be a trusted internal string — never use user input here.

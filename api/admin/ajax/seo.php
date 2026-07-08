@@ -7,6 +7,12 @@ $conn = $database->getConnection();
 session_start();
 header('Content-Type: application/json');
 
+if (empty($_SESSION['admin'])) {
+    http_response_code(403);
+    echo json_encode(["status" => "error", "message" => "Yetkisiz erişim."]);
+    exit;
+}
+
 // Ortak Değişken (Hangi modülün çalışacağını belirler)
 // Bu değerin POST isteği ile gelmesi beklenir: örn: '{"seo_type": "og", ...}'
 $input_data = json_decode(file_get_contents('php://input'), true);

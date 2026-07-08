@@ -13,8 +13,8 @@ function PrivacyPolicy2() {
 
                 const result = await res.json();
                 // ✅ Access nested data
-                if (result.success && result.data?.gizlilik_politikasi) {
-                    setInfo(result.data.gizlilik_politikasi);
+                if (result.success && result.content?.gizlilik_politikasi) {
+                    setInfo(result.content.gizlilik_politikasi);
                 } else {
                     console.warn("Unexpected API response:", result);
                     setInfo(null);
