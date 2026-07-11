@@ -29,7 +29,7 @@ export default function TermsOfUse() {
         }, []);
     return (
     <div
-        className="rounded-xl border border-white/10 bg-luma-elevated p-6 text-white [&_h2]:mb-4 [&_h2]:text-xl [&_h4]:mb-2 [&_h4]:mt-5 [&_h4]:text-base [&_h4]:text-indigo-400 [&_li]:mb-1 [&_p]:mb-3 [&_p]:text-sm [&_ul]:pl-5"
+        className="rounded-xl border border-transparent bg-luma-elevated p-6 text-white [&_h2]:mb-4 [&_h2]:text-xl [&_h4]:mb-2 [&_h4]:mt-5 [&_h4]:text-base [&_h4]:text-fuchsia-400 [&_li]:mb-1 [&_p]:mb-3 [&_p]:text-sm [&_ul]:pl-5"
         dangerouslySetInnerHTML={{ __html: info }}
     ></div>
   )

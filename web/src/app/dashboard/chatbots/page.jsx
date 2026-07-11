@@ -21,10 +21,10 @@ export default function Chatbotlarim() {
                 const res = await fetch("/api/auth/sessioncheck.php", { credentials: "include" });
                 const result = JSON.parse(await res.text());
                 if (result.authenticated) setUserId(result.user_id);
-                else router.push("/login");
+                // else router.push("/login"); // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
             } catch (err) {
                 console.error("Session check error:", err);
-                router.push("/login");
+                // router.push("/login"); // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
             }
         }
         checkSession();
@@ -36,7 +36,7 @@ export default function Chatbotlarim() {
             .then(res => res.text())
             .then(dataText => {
                 const data = JSON.parse(dataText);
-                if (Array.isArray(data)) setChatbots(data);
+                if (Array.isArray(data?.bots)) setChatbots(data.bots);
             })
             .catch(err => console.error("Yükleme hatası:", err))
             .finally(() => setLoading(false));
@@ -86,22 +86,22 @@ export default function Chatbotlarim() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6 text-center px-4">
                 <div className="relative flex items-center justify-center">
-                    <div className="absolute w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500/20 to-cyan-500/10 blur-2xl" />
-                    <Image src={iconSrc} alt="Logo" width={64} height={64} className="relative z-10 drop-shadow-[0_0_20px_rgba(99,102,241,0.6)]" />
+                    <div className="absolute w-32 h-32 rounded-full bg-gradient-to-br from-fuchsia-500/20 to-violet-500/10 blur-2xl" />
+                    <Image src={iconSrc} alt="Logo" width={64} height={64} className="relative z-10 drop-shadow-[0_0_20px_rgba(217,70,239,0.6)]" />
                 </div>
 
                 <div className="flex flex-col gap-2 max-w-md">
-                    <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
+                    <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
                         Sohbet Botlarım
                     </h2>
                     <p className="text-white/55 text-[15px] leading-relaxed">
                         Hayalinizdeki sohbet botunu sadece{' '}
-                        <span className="text-indigo-300 font-semibold">birkaç basit adımda</span>{' '}
+                        <span className="text-fuchsia-300 font-semibold">birkaç basit adımda</span>{' '}
                         hayata geçirin.
                     </p>
                     <p className="text-white/55 text-[15px] leading-relaxed">
                         Bilgi paylaşın, eğlendirin ya da iş süreçlerini kolaylaştırın —
-                        <span className="text-indigo-300 font-semibold"> hepsi sizin elinizde!</span>
+                        <span className="text-fuchsia-300 font-semibold"> hepsi sizin elinizde!</span>
                     </p>
                 </div>
 
@@ -120,7 +120,7 @@ export default function Chatbotlarim() {
         <div className="flex flex-col gap-5 px-6 py-5">
             {/* Header */}
             <div className="flex items-center justify-between gap-4">
-                <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
+                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
                     Chatbotlarım
                 </h2>
                 <Link

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/shared/ui/dialog';
+import { Button } from '@/shared/ui/button';
 import { cn } from '@/lib/utils';
 
 export default function CommentModal({ isOpen, onClose, comments = [], onSend }) {
@@ -62,7 +63,7 @@ export default function CommentModal({ isOpen, onClose, comments = [], onSend })
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-[440px] bg-luma-card border-white/10 p-6">
+            <DialogContent className="max-w-[440px] bg-luma-card border-transparent p-6">
                 <DialogTitle className="mb-4 text-center text-[16px]">Yorumlar</DialogTitle>
 
                 <div className="mb-4 flex max-h-[360px] flex-col gap-1 overflow-y-auto text-left">
@@ -77,18 +78,19 @@ export default function CommentModal({ isOpen, onClose, comments = [], onSend })
 
                         return (
                             <div key={index} className="flex items-start gap-3 rounded-xl p-2.5 transition-colors duration-150 hover:bg-white/5">
-                                <div className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-indigo-400 to-cyan-400" />
+                                <div className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-fuchsia-400 to-violet-400" />
                                 <div className="min-w-0 flex-1">
                                     <p className={cn("text-[14px] leading-relaxed text-white", !isExpanded && "line-clamp-3")}>
                                         {isExpanded ? commentBody : text}
                                     </p>
                                     {isTruncated && (
-                                        <button
+                                        <Button
                                             onClick={() => toggleCommentExpansion(index)}
-                                            className="mt-1 text-xs font-medium text-indigo-400 hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            variant="link"
+                                            className="mt-1 h-auto p-0 text-xs font-medium"
                                         >
                                             {isExpanded ? 'Daha az göster' : 'Devamını oku'}
-                                        </button>
+                                        </Button>
                                     )}
                                     <p className="mt-1 text-xs text-white/45">
                                         <strong className="font-semibold text-white/70">{owner}</strong> – {date}
@@ -108,12 +110,9 @@ export default function CommentModal({ isOpen, onClose, comments = [], onSend })
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                         className="flex-1 bg-transparent font-sans text-[14px] text-white placeholder:text-white/40 focus:outline-none"
                     />
-                    <button
-                        onClick={handleSend}
-                        className="shrink-0 text-sm font-semibold text-indigo-400 hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
+                    <Button onClick={handleSend} variant="link" className="h-auto shrink-0 p-0 text-sm font-semibold">
                         Gönder
-                    </button>
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>

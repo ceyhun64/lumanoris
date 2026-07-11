@@ -134,10 +134,10 @@ export default function MessageInput({ onSend, onResetChat }) {
         <>
             {(selectedFileName && !recordedAudioUrl) && (
                 <div className="mb-2.5 flex justify-start px-5">
-                    <div className="relative flex min-w-[130px] flex-col items-center gap-2 rounded-xl border-2 border-indigo-400 bg-black p-4">
+                    <div className="relative flex min-w-[130px] flex-col items-center gap-2 rounded-xl border-2 border-fuchsia-400 bg-black p-4">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#818CF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                            <path d="M14 2v6h6" stroke="#818CF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#E879F9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                            <path d="M14 2v6h6" stroke="#E879F9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
 
                         <span className="text-center text-[13px] font-medium text-white">
@@ -149,7 +149,7 @@ export default function MessageInput({ onSend, onResetChat }) {
                                 setSelectedFileName('');
                                 setSelectedFile(null);
                             }}
-                            className="absolute -right-2.5 -top-2.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-rose-500 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="absolute -right-2.5 -top-2.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-transparent bg-rose-500 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             aria-label="Dosyayı kaldır"
                         >
                             <X className="h-3.5 w-3.5" />
@@ -181,7 +181,7 @@ export default function MessageInput({ onSend, onResetChat }) {
 
                     <button
                         onClick={() => fileInputRef.current.click()}
-                        className="flex h-[67px] shrink-0 items-center justify-center border-none bg-transparent p-2.5 text-indigo-400 transition-transform duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+                        className="flex h-[67px] shrink-0 items-center justify-center border-none bg-transparent p-2.5 text-fuchsia-400 transition-transform duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
                         aria-label="Dosya ekle"
                     >
                         <Plus className="h-5 w-5" />
@@ -204,7 +204,7 @@ export default function MessageInput({ onSend, onResetChat }) {
                         }}
                         disabled={isRecording}
                         className={cn(
-                            "h-[68px] max-h-[180px] flex-1 resize-none border-none bg-transparent py-[25px] pl-0 pr-2.5 font-sans text-[15px] font-light text-white placeholder:text-white/45 focus:text-indigo-200 focus:outline-none disabled:opacity-60",
+                            "h-[68px] max-h-[180px] flex-1 resize-none border-none bg-transparent py-[25px] pl-0 pr-2.5 font-sans text-[15px] font-light text-white placeholder:text-white/45 focus:text-fuchsia-200 focus:outline-none disabled:opacity-60",
                             message.length < 150 ? "overflow-hidden" : "overflow-y-auto",
                         )}
                     />
@@ -212,7 +212,7 @@ export default function MessageInput({ onSend, onResetChat }) {
                     <button
                         onClick={handleSend}
                         disabled={isRecording || !(message.trim() || selectedFileName || recordedAudioUrl)}
-                        className="flex h-[67px] shrink-0 items-center justify-center border-none bg-transparent p-2.5 text-indigo-300 transition-transform duration-200 hover:scale-110 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+                        className="flex h-[67px] shrink-0 items-center justify-center border-none bg-transparent p-2.5 text-fuchsia-300 transition-transform duration-200 hover:scale-110 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
                         aria-label="Gönder"
                     >
                         <Send className="h-5 w-5 -rotate-45" />
@@ -232,7 +232,7 @@ export default function MessageInput({ onSend, onResetChat }) {
                         <button
                             onClick={() => setVoiceModalOpen(true)}
                             disabled={!!selectedFileName}
-                            className="flex items-center justify-center text-indigo-300 transition-transform duration-200 hover:scale-110 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+                            className="flex items-center justify-center text-fuchsia-300 transition-transform duration-200 hover:scale-110 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
                             aria-label="Sesli mesaj"
                         >
                             <Mic className="h-5 w-5" />
@@ -243,7 +243,7 @@ export default function MessageInput({ onSend, onResetChat }) {
 
                     <button
                         onClick={onResetChat}
-                        className="flex items-center justify-center text-indigo-300 transition-transform duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+                        className="flex items-center justify-center text-fuchsia-300 transition-transform duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
                         aria-label="Sohbeti sıfırla"
                     >
                         <RotateCcw className="h-5 w-5" />

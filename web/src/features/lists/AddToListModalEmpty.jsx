@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
+import { Button } from '@/shared/ui/button';
 import { Plus } from 'lucide-react';
 
 export default function AddToListModalEmpty({ isOpen, onClose, onCreate, header = "Yeni Liste Oluştur" }) {
@@ -20,7 +21,7 @@ export default function AddToListModalEmpty({ isOpen, onClose, onCreate, header 
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-[450px] bg-luma-card border-white/10 p-6 text-center">
+            <DialogContent className="max-w-[450px] bg-luma-card border-transparent p-6 text-center">
                 <DialogTitle className="mb-1 text-[16px]">{header}</DialogTitle>
                 <DialogDescription className="mb-5 text-left font-sans text-[14px] font-normal leading-6 text-white">
                     Yeni bir liste oluşturmak için isim girin.
@@ -37,25 +38,23 @@ export default function AddToListModalEmpty({ isOpen, onClose, onCreate, header 
                     />
                     <button
                         onClick={handleSubmit}
-                        className="flex items-center justify-center rounded-lg p-1 text-indigo-400 transition-colors hover:bg-indigo-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="flex items-center justify-center rounded-lg p-1 text-fuchsia-400 transition-colors hover:bg-fuchsia-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         aria-label="Liste oluştur"
                     >
                         <Plus className="h-5 w-5" />
                     </button>
                 </div>
                 <div className="flex justify-between gap-6">
-                    <button
+                    <Button
                         onClick={onClose}
-                        className="min-w-[120px] flex-1 rounded-xl border-b border-dashed border-indigo-700 bg-white/[0.04] px-6 py-3 font-display text-[16px] font-medium text-white transition-all duration-200 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        variant="ghost"
+                        className="h-auto min-w-[120px] flex-1 border-b border-dashed border-fuchsia-700 bg-white/[0.04] py-3 text-[16px] hover:bg-white/[0.08]"
                     >
                         İptal
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        className="min-w-[120px] flex-1 rounded-xl bg-gradient-btn px-6 py-3 font-display text-[16px] font-medium text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
+                    </Button>
+                    <Button onClick={handleSubmit} className="h-auto min-w-[120px] flex-1 py-3 text-[16px]">
                         Kaydet
-                    </button>
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>

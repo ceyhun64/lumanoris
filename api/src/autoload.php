@@ -9,6 +9,7 @@
 
 require_once __DIR__ . '/../functions/bootstrap.php';
 require_once __DIR__ . '/../functions/validators.php';
+require_once __DIR__ . '/../functions/rate_limit.php';
 
 // AppException.php defines 8 exception classes in one file (AppException,
 // AuthException, ValidationException, NotFoundException, PermissionException,

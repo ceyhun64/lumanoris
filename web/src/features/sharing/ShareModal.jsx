@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
+import { Button } from '@/shared/ui/button';
 
 export default function ShareModal({ isOpen, urlId, onClose, }) {
     const [copied, setCopied] = useState(false);
@@ -46,14 +47,14 @@ export default function ShareModal({ isOpen, urlId, onClose, }) {
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-[450px] bg-luma-card border-white/10 p-6 text-center">
+            <DialogContent className="max-w-[450px] bg-luma-card border-transparent p-6 text-center">
                 <div className="flex flex-col items-center">
-                    <div className="mb-5 text-indigo-400" aria-hidden="true">
+                    <div className="mb-5 text-fuchsia-400" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" width="70" height="70" viewBox="0 0 81 81" fill="none">
                             <path d="M68.4458 44.4777C67.407 44.3547 66.3618 44.6479 65.5385 45.2932C64.7152 45.9385 64.1808 46.8834 64.0521 47.9215C63.2036 54.6171 59.9405 60.7729 54.8752 65.2332C49.8099 69.6936 43.2908 72.1518 36.5416 72.1465H14.4146L16.9479 69.6527C17.6851 68.9111 18.099 67.9079 18.099 66.8621C18.099 65.8164 17.6851 64.8131 16.9479 64.0715C13.4808 60.6182 10.99 56.3083 9.7289 51.5801C8.46782 46.8519 8.48141 41.8741 9.76829 37.1528C11.0552 32.4316 13.5694 28.1353 17.0554 24.701C20.5413 21.2668 24.8746 18.8169 29.6146 17.6007C30.6329 17.3382 31.5052 16.682 32.0397 15.7763C32.5742 14.8707 32.727 13.7898 32.4646 12.7715C32.2021 11.7532 31.5459 10.8808 30.6402 10.3463C29.7346 9.81186 28.6537 9.65904 27.6354 9.92149C21.8839 11.4211 16.5991 14.3359 12.2623 18.4004C7.92545 22.4648 4.67449 27.5498 2.80554 33.1921C0.93659 38.8343 0.509054 44.8545 1.56188 50.7043C2.6147 56.5541 5.11441 62.0474 8.83332 66.684L2.06457 73.2944C1.51532 73.851 1.14325 74.5579 0.995309 75.3258C0.84737 76.0936 0.930189 76.8881 1.23332 77.609C1.53027 78.3318 2.03455 78.9506 2.68261 79.3874C3.33067 79.8241 4.09351 80.0592 4.87498 80.0632H36.5416C45.2222 80.0631 53.604 76.8937 60.1128 71.1503C66.6215 65.4068 70.8093 57.4845 71.8896 48.8715C72.0126 47.8327 71.7194 46.7875 71.0741 45.9642C70.4288 45.1409 69.4839 44.6065 68.4458 44.4777ZM68.2083 20.6882C66.5269 20.6937 64.891 21.2344 63.5375 22.2319L56.6104 19.0652L64.25 15.5819C65.4449 16.3073 66.8107 16.7034 68.2083 16.7298C69.7741 16.7298 71.3047 16.2655 72.6066 15.3956C73.9085 14.5257 74.9232 13.2893 75.5224 11.8427C76.1216 10.3962 76.2783 8.80437 75.9729 7.26869C75.6674 5.73301 74.9134 4.32239 73.8062 3.21523C72.6991 2.10806 71.2885 1.35407 69.7528 1.0486C68.2171 0.743138 66.6253 0.899915 65.1787 1.49911C63.7322 2.0983 62.4957 3.113 61.6258 4.41489C60.756 5.71678 60.2916 7.24739 60.2916 8.81316L52.7708 12.2569C51.4961 11.3491 49.9809 10.8394 48.4166 10.7923C46.317 10.7923 44.3034 11.6264 42.8187 13.1111C41.3341 14.5957 40.5 16.6094 40.5 18.709C40.5 20.8086 41.3341 22.8223 42.8187 24.3069C44.3034 25.7916 46.317 26.6257 48.4166 26.6257C49.7027 26.6127 50.9662 26.2866 52.0979 25.6757L60.3708 29.634C60.5687 31.1434 61.1976 32.5638 62.1822 33.7249C63.1668 34.886 64.4653 35.7386 65.9221 36.1805C67.3789 36.6225 68.9322 36.635 70.3959 36.2167C71.8597 35.7983 73.1717 34.9668 74.1749 33.8217C75.1781 32.6766 75.8299 31.2666 76.0521 29.7606C76.2744 28.2545 76.0577 26.7163 75.428 25.3303C74.7983 23.9443 73.7824 22.7692 72.5019 21.9459C71.2214 21.1225 69.7307 20.6859 68.2083 20.6882Z" fill="currentColor" />
                         </svg>
                     </div>
-                    <DialogTitle className="mb-3 text-xl font-semibold text-indigo-400">
+                    <DialogTitle className="mb-3 text-xl font-semibold text-fuchsia-400">
                         Bu modeli arkadaşlarınızla paylaşın!
                     </DialogTitle>
                     <DialogDescription className="mb-3.5 font-display text-[15px] font-semibold text-white">
@@ -64,12 +65,13 @@ export default function ShareModal({ isOpen, urlId, onClose, }) {
                         <span className="truncate text-[15px] text-white">
                             {shareUrl.length > 30 ? shareUrl.slice(0, 30) + "..." : shareUrl}
                         </span>
-                        <button
+                        <Button
                             onClick={handleCopy}
-                            className="shrink-0 rounded-xl border border-indigo-400/10 bg-indigo-400/10 px-3 py-3 font-display text-[15px] font-medium text-white transition-all duration-200 hover:bg-indigo-400/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            variant="outline"
+                            className="h-auto shrink-0 border-fuchsia-400/10 bg-fuchsia-400/10 py-3 text-body-lg text-white hover:bg-fuchsia-400/25"
                         >
                             Kopyala
-                        </button>
+                        </Button>
                         {copied && (
                             <span className="absolute -top-3 right-4 rounded-full bg-emerald-500 px-2.5 py-1 text-xs font-semibold text-white shadow-glow">
                                 Kopyalandı!
@@ -80,6 +82,7 @@ export default function ShareModal({ isOpen, urlId, onClose, }) {
                     <div className="flex flex-wrap justify-center gap-5">
                         <button
                             onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(shareUrl)}`, "_blank")}
+                            aria-label="WhatsApp ile paylaş"
                             className="rounded-full transition-transform duration-300 hover:scale-110 hover:rotate-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 43 43" fill="none">
@@ -89,6 +92,7 @@ export default function ShareModal({ isOpen, urlId, onClose, }) {
                         </button>
                         <button
                             onClick={handleInstagramShare}
+                            aria-label="Instagram ile paylaş"
                             className="rounded-full transition-transform duration-300 hover:scale-110 hover:rotate-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 43" fill="none">
@@ -97,6 +101,7 @@ export default function ShareModal({ isOpen, urlId, onClose, }) {
                         </button>
                         <button
                             onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank")}
+                            aria-label="Facebook ile paylaş"
                             className="rounded-full transition-transform duration-300 hover:scale-110 hover:rotate-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 43" fill="none">
@@ -112,6 +117,7 @@ export default function ShareModal({ isOpen, urlId, onClose, }) {
                         </button>
                         <button
                             onClick={() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}`, "_blank")}
+                            aria-label="X (Twitter) ile paylaş"
                             className="rounded-full transition-transform duration-300 hover:scale-110 hover:rotate-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             <svg width="42" height="42" viewBox="0 0 42 43" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -121,6 +127,7 @@ export default function ShareModal({ isOpen, urlId, onClose, }) {
                         </button>
                         <button
                             onClick={() => window.open(`mailto:?subject=Lumanoris'ten Harika Bir Model Buldum!&body=${encodeURIComponent(shareUrl)}`, "_self")}
+                            aria-label="E-posta ile paylaş"
                             className="rounded-full transition-transform duration-300 hover:scale-110 hover:rotate-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 43" fill="none">

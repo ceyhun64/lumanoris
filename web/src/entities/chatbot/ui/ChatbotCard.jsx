@@ -9,6 +9,7 @@ import DeleteConfirmModal from "@/shared/ui/DeleteConfirmModal";
 import PublishModal from "@/features/chatbot-mgmt/PublishModal";
 import BuyModal from "@/features/purchasing/BuyModal";
 import { cn } from "@/lib/utils";
+import { ThumbsUp, ThumbsDown, MessageSquare, Share2 } from "lucide-react";
 
 export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isIndependent, title, image, likes, dislikes, comments, dialogs, status, sellerStatus, profileImage, category, weeklyPrice, monthlyPrice, onDelete, onChanged }) {
     const isInactiveSeller = !isIndependent && sellerStatus && sellerStatus !== 'active';
@@ -132,8 +133,8 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
                 className={cn(
                     'relative flex items-stretch gap-0 rounded-2xl overflow-hidden cursor-pointer',
                     'bg-gradient-to-r from-[#111120] to-[#0D0D1A]',
-                    'border border-indigo-400/10 transition-all duration-300',
-                    'hover:-translate-y-0.5 hover:border-indigo-400/22 hover:shadow-[0_6px_24px_rgba(99,102,241,0.13)]',
+                    'border border-fuchsia-400/10 transition-all duration-300',
+                    'hover:-translate-y-0.5 hover:border-fuchsia-400/22 hover:shadow-[0_6px_24px_rgba(217,70,239,0.13)]',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
                     isInactiveSeller ? 'opacity-70 saturate-50' : '',
                 )}
@@ -166,8 +167,8 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
                                 <feGaussianBlur stdDeviation="59.3" />
                             </filter>
                             <linearGradient id="cc_grad" x1="-47" y1="61.2" x2="86" y2="61.2" gradientUnits="userSpaceOnUse">
-                                <stop offset="0.21" stopColor="#4F46E5" />
-                                <stop offset="0.79" stopColor="#06B6D4" />
+                                <stop offset="0.21" stopColor="#C026D3" />
+                                <stop offset="0.79" stopColor="#8B5CF6" />
                             </linearGradient>
                         </defs>
                     </svg>
@@ -195,19 +196,19 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
                                 alt="user"
                                 width={38}
                                 height={38}
-                                className="w-9 h-9 shrink-0 rounded-full object-cover border border-indigo-400/20"
+                                className="w-9 h-9 shrink-0 rounded-full object-cover border border-fuchsia-400/20"
                             />
                             <p className="text-[14px] font-semibold text-white/90 leading-snug truncate">{title}</p>
                         </div>
 
                         {/* Dialog count + status (desktop only) */}
                         <div className="hidden sm:flex items-center gap-2 shrink-0">
-                            <span className="text-[12px] text-white/45">{dialogs} Diyalog</span>
+                            <span className="text-label text-luma-muted">{dialogs} Diyalog</span>
                             <span className={cn(
                                 'px-2 py-0.5 rounded-md text-[11px] font-semibold',
                                 status === "Satın Alındı"
                                     ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25'
-                                    : 'bg-indigo-500/12 text-indigo-300 border border-indigo-400/18',
+                                    : 'bg-fuchsia-500/12 text-fuchsia-300 border border-fuchsia-400/18',
                             )}>
                                 {status}
                             </span>
@@ -217,7 +218,7 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
                         <div className="relative shrink-0 ml-1" ref={menuRef}>
                             <button
                                 aria-label="Chatbot menüsü"
-                                className="flex items-center justify-center w-7 h-7 rounded-lg text-white/40 hover:text-white/80 hover:bg-indigo-500/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base"
+                                className="flex items-center justify-center w-7 h-7 rounded-lg text-white/40 hover:text-white/80 hover:bg-fuchsia-500/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base"
                                 onClick={(e) => { e.stopPropagation(); setCardMenuOpen(v => !v); }}
                             >
                                 <svg width="4" height="14" viewBox="0 0 4 16" fill="currentColor">
@@ -226,7 +227,7 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
                             </button>
                             {cardMenuOpen && (
                                 <div
-                                    className="absolute right-0 top-9 z-50 min-w-[160px] rounded-xl border border-indigo-400/12 bg-[#0E0E22] shadow-[0_8px_32px_rgba(0,0,0,0.55)] overflow-hidden"
+                                    className="absolute right-0 top-9 z-50 min-w-[160px] rounded-xl border border-fuchsia-400/12 bg-[#0E0E22] shadow-[0_8px_32px_rgba(0,0,0,0.55)] overflow-hidden"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     <button
@@ -240,7 +241,7 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
                                     </button>
                                     {isOwn && !isIndependent && (
                                         <button
-                                            className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[12.5px] text-white/70 hover:bg-indigo-500/10 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                                            className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[12.5px] text-white/70 hover:bg-fuchsia-500/10 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setUnpublishConfirmOpen(true); setCardMenuOpen(false); }}
                                         >
                                             Yayından Kaldır
@@ -253,12 +254,12 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
 
                     {/* Mobile: dialog + status */}
                     <div className="flex sm:hidden items-center gap-2">
-                        <span className="text-[12px] text-white/45">{dialogs} Diyalog</span>
+                        <span className="text-label text-luma-muted">{dialogs} Diyalog</span>
                         <span className={cn(
                             'px-2 py-0.5 rounded-md text-[11px] font-semibold',
                             status === "Satın Alındı"
                                 ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25'
-                                : 'bg-indigo-500/12 text-indigo-300 border border-indigo-400/18',
+                                : 'bg-fuchsia-500/12 text-fuchsia-300 border border-fuchsia-400/18',
                         )}>
                             {status}
                         </span>
@@ -266,20 +267,20 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
 
                     {/* Stats row */}
                     <div className="flex items-center gap-3">
-                        <StatBtn active={liked} activeClass="text-indigo-300" onClick={handleLike}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.27 16.265 20.975 12.185A2.25 2.25 0 0 0 18.75 9.5h-4.6l.663-4.045a2.25 2.25 0 0 0-2.082-2.592l-.145-.005a1.5 1.5 0 0 0-1.425 1.025L10.5 7.25a7.5 7.5 0 0 1-2.863 3.638l-1.44 1.24a1.875 1.875 0 0 0-.635 1.623l.813 9.393a1.875 1.875 0 0 0 1.868 1.706H12.5a7.5 7.5 0 0 0 7.27-5.585l.5-3Z" /></svg>
+                        <StatBtn active={liked} activeClass="text-fuchsia-300" onClick={handleLike}>
+                            <ThumbsUp className="h-4 w-4" strokeWidth={1.8} />
                             {likeCount}
                         </StatBtn>
                         <StatBtn active={disliked} activeClass="text-rose-400" onClick={handleDislike}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3.73 8.485 3.025 12.565A2.25 2.25 0 0 0 5.25 15.25h4.6l-.663 4.045a2.25 2.25 0 0 0 2.082 2.592l.145.005a1.5 1.5 0 0 0 1.425-1.025l.661-2.867a7.5 7.5 0 0 1 2.863-3.638l1.44-1.24a1.875 1.875 0 0 0 .635-1.623L17.625 2.106A1.875 1.875 0 0 0 15.757.4H11.5a7.5 7.5 0 0 0-7.27 5.585l-.5 3Z" /></svg>
+                            <ThumbsDown className="h-4 w-4" strokeWidth={1.8} />
                             {dislikeCount}
                         </StatBtn>
                         <StatBtn onClick={(e) => { e.stopPropagation(); setCommentOpen(true); }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                            <MessageSquare className="h-4 w-4" strokeWidth={1.8} />
                             {commentCount}
                         </StatBtn>
                         <StatBtn onClick={(e) => { e.stopPropagation(); setShareOpen(true); }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51 15.42 17.49M15.41 6.51 8.59 10.49"/></svg>
+                            <Share2 className="h-4 w-4" strokeWidth={1.8} />
                             Paylaş
                         </StatBtn>
                     </div>
@@ -344,7 +345,7 @@ function StatBtn({ active, activeClass, onClick, children }) {
             className={cn(
                 'flex items-center gap-1.5 text-[12px] transition-colors px-0 rounded-md',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
-                active ? (activeClass ?? 'text-indigo-300') : 'text-white/45 hover:text-white/75',
+                active ? (activeClass ?? 'text-fuchsia-300') : 'text-white/45 hover:text-white/75',
             )}
             onClick={onClick}
         >
@@ -356,7 +357,7 @@ function StatBtn({ active, activeClass, onClick, children }) {
 function ActionBtn({ onClick, children }) {
     return (
         <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/8 border border-indigo-400/18 text-indigo-300 text-[11.5px] font-semibold hover:bg-indigo-500/15 hover:border-indigo-400/35 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-fuchsia-500/8 border border-fuchsia-400/18 text-fuchsia-300 text-[11.5px] font-semibold hover:bg-fuchsia-500/15 hover:border-fuchsia-400/35 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base"
             onClick={onClick}
         >
             {children}

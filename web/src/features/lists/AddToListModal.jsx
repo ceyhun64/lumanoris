@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
 import { Checkbox } from '@/shared/ui/checkbox';
+import { Button } from '@/shared/ui/button';
 import { Plus } from 'lucide-react';
 
 export default function AddToListModal({ userId, botId, isOpen, onClose, header = "Listeye Ekle", onCreateList }) {
@@ -115,7 +116,7 @@ export default function AddToListModal({ userId, botId, isOpen, onClose, header 
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-[450px] bg-luma-card border-white/10 p-6 text-center">
+            <DialogContent className="max-w-[450px] bg-luma-card border-transparent p-6 text-center">
                 {showFeedback && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-glow">
                         Değişiklikler kaydedildi ✅
@@ -136,7 +137,7 @@ export default function AddToListModal({ userId, botId, isOpen, onClose, header 
                     />
                     <button
                         onClick={handleAddNewList}
-                        className="flex items-center justify-center rounded-lg p-1 text-indigo-400 transition-colors hover:bg-indigo-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="flex items-center justify-center rounded-lg p-1 text-fuchsia-400 transition-colors hover:bg-fuchsia-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         aria-label="Yeni liste ekle"
                     >
                         <Plus className="h-5 w-5" />
@@ -159,19 +160,20 @@ export default function AddToListModal({ userId, botId, isOpen, onClose, header 
                 </div>
 
                 <div className="flex justify-between gap-6">
-                    <button
+                    <Button
                         onClick={onClose}
-                        className="min-w-[120px] flex-1 rounded-xl border-b border-dashed border-indigo-700 bg-white/[0.04] px-6 py-3 font-display text-[16px] font-medium text-white transition-all duration-200 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        variant="ghost"
+                        className="h-auto min-w-[120px] flex-1 border-b border-dashed border-fuchsia-700 bg-white/[0.04] py-3 text-[16px] hover:bg-white/[0.08]"
                     >
                         İptal
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={handleSave}
                         disabled={loading}
-                        className="min-w-[120px] flex-1 rounded-xl bg-gradient-btn px-6 py-3 font-display text-[16px] font-medium text-white shadow-glow transition-all duration-200 hover:brightness-110 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="h-auto min-w-[120px] flex-1 py-3 text-[16px]"
                     >
                         {loading ? "Kaydediliyor..." : "Kaydet"}
-                    </button>
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>

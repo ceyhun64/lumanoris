@@ -8,6 +8,7 @@ import CommentModal from "@/features/comments/CommentModal";
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogTitle } from '@/shared/ui/dialog';
 import { cn } from '@/lib/utils';
+import { ThumbsUp, ThumbsDown } from 'lucide-react';
 
 export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
     const inputRef = useRef(null);
@@ -36,11 +37,11 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
         if (result.authenticated) {
           setUserId(result.user_id);
         } else {
-          router.push("/login");
+          // router.push("/login"); // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
         }
       } catch (err) {
         console.error("Session check error:", err);
-        router.push("/login");
+        // router.push("/login"); // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
       }
     }
 
@@ -117,12 +118,12 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
         <svg width="15" height="15" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g clipPath="url(#clip0_7960_14766)">
                 <path d="M14.1667 6.375H7.79167C7.00926 6.375 6.375 7.00926 6.375 7.79167V14.1667C6.375 14.9491 7.00926 15.5833 7.79167 15.5833H14.1667C14.9491 15.5833 15.5833 14.9491 15.5833 14.1667V7.79167C15.5833 7.00926 14.9491 6.375 14.1667 6.375Z" stroke="url(#paint0_linear_7960_14766)" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M3.54102 10.6243H2.83268C2.45696 10.6243 2.09662 10.4751 1.83095 10.2094C1.56527 9.94374 1.41602 9.58341 1.41602 9.20768V2.83268C1.41602 2.45696 1.56527 2.09662 1.83095 1.83095C2.09662 1.56527 2.45696 1.41602 2.83268 1.41602H9.20768C9.58341 1.41602 9.94374 1.56527 10.2094 1.83095C10.4751 2.09662 10.6243 2.45696 10.6243 2.83268V3.54102" stroke="#818CF8" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M3.54102 10.6243H2.83268C2.45696 10.6243 2.09662 10.4751 1.83095 10.2094C1.56527 9.94374 1.41602 9.58341 1.41602 9.20768V2.83268C1.41602 2.45696 1.56527 2.09662 1.83095 1.83095C2.09662 1.56527 2.45696 1.41602 2.83268 1.41602H9.20768C9.58341 1.41602 9.94374 1.56527 10.2094 1.83095C10.4751 2.09662 10.6243 2.45696 10.6243 2.83268V3.54102" stroke="#E879F9" strokeLinecap="round" strokeLinejoin="round" />
             </g>
             <defs>
                 <linearGradient id="paint0_linear_7960_14766" x1="16.3709" y1="17.7422" x2="6.4982" y2="4.87085" gradientUnits="userSpaceOnUse">
-                    <stop offset="0.211538" stopColor="#22D3EE" />
-                    <stop offset="1" stopColor="#818CF8" />
+                    <stop offset="0.211538" stopColor="#A78BFA" />
+                    <stop offset="1" stopColor="#E879F9" />
                 </linearGradient>
                 <clipPath id="clip0_7960_14766">
                     <rect width="17" height="17" fill="white" />
@@ -134,7 +135,7 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
     return (
         <>
             <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-                <DialogContent className="max-w-[520px] bg-luma-card border-white/10 p-6">
+                <DialogContent className="max-w-[520px] bg-luma-card border-transparent p-6">
                     <DialogTitle className="mb-4 text-center text-[16px]">Deftere Kaydedilmiş Diyalog</DialogTitle>
 
                     <div className="flex flex-col gap-4">
@@ -204,13 +205,10 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
                                         console.error("Like API error:", err);
                                         }
                                     }}
-                                    className={cn("transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md", liked && "text-indigo-400")}
+                                    className={cn("transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md", liked && "text-fuchsia-400")}
                                     aria-label="Beğen"
                                 >
-                                    <svg width="22" height="21" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M20.3698 16.265L21.0748 12.185C21.1162 11.9459 21.1048 11.7006 21.0415 11.4663C20.9782 11.232 20.8644 11.0144 20.7082 10.8287C20.552 10.643 20.3571 10.4936 20.1372 10.391C19.9172 10.2885 19.6775 10.2352 19.4348 10.235H14.2528C14.132 10.2349 14.0127 10.2085 13.903 10.1576C13.7934 10.1068 13.6962 10.0327 13.6181 9.94049C13.54 9.8483 13.4829 9.74023 13.4507 9.62376C13.4185 9.50729 13.4121 9.38522 13.4318 9.26601L14.0948 5.22101C14.2019 4.56422 14.1713 3.89233 14.0048 3.24801C13.9329 2.9819 13.795 2.73823 13.604 2.5395C13.4129 2.34077 13.1749 2.1934 12.9118 2.11101L12.7668 2.06401C12.4393 1.95938 12.0841 1.9837 11.7738 2.13201C11.4338 2.29601 11.1858 2.59501 11.0938 2.95001L10.6178 4.78401C10.4665 5.36772 10.2463 5.93135 9.96184 6.46301C9.54584 7.24001 8.90383 7.86301 8.23683 8.43801L6.79683 9.67801C6.5972 9.85052 6.44129 10.0679 6.34186 10.3123C6.24244 10.5567 6.20233 10.8211 6.22483 11.084L7.03784 20.477C7.07361 20.8922 7.26372 21.279 7.57066 21.5609C7.87759 21.8429 8.27906 21.9995 8.69583 22H13.3448C16.8258 22 19.7968 19.574 20.3688 16.265" fill="currentColor" />
-                                        <path opacity="0.5" fillRule="evenodd" clipRule="evenodd" d="M3.06769 9.48509C3.26095 9.47664 3.45 9.54319 3.59535 9.67084C3.7407 9.79849 3.83111 9.97736 3.84769 10.1701L4.81769 21.4061C4.83412 21.5734 4.81627 21.7423 4.76523 21.9025C4.71419 22.0627 4.63103 22.2108 4.52083 22.3378C4.41063 22.4648 4.2757 22.5679 4.12429 22.641C3.97288 22.7141 3.80816 22.7555 3.64019 22.7628C3.47222 22.7701 3.30453 22.7431 3.14736 22.6834C2.99019 22.6237 2.84684 22.5326 2.72607 22.4156C2.60529 22.2986 2.50963 22.1583 2.44491 22.0031C2.3802 21.8479 2.3478 21.6812 2.34969 21.5131V10.2341C2.34977 10.0408 2.42449 9.85495 2.55827 9.7154C2.69205 9.57585 2.87455 9.49334 3.06769 9.48509Z" fill="currentColor" />
-                                    </svg>
+                                    <ThumbsUp className="h-[22px] w-[22px]" strokeWidth={1.8} />
                                 </button>
                                 <span className="text-sm">{likeCount}</span>
                             </div>
@@ -251,10 +249,7 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
                                     className={cn("transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md", disliked && "text-rose-400")}
                                     aria-label="Beğenme"
                                 >
-                                    <svg width="22" height="21" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M20.3698 8.485L21.0748 12.565C21.1162 12.8041 21.1048 13.0494 21.0415 13.2837C20.9782 13.518 20.8644 13.7356 20.7082 13.9213C20.552 14.1071 20.3571 14.2564 20.1372 14.359C19.9172 14.4615 19.6775 14.5148 19.4348 14.515H14.2528C14.132 14.5151 14.0127 14.5415 13.903 14.5924C13.7934 14.6432 13.6962 14.7173 13.6181 14.8095C13.54 14.9017 13.4829 15.0098 13.4507 15.1263C13.4185 15.2427 13.4121 15.3648 13.4318 15.484L14.0948 19.529C14.2021 20.1861 14.1714 20.8584 14.0048 21.503C13.8648 22.036 13.4538 22.465 12.9118 22.639L12.7668 22.686C12.4393 22.7906 12.0841 22.7663 11.7738 22.618C11.6077 22.5395 11.4607 22.4256 11.3433 22.2843C11.2258 22.143 11.1407 21.9777 11.0938 21.8L10.6178 19.966C10.4665 19.3823 10.2463 18.8187 9.96184 18.287C9.54584 17.51 8.90383 16.887 8.23683 16.312L6.79683 15.072C6.5972 14.8995 6.44129 14.6821 6.34186 14.4377C6.24244 14.1934 6.20233 13.9289 6.22483 13.666L7.03784 4.273C7.07361 3.85776 7.26372 3.47101 7.57066 3.18907C7.87759 2.90712 8.27906 2.75046 8.69583 2.75H13.3448C16.8258 2.75 19.7968 5.176 20.3688 8.485" fill="currentColor" />
-                                        <path opacity="0.5" fillRule="evenodd" clipRule="evenodd" d="M3.06769 15.2652C3.26095 15.2737 3.45 15.2071 3.59535 15.0795C3.7407 14.9518 3.83111 14.773 3.84769 14.5802L4.81769 3.34422C4.83412 3.1769 4.81627 3.00799 4.76523 2.8478C4.71419 2.68761 4.63103 2.5395 4.52083 2.41253C4.41063 2.28555 4.2757 2.18237 4.12429 2.1093C3.97288 2.03622 3.80816 1.99477 3.64019 1.98749C3.47222 1.98021 3.30453 2.00724 3.14736 2.06694C2.99019 2.12664 2.84684 2.21775 2.72607 2.33471C2.60529 2.45167 2.50963 2.59203 2.44491 2.7472C2.3802 2.90237 2.3478 3.06911 2.34969 3.23722V14.5162C2.34951 14.7097 2.42412 14.8958 2.55793 15.0356C2.69173 15.1753 2.87437 15.257 3.06769 15.2652Z" fill="currentColor" />
-                                    </svg>
+                                    <ThumbsDown className="h-[22px] w-[22px]" strokeWidth={1.8} />
                                 </button>
                                 <span className="text-sm">{dislikeCount}</span>
                             </div>

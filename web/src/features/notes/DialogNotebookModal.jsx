@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
+import { Button } from '@/shared/ui/button';
 
 export default function DialogNotebookModal({ userId, botId, inputMessage, outputMessage, isOpen, onClose, onPublish }) {
     const [title, setTitle] = useState("");
@@ -56,13 +57,13 @@ export default function DialogNotebookModal({ userId, botId, inputMessage, outpu
         <>
             {/* Feedback Badge */}
             {showFeedback && (
-                <div className="fixed bottom-6 right-6 px-3 py-1.5 rounded-lg bg-indigo-400 text-white text-[13px] font-medium pointer-events-none z-[999999] animate-[fadeInOut_2s_ease_forwards]">
+                <div className="fixed bottom-6 right-6 px-3 py-1.5 rounded-lg bg-fuchsia-400 text-white text-[13px] font-medium pointer-events-none z-[999999] animate-[fadeInOut_2s_ease_forwards]">
                     Başarıyla yayınlandı ✅
                 </div>
             )}
 
             <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-                <DialogContent className="max-w-[450px] bg-luma-card border-white/10 p-6 text-center">
+                <DialogContent className="max-w-[450px] bg-luma-card border-transparent p-6 text-center">
                     <DialogTitle className="mb-1 text-[16px]">Diyalog Defterine Ekle</DialogTitle>
                     <DialogDescription className="mb-5 text-left font-sans text-[14px] font-normal leading-6 text-white">
                         Diyaloğunuza uygun bir başlık belirleyin ve Diyalog Defteri sayfasında bu içeriği diğer insanlarla paylaşın.
@@ -77,18 +78,16 @@ export default function DialogNotebookModal({ userId, botId, inputMessage, outpu
                         />
                     </div>
                     <div className="flex justify-between gap-6">
-                        <button
+                        <Button
                             onClick={onClose}
-                            className="min-w-[120px] flex-1 rounded-xl border-b border-dashed border-indigo-700 bg-white/[0.04] px-6 py-3 font-display text-[16px] font-medium text-white transition-all duration-200 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            variant="ghost"
+                            className="h-auto min-w-[120px] flex-1 border-b border-dashed border-fuchsia-700 bg-white/[0.04] py-3 text-[16px] hover:bg-white/[0.08]"
                         >
                             İptal
-                        </button>
-                        <button
-                            onClick={handlePublish}
-                            className="min-w-[120px] flex-1 rounded-xl bg-gradient-btn px-6 py-3 font-display text-[16px] font-medium text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
+                        </Button>
+                        <Button onClick={handlePublish} className="h-auto min-w-[120px] flex-1 py-3 text-[16px]">
                             Yayınla
-                        </button>
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Input } from "@/shared/ui/input";
+import { Button } from "@/shared/ui/button";
 
 export default function EmailEditor({ userId }) {
   const [currentEmail, setCurrentEmail] = useState("");
@@ -50,7 +51,7 @@ export default function EmailEditor({ userId }) {
   };
 
   return (
-    <div className="flex flex-col items-stretch gap-3 rounded-xl border border-white/10 p-4 sm:flex-row sm:items-center">
+    <div className="flex flex-col items-stretch gap-3 rounded-xl border border-transparent p-4 sm:flex-row sm:items-center">
       <Input
         type="text"
         className="flex-1 uppercase"
@@ -65,12 +66,9 @@ export default function EmailEditor({ userId }) {
         onChange={(e) => setNewEmail(e.target.value)}
         placeholder="YENİ E-POSTA"
       />
-      <button
-        onClick={handleAddEmail}
-        className="min-w-[100px] shrink-0 rounded-xl border border-white/70 bg-gradient-btn px-3 py-2.5 font-display text-sm font-medium text-white shadow-glow transition-all duration-300 hover:scale-[1.03] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
+      <Button onClick={handleAddEmail} className="h-auto min-w-[100px] shrink-0 border border-transparent py-2.5">
         Güncelle
-      </button>
+      </Button>
     </div>
   );
 }

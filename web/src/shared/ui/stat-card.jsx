@@ -10,13 +10,13 @@ function StatCard({ icon: Icon, label, value, trend, className }) {
   return (
     <div
       className={cn(
-        "flex items-center gap-4 rounded-2xl border border-indigo-400/10 bg-gradient-card p-5 shadow-card",
+        "flex items-center gap-4 rounded-2xl border border-fuchsia-400/10 bg-gradient-card p-5 shadow-card",
         className
       )}
     >
       {Icon && (
-        <div className="flex items-center justify-center w-11 h-11 shrink-0 rounded-xl bg-indigo-500/10 border border-indigo-400/15">
-          <Icon className="w-5 h-5 text-indigo-300" strokeWidth={1.75} />
+        <div className="flex items-center justify-center w-11 h-11 shrink-0 rounded-xl bg-fuchsia-500/10 border border-fuchsia-400/15">
+          <Icon className="w-5 h-5 text-fuchsia-300" strokeWidth={1.75} />
         </div>
       )}
       <div className="flex flex-col gap-0.5 min-w-0">

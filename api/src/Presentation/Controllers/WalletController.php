@@ -1,10 +1,10 @@
 <?php
 class WalletController {
-    public static function getMyBalance(): void {
-        $userId = AuthMiddleware::requireAuth();
-
-        $db = Database::getInstance();
-
+    /**
+     * Shared by getMyBalance() (display) and withdraw() (validation) so the
+     * two can never drift into disagreeing about what a seller's balance is.
+     */
+    private static function computeBalanceAndTransactions(Database $db, int $userId): array {
         $incomeRows = $db->selectMulti(
             "d.payable_amount, d.status, d.created_at, p.order_id
              FROM param_marketplace_details d
@@ -46,7 +46,14 @@ class WalletController {
 
         usort($transactions, static fn($a, $b) => strcmp((string) ($b['created_at'] ?? ''), (string) ($a['created_at'] ?? '')));
 
-        echo json_encode(['success' => true, 'balance' => round($balance, 2), 'transactions' => $transactions]);
+        return ['balance' => round($balance, 2), 'transactions' => $transactions];
+    }
+
+    public static function getMyBalance(): void {
+        $userId = AuthMiddleware::requireAuth();
+        $result = self::computeBalanceAndTransactions(Database::getInstance(), $userId);
+
+        echo json_encode(array_merge(['success' => true], $result));
         exit;
     }
 
@@ -65,12 +72,37 @@ class WalletController {
             JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
         }
 
-        $id = Database::getInstance()->insert('para_cekme_talepleri', [
-            'user_id' => $userId,
-            'iban'    => InputSanitizer::string($data['iban'], 40),
-            'miktar'  => InputSanitizer::price($data['amount']),
-            'durum'   => 'beklemede',
-        ]);
+        $amount = InputSanitizer::price($data['amount']);
+        if ($amount <= 0) {
+            JsonResponse::error('Geçersiz tutar.', 400, AppConfig::ERR_VALIDATION);
+        }
+
+        $db = Database::getInstance();
+
+        // Previously inserted a withdrawal request for any client-supplied
+        // amount with no check against the seller's actual balance — a user
+        // could request (and, once approved, receive) a withdrawal far larger
+        // than they've ever earned.
+        $conn = $db->getConnection();
+        $conn->beginTransaction();
+        try {
+            $available = self::computeBalanceAndTransactions($db, $userId)['balance'];
+            if ($amount > $available) {
+                $conn->rollBack();
+                JsonResponse::error('Talep edilen tutar mevcut bakiyenizi aşıyor.', 400, AppConfig::ERR_VALIDATION);
+            }
+
+            $id = $db->insert('para_cekme_talepleri', [
+                'user_id' => $userId,
+                'iban'    => InputSanitizer::string($data['iban'], 40),
+                'miktar'  => $amount,
+                'durum'   => 'beklemede',
+            ]);
+            $conn->commit();
+        } catch (Exception $e) {
+            $conn->rollBack();
+            throw $e;
+        }
 
         JsonResponse::success(['message' => 'Para çekme talebi oluşturuldu.', 'id' => $id]);
     }

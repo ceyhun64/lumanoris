@@ -7,6 +7,7 @@ import DeleteConfirmModal from "@/shared/ui/DeleteConfirmModal";
 import BotCard from "@/entities/chatbot/ui/BotCard";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { Trash2, Tag } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/lib/utils";
 
 const DURATIONS = [
@@ -35,7 +36,8 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
             const data = await response.json();
 
             // API'den gelen veriyi SuggestedCard'ın beklediği formata dönüştürelim
-            const formattedBots = data.map(bot => ({
+            const bots = Array.isArray(data?.bots) ? data.bots : [];
+            const formattedBots = bots.map(bot => ({
                 id: bot.id,
                 title: bot.isim,
                 author: bot.owner_name || "Bilinmiyor",
@@ -167,7 +169,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
     <div>
         <div className="flex flex-col items-start gap-8 md:flex-row">
             <div className="w-full flex-[2]">
-                <div className="rounded-xl border border-white/10 bg-luma-elevated p-3">
+                <div className="rounded-xl border border-transparent bg-luma-elevated p-3">
                     <label className="flex cursor-pointer items-center gap-3 p-2">
                         <Checkbox
                             checked={selectedItems.length === cartItems.length && cartItems.length > 0}
@@ -178,7 +180,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                         <span className="text-sm text-white/70">Tümünü seç</span>
                     </label>
 
-                    <div className="my-3 h-0.5 w-full bg-gradient-to-r from-[#1B1A22] to-[#6366F1]" />
+                    <div className="my-3 h-0.5 w-full bg-gradient-to-r from-[#1B1A22] to-[#D946EF]" />
 
                     {cartItems.map((item) => {
         const isSelected = selectedItems.includes(item.id);
@@ -190,7 +192,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
         let currentPrice = (currentDuration === 4) ? (monthlyPrice * 0.95) : (weeklyPrice * currentDuration);
 
         return (
-            <div className="mb-5 flex items-start gap-3 border-b border-white/5 py-5 last:border-b-0" key={item.id}>
+            <div className="mb-5 flex items-start gap-3 border-b border-transparent py-5 last:border-b-0" key={item.id}>
                 <label className="mt-8 flex cursor-pointer items-center">
                     <Checkbox
                         checked={isSelected}
@@ -198,14 +200,14 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                     />
                 </label>
 
-                <div className="mt-2.5 shrink-0 overflow-hidden rounded-lg border border-white/10">
+                <div className="mt-2.5 shrink-0 overflow-hidden rounded-lg border border-transparent">
                     <Image src={item.image} width={100} height={100} alt={item.title} className="h-[100px] w-[100px] object-cover" />
                 </div>
 
                 <div className="ml-1 flex-1">
                     <h3 className="mb-2.5 text-left font-display text-lg font-normal text-white">{item.title}</h3>
                     <p className="mb-3.5 text-left text-sm text-white/70">
-                        Kategori: <span className="text-indigo-400">{item.category || 'Genel'}</span>
+                        Kategori: <span className="text-fuchsia-400">{item.category || 'Genel'}</span>
                     </p>
 
                     <div className="mt-3.5 grid max-w-[320px] grid-cols-2 gap-2.5">
@@ -230,7 +232,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                 </div>
 
                 <div className="min-w-[100px] text-right">
-                    <div className="text-lg font-bold text-indigo-400">
+                    <div className="text-lg font-bold text-fuchsia-400">
                         {currentPrice.toFixed(2)}₺
                     </div>
                     <button
@@ -264,18 +266,18 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
             </div>
 
             {/* Sağ Alan - Özet */}
-            <div className="w-full flex-1 rounded-xl border border-white/10 bg-luma-elevated p-3 md:sticky md:top-6">
+            <div className="w-full flex-1 rounded-xl border border-transparent bg-luma-elevated p-3 md:sticky md:top-6">
                 <h4 className="mb-6 font-display text-xl font-medium text-white">Sipariş Özeti</h4>
                 <div className="my-2 flex justify-between font-display text-base font-medium text-white">
                     <span>Ürün Tutarı</span>
                     <span className="text-white/50">{subtotal.toFixed(2)}₺</span>
                 </div>
-                <div className="my-2 flex justify-between border-y border-white/10 py-3 font-display text-base font-medium text-white">
+                <div className="my-2 flex justify-between border-y border-transparent py-3 font-display text-base font-medium text-white">
                     <strong>Toplam</strong>
                     <strong className="text-white/50">{total.toFixed(2)}₺</strong>
                 </div>
-                <div className="mt-4 flex items-stretch rounded-xl border border-indigo-400 bg-white/10">
-                    <div className="flex items-center p-3.5 text-indigo-400">
+                <div className="mt-4 flex items-stretch rounded-xl border border-fuchsia-400 bg-white/10">
+                    <div className="flex items-center p-3.5 text-fuchsia-400">
                         <Tag className="h-5 w-5" />
                     </div>
                     <input
@@ -283,12 +285,9 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                         className="flex-1 bg-transparent py-3.5 pr-3.5 font-display text-base font-medium text-white placeholder:text-white/40 focus:outline-none"
                     />
                 </div>
-                <button
-                    onClick={handleFinalConfirm}
-                    className="mt-4 w-full rounded-xl border border-white/10 bg-gradient-btn py-3.5 font-display text-sm font-bold uppercase text-white shadow-glow transition-transform duration-200 hover:scale-[1.02] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
+                <Button onClick={handleFinalConfirm} className="mt-4 h-auto w-full border border-transparent py-3.5 text-sm font-bold uppercase">
                     Sepeti Onayla
-                </button>
+                </Button>
             </div>
         </div>
         <DeleteConfirmModal

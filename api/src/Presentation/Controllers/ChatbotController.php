@@ -85,8 +85,7 @@ class ChatbotController {
     public static function getChatbots(): void {
         $search = InputSanitizer::string($_GET['search'] ?? '');
         $repo   = new ChatbotRepository();
-        echo json_encode($repo->getPublished(['search' => $search !== '' ? $search : null]));
-        exit;
+        JsonResponse::success(['bots' => $repo->getPublished(['search' => $search !== '' ? $search : null])]);
     }
 
     public static function getChatbotsV2(): void {
@@ -211,8 +210,7 @@ class ChatbotController {
     public static function getChatbotsMenu(): void {
         $userId = AuthMiddleware::requireAuth();
         $repo   = new ChatbotRepository();
-        echo json_encode($repo->getMenuItems($userId));
-        exit;
+        JsonResponse::success(['bots' => $repo->getMenuItems($userId)]);
     }
 
     public static function getChatbotLimits(): void {
@@ -240,16 +238,14 @@ class ChatbotController {
         $limit  = InputSanitizer::positiveInt($_GET['limit'] ?? 3);
 
         if (!$userId) {
-            echo json_encode([]);
-            exit;
+            JsonResponse::success(['bots' => []]);
         }
 
         $repo     = new ChatbotRepository();
         $cartRows = $repo->getCartCategoryIds($userId);
 
         if (empty($cartRows)) {
-            echo json_encode([]);
-            exit;
+            JsonResponse::success(['bots' => []]);
         }
 
         $categoryIds = array_filter(array_unique(array_column($cartRows, 'kategori_id')));
@@ -263,8 +259,7 @@ class ChatbotController {
             }
         }
 
-        echo json_encode($results);
-        exit;
+        JsonResponse::success(['bots' => $results]);
     }
 
     public static function updateChatbotPrice(): void {
@@ -309,11 +304,14 @@ class ChatbotController {
             if ($file['size'] > AppConfig::MAX_UPLOAD_SIZE_BYTES) {
                 JsonResponse::error('Dosya boyutu 5 MB\'ı aşamaz.', 400, AppConfig::ERR_VALIDATION);
             }
-            if (!InputSanitizer::isAllowedMime($file['tmp_name'], AppConfig::ALLOWED_IMAGE_MIMES)) {
+            $mime = InputSanitizer::detectMime($file['tmp_name']);
+            if (!in_array($mime, AppConfig::ALLOWED_IMAGE_MIMES, true)) {
                 JsonResponse::error('Geçersiz dosya türü. Sadece resim yükleyebilirsiniz.', 400, AppConfig::ERR_VALIDATION);
             }
 
-            $ext       = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            // Extension is derived from the verified MIME type, never the
+            // client-supplied filename — see InputSanitizer::extensionForMime().
+            $ext       = InputSanitizer::extensionForMime($mime);
             $uploadDir = __DIR__ . '/../../../assets/' . $dbCol;
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0755, true);

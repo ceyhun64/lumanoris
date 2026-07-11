@@ -84,4 +84,31 @@ final class AppConfig {
     public static function noreplyEmail(): string {
         return $_ENV['NOREPLY_EMAIL'] ?? getenv('NOREPLY_EMAIL') ?: 'no-reply@seninsiten.com';
     }
+
+    /**
+     * The admin panel (admin/api.php + admin/ajax/updateenv.php) manages this
+     * key in api/admin/.env, not the app-root api/.env that bootstrap.php
+     * loads into $_ENV — so it has to be read from that file directly.
+     */
+    public static function googleGeminiApiKey(): string {
+        if ($_ENV['API_GOOGLE_GEMINI'] ?? getenv('API_GOOGLE_GEMINI') ?: '') {
+            return $_ENV['API_GOOGLE_GEMINI'] ?? getenv('API_GOOGLE_GEMINI');
+        }
+
+        $envFile = __DIR__ . '/../../../admin/.env';
+        if (!is_file($envFile)) {
+            return '';
+        }
+        foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+            $line = trim($line);
+            if ($line === '' || $line[0] === '#') continue;
+            $pos = strpos($line, '=');
+            if ($pos === false) continue;
+            $key = trim(substr($line, 0, $pos));
+            if ($key === 'API_GOOGLE_GEMINI') {
+                return trim(substr($line, $pos + 1), " \t\"'");
+            }
+        }
+        return '';
+    }
 }

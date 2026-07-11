@@ -26,6 +26,9 @@ module.exports = {
           panel:    '#161630',
           input:    '#0F0F22',
           hover:    'rgba(99,102,241,0.07)',
+          // WCAG AA-safe (≥4.5:1 on #09090F) small-text alternative to the
+          // free-floating text-white/38..45 opacity classes used throughout.
+          muted:    'rgba(255,255,255,0.58)',
         },
         border:     "hsl(var(--border))",
         input:      "hsl(var(--input))",
@@ -82,19 +85,33 @@ module.exports = {
         sans:      ["Public Sans", "sans-serif"],
         display:   ["Montserrat", "sans-serif"],
       },
+      /* Named scale for new/touched components — replaces ad-hoc text-[Npx]
+         arbitrary values (260+ distinct uses in the codebase) with a single
+         source of truth. Sized to the values already dominant in the UI. */
+      fontSize: {
+        'caption':  ['11px', { lineHeight: '1.4' }],
+        'label':    ['12px', { lineHeight: '1.4', letterSpacing: '.02em' }],
+        'body-sm':  ['13px', { lineHeight: '1.55' }],
+        'body':     ['14px', { lineHeight: '1.6' }],
+        'body-lg':  ['15px', { lineHeight: '1.6' }],
+        'title-sm': ['16px', { lineHeight: '1.4', fontWeight: '600' }],
+        'title':    ['20px', { lineHeight: '1.3', fontWeight: '700' }],
+        'title-lg': ['28px', { lineHeight: '1.2', fontWeight: '700' }],
+      },
       backgroundImage: {
-        'gradient-luma': 'linear-gradient(135deg, #818CF8 0%, #22D3EE 100%)',
-        'gradient-btn':  'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+        /* Lumanoris Elite palette — Fuchsia + Violet (rebranded from indigo/cyan) */
+        'gradient-luma': 'linear-gradient(135deg, #E879F9 0%, #A78BFA 100%)',
+        'gradient-btn':  'linear-gradient(135deg, #C026D3 0%, #7C3AED 100%)',
         'gradient-card': 'linear-gradient(160deg, #111120 0%, #0D0D1A 100%)',
       },
       boxShadow: {
-        'xs':        '0 1px 2px rgba(0,0,0,0.20)',
-        'sm':        '0 2px 6px rgba(0,0,0,0.22)',
-        'glow':      '0 4px 24px rgba(99,102,241,0.32)',
-        'glow-cyan': '0 4px 24px rgba(6,182,212,0.25)',
-        'glow-lg':   '0 8px 32px rgba(99,102,241,0.25)',
-        'card':      '0 2px 8px rgba(0,0,0,0.24)',
-        'modal':     '0 20px 50px rgba(0,0,0,0.50)',
+        'xs':          '0 1px 2px rgba(0,0,0,0.20)',
+        'sm':          '0 2px 6px rgba(0,0,0,0.22)',
+        'glow':        '0 4px 24px rgba(217,70,239,0.32)',
+        'glow-cyan':   '0 4px 24px rgba(139,92,246,0.25)',
+        'glow-lg':     '0 8px 32px rgba(217,70,239,0.25)',
+        'card':        '0 2px 8px rgba(0,0,0,0.24)',
+        'modal':       '0 20px 50px rgba(0,0,0,0.50)',
       },
       keyframes: {
         "accordion-down": {

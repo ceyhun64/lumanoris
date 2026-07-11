@@ -4,6 +4,7 @@ import ubeyazlogo from "@/images/ubeyaz.png";
 import { useRouter } from "next/navigation";
 import Alert from "@/shared/ui/Alert";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { Button } from "@/shared/ui/button";
 
 export default function ForgotPassword() {
     const [step, setStep] = useState(1);
@@ -138,21 +139,21 @@ export default function ForgotPassword() {
     };
 
     const inputCls =
-        "w-full bg-luma-input border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-colors font-sans";
+        "w-full bg-luma-input border border-transparent rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/30 transition-colors font-sans";
 
     return (
         <div className="min-h-screen bg-luma-base flex">
             {/* ── Left branding panel (desktop only) ── */}
             <div className="hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 via-purple-900/15 to-cyan-900/10" />
-                <div className="absolute top-1/4 left-1/3 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute bottom-1/4 right-1/4 w-56 h-56 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-600/20 via-purple-900/15 to-violet-900/10" />
+                <div className="absolute top-1/4 left-1/3 w-72 h-72 bg-fuchsia-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-1/4 right-1/4 w-56 h-56 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_39px,rgba(255,255,255,0.02)_39px,rgba(255,255,255,0.02)_40px),repeating-linear-gradient(90deg,transparent,transparent_39px,rgba(255,255,255,0.02)_39px,rgba(255,255,255,0.02)_40px)]" />
                 <div className="relative z-10 flex flex-col items-center text-center px-12 gap-6">
                     <img
                         src={ubeyazlogo.src}
                         alt="Lumanoris"
-                        className="w-20 h-20 drop-shadow-[0_0_32px_rgba(99,102,241,0.5)]"
+                        className="w-20 h-20 drop-shadow-[0_0_32px_rgba(217,70,239,0.5)]"
                     />
                     <h1 className="text-4xl font-bold text-white font-display tracking-tight">
                         LUMANORIS
@@ -171,7 +172,7 @@ export default function ForgotPassword() {
                         <img src={ubeyazlogo.src} alt="Lumanoris" className="w-14 h-14" />
                     </div>
 
-                    <div className="bg-luma-elevated rounded-2xl p-8 border border-white/5 shadow-modal">
+                    <div className="bg-luma-elevated rounded-2xl p-8 border border-transparent shadow-modal">
                         <h2 className="text-xl font-bold text-white font-display mb-6">
                             Şifremi Unuttum
                         </h2>
@@ -193,12 +194,9 @@ export default function ForgotPassword() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     onKeyPress={(e) => e.key === 'Enter' && handleSendCode()}
                                 />
-                                <button
-                                    onClick={handleSendCode}
-                                    className="w-full py-3 rounded-xl bg-gradient-btn text-white text-sm font-semibold font-display shadow-glow hover:opacity-90 active:opacity-80 transition-opacity mt-2"
-                                >
+                                <Button onClick={handleSendCode} className="mt-2 h-auto w-full py-3">
                                     Kod Gönder
-                                </button>
+                                </Button>
                             </div>
                         )}
 
@@ -254,12 +252,9 @@ export default function ForgotPassword() {
                                     </button>
                                 </div>
 
-                                <button
-                                    onClick={handleSavePassword}
-                                    className="w-full py-3 rounded-xl bg-gradient-btn text-white text-sm font-semibold font-display shadow-glow hover:opacity-90 active:opacity-80 transition-opacity mt-2"
-                                >
+                                <Button onClick={handleSavePassword} className="mt-2 h-auto w-full py-3">
                                     Kaydet
-                                </button>
+                                </Button>
                             </div>
                         )}
                     </div>

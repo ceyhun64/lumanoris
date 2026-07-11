@@ -177,7 +177,7 @@ export default function PrivacyPopup({ onClose }) {
                     );
                 case 'header': // Ana Başlıklar (1., 2., 3. vs.)
                     return (
-                        <h3 key={index} className="mt-5 text-[1.1em] font-bold text-indigo-400">
+                        <h3 key={index} className="mt-5 text-[1.1em] font-bold text-fuchsia-400">
                             {item.text}
                         </h3>
                     );
@@ -195,7 +195,7 @@ export default function PrivacyPopup({ onClose }) {
                     );
                 case 'note': // Özel notlar (Örn: Önemli uyarı)
                     return (
-                        <p key={index} className="mt-2.5 border-l-[3px] border-indigo-400 pl-4 font-bold text-indigo-400">
+                        <p key={index} className="mt-2.5 border-l-[3px] border-fuchsia-400 pl-4 font-bold text-fuchsia-400">
                             {item.text}
                         </p>
                     );
@@ -217,7 +217,7 @@ export default function PrivacyPopup({ onClose }) {
 
     return (
         <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="flex max-h-[80vh] max-w-[900px] flex-col overflow-hidden bg-luma-elevated border-white/10 p-0">
+            <DialogContent className="flex max-h-[80vh] max-w-[900px] flex-col overflow-hidden bg-luma-elevated border-transparent p-0">
                 <DialogTitle className="shrink-0 px-6 pb-3 pt-6 text-[16px]">{privacyContent[0].text}</DialogTitle>
 
                 {/* İçerik alanı: Liste yapısından çıkarılıp, render fonksiyonu kullanıldı */}

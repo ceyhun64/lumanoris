@@ -15,15 +15,15 @@ function EmptyState({ icon: Icon, title, description, actionLabel, onAction, cla
       )}
     >
       {Icon && (
-        <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/15 to-cyan-500/10 border border-indigo-400/15 mb-1">
-          <Icon className="w-6 h-6 text-indigo-300/80" strokeWidth={1.75} />
+        <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-fuchsia-500/15 to-violet-500/10 border border-fuchsia-400/15 mb-1">
+          <Icon className="w-6 h-6 text-fuchsia-300/80" strokeWidth={1.75} />
         </div>
       )}
       {title && (
         <h3 className="text-[15px] font-display font-semibold text-white/85">{title}</h3>
       )}
       {description && (
-        <p className="text-[13px] text-white/45 max-w-[320px] leading-relaxed">{description}</p>
+        <p className="text-body-sm text-luma-muted max-w-[320px] leading-relaxed">{description}</p>
       )}
       {actionLabel && onAction && (
         <Button onClick={onAction} size="sm" className="mt-2">

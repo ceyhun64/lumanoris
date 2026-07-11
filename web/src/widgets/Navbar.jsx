@@ -11,7 +11,7 @@ export default function NavbarMobile() {
 
     return (
         <>
-            <div className="flex items-center justify-between px-4 py-3 bg-luma-base border-b border-white/5">
+            <div className="flex items-center justify-between px-4 py-3 bg-luma-base border-b border-transparent">
                 <div
                     className="flex items-center gap-2 cursor-pointer select-none transition-opacity hover:opacity-80"
                     onClick={() => router.push('/dashboard')}

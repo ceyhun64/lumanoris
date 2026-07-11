@@ -3,13 +3,15 @@ import { useEffect, useState, useRef } from 'react';
 import ShareModal from '@/features/sharing/ShareModal';
 import ReportModal from '@/features/moderation/ReportModal';
 import AddToListModal from '@/features/lists/AddToListModal';
+import DeleteConfirmModal from '@/shared/ui/DeleteConfirmModal';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { toast } from '@/shared/hooks/use-toast';
 
 const BADGE_CLASSES = {
     sold:     'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
-    produced: 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/30',
-    rented:   'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30',
+    produced: 'bg-fuchsia-500/15 text-fuchsia-300 border border-fuchsia-500/30',
+    rented:   'bg-violet-500/15 text-violet-300 border border-violet-500/30',
 };
 
 export default function BotCard({ bot, userId, onRemove }) {
@@ -21,23 +23,28 @@ export default function BotCard({ bot, userId, onRemove }) {
     const [reportOpen, setReportOpen] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [showFeedbackBadge, setShowFeedbackBadge] = useState(false);
+    const [confirmAction, setConfirmAction] = useState(null); // 'notInterested' | 'hideBot' | null
     const userLists = bot.userLists || [];
 
-    const handleNotInterested = async () => {
-        if (!userId) { router.push('/login'); return; }
-        const isConfirmed = window.confirm("Bu kategoriyle ilgilenmediğinizi bildirmek istediğinize emin misiniz? Bu kategorideki içerikleri artık daha az göreceksiniz.");
-        if (!isConfirmed) return;
+    const handleNotInterested = () => {
+        // if (!userId) { router.push('/login'); return; } // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
+        setMenuOpen(false);
+        setConfirmAction('notInterested');
+    };
+
+    const confirmNotInterested = async () => {
+        setConfirmAction(null);
         const payload = { user_id: userId, category_id: bot?.kategori_id };
         const formData = new FormData();
         formData.append('data', JSON.stringify(payload));
         try {
             const response = await fetch('/api/social/adduninterest.php', { method: 'POST', body: formData });
             const result = JSON.parse(await response.text());
-            if (result.success) { alert("Geri bildiriminiz alındı, teşekkür ederiz."); router.push("/dashboard"); }
-            else alert("Bir hata oluştu: " + result.message);
+            if (result.success) { toast({ variant: "success", title: "Teşekkürler", description: "Geri bildiriminiz alındı." }); router.push("/dashboard"); }
+            else toast({ variant: "destructive", title: "Bir hata oluştu", description: result.message });
         } catch (error) {
             console.error("Hata:", error);
-            alert("Sunucuyla bağlantı kurulamadı.");
+            toast({ variant: "destructive", title: "Bağlantı hatası", description: "Sunucuyla bağlantı kurulamadı." });
         }
     };
 
@@ -51,13 +58,16 @@ export default function BotCard({ bot, userId, onRemove }) {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [menuOpen]);
 
-    const handleHideBot = async (e) => {
+    const handleHideBot = (e) => {
         e.stopPropagation();
-        if (!userId) { router.push('/login'); return; }
-        setShowFeedbackBadge(true);
+        // if (!userId) { router.push('/login'); return; } // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
         setMenuOpen(false);
-        const isConfirmed = window.confirm("Bu botu bir daha size önermeyeceğiz. Onaylıyor musunuz?");
-        if (!isConfirmed) return;
+        setConfirmAction('hideBot');
+    };
+
+    const confirmHideBot = async () => {
+        setConfirmAction(null);
+        setShowFeedbackBadge(true);
         const payload = { user_id: userId, chatbot_id: bot?.id };
         const formData = new FormData();
         formData.append('data', JSON.stringify(payload));
@@ -65,20 +75,19 @@ export default function BotCard({ bot, userId, onRemove }) {
             const response = await fetch('/api/social/addhide.php', { method: 'POST', body: formData });
             const result = JSON.parse(await response.text());
             if (result.success) {
-                alert("Geri bildiriminiz alındı, teşekkür ederiz.");
-                setShowFeedbackBadge(false);
+                toast({ variant: "success", title: "Teşekkürler", description: "Geri bildiriminiz alındı." });
                 if (onRemove) onRemove(bot.id);
-            } else alert("Bir hata oluştu: " + result.message);
+            } else toast({ variant: "destructive", title: "Bir hata oluştu", description: result.message });
         } catch (error) {
             console.error("Hata:", error);
-            alert("Sunucuyla bağlantı kurulamadı.");
+            toast({ variant: "destructive", title: "Bağlantı hatası", description: "Sunucuyla bağlantı kurulamadı." });
         }
-        setTimeout(() => { setShowFeedbackBadge(false); onRemove?.(); }, 2000);
+        setTimeout(() => { setShowFeedbackBadge(false); }, 2000);
     };
 
     return (
         <div
-            className="relative flex flex-col rounded-2xl overflow-hidden cursor-pointer bg-gradient-to-b from-[#111120] to-[#0D0D1A] border border-indigo-400/10 transition-all duration-300 hover:-translate-y-1 hover:border-indigo-400/25 hover:shadow-[0_8px_32px_rgba(99,102,241,0.18)]"
+            className="relative flex flex-col rounded-2xl overflow-hidden cursor-pointer bg-gradient-to-b from-[#111120] to-[#0D0D1A] border border-fuchsia-400/10 transition-all duration-300 hover:-translate-y-1 hover:border-fuchsia-400/25 hover:shadow-[0_8px_32px_rgba(217,70,239,0.18)]"
             onClick={() => router.push(`/dashboard/chat/?botId=${bot.id}`)}
         >
             {/* Glow blob top */}
@@ -92,8 +101,8 @@ export default function BotCard({ bot, userId, onRemove }) {
                             <feGaussianBlur stdDeviation="61.873" result="blur" />
                         </filter>
                         <linearGradient id="bc_grad" x1="31.7" y1="-4.5" x2="170.4" y2="-4.5" gradientUnits="userSpaceOnUse">
-                            <stop offset="0.21" stopColor="#4F46E5" />
-                            <stop offset="0.79" stopColor="#06B6D4" />
+                            <stop offset="0.21" stopColor="#C026D3" />
+                            <stop offset="0.79" stopColor="#8B5CF6" />
                         </linearGradient>
                     </defs>
                 </svg>
@@ -104,7 +113,7 @@ export default function BotCard({ bot, userId, onRemove }) {
                 {badge && (
                     <span className={cn(
                         'absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-md text-[10px] font-semibold font-display tracking-wide',
-                        BADGE_CLASSES[badge.type] ?? 'bg-white/10 text-white/80 border border-white/15',
+                        BADGE_CLASSES[badge.type] ?? 'bg-white/10 text-white/80 border border-transparent',
                     )}>
                         {badge.label}
                     </span>
@@ -117,7 +126,7 @@ export default function BotCard({ bot, userId, onRemove }) {
                 <div className="flex items-start justify-between gap-2">
                     {/* Avatar + name */}
                     <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden border border-indigo-400/20">
+                        <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden border border-fuchsia-400/20">
                             <Image src={avatar} alt="Avatar" width={32} height={32} className="w-full h-full object-cover" />
                         </div>
                         <div className="min-w-0">
@@ -129,7 +138,7 @@ export default function BotCard({ bot, userId, onRemove }) {
                     {/* Context menu trigger */}
                     <div className="relative shrink-0" ref={menuRef}>
                         <button
-                            className="flex items-center justify-center w-7 h-7 rounded-lg text-white/40 hover:text-white/80 hover:bg-indigo-500/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="flex items-center justify-center w-7 h-7 rounded-lg text-white/40 hover:text-white/80 hover:bg-fuchsia-500/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             onClick={(e) => { e.stopPropagation(); toggleMenu(); }}
                             aria-label="Diğer seçenekler"
                         >
@@ -140,12 +149,12 @@ export default function BotCard({ bot, userId, onRemove }) {
 
                         {menuOpen && (
                             <div
-                                className="absolute right-0 top-8 z-50 min-w-[180px] rounded-xl border border-indigo-400/12 bg-[#0E0E22] shadow-[0_8px_32px_rgba(0,0,0,0.55)] overflow-hidden"
+                                className="absolute right-0 top-8 z-50 min-w-[180px] rounded-xl border border-fuchsia-400/12 bg-[#0E0E22] shadow-[0_8px_32px_rgba(0,0,0,0.55)] overflow-hidden"
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 <MenuItem onClick={() => { setModalVisible(true); setMenuOpen(false); }} icon="📑">Listeye Kaydet</MenuItem>
                                 <MenuItem onClick={() => { setShareOpen(true); setMenuOpen(false); }} icon="↗">Paylaş</MenuItem>
-                                <div className="h-px bg-indigo-400/10 mx-2" />
+                                <div className="h-px bg-fuchsia-400/10 mx-2" />
                                 <MenuItem onClick={handleNotInterested} icon="👎">İlgilenmiyorum</MenuItem>
                                 <MenuItem onClick={handleHideBot} icon="—">Bu Profili Önermeyin</MenuItem>
                                 <MenuItem onClick={(e) => { e.stopPropagation(); setReportOpen(true); setMenuOpen(false); }} icon="⚠" danger>Bildir</MenuItem>
@@ -163,8 +172,25 @@ export default function BotCard({ bot, userId, onRemove }) {
             <ReportModal isOpen={reportOpen} repId={bot.id} onClose={() => setReportOpen(false)} />
             <AddToListModal userId={userId} botId={bot.id} isOpen={modalVisible} onClose={() => setModalVisible(false)} lists={userLists} />
 
+            <DeleteConfirmModal
+                isOpen={confirmAction === 'notInterested'}
+                onClose={() => setConfirmAction(null)}
+                onConfirm={confirmNotInterested}
+                title="İlgilenmiyor musunuz?"
+                description="Bu kategoriyle ilgilenmediğinizi bildirmek istediğinize emin misiniz? Bu kategorideki içerikleri artık daha az göreceksiniz."
+                confirmLabel="Onayla"
+            />
+            <DeleteConfirmModal
+                isOpen={confirmAction === 'hideBot'}
+                onClose={() => setConfirmAction(null)}
+                onConfirm={confirmHideBot}
+                title="Bu profili gizle"
+                description="Bu botu bir daha size önermeyeceğiz. Onaylıyor musunuz?"
+                confirmLabel="Onayla"
+            />
+
             {showFeedbackBadge && (
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow-glow whitespace-nowrap">
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white text-xs font-semibold shadow-glow whitespace-nowrap">
                     Uyarınız alındı
                 </div>
             )}
@@ -177,7 +203,7 @@ function MenuItem({ onClick, icon, danger, children }) {
         <button
             className={cn(
                 'flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13.5px] transition-colors text-left',
-                danger ? 'text-rose-400 hover:bg-rose-500/10' : 'text-white/75 hover:bg-indigo-500/10 hover:text-white',
+                danger ? 'text-rose-400 hover:bg-rose-500/10' : 'text-white/75 hover:bg-fuchsia-500/10 hover:text-white',
             )}
             onClick={onClick}
         >

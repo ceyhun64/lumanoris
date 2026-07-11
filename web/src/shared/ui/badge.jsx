@@ -8,13 +8,13 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-indigo-500/20 text-indigo-300",
+          "border-transparent bg-fuchsia-500/20 text-fuchsia-300",
         secondary:
-          "border-transparent bg-cyan-500/15 text-cyan-300",
+          "border-transparent bg-violet-500/15 text-violet-300",
         destructive:
           "border-transparent bg-rose-500/20 text-rose-400",
         outline:
-          "border-indigo-400/25 text-indigo-300",
+          "border-fuchsia-400/25 text-fuchsia-300",
         success:
           "border-transparent bg-emerald-500/15 text-emerald-400",
         warning:

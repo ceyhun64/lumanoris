@@ -11,15 +11,15 @@ const buttonVariants = cva(
         default:
           "bg-gradient-btn text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0",
         secondary:
-          "bg-luma-card border border-white/10 text-white/80 hover:bg-white/10 hover:text-white",
+          "bg-luma-card border border-transparent text-white/80 hover:bg-white/10 hover:text-white",
         ghost:
           "text-white/70 hover:bg-white/5 hover:text-white",
         outline:
-          "border border-indigo-400/25 bg-transparent text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400/50",
+          "border border-fuchsia-400/25 bg-transparent text-fuchsia-300 hover:bg-fuchsia-500/10 hover:border-fuchsia-400/50",
         destructive:
           "bg-rose-500/90 text-white hover:bg-rose-500 shadow-sm",
         link:
-          "text-indigo-400 underline-offset-4 hover:underline hover:text-cyan-400",
+          "text-fuchsia-400 underline-offset-4 hover:underline hover:text-violet-400",
         gradient:
           "bg-gradient-luma text-white shadow-glow-cyan hover:brightness-110 hover:-translate-y-0.5",
       },

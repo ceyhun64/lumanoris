@@ -2,7 +2,9 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
+import { Button } from '@/shared/ui/button';
 import { cn } from '@/lib/utils';
+import { toast } from '@/shared/hooks/use-toast';
 
 const WEEKS_TO_DURATION = { 1: '1_week', 2: '2_weeks', 3: '3_weeks', 4: '1_month' };
 
@@ -111,19 +113,19 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
             window.location.href = "/dashboard/checkout";
           } else {
             // Hata mesajını göster (Örn: "Zaten sepette")
-            alert(result.message);
+            toast({ variant: "destructive", title: "Sepete eklenemedi", description: result.message });
           }
         } catch (error) {
           console.error("Hata oluştu:", error);
-          alert("Bir hata oluştu, lütfen tekrar deneyin.");
+          toast({ variant: "destructive", title: "Bir hata oluştu", description: "Lütfen tekrar deneyin." });
         }
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-[440px] bg-luma-card border-white/10 p-6 text-center">
+            <DialogContent className="max-w-[440px] bg-luma-card border-transparent p-6 text-center">
                 <DialogTitle className="mb-1 text-xl font-semibold">Satın Al</DialogTitle>
-                <p className="mb-3 font-display text-[15px] font-medium text-indigo-300">{botData.isim || "Bu chatbot"}</p>
+                <p className="mb-3 font-display text-[15px] font-medium text-fuchsia-300">{botData.isim || "Bu chatbot"}</p>
                 <DialogDescription className="mb-1 font-sans text-[14px] text-white">
                     Chatbotunu satın al, sınırsız kullanımın kilidini aç!
                 </DialogDescription>
@@ -157,7 +159,7 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
                     </div>
                 )}
 
-                <div className="my-3 rounded-xl border border-dashed border-indigo-400/40 bg-white/5 p-4 text-center">
+                <div className="my-3 rounded-xl border border-dashed border-fuchsia-400/40 bg-white/5 p-4 text-center">
                     <span className="mb-1.5 block text-[11px] text-white/60">
                         {selectedDuration === '1_month' ? 'BİR AYLIK SATIŞ FİYATI' : 'SEÇİLEN SÜREYE GÖRE SATIŞ FİYATI'}
                     </span>
@@ -171,18 +173,16 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
                 )}
 
                 <div className="mt-4 flex gap-2.5">
-                    <button
+                    <Button
                         onClick={onClose}
-                        className="flex-1 rounded-xl border-b border-dashed border-indigo-700 bg-white/[0.04] px-4 py-3 font-display text-[15px] font-medium text-white transition-all duration-200 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        variant="ghost"
+                        className="h-auto flex-1 border-b border-dashed border-fuchsia-700 bg-white/[0.04] py-3 text-body-lg hover:bg-white/[0.08]"
                     >
                         İptal
-                    </button>
-                    <button
-                        onClick={handleFinalBuy}
-                        className="flex-[2] rounded-xl bg-gradient-btn px-4 py-3 font-display text-[15px] font-medium text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
+                    </Button>
+                    <Button onClick={handleFinalBuy} className="h-auto flex-[2] py-3 text-body-lg">
                         Satın Al
-                    </button>
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>

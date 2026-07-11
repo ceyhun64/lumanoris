@@ -1,5 +1,6 @@
 'use client';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
+import { Button } from '@/shared/ui/button';
 
 export default function DeleteConfirmModal({
     isOpen,
@@ -11,7 +12,7 @@ export default function DeleteConfirmModal({
 }) {
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-[440px] bg-luma-card border-white/10 p-6 text-center">
+            <DialogContent className="max-w-[440px] bg-luma-card border-transparent p-6 text-center">
                 <div className="flex flex-col items-center">
                     <div className="mb-3 text-rose-500" aria-hidden="true">
                         <svg width="80" height="80" viewBox="0 0 102 102" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -28,18 +29,20 @@ export default function DeleteConfirmModal({
                         {description}
                     </DialogDescription>
                     <div className="grid w-full grid-cols-2 gap-3">
-                        <button
+                        <Button
                             onClick={onClose}
-                            className="rounded-xl border border-white/60 bg-white/10 px-3 py-3 font-display text-[15px] font-medium text-white transition-all duration-200 hover:border-white/80 hover:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            variant="secondary"
+                            className="h-auto border-transparent bg-white/10 py-3 text-body-lg hover:border-transparent hover:bg-white/18"
                         >
                             İptal
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             onClick={onConfirm}
-                            className="rounded-xl border border-rose-500 bg-rose-500/10 px-3 py-3 font-display text-[15px] font-medium text-rose-500 transition-all duration-200 hover:border-rose-400 hover:bg-rose-500/20 hover:text-rose-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            variant="outline"
+                            className="h-auto border-rose-500 bg-rose-500/10 py-3 text-body-lg text-rose-500 hover:border-rose-400 hover:bg-rose-500/20 hover:text-rose-400"
                         >
                             {confirmLabel}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </DialogContent>

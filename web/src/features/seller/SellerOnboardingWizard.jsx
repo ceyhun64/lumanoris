@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/shared/ui/input";
+import { Button } from "@/shared/ui/button";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -87,7 +88,7 @@ function isoToDdmmyyyy(value) {
     return m ? `${m[3]}.${m[2]}.${m[1]}` : "";
 }
 
-const selectClass = "flex h-11 w-full rounded-xl border border-indigo-400/14 bg-luma-input px-4 py-2 text-sm text-white font-sans transition-all duration-200 focus:outline-none focus:border-indigo-500/55 focus:ring-2 focus:ring-indigo-500/15 disabled:cursor-not-allowed disabled:opacity-50";
+const selectClass = "flex h-11 w-full rounded-xl border border-fuchsia-400/14 bg-luma-input px-4 py-2 text-sm text-white font-sans transition-all duration-200 focus:outline-none focus:border-fuchsia-500/55 focus:ring-2 focus:ring-fuchsia-500/15 disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function SellerOnboardingWizard({ userId, initialStatus, onComplete }) {
     const [step, setStep] = useState(0);
@@ -271,11 +272,11 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
     );
 
     if (bootstrapping) {
-        return <div className="rounded-2xl border border-white/10 bg-luma-elevated p-6"><p className="text-white/60">Yükleniyor...</p></div>;
+        return <div className="rounded-2xl border border-transparent bg-luma-elevated p-6"><p className="text-white/60">Yükleniyor...</p></div>;
     }
 
     return (
-        <div className="flex flex-col gap-6 rounded-2xl border border-white/10 bg-luma-elevated p-6">
+        <div className="flex flex-col gap-6 rounded-2xl border border-transparent bg-luma-elevated p-6">
             <div>
                 <h2 className="font-display text-xl font-semibold text-white">Pazaryeri Satıcı Kaydı</h2>
                 <p className="mt-1 text-sm text-white/55">Chatbot satabilmek için Param pazaryerine satıcı olarak kaydolun.</p>
@@ -291,7 +292,7 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
                                     ? "border-transparent bg-gradient-btn text-white shadow-glow"
                                     : idx < step
                                         ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                                        : "border-white/10 bg-white/5 text-white/45",
+                                        : "border-transparent bg-white/5 text-white/45",
                             )}
                         >
                             {idx < step ? <Check className="h-3.5 w-3.5" /> : <span>{idx + 1}</span>}
@@ -324,8 +325,8 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
                                 className={cn(
                                     "flex flex-col items-start gap-1.5 rounded-xl border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                     form.account_type === opt.value
-                                        ? "border-indigo-400/50 bg-indigo-500/10 shadow-glow"
-                                        : "border-white/10 bg-luma-input hover:border-indigo-400/25",
+                                        ? "border-fuchsia-400/50 bg-fuchsia-500/10 shadow-glow"
+                                        : "border-transparent bg-luma-input hover:border-fuchsia-400/25",
                                 )}
                             >
                                 <strong className="font-display text-sm font-semibold text-white">{opt.title}</strong>
@@ -449,32 +450,24 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
 
             <div className="flex items-center justify-end gap-3">
                 {step > 0 && (
-                    <button
+                    <Button
                         type="button"
                         onClick={back}
                         disabled={submitting}
-                        className="rounded-xl bg-white/[0.06] px-5 py-2.5 font-display text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        variant="ghost"
+                        className="h-auto bg-white/[0.06] px-5 py-2.5 hover:bg-white/10"
                     >
                         Geri
-                    </button>
+                    </Button>
                 )}
                 {step < STEP_LABELS.length - 1 ? (
-                    <button
-                        type="button"
-                        onClick={next}
-                        className="rounded-xl bg-gradient-btn px-5 py-2.5 font-display text-sm font-medium text-white shadow-glow transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
+                    <Button type="button" onClick={next} className="h-auto px-5 py-2.5">
                         Devam
-                    </button>
+                    </Button>
                 ) : (
-                    <button
-                        type="button"
-                        onClick={submit}
-                        disabled={submitting}
-                        className="rounded-xl bg-gradient-btn px-5 py-2.5 font-display text-sm font-medium text-white shadow-glow transition-transform hover:scale-[1.02] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
+                    <Button type="button" onClick={submit} disabled={submitting} className="h-auto px-5 py-2.5">
                         {submitting ? "Gönderiliyor..." : "Pazaryeri Kaydını Tamamla"}
-                    </button>
+                    </Button>
                 )}
             </div>
         </div>

@@ -10,6 +10,17 @@
 header('Content-Type: application/json');
 
 if (session_status() === PHP_SESSION_NONE) {
+    // Lax (not Strict) because top-level GET navigations into the app must
+    // still carry the cookie; Secure is conditional so local HTTP dev
+    // servers keep working — it flips on automatically once actually served
+    // over HTTPS.
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/',
+        'httponly' => true,
+        'samesite' => 'Lax',
+        'secure'   => !empty($_SERVER['HTTPS']),
+    ]);
     session_start();
 }
 

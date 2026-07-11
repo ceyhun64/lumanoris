@@ -9,21 +9,21 @@ export default function Chatbotlarim() {
     return (
         <div className="flex min-h-[70vh] flex-col items-center justify-center gap-6 px-4 text-center">
             <div className="relative flex items-center justify-center">
-                <div className="absolute h-32 w-32 rounded-full bg-gradient-to-br from-indigo-500/20 to-cyan-500/10 blur-2xl" />
-                <Image src={iconSrc} alt="Logo" width={64} height={64} className="relative z-10 drop-shadow-[0_0_20px_rgba(99,102,241,0.6)]" />
+                <div className="absolute h-32 w-32 rounded-full bg-gradient-to-br from-fuchsia-500/20 to-violet-500/10 blur-2xl" />
+                <Image src={iconSrc} alt="Logo" width={64} height={64} className="relative z-10 drop-shadow-[0_0_20px_rgba(217,70,239,0.6)]" />
             </div>
 
-            <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-bold text-transparent">
+            <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-bold text-transparent">
                 Sohbet Botlarım
             </h2>
 
             <div className="flex max-w-md flex-col gap-2">
                 <p className="text-[15px] leading-relaxed text-white/55">
-                    Hayalinizdeki sohbet botunu sadece <span className="font-semibold text-indigo-300">birkaç basit adımda</span> hayata geçirin.
+                    Hayalinizdeki sohbet botunu sadece <span className="font-semibold text-fuchsia-300">birkaç basit adımda</span> hayata geçirin.
                 </p>
                 <p className="text-[15px] leading-relaxed text-white/55">
                     Bilgi paylaşın, eğlendirin ya da iş süreçlerini kolaylaştırın —
-                    <span className="font-semibold text-indigo-300"> hepsi sizin elinizde!</span>
+                    <span className="font-semibold text-fuchsia-300"> hepsi sizin elinizde!</span>
                 </p>
             </div>
 

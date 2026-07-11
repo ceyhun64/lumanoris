@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Input } from "@/shared/ui/input";
+import { Button } from "@/shared/ui/button";
 
 export default function EditableField({ fields, onSubmit }) {
     const [isEditing, setIsEditing] = useState(false);
@@ -34,7 +35,7 @@ export default function EditableField({ fields, onSubmit }) {
     };
 
     return (
-        <div className="mb-5 flex items-stretch gap-3 rounded-xl border border-white/10 p-4">
+        <div className="mb-5 flex items-stretch gap-3 rounded-xl border border-transparent p-4">
             <div className="flex flex-1 flex-wrap gap-3">
                 {fields.map((field) => (
                     <Input
@@ -48,12 +49,9 @@ export default function EditableField({ fields, onSubmit }) {
                     />
                 ))}
             </div>
-            <button
-                onClick={handleButtonClick}
-                className="min-w-[100px] rounded-xl border border-white/70 bg-gradient-btn px-3 font-display text-sm font-medium text-white shadow-glow transition-all duration-300 hover:scale-[1.03] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
+            <Button onClick={handleButtonClick} className="h-auto min-w-[100px] border border-transparent">
                 {isEditing ? "Kaydet" : "Düzenle"}
-            </button>
+            </Button>
         </div>
     );
 }

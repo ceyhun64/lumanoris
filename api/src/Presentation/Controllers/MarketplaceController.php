@@ -46,8 +46,7 @@ class MarketplaceController {
              WHERE uc.user_id = ?",
             [$userId]
         );
-        echo json_encode($results);
-        exit;
+        JsonResponse::success(['cart' => $results]);
     }
 
     public static function getCartCount(): void {
@@ -106,7 +105,8 @@ class MarketplaceController {
             JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
         }
 
-        $db     = Database::getInstance();
+        $db   = Database::getInstance();
+        $conn = $db->getConnection();
 
         $subscriptionIds = [];
         $detailRows      = [];
@@ -119,6 +119,12 @@ class MarketplaceController {
         $mysqlNowRow = $db->selectSingle('NOW() AS now_time');
         $mysqlNow    = strtotime($mysqlNowRow['now_time']);
 
+        // The loop below does several inserts/deletes per cart item with no
+        // transaction — a failure partway through (e.g. item 3 of 5) used to
+        // leave prior items fully purchased/removed from cart while later
+        // ones silently never happened, with no way to retry cleanly.
+        $conn->beginTransaction();
+        try {
         foreach ($data['items'] as $item) {
             $chatbotId     = InputSanitizer::positiveInt($item['chatbot_id'] ?? 0);
             $durationWeeks = InputSanitizer::positiveInt($item['duration_weeks'] ?? 0) ?: 4;
@@ -163,6 +169,7 @@ class MarketplaceController {
         }
 
         if (empty($subscriptionIds)) {
+            $conn->rollBack();
             JsonResponse::error('Geçerli ürün bulunamadı.', 400, AppConfig::ERR_VALIDATION);
         }
 
@@ -183,7 +190,6 @@ class MarketplaceController {
         // doesn't touch existing rows/columns) rather than working around it
         // with a JSON blob. MySQL 8's `ADD COLUMN IF NOT EXISTS` rejects this
         // form, so check information_schema first to stay idempotent.
-        $conn        = $db->getConnection();
         $columnCheck = $db->selectSingle(
             "COUNT(*) AS cnt FROM information_schema.columns
              WHERE table_schema = DATABASE() AND table_name = 'param_marketplace_details' AND column_name = 'chatbot_id'"
@@ -202,6 +208,12 @@ class MarketplaceController {
                 'payable_amount'    => $row['payable_amount'],
                 'status'            => 'approved',
             ]);
+        }
+
+        $conn->commit();
+        } catch (Exception $e) {
+            if ($conn->inTransaction()) $conn->rollBack();
+            throw $e;
         }
 
         JsonResponse::success(['message' => 'Abonelik oluşturuldu.', 'ids' => $subscriptionIds, 'order_id' => $orderId]);

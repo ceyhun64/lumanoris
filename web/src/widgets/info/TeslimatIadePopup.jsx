@@ -38,7 +38,7 @@ export default function DeliveryAndReturnPopup({ onClose }) {
         {
             type: 'header',
             text: '1. Teslimat Koşulları',
-            style: { fontWeight: 'bold', fontSize: '1.1em', marginTop: '20px', color: '#818CF8' }
+            style: { fontWeight: 'bold', fontSize: '1.1em', marginTop: '20px', color: '#E879F9' }
         },
         {
             type: 'paragraph',
@@ -76,7 +76,7 @@ export default function DeliveryAndReturnPopup({ onClose }) {
         {
             type: 'header',
             text: '2. İade ve Cayma Hakkı',
-            style: { fontWeight: 'bold', fontSize: '1.1em', marginTop: '20px', color: '#818CF8' }
+            style: { fontWeight: 'bold', fontSize: '1.1em', marginTop: '20px', color: '#E879F9' }
         },
         {
             type: 'paragraph',
@@ -102,7 +102,7 @@ export default function DeliveryAndReturnPopup({ onClose }) {
         {
             type: 'header',
             text: '3. İstisnai Durumlar',
-            style: { fontWeight: 'bold', fontSize: '1.1em', marginTop: '20px', color: '#818CF8' }
+            style: { fontWeight: 'bold', fontSize: '1.1em', marginTop: '20px', color: '#E879F9' }
         },
         {
             type: 'paragraph',
@@ -124,7 +124,7 @@ export default function DeliveryAndReturnPopup({ onClose }) {
         {
             type: 'header',
             text: '4. Sorumluluk',
-            style: { fontWeight: 'bold', fontSize: '1.1em', marginTop: '20px', color: '#818CF8' }
+            style: { fontWeight: 'bold', fontSize: '1.1em', marginTop: '20px', color: '#E879F9' }
         },
         {
             type: 'list',
@@ -137,7 +137,7 @@ export default function DeliveryAndReturnPopup({ onClose }) {
         {
             type: 'header',
             text: '5. Şirket Bilgileri',
-            style: { fontWeight: 'bold', fontSize: '1.1em', marginTop: '20px', color: '#818CF8' }
+            style: { fontWeight: 'bold', fontSize: '1.1em', marginTop: '20px', color: '#E879F9' }
         },
         {
             type: 'list',
@@ -152,11 +152,11 @@ export default function DeliveryAndReturnPopup({ onClose }) {
 
     return (
         <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="flex max-h-[80vh] max-w-[900px] flex-col overflow-hidden bg-luma-elevated border-white/10 p-0">
+            <DialogContent className="flex max-h-[80vh] max-w-[900px] flex-col overflow-hidden bg-luma-elevated border-transparent p-0">
                 <DialogTitle className="shrink-0 px-6 pb-3 pt-6 text-[16px]">Kullanım Koşulları</DialogTitle>
 
                 {/* API'den gelen HTML içeriği burada render ediliyor */}
-                <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 [&_h1]:mb-2.5 [&_h1]:text-[1.4em] [&_h1]:font-bold [&_h1]:text-white [&_h2]:mt-5 [&_h2]:text-[1.1em] [&_h2]:font-bold [&_h2]:text-indigo-400 [&_h3]:mt-4 [&_h3]:text-base [&_h3]:font-bold [&_h3]:text-white [&_li]:mb-2 [&_li]:text-[0.95em] [&_p]:mb-2.5 [&_p]:text-[0.95em] [&_p]:leading-relaxed [&_p]:text-white/65 [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-9 [&_ul]:text-white/65">
+                <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 [&_h1]:mb-2.5 [&_h1]:text-[1.4em] [&_h1]:font-bold [&_h1]:text-white [&_h2]:mt-5 [&_h2]:text-[1.1em] [&_h2]:font-bold [&_h2]:text-fuchsia-400 [&_h3]:mt-4 [&_h3]:text-base [&_h3]:font-bold [&_h3]:text-white [&_li]:mb-2 [&_li]:text-[0.95em] [&_p]:mb-2.5 [&_p]:text-[0.95em] [&_p]:leading-relaxed [&_p]:text-white/65 [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-9 [&_ul]:text-white/65">
                     {isLoading ? (
                         <p className="text-sm text-white/50">Yükleniyor...</p>
                     ) : (

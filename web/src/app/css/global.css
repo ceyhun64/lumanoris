@@ -52,24 +52,24 @@
     --popover:             240 47% 8%;    /* #0D0D1A */
     --popover-foreground:  240 5% 96%;
 
-    --primary:             239 84% 67%;   /* #6366F1 indigo */
+    --primary:             292 84% 61%;   /* #D946EF fuchsia */
     --primary-foreground:  0 0% 100%;
 
-    --secondary:           188 95% 43%;   /* #06B6D4 cyan */
+    --secondary:           258 90% 66%;   /* #8B5CF6 violet */
     --secondary-foreground: 0 0% 100%;
 
     --muted:               240 47% 14%;   /* #161630 */
     --muted-foreground:    234 30% 65%;
 
-    --accent:              244 75% 57%;   /* #4F46E5 */
+    --accent:              292 69% 48%;   /* #C026D3 */
     --accent-foreground:   0 0% 100%;
 
     --destructive:         350 90% 60%;   /* #F43F5E */
     --destructive-foreground: 0 0% 100%;
 
-    --border:              234 90% 74% / 0.18;  /* indigo-400 18% */
+    --border:              292 91% 76% / 0.18;  /* fuchsia-400 18% */
     --input:               240 57% 10%;   /* #0F0F22 */
-    --ring:                239 84% 67%;   /* primary */
+    --ring:                292 84% 61%;   /* primary */
 
     --radius: 0.75rem;
   }
@@ -84,23 +84,23 @@
 --------------------------------------------------------------------- */
 :root {
   /* ── Lumanoris Elite Palette ──────────────────────────────────────────
-     Electric Indigo + Cyan: daha rafine, premium bir SaaS/AI hissi.
-     Eski pembe+mavi neon yerine derinlikli, çarpıcı ama göz yormayan renk tonu.
+     Fuchsia + Violet: daha rafine, premium bir SaaS/AI hissi.
+     Eski indigo+cyan yerine derinlikli, çarpıcı ama göz yormayan renk tonu.
   ─────────────────────────────────────────────────────────────────────── */
-  --accent-primary:       #6366F1;   /* Electric Indigo — ana CTA, aktif durum */
-  --accent-primary-light: #818CF8;   /* Soft Indigo — başlıklar, gradient */
-  --accent-secondary:     #06B6D4;   /* Cyan — vurgu, badge, hover */
-  --accent-secondary-light: #22D3EE; /* Light Cyan — gradient bitiş, glow */
+  --accent-primary:       #D946EF;   /* Fuchsia — ana CTA, aktif durum */
+  --accent-primary-light: #E879F9;   /* Soft Fuchsia — başlıklar, gradient */
+  --accent-secondary:     #8B5CF6;   /* Violet — vurgu, badge, hover */
+  --accent-secondary-light: #A78BFA; /* Light Violet — gradient bitiş, glow */
   --accent-purple:        #7C3AED;   /* Deep Violet — özel aksan */
   --accent-amber:         #F59E0B;   /* Amber — premium badge, uyarı */
   --accent-rose:          #F43F5E;   /* Rose — silme, tehlike */
   --accent-emerald:       #10B981;   /* Emerald — başarı */
 
   /* Gradient'ler */
-  --accent-gradient:        linear-gradient(135deg, #818CF8 0%, #22D3EE 100%);
-  --accent-gradient-btn:    linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-  --accent-gradient-active: linear-gradient(135deg, rgba(99,102,241,0.18) 0%, rgba(6,182,212,0.09) 100%);
-  --accent-gradient-card:   linear-gradient(135deg, rgba(99,102,241,0.07) 0%, rgba(6,182,212,0.03) 100%);
+  --accent-gradient:        linear-gradient(135deg, #E879F9 0%, #A78BFA 100%);
+  --accent-gradient-btn:    linear-gradient(135deg, #C026D3 0%, #7C3AED 100%);
+  --accent-gradient-active: linear-gradient(135deg, rgba(217,70,239,0.18) 0%, rgba(139,92,246,0.09) 100%);
+  --accent-gradient-card:   linear-gradient(135deg, rgba(217,70,239,0.07) 0%, rgba(139,92,246,0.03) 100%);
 
   /* Arka plan katmanları */
   --bg-base:    #09090F;
@@ -108,12 +108,12 @@
   --bg-card:    #111120;
   --bg-panel:   #161630;
   --bg-input:   #0F0F22;
-  --bg-hover:   rgba(99, 102, 241, 0.07);
+  --bg-hover:   rgba(217,70,239, 0.07);
 
   /* Kenarlıklar */
-  --border-subtle: rgba(129, 140, 248, 0.10);
-  --border-normal: rgba(129, 140, 248, 0.18);
-  --border-strong: rgba(129, 140, 248, 0.40);
+  --border-subtle: rgba(232,121,249, 0.10);
+  --border-normal: rgba(232,121,249, 0.18);
+  --border-strong: rgba(232,121,249, 0.40);
 
   /* Radius */
   --radius-sm: 8px;
@@ -135,8 +135,8 @@
   --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.24);
   --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.36);
   --shadow-3: 0 20px 50px rgba(0, 0, 0, 0.50);
-  --shadow-glow:        0 4px 24px rgba(99, 102, 241, 0.32);
-  --shadow-glow-cyan:   0 4px 24px rgba(6, 182, 212, 0.25);
+  --shadow-glow:        0 4px 24px rgba(217,70,239, 0.32);
+  --shadow-glow-cyan:   0 4px 24px rgba(139,92,246, 0.25);
   --shadow-glow-amber:  0 4px 20px rgba(245, 158, 11, 0.25);
 
   /* Geriye dönük uyumluluk — eski var() referansları otomatik yeni rengi alır */
@@ -206,7 +206,7 @@ input[type="search"]:focus,
 textarea:focus,
 select:focus {
   border-color: var(--accent-primary) !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+  box-shadow: 0 0 0 3px rgba(217,70,239, 0.15) !important;
 }
 
 
@@ -219,7 +219,7 @@ select:focus {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #6366F1 #0D0D1A;
+  scrollbar-color: #D946EF #0D0D1A;
 }
 
 *::-webkit-scrollbar {
@@ -231,12 +231,12 @@ select:focus {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #6366F1, #06B6D4);
+  background: linear-gradient(to bottom, #D946EF, #8B5CF6);
   border-radius: 6px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #818CF8, #22D3EE);
+  background: linear-gradient(to bottom, #E879F9, #A78BFA);
 }
 
 html {
@@ -297,7 +297,7 @@ body {
   font-style: normal;
   font-weight: 600;
   line-height: 56px;
-  background: var(--Linear, linear-gradient(135deg, #818CF8 0%, #22D3EE 100%));
+  background: var(--Linear, linear-gradient(135deg, #E879F9 0%, #A78BFA 100%));
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -319,7 +319,7 @@ body {
   background: none;
   padding: 12px 20px;
   border-radius: 12px;
-  border: 1px dashed #818CF8;
+  border: 1px dashed #E879F9;
   background: #0F0F22;
   cursor: pointer;
   transition: border 0.15s;
@@ -334,7 +334,7 @@ body {
   margin-right: 7px;
 }
 .market-wrapper .market-header .market-filter-select .market-filter-btn:hover {
-  border-color: #818CF8;
+  border-color: #E879F9;
 }
 .market-wrapper .market-header .market-filter-select .market-filter-dropdown {
   position: absolute;
@@ -366,7 +366,7 @@ body {
   transition: color 0.18s;
 }
 .market-wrapper .market-header .market-filter-select .market-filter-dropdown .filter-option:hover, .market-wrapper .market-header .market-filter-select .market-filter-dropdown .filter-option.active {
-  color: #818CF8;
+  color: #E879F9;
 }
 .market-wrapper .market-header .market-filter-select .market-filter-dropdown .filter-option .info-dot {
   display: flex;
@@ -434,7 +434,7 @@ body {
   width: 100%;
 }
 .market-wrapper .market-content .left-cards .bot-card:hover {
-  box-shadow: 0 0 12px rgba(99, 102, 241, 0.25);
+  box-shadow: 0 0 12px rgba(217,70,239, 0.25);
 }
 .market-wrapper .market-content .left-cards .bot-card .shadow {
   position: absolute;
@@ -595,7 +595,7 @@ body {
   font-weight: 500;
   line-height: 12px;
   transition: all 0.3s ease;
-  background: var(--liner, linear-gradient(329deg, #3730A3 -2.05%, rgba(6, 182, 212, 0) 178.12%));
+  background: var(--liner, linear-gradient(329deg, #86198F -2.05%, rgba(139,92,246, 0) 178.12%));
   background-image: url("/images/btn-bg.png");
   background-position: center;
   background-repeat: no-repeat;
@@ -654,7 +654,7 @@ body {
 }
 .market-wrapper .market-content .left-cards .bot-card .popup-menu ul li:hover {
   transform: translateX(4px);
-  color: #818CF8;
+  color: #E879F9;
 }
 .market-wrapper .market-content .left-cards .bot-card .popup-menu ul hr {
   border: none;
@@ -698,7 +698,7 @@ body {
   background: rgba(255, 255, 255, 0.05);
 }
 .market-wrapper .market-content .right-sorts .sort-buttons .sort-btn.active {
-  background: #818CF8;
+  background: #E879F9;
   color: #fff;
   font-weight: 600;
 }
@@ -777,47 +777,6 @@ input[type=number]::-webkit-outer-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
-
-.custom-alert {
-  display: flex;
-  align-items: center;
-  background: rgba(41, 28, 41, 0.8);
-  position: fixed;
-  top: 0;
-  left: 0;
-  color: #fff;
-  padding: 13px 18px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  margin-top: 16px;
-  box-shadow: 0 6px 36px 0 rgba(99, 102, 241, 0.2705882353);
-  border-left: 5px solid #818CF8;
-  position: relative;
-  z-index: 100;
-  animation: fadeIn 0.2s;
-}
-
-.custom-alert .icon {
-  margin-right: 10px;
-}
-
-.custom-alert .close-alert {
-  margin-left: 12px;
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 19px;
-  cursor: pointer;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
-
-.custom-alert .close-alert:hover {
-  opacity: 1;
-}
-
-
 
 
 

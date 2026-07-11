@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import ubeyazlogo from "@/images/ubeyaz.png";
+import { Button } from "@/shared/ui/button";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -172,22 +173,22 @@ export default function AuthPage() {
   };
 
   const inputCls =
-    "w-full bg-luma-input border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-colors font-sans";
+    "w-full bg-luma-input border border-transparent rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/30 transition-colors font-sans";
 
   return (
     <GoogleOAuthProvider clientId="457680679934-poocs7d0n78r3eq8q53c6sedfdi1dh0c.apps.googleusercontent.com">
       <div className="min-h-screen bg-luma-base flex">
         {/* ── Left branding panel (desktop only) ── */}
         <div className="hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 via-purple-900/15 to-cyan-900/10" />
-          <div className="absolute top-1/4 left-1/3 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-1/4 right-1/4 w-56 h-56 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-600/20 via-purple-900/15 to-violet-900/10" />
+          <div className="absolute top-1/4 left-1/3 w-72 h-72 bg-fuchsia-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-1/4 right-1/4 w-56 h-56 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_39px,rgba(255,255,255,0.02)_39px,rgba(255,255,255,0.02)_40px),repeating-linear-gradient(90deg,transparent,transparent_39px,rgba(255,255,255,0.02)_39px,rgba(255,255,255,0.02)_40px)]" />
           <div className="relative z-10 flex flex-col items-center text-center px-12 gap-6">
             <img
               src={ubeyazlogo.src}
               alt="Lumanoris"
-              className="w-20 h-20 drop-shadow-[0_0_32px_rgba(99,102,241,0.5)]"
+              className="w-20 h-20 drop-shadow-[0_0_32px_rgba(217,70,239,0.5)]"
             />
             <h1 className="text-4xl font-bold text-white font-display tracking-tight">
               LUMANORIS
@@ -196,10 +197,10 @@ export default function AuthPage() {
               Yapay zeka sohbet modellerinizi oluşturun, paylaşın ve gelir elde edin.
             </p>
             <div className="flex gap-3 mt-2">
-              <div className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/40 text-xs font-sans">
+              <div className="px-3 py-1.5 rounded-full bg-white/5 border border-transparent text-white/40 text-xs font-sans">
                 ✦ AI Destekli
               </div>
-              <div className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/40 text-xs font-sans">
+              <div className="px-3 py-1.5 rounded-full bg-white/5 border border-transparent text-white/40 text-xs font-sans">
                 ✦ Güvenli
               </div>
             </div>
@@ -215,7 +216,7 @@ export default function AuthPage() {
             </div>
 
             {/* Tab toggle */}
-            <div className="flex bg-luma-elevated rounded-xl p-1 mb-6 border border-white/5">
+            <div className="flex bg-luma-elevated rounded-xl p-1 mb-6 border border-transparent">
               <button
                 type="button"
                 onClick={() => setIsActive(false)}
@@ -242,7 +243,7 @@ export default function AuthPage() {
 
             {/* ── Login form ── */}
             {!isActive && (
-              <div className="bg-luma-elevated rounded-2xl p-8 border border-white/5 shadow-modal">
+              <div className="bg-luma-elevated rounded-2xl p-8 border border-transparent shadow-modal">
                 <h2 className="text-xl font-bold text-white font-display mb-6">
                   Hoş Geldiniz
                 </h2>
@@ -286,7 +287,7 @@ export default function AuthPage() {
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
-                        className="w-4 h-4 rounded border-white/20 bg-luma-input cursor-pointer accent-indigo-500"
+                        className="w-4 h-4 rounded border-transparent bg-luma-input cursor-pointer accent-fuchsia-500"
                         checked={loginData.rememberMe}
                         onChange={(e) =>
                           setLoginData({
@@ -299,19 +300,15 @@ export default function AuthPage() {
                     </label>
                     <a
                       href="/forgot-password"
-                      className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-sans"
+                      className="text-xs text-fuchsia-400 hover:text-fuchsia-300 transition-colors font-sans"
                     >
                       Şifremi Unuttum?
                     </a>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-3 rounded-xl bg-gradient-btn text-white text-sm font-semibold font-display shadow-glow hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 mt-2"
-                  >
+                  <Button type="submit" disabled={loading} className="mt-2 h-auto w-full py-3">
                     {loading ? "Giriş Yapılıyor..." : "Giriş Yap"}
-                  </button>
+                  </Button>
 
                   <div className="relative flex items-center gap-3 my-1">
                     <div className="flex-1 h-px bg-white/10" />
@@ -336,7 +333,7 @@ export default function AuthPage() {
 
             {/* ── Register form ── */}
             {isActive && (
-              <div className="bg-luma-elevated rounded-2xl p-8 border border-white/5 shadow-modal">
+              <div className="bg-luma-elevated rounded-2xl p-8 border border-transparent shadow-modal">
                 <h2 className="text-xl font-bold text-white font-display mb-6">
                   Hesap Oluştur
                 </h2>
@@ -378,13 +375,9 @@ export default function AuthPage() {
                     onChange={handleRegisterChange}
                   />
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-3 rounded-xl bg-gradient-btn text-white text-sm font-semibold font-display shadow-glow hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 mt-2"
-                  >
+                  <Button type="submit" disabled={loading} className="mt-2 h-auto w-full py-3">
                     {loading ? "İşleniyor..." : "Kayıt Ol"}
-                  </button>
+                  </Button>
 
                   <div className="relative flex items-center gap-3 my-1">
                     <div className="flex-1 h-px bg-white/10" />
@@ -410,21 +403,23 @@ export default function AuthPage() {
             {/* Terms */}
             <p className="text-center mt-6 text-[11px] text-white/25 font-sans px-4">
               Devam ederek{" "}
-              <button
+              <Button
                 type="button"
                 onClick={() => openPolicy("terms")}
-                className="text-indigo-400/70 hover:text-indigo-400 underline transition-colors"
+                variant="link"
+                className="h-auto p-0 text-[11px] text-fuchsia-400/70 hover:text-fuchsia-400"
               >
                 Kullanım Koşulları
-              </button>{" "}
+              </Button>{" "}
               ve{" "}
-              <button
+              <Button
                 type="button"
                 onClick={() => openPolicy("privacy")}
-                className="text-indigo-400/70 hover:text-indigo-400 underline transition-colors"
+                variant="link"
+                className="h-auto p-0 text-[11px] text-fuchsia-400/70 hover:text-fuchsia-400"
               >
                 Gizlilik Politikası
-              </button>
+              </Button>
               'nı kabul etmiş olursunuz.
             </p>
           </div>
@@ -438,7 +433,7 @@ export default function AuthPage() {
           onClick={closePolicy}
         >
           <div
-            className="bg-[#14181B] border border-white/10 rounded-2xl p-8 max-w-lg w-full max-h-[80vh] overflow-y-auto shadow-modal"
+            className="bg-[#14181B] border border-transparent rounded-2xl p-8 max-w-lg w-full max-h-[80vh] overflow-y-auto shadow-modal"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
@@ -464,7 +459,7 @@ export default function AuthPage() {
                   <h2 className="text-white font-semibold">3. Kullanıcı Sorumlulukları</h2>
                   <p>Kullanıcılar, platformu yürürlükteki yasalara ve genel ahlak kurallarına uygun şekilde kullanmakla yükümlüdür. Hesap bilgilerinin güvenliğinden kullanıcı sorumludur.</p>
                   <h2 className="text-white font-semibold">7. İletişim</h2>
-                  <p>E-posta: <a href="mailto:lumanoris.ai@gmail.com" className="text-indigo-400">lumanoris.ai@gmail.com</a></p>
+                  <p>E-posta: <a href="mailto:lumanoris.ai@gmail.com" className="text-fuchsia-400">lumanoris.ai@gmail.com</a></p>
                 </>
               ) : (
                 <>
@@ -475,7 +470,7 @@ export default function AuthPage() {
                   <h2 className="text-white font-semibold">10. Haklarınız</h2>
                   <p>KVKK ve GDPR kapsamında verilerinize erişme, düzeltme, silme, itiraz etme ve taşınabilirlik talep etme haklarına sahipsiniz.</p>
                   <h2 className="text-white font-semibold">11. İletişim</h2>
-                  <p>E-posta: <a href="mailto:lumanoris.ai@gmail.com" className="text-indigo-400">lumanoris.ai@gmail.com</a></p>
+                  <p>E-posta: <a href="mailto:lumanoris.ai@gmail.com" className="text-fuchsia-400">lumanoris.ai@gmail.com</a></p>
                 </>
               )}
             </div>

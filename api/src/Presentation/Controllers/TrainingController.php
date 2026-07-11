@@ -69,29 +69,43 @@ class TrainingController {
         }
     }
 
+    // Cap on the decoded PDF size this endpoint will parse. Was previously
+    // reachable with no session and no size limit at all — anyone on the
+    // internet could submit arbitrarily large/malformed PDFs and burn server
+    // CPU/memory in Smalot\PdfParser (DoS).
+    private const MAX_PDF_BYTES = 15 * 1024 * 1024;
+
     public static function readPdf(): void {
+        require_method('POST');
+        AuthMiddleware::requireAuth();
         require_once __DIR__ . '/../../../vendor/autoload.php';
 
         $input = json_decode(file_get_contents('php://input'), true);
         if (!isset($input['base64Data'])) {
-            echo json_encode(['error' => 'base64Data missing']);
-            exit;
+            JsonResponse::error('base64Data eksik.', 400, AppConfig::ERR_VALIDATION);
         }
 
         $pdfBytes = base64_decode($input['base64Data'], true);
         if ($pdfBytes === false) {
             JsonResponse::error('Geçersiz base64 verisi.', 400, AppConfig::ERR_VALIDATION);
         }
+        if (strlen($pdfBytes) > self::MAX_PDF_BYTES) {
+            JsonResponse::error('PDF dosyası çok büyük (maks. 15MB).', 413, AppConfig::ERR_VALIDATION);
+        }
 
         $tmpFile = tempnam(sys_get_temp_dir(), 'pdf');
         file_put_contents($tmpFile, $pdfBytes);
 
-        $parser = new \Smalot\PdfParser\Parser();
-        $pdf    = $parser->parseFile($tmpFile);
-        $text   = $pdf->getText();
+        try {
+            $parser = new \Smalot\PdfParser\Parser();
+            $pdf    = $parser->parseFile($tmpFile);
+            $text   = $pdf->getText();
+        } catch (\Exception $e) {
+            unlink($tmpFile);
+            JsonResponse::error('PDF ayrıştırılamadı.', 400, AppConfig::ERR_VALIDATION);
+        }
         unlink($tmpFile);
 
-        echo json_encode(['success' => true, 'text' => $text]);
-        exit;
+        JsonResponse::success(['text' => $text]);
     }
 }

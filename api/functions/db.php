@@ -206,25 +206,48 @@ class Database {
         }
     }
 
+    /**
+     * insert()/update() build their column list from array_keys($data), and
+     * many controllers pass a client-supplied JSON object straight through
+     * as $data (e.g. NoteController::addDialogBook, ChatController, ...).
+     * Only the values were ever parameterized — a key containing a backtick
+     * breaks out of the `$key` identifier quoting and injects arbitrary SQL
+     * via the column list itself. Column names are never legitimately
+     * anything but a simple identifier, so reject anything else outright.
+     */
+    private static function assertSafeColumnName($key) {
+        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', (string) $key)) {
+            throw new Exception('Geçersiz sütun adı: ' . $key);
+        }
+    }
+
     public function insert($table, $data, $updateOnDuplicate = false) {
+        foreach (array_keys($data) as $key) {
+            self::assertSafeColumnName($key);
+        }
+
         $columns = implode(', ', array_keys($data));
         $placeholders = implode(', ', array_fill(0, count($data), '?'));
-        
+
         $params = array_values($data);
-        
+
         $sql = "INSERT INTO `$table` ($columns) VALUES ($placeholders)";
         if ($updateOnDuplicate) {
             $updateColumns = implode(', ', array_map(fn($key) => "`$key` = VALUES(`$key`)", array_keys($data)));
             $sql .= " ON DUPLICATE KEY UPDATE $updateColumns";
         }
-        
+
         $stmt = $this->executePreparedStatement($sql, $params);
-        
+
         return $this->conn->lastInsertId();
     }
-    
+
     // update metodunu ? parametrelerini kabul edecek şekilde düzenledim.
     public function update($table, $data, $where, $params = []) {
+        foreach (array_keys($data) as $key) {
+            self::assertSafeColumnName($key);
+        }
+
         // SET kısmında ? kullanıyoruz
         $setPart = implode(', ', array_map(fn($key) => "`$key` = ?", array_keys($data)));
         

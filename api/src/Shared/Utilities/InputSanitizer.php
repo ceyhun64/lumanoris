@@ -50,12 +50,33 @@ final class InputSanitizer {
         return $data[$key] ?? $default;
     }
 
-    /** Validate MIME type against allowed list. Returns true if safe. */
-    public static function isAllowedMime(string $tmpPath, array $allowedMimes): bool {
+    /** Sniff the real MIME type from file content (magic bytes), not the client-supplied name. */
+    public static function detectMime(string $tmpPath): string|false {
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime  = finfo_file($finfo, $tmpPath);
         finfo_close($finfo);
-        return in_array($mime, $allowedMimes, true);
+        return $mime;
+    }
+
+    /** Validate MIME type against allowed list. Returns true if safe. */
+    public static function isAllowedMime(string $tmpPath, array $allowedMimes): bool {
+        return in_array(self::detectMime($tmpPath), $allowedMimes, true);
+    }
+
+    /**
+     * Extension for a verified MIME type — used to name saved uploads so the
+     * file extension always matches the sniffed content type, never the
+     * client-supplied filename (a polyglot file with a real image header but
+     * a ".php" client filename would otherwise be saved as executable PHP).
+     */
+    public static function extensionForMime(string $mime): string {
+        return match ($mime) {
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/gif'  => 'gif',
+            'image/webp' => 'webp',
+            default      => 'bin',
+        };
     }
 
     /** Generate a cryptographically safe random token. */

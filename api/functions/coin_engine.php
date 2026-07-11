@@ -51,29 +51,52 @@ function getOrInitCoinBalance(Database $db, int $userId): array {
     return ['coins_remaining' => (int) $row['coins_remaining'], 'exhausted_at' => $row['exhausted_at']];
 }
 
+/**
+ * Both branches below decrement with an atomic
+ * `UPDATE ... SET x = x - 1 WHERE x > 0` guarded by the affected row count,
+ * rather than reading a value in PHP and writing back a computed one — two
+ * concurrent requests racing on a read-then-write would otherwise both read
+ * the same remaining count and both succeed, granting an extra free message
+ * past what the user actually has left.
+ */
 function consumeMessage(Database $db, int $userId, int $chatbotId): array {
     $credit = getActivePurchaseCredit($db, $userId, $chatbotId);
 
     if ($credit) {
-        $remaining = (int) $credit['credits_remaining'] - 1;
-        $db->update(AppConfig::TABLE_PURCHASE_CREDITS, ['credits_remaining' => $remaining], 'id = ?', [(int) $credit['id']]);
-        return ['allowed' => true, 'source' => 'purchase_credit', 'remaining' => $remaining];
+        $conn = $db->getConnection();
+        $stmt = $conn->prepare(
+            'UPDATE ' . AppConfig::TABLE_PURCHASE_CREDITS . '
+             SET credits_remaining = credits_remaining - 1
+             WHERE id = ? AND credits_remaining > 0'
+        );
+        $stmt->execute([(int) $credit['id']]);
+        if ($stmt->rowCount() > 0) {
+            return ['allowed' => true, 'source' => 'purchase_credit', 'remaining' => (int) $credit['credits_remaining'] - 1];
+        }
+        // Exhausted by a concurrent request between the read above and this
+        // update — fall through and try the daily coin balance instead.
     }
 
-    $balance = getOrInitCoinBalance($db, $userId);
-    if ((int) $balance['coins_remaining'] <= 0) {
+    getOrInitCoinBalance($db, $userId); // ensure today's balance row exists/has been reset
+
+    $conn = $db->getConnection();
+    $stmt = $conn->prepare(
+        'UPDATE ' . AppConfig::TABLE_COIN_BALANCES . '
+         SET coins_remaining = coins_remaining - 1,
+             exhausted_at = IF(coins_remaining - 1 = 0, NOW(), exhausted_at)
+         WHERE user_id = ? AND coins_remaining > 0'
+    );
+    $stmt->execute([$userId]);
+    if ($stmt->rowCount() === 0) {
         return ['allowed' => false, 'source' => 'coins', 'remaining' => 0];
     }
 
-    $newCoins = (int) $balance['coins_remaining'] - 1;
-    $db->update(
-        AppConfig::TABLE_COIN_BALANCES,
-        ['coins_remaining' => $newCoins, 'exhausted_at' => $newCoins === 0 ? date('Y-m-d H:i:s') : null],
-        'user_id = ?',
+    $remaining = (int) $db->selectSingle(
+        'coins_remaining FROM ' . AppConfig::TABLE_COIN_BALANCES . ' WHERE user_id = ?',
         [$userId]
-    );
+    )['coins_remaining'];
 
-    return ['allowed' => true, 'source' => 'coins', 'remaining' => $newCoins];
+    return ['allowed' => true, 'source' => 'coins', 'remaining' => $remaining];
 }
 
 // Keep in sync with COIN_TIER_* in web/src/features/purchasing/BuyModal.jsx.

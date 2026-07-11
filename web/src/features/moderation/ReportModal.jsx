@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Textarea } from '@/shared/ui/textarea';
+import { Button } from '@/shared/ui/button';
 
 export default function ReportModal({ isOpen, repId, onClose }) {
     const [step, setStep] = useState(1);
@@ -89,7 +90,7 @@ export default function ReportModal({ isOpen, repId, onClose }) {
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-[450px] bg-luma-card border-white/10 p-6 text-center">
+            <DialogContent className="max-w-[450px] bg-luma-card border-transparent p-6 text-center">
                 {showFeedback && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-glow">
                         Bildiriminiz alındı 🎉
@@ -135,12 +136,13 @@ export default function ReportModal({ isOpen, repId, onClose }) {
                                 ))}
                             </div>
 
-                            <button
+                            <Button
                                 onClick={handleContinue}
-                                className="w-full rounded-xl border border-fuchsia-400/30 bg-fuchsia-400/10 px-3 py-4 font-display text-[15px] font-medium text-white transition-all duration-300 hover:bg-fuchsia-400/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                variant="outline"
+                                className="h-auto w-full border-fuchsia-400/30 bg-fuchsia-400/10 py-4 text-body-lg text-white hover:bg-fuchsia-400/20"
                             >
                                 Devam Et
-                            </button>
+                            </Button>
                         </>
                     ) : (
                         <>
@@ -156,12 +158,13 @@ export default function ReportModal({ isOpen, repId, onClose }) {
                                 value={extraDetail}
                                 onChange={(e) => setExtraDetail(e.target.value)}
                             />
-                            <button
+                            <Button
                                 onClick={handleSubmit}
-                                className="w-full rounded-xl border border-fuchsia-400/30 bg-fuchsia-400/10 px-3 py-4 font-display text-[15px] font-medium text-white transition-all duration-300 hover:bg-fuchsia-400/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                variant="outline"
+                                className="h-auto w-full border-fuchsia-400/30 bg-fuchsia-400/10 py-4 text-body-lg text-white hover:bg-fuchsia-400/20"
                             >
                                 Bildir
-                            </button>
+                            </Button>
                         </>
                     )}
                 </div>

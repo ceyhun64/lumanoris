@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
+import { Button } from '@/shared/ui/button';
 import { cn } from '@/lib/utils';
 
 const DURATIONS = [
@@ -100,7 +101,7 @@ export default function AddToSaleListModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-[450px] bg-luma-card border-white/10 p-6 text-center">
+            <DialogContent className="max-w-[450px] bg-luma-card border-transparent p-6 text-center">
                 {showFeedback && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-glow">
                         Fiyatlar Güncellendi ✅
@@ -112,7 +113,7 @@ export default function AddToSaleListModal({
                 </DialogDescription>
 
                 <div className="mb-4 text-left">
-                    <label className="mb-1.5 block text-xs font-semibold text-indigo-400">HAFTALIK BİRİM FİYAT</label>
+                    <label className="mb-1.5 block text-xs font-semibold text-fuchsia-400">HAFTALIK BİRİM FİYAT</label>
                     <div className="flex items-center justify-between gap-2 rounded-xl bg-luma-input px-5 py-4">
                         <input
                             type="number"
@@ -121,13 +122,13 @@ export default function AddToSaleListModal({
                             placeholder="0.00"
                             className="w-full bg-transparent font-display text-[15px] text-white placeholder:text-white/40 focus:outline-none"
                         />
-                        <span className="font-bold text-indigo-400">TL</span>
+                        <span className="font-bold text-fuchsia-400">TL</span>
                     </div>
                 </div>
 
                 <div className="mb-5 text-left">
-                    <label className="mb-1.5 block text-xs font-semibold text-cyan-400">AYLIK (4 HAFTA) ÖZEL FİYAT</label>
-                    <div className="flex items-center justify-between gap-2 rounded-xl border border-cyan-400/50 bg-luma-input px-5 py-4">
+                    <label className="mb-1.5 block text-xs font-semibold text-violet-400">AYLIK (4 HAFTA) ÖZEL FİYAT</label>
+                    <div className="flex items-center justify-between gap-2 rounded-xl border border-violet-400/50 bg-luma-input px-5 py-4">
                         <input
                             type="number"
                             value={mPrice}
@@ -135,7 +136,7 @@ export default function AddToSaleListModal({
                             placeholder="0.00"
                             className="w-full bg-transparent font-display text-[15px] text-white placeholder:text-white/40 focus:outline-none"
                         />
-                        <span className="font-bold text-cyan-400">TL</span>
+                        <span className="font-bold text-violet-400">TL</span>
                     </div>
                     {parseFloat(wPrice) > 0 && (
                         <small className="mt-1.5 block text-[11px] text-white/70">
@@ -173,7 +174,7 @@ export default function AddToSaleListModal({
                     })}
                 </div>
 
-                <div className="mb-5 rounded-xl border border-dashed border-indigo-400/50 bg-white/5 p-4 text-center">
+                <div className="mb-5 rounded-xl border border-dashed border-fuchsia-400/50 bg-white/5 p-4 text-center">
                     <span className="mb-1.5 block text-[11px] text-white/60">
                         SEÇİLEN SÜREYE GÖRE TOPLAM TUTAR
                     </span>
@@ -183,18 +184,16 @@ export default function AddToSaleListModal({
                 </div>
 
                 <div className="flex gap-2.5">
-                    <button
+                    <Button
                         onClick={onClose}
-                        className="flex-1 rounded-xl border-b border-dashed border-indigo-700 bg-white/[0.04] px-4 py-3 font-display text-[15px] font-medium text-white transition-all duration-200 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        variant="ghost"
+                        className="h-auto flex-1 border-b border-dashed border-fuchsia-700 bg-white/[0.04] py-3 text-body-lg hover:bg-white/[0.08]"
                     >
                         İptal
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        className="flex-[2] rounded-xl bg-gradient-btn px-4 py-3 font-display text-[15px] font-medium text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
+                    </Button>
+                    <Button onClick={handleSave} className="h-auto flex-[2] py-3 text-body-lg">
                         Kaydet
-                    </button>
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>

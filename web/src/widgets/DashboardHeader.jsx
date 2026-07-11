@@ -11,6 +11,7 @@ import ProfilePopup from '@/features/user-profile/ProfilePopup';
 import QuitModal from '@/features/auth/QuitModal';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/shared/ui/tooltip';
+import { Button } from '@/shared/ui/button';
 
 const ICON_BTN_FOCUS = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base';
 
@@ -147,10 +148,10 @@ export default function Header({ userId }) {
                 <NotificationPopup onClose={() => setShowNotification(false)} userId={user.id} />
             )}
 
-            <header className="sticky top-0 z-[100] flex items-center justify-between px-6 py-3 bg-[rgba(9,9,15,0.80)] backdrop-blur-xl border-b border-indigo-400/8">
+            <header className="sticky top-0 z-[100] flex items-center justify-between px-6 py-3 bg-[rgba(9,9,15,0.80)] backdrop-blur-xl border-b border-fuchsia-400/8">
                 {/* Search */}
                 <div className="flex items-center gap-2 flex-1 max-w-[440px]">
-                    <div className="flex items-center w-full rounded-2xl bg-[rgba(15,15,34,0.90)] border border-indigo-400/12 overflow-hidden focus-within:border-indigo-500/45 focus-within:shadow-[0_0_0_2px_rgba(99,102,241,0.10)] transition-all duration-200">
+                    <div className="flex items-center w-full rounded-2xl bg-[rgba(15,15,34,0.90)] border border-fuchsia-400/12 overflow-hidden focus-within:border-fuchsia-500/45 focus-within:shadow-[0_0_0_2px_rgba(217,70,239,0.10)] transition-all duration-200">
                         <input
                             type="text"
                             placeholder="KEŞFET"
@@ -163,7 +164,7 @@ export default function Header({ userId }) {
                             onClick={goToExplore}
                             onTouchStart={goToExplore}
                             aria-label="Keşfet"
-                            className={cn('flex items-center justify-center w-10 h-10 text-white/50 hover:text-indigo-400 transition-colors duration-150 rounded-lg', ICON_BTN_FOCUS)}
+                            className={cn('flex items-center justify-center w-10 h-10 text-white/50 hover:text-fuchsia-400 transition-colors duration-150 rounded-lg', ICON_BTN_FOCUS)}
                         >
                             <Image src={searchIcon} alt="" width={18} height={18} />
                         </button>
@@ -178,7 +179,7 @@ export default function Header({ userId }) {
                             <button
                                 onClick={() => setShowNotification(true)}
                                 aria-label="Bildirimler"
-                                className={cn('relative flex items-center justify-center w-10 h-10 rounded-xl bg-[rgba(15,15,28,0.70)] border border-indigo-400/10 text-white/60 hover:bg-indigo-500/10 hover:text-indigo-300 hover:border-indigo-400/30 transition-all duration-150', ICON_BTN_FOCUS)}
+                                className={cn('relative flex items-center justify-center w-10 h-10 rounded-xl bg-[rgba(15,15,28,0.70)] border border-fuchsia-400/10 text-white/60 hover:bg-fuchsia-500/10 hover:text-fuchsia-300 hover:border-fuchsia-400/30 transition-all duration-150', ICON_BTN_FOCUS)}
                             >
                                 <Image src={bellIcon} alt="" width={20} height={20} />
                             </button>
@@ -192,7 +193,7 @@ export default function Header({ userId }) {
                             <button
                                 onClick={() => router.push('/dashboard/checkout')}
                                 aria-label="Sepetim"
-                                className={cn('relative flex items-center justify-center w-10 h-10 rounded-xl bg-[rgba(15,15,28,0.70)] border border-indigo-400/10 text-white/60 hover:bg-indigo-500/10 hover:text-indigo-300 hover:border-indigo-400/30 transition-all duration-150', ICON_BTN_FOCUS)}
+                                className={cn('relative flex items-center justify-center w-10 h-10 rounded-xl bg-[rgba(15,15,28,0.70)] border border-fuchsia-400/10 text-white/60 hover:bg-fuchsia-500/10 hover:text-fuchsia-300 hover:border-fuchsia-400/30 transition-all duration-150', ICON_BTN_FOCUS)}
                             >
                                 <Image src={cartIcon} alt="" width={20} height={20} />
                                 {cartCount > 0 && (
@@ -214,7 +215,7 @@ export default function Header({ userId }) {
                         >
                             <button
                                 aria-label="Profil menüsü"
-                                className={cn('flex items-center justify-center w-10 h-10 rounded-xl bg-[rgba(15,15,28,0.70)] border border-indigo-400/10 text-white/60 hover:bg-indigo-500/10 hover:border-indigo-400/30 transition-all duration-150 overflow-hidden', ICON_BTN_FOCUS)}
+                                className={cn('flex items-center justify-center w-10 h-10 rounded-xl bg-[rgba(15,15,28,0.70)] border border-fuchsia-400/10 text-white/60 hover:bg-fuchsia-500/10 hover:border-fuchsia-400/30 transition-all duration-150 overflow-hidden', ICON_BTN_FOCUS)}
                             >
                                 <Image
                                     src={profileImage || userIcon}
@@ -231,12 +232,12 @@ export default function Header({ userId }) {
                             )}
                         </div>
                     ) : (
-                        <button
+                        <Button
                             onClick={() => router.push('/login')}
-                            className={cn('px-5 py-2 rounded-xl bg-gradient-btn text-white text-[15px] font-semibold font-display tracking-wide shadow-[0_4px_16px_rgba(79,70,229,0.35)] hover:brightness-110 hover:-translate-y-0.5 transition-all duration-150', ICON_BTN_FOCUS)}
+                            className="h-auto px-5 py-2 text-[15px] shadow-[0_4px_16px_rgba(79,70,229,0.35)]"
                         >
                             Giriş Yap
-                        </button>
+                        </Button>
                     )}
                 </div>
             </header>

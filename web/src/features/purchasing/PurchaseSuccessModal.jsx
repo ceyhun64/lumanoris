@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
 
-export default function PurchaseSuccessModal({ isOpen, onClose, chatbotName = "Travel Planner AI" }) {
+export default function PurchaseSuccessModal({ isOpen, onClose, chatbotName = "Travel Planner AI", orderId }) {
     const router = useRouter();
 
     useEffect(() => {
@@ -31,7 +31,7 @@ export default function PurchaseSuccessModal({ isOpen, onClose, chatbotName = "T
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-            <DialogContent className="max-w-[440px] bg-luma-card border-white/10 p-6 text-center">
+            <DialogContent className="max-w-[440px] bg-luma-card border-transparent p-6 text-center">
                 <div className="flex flex-col items-center">
                     <div className="mb-3 text-emerald-500" aria-hidden="true">
                         <svg width="88" height="89" viewBox="0 0 108 109" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -42,13 +42,16 @@ export default function PurchaseSuccessModal({ isOpen, onClose, chatbotName = "T
                     <DialogTitle className="mb-2.5 text-xl font-semibold text-emerald-500">
                         Satın Alma Başarılı
                     </DialogTitle>
-                    <DialogDescription className="mb-8 font-display text-[15px] font-semibold leading-relaxed text-white">
+                    <DialogDescription className="mb-2.5 font-display text-[15px] font-semibold leading-relaxed text-white">
                         {chatbotName} sohbetin aktif hale getirildi. Sahip olduğun chatbotlar arasında görüntüleyebilirsin.
                     </DialogDescription>
+                    <p className="mb-8 font-mono text-[13px] text-white/60">
+                        {orderId ? <>Sipariş No: <span className="text-white/85">{orderId}</span></> : " "}
+                    </p>
                     <div className="grid w-full grid-cols-2 gap-3">
                         <button
                             onClick={handleCancel}
-                            className="rounded-xl border border-white/60 bg-white/10 px-3 py-3 font-display text-[15px] font-medium text-white transition-all duration-200 hover:border-white/80 hover:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="rounded-xl border border-transparent bg-white/10 px-3 py-3 font-display text-[15px] font-medium text-white transition-all duration-200 hover:border-transparent hover:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             İptal
                         </button>

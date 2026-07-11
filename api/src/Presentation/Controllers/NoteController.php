@@ -29,8 +29,7 @@ class NoteController {
              ORDER BY RAND() LIMIT 100",
             []
         );
-        echo json_encode($results);
-        exit;
+        JsonResponse::success(['dialogues' => $results]);
     }
 
     public static function getDialogInteracts(): void {

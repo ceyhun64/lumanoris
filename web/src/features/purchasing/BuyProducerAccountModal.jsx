@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/shared/ui/dialog';
 import { Input } from '@/shared/ui/input';
+import { Button } from '@/shared/ui/button';
 
 export default function BuyProducerAccountModal({ isOpen, onClose, userId, onPurchased }) {
     const [cardNumber, setCardNumber] = useState('');
@@ -67,7 +68,7 @@ export default function BuyProducerAccountModal({ isOpen, onClose, userId, onPur
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-[400px] bg-luma-card border-white/10 p-6">
+            <DialogContent className="max-w-[400px] bg-luma-card border-transparent p-6">
                 <DialogTitle className="mb-1 text-[17px]">Lumanoris Üretici Hesabı</DialogTitle>
                 <p className="mb-4 text-[13px] text-white/70">
                     750₺/ay — 5 herkese açık + 2 bağımsız chatbot oluşturma hakkı.
@@ -108,20 +109,21 @@ export default function BuyProducerAccountModal({ isOpen, onClose, userId, onPur
                         {errorMsg && <div className="mb-3 text-[13px] text-rose-400">{errorMsg}</div>}
 
                         <div className="flex gap-2.5">
-                            <button
+                            <Button
                                 onClick={onClose}
                                 disabled={submitting}
-                                className="flex-1 rounded-xl bg-white/[0.06] px-4 py-2.5 font-display text-[14px] font-medium text-white transition-all duration-200 hover:bg-white/10 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                variant="ghost"
+                                className="h-auto flex-1 bg-white/[0.06] py-2.5 text-[14px] hover:bg-white/10"
                             >
                                 İptal
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={handleSubmit}
                                 disabled={submitting}
-                                className="flex-[2] rounded-xl bg-gradient-btn px-4 py-2.5 font-display text-[14px] font-medium text-white shadow-glow transition-all duration-200 hover:brightness-110 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                className="h-auto flex-[2] py-2.5 text-[14px]"
                             >
                                 {submitting ? 'İşleniyor...' : '750₺ Öde'}
-                            </button>
+                            </Button>
                         </div>
                     </>
                 )}

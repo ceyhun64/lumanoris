@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { Search, Check, SearchX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { Button } from "@/shared/ui/button";
+import avatarBot from "@/images/avatar-bot.jpg";
 
 export default function Explore() {
     const router = useRouter();
@@ -61,9 +63,9 @@ export default function Explore() {
             if (!response.ok) throw new Error(`Bot HTTP error! status: ${response.status}`);
 
             const data = await response.json();
-            if (data.success === false) throw new Error(data.message || "Bot API'sinden hata alındı.");
+            if (!data.success) throw new Error(data.message || "Bot API'sinden hata alındı.");
 
-            setApiBots(data);
+            setApiBots(Array.isArray(data.bots) ? data.bots : []);
             setSelectedBots([]);
 
         } catch (e) {
@@ -236,7 +238,7 @@ export default function Explore() {
           <p className="text-rose-400">Veri yüklenemedi: {error}</p>
         )}
 
-        <div className="flex items-center rounded-xl bg-luma-input transition-shadow duration-300 hover:shadow-[0_0_0_2px_rgba(99,102,241,0.3)]">
+        <div className="flex items-center rounded-xl bg-luma-input transition-shadow duration-300 hover:shadow-[0_0_0_2px_rgba(217,70,239,0.3)]">
           <input
             type="search"
             placeholder="Sohbet botu, uygulama veya kişi ara"
@@ -245,17 +247,17 @@ export default function Explore() {
             className="flex-1 bg-transparent px-5 py-6 font-display text-[15px] text-white placeholder:text-white/40 focus:outline-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
           />
           <button className="flex items-center justify-center px-5 py-1 transition-transform duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg" aria-label="Ara">
-            <Search className="h-5 w-5 text-indigo-400" />
+            <Search className="h-5 w-5 text-fuchsia-400" />
           </button>
 
           {/* Filtre Butonu Birebir */}
           <div className="relative mr-2" ref={sortMenuRef}>
             <button
-              className="flex items-center gap-2 whitespace-nowrap rounded-2xl border border-dashed border-indigo-400 bg-transparent px-3 py-1.5 font-sans text-[13px] text-white transition-colors hover:border-indigo-300"
+              className="flex items-center gap-2 whitespace-nowrap rounded-2xl border border-dashed border-fuchsia-400 bg-transparent px-3 py-1.5 font-sans text-[13px] text-white transition-colors hover:border-fuchsia-300"
               onClick={() => setShowSortMenu((v) => !v)}
             >
               <svg width="14" height="14" viewBox="-4 -4 24 24" fill="none">
-                <path d="M0.32 3.328L6.4 9.728V15.618L9.6 13.618V9.728L15.68 3.328V0.32H0.32V3.328ZM0.96 0.96H15.04V3.073L8.96 9.473V13.263L7.04 14.463V9.473L0.96 3.073V0.96Z" fill="#818CF8"/>
+                <path d="M0.32 3.328L6.4 9.728V15.618L9.6 13.618V9.728L15.68 3.328V0.32H0.32V3.328ZM0.96 0.96H15.04V3.073L8.96 9.473V13.263L7.04 14.463V9.473L0.96 3.073V0.96Z" fill="#E879F9"/>
               </svg>
               <span>
                 {sortOptions.find((o) => o.value === sortType)?.label || "Filtrele"}
@@ -267,8 +269,8 @@ export default function Explore() {
                   <div
                     key={opt.value}
                     className={cn(
-                      "flex items-center justify-between px-4 py-3 cursor-pointer text-[13px] font-display transition-colors hover:bg-indigo-500/10",
-                      sortType === opt.value ? 'text-indigo-400' : 'text-[#e0e0e0]',
+                      "flex items-center justify-between px-4 py-3 cursor-pointer text-[13px] font-display transition-colors hover:bg-fuchsia-500/10",
+                      sortType === opt.value ? 'text-fuchsia-400' : 'text-[#e0e0e0]',
                     )}
                     onClick={() => {
                       setSortType(opt.value);
@@ -322,20 +324,20 @@ export default function Explore() {
               <div
                 key={bot.id}
                 onClick={() => handleCardClick(bot)}
-                className="flex w-full cursor-pointer items-start justify-between gap-6 rounded-lg border border-white/10 bg-luma-elevated p-2 pb-3 transition-all duration-300 hover:-translate-y-1 hover:border-indigo-400/25 hover:bg-gradient-to-br hover:from-[#13121c] hover:to-[#1a1925] hover:shadow-[0_10px_25px_rgba(99,102,241,0.12),0_4px_12px_rgba(6,182,212,0.15)] max-md:flex-col"
+                className="flex w-full cursor-pointer items-start justify-between gap-6 rounded-lg border border-transparent bg-luma-elevated p-2 pb-3 transition-all duration-300 hover:-translate-y-1 hover:border-fuchsia-400/25 hover:bg-gradient-to-br hover:from-[#13121c] hover:to-[#1a1925] hover:shadow-[0_10px_25px_rgba(217,70,239,0.12),0_4px_12px_rgba(139,92,246,0.15)] max-md:flex-col"
               >
                 <div className="flex items-start gap-4 max-md:flex-col">
                   <div className="relative flex items-center justify-center">
                     <img
-                      src={bot.profil_fotografi || "fallback_icon_url"}
+                      src={bot.profil_fotografi || avatarBot.src}
                       alt={bot.isim}
                       className="aspect-square h-[120px] w-[120px] rounded-md object-cover"
                     />
                     {isFromList && (
                       <div
                         className={cn(
-                          "absolute bottom-2 right-2 z-[2] flex h-5 w-5 items-center justify-center rounded border-2 border-indigo-400 bg-white text-indigo-400",
-                          isSelected && "bg-indigo-400 text-white",
+                          "absolute bottom-2 right-2 z-[2] flex h-5 w-5 items-center justify-center rounded border-2 border-fuchsia-400 bg-white text-fuchsia-400",
+                          isSelected && "bg-fuchsia-400 text-white",
                         )}
                       >
                         {isSelected && <Check className="h-3.5 w-3.5" />}
@@ -356,17 +358,17 @@ export default function Explore() {
         </div>
 
         {isFromList && selectedBots.length > 0 && (
-          <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-xl border border-white/10 bg-luma-elevated px-6 py-4 shadow-modal">
+          <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-xl border border-transparent bg-luma-elevated px-6 py-4 shadow-modal">
             <p className="text-sm text-white">{selectedBots.length} bot seçildi</p>
-            <button
+            <Button
               onClick={() => {
                 addBotsToList(listName, selectedBots);
                 router.push("/dashboard/list");
               }}
-              className="rounded-xl bg-gradient-btn px-5 py-2.5 font-display text-sm font-semibold text-white shadow-glow transition-transform hover:scale-[1.03]"
+              className="h-auto px-5 py-2.5"
             >
               Kaydet ve Listeye Ekle
-            </button>
+            </Button>
           </div>
         )}
       </div>

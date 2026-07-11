@@ -20,8 +20,7 @@ class ChatController {
             'message, sent_by FROM chatbot_chats WHERE chatbot_id = ? AND user_id = ?',
             [$chatbotId, $userId]
         );
-        echo json_encode($results);
-        exit;
+        JsonResponse::success(['messages' => $results]);
     }
 
     public static function addConversation(): void {
@@ -158,6 +157,66 @@ class ChatController {
         );
 
         echo json_encode(['success' => true, 'message' => 'ok', 'results' => $results]);
+        exit;
+    }
+
+    /**
+     * Server-side proxy for the Gemini streaming call. The frontend used to
+     * fetch the raw API key from /admin/ajax/readenv.php and call Google
+     * directly from the browser — that endpoint requires an admin session
+     * (which no regular user has, so chat was 403ing for everyone), and even
+     * when it worked it handed the real API key to any client, visible in
+     * devtools and reusable by anyone. The key never leaves the server now;
+     * this just streams Gemini's SSE response straight through.
+     */
+    public static function generateReply(): void {
+        require_method('POST');
+        AuthMiddleware::requireAuth();
+
+        $data             = json_decode($_POST['data'] ?? '', true) ?? null;
+        $systemInstruction = $data['system_instruction'] ?? null;
+        $message          = $data['message'] ?? null;
+        if (!$data || $systemInstruction === null || $message === null) {
+            JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
+        }
+
+        $apiKey = AppConfig::googleGeminiApiKey();
+        if (!$apiKey) {
+            JsonResponse::error('Yapay zeka servisi yapılandırılmamış.', 500, AppConfig::ERR_SERVER);
+        }
+
+        $payload = json_encode([
+            'contents' => [[
+                'role'  => 'user',
+                'parts' => [
+                    ['text' => $systemInstruction],
+                    ['text' => $message],
+                ],
+            ]],
+        ]);
+
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:streamGenerateContent'
+             . '?alt=sse&key=' . urlencode($apiKey);
+
+        header('Content-Type: text/event-stream');
+        header('Cache-Control: no-cache');
+        header('X-Accel-Buffering: no');
+        while (ob_get_level() > 0) { ob_end_flush(); }
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_WRITEFUNCTION  => static function ($handle, string $chunk): int {
+                echo $chunk;
+                @flush();
+                return strlen($chunk);
+            },
+        ]);
+        curl_exec($ch);
+        curl_close($ch);
         exit;
     }
 }

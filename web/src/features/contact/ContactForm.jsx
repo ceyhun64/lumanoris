@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import { Paperclip } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 
 export default function ContactForm() {
     const [formData, setFormData] = useState({
@@ -48,7 +49,7 @@ export default function ContactForm() {
     };
 
     return (
-        <div className="rounded-xl border border-white/10 bg-luma-elevated p-6">
+        <div className="rounded-xl border border-transparent bg-luma-elevated p-6">
             <h3 className="mb-5 font-display text-lg font-semibold text-white">Bize Ulaşın</h3>
             <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
                 <div className="flex flex-col gap-3.5 sm:flex-row">
@@ -91,7 +92,7 @@ export default function ContactForm() {
                         onChange={handleChange}
                         hidden
                     />
-                    <Paperclip className="h-4 w-4 text-indigo-400" />
+                    <Paperclip className="h-4 w-4 text-fuchsia-400" />
                     Dosya Ekle
                 </label>
 
@@ -100,12 +101,9 @@ export default function ContactForm() {
                 )}
 
                 <div className="mt-2 flex flex-wrap items-center gap-4">
-                    <button
-                        type="submit"
-                        className="rounded-xl bg-gradient-btn px-6 py-2.5 font-display text-sm font-semibold text-white shadow-glow transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
+                    <Button type="submit" className="h-auto px-6 py-2.5">
                         Gönder
-                    </button>
+                    </Button>
                     <p className="text-xs text-white/50">Yanıt süremiz ortalama 24 saattir.</p>
                 </div>
             </form>

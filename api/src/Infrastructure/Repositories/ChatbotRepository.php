@@ -89,8 +89,9 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
         return self::all(
             "SELECT c.id, c.kapak_fotografi, c.profil_fotografi, c.kategori_id, c.isim, c.aciklama,
                     c.ucret_haftalik, c.yayimlanma_tarih, 1 AS durum, u.kullanici_adi AS owner_name,
-                    COUNT(cc.id) AS toplam_chats, COUNT(cf.id) AS toplam_follows,
-                    COUNT(cl.id) AS toplam_lists, COUNT(cli.id) AS toplam_likes, COUNT(cdi.id) AS toplam_dislikes
+                    COUNT(DISTINCT cc.id) AS toplam_chats, COUNT(DISTINCT cf.id) AS toplam_follows,
+                    COUNT(DISTINCT cl.id) AS toplam_lists, COUNT(DISTINCT cli.id) AS toplam_likes,
+                    COUNT(DISTINCT cdi.id) AS toplam_dislikes, COUNT(DISTINCT cm.id) AS toplam_comments
              FROM `" . self::T . "` c
              INNER JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id AND pms.status = 'active'
              LEFT JOIN chatbot_chats cc ON cc.chatbot_id = c.id
@@ -98,6 +99,7 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
              LEFT JOIN chatbot_in_list cl ON cl.chatbot_id = c.id
              LEFT JOIN chatbot_likes cli ON cli.chatbot_id = c.id
              LEFT JOIN chatbot_dislikes cdi ON cdi.chatbot_id = c.id
+             LEFT JOIN chatbot_comments cm ON cm.chatbot_id = c.id
              LEFT JOIN kullanicilar u ON u.id = c.owner_user_id
              $where GROUP BY c.id ORDER BY c.id DESC",
             $params

@@ -29,7 +29,7 @@ const ICONS = {
     default: (
         <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 4.5C10.4087 4.5 8.88258 5.13214 7.75736 6.25736C6.63214 7.38258 6 8.9087 6 10.5V18.5H18V10.5C18 8.9087 17.3679 7.38258 16.2426 6.25736C15.1174 5.13214 13.5913 4.5 12 4.5Z" fill="#E7D8D8" fillOpacity="0.16" />
-            <path d="M12 4.5C10.4087 4.5 8.88258 5.13214 7.75736 6.25736C6.63214 7.38258 6 8.9087 6 10.5V18.5H18V10.5C18 8.9087 17.3679 7.38258 16.2426 6.25736C15.1174 5.13214 13.5913 4.5 12 4.5ZM12 4.5C12.2652 4.5 12.5196 4.39464 12.7071 4.20711C12.8946 4.01957 13 3.76522 13 3.5C13 3.23478 12.8946 2.98043 12.7071 2.79289C12.5196 2.60536 12.2652 2.5 12 2.5C11.7348 2.5 11.4804 2.60536 11.2929 2.79289C11.1054 2.98043 11 3.23478 11 3.5C11 3.76522 11.1054 4.01957 11.2929 4.20711C11.4804 4.39464 11.7348 4.5 12 4.5ZM20 18.5H4M14 20.5C14 21.0304 13.7893 21.5391 13.4142 21.9142C13.0391 22.2893 12.5304 22.5 12 22.5C11.4696 22.5 10.9609 22.2893 10.5858 21.9142C10.2107 21.5391 10 21.0304 10 20.5" stroke="#818CF8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M12 4.5C10.4087 4.5 8.88258 5.13214 7.75736 6.25736C6.63214 7.38258 6 8.9087 6 10.5V18.5H18V10.5C18 8.9087 17.3679 7.38258 16.2426 6.25736C15.1174 5.13214 13.5913 4.5 12 4.5ZM12 4.5C12.2652 4.5 12.5196 4.39464 12.7071 4.20711C12.8946 4.01957 13 3.76522 13 3.5C13 3.23478 12.8946 2.98043 12.7071 2.79289C12.5196 2.60536 12.2652 2.5 12 2.5C11.7348 2.5 11.4804 2.60536 11.2929 2.79289C11.1054 2.98043 11 3.23478 11 3.5C11 3.76522 11.1054 4.01957 11.2929 4.20711C11.4804 4.39464 11.7348 4.5 12 4.5ZM20 18.5H4M14 20.5C14 21.0304 13.7893 21.5391 13.4142 21.9142C13.0391 22.2893 12.5304 22.5 12 22.5C11.4696 22.5 10.9609 22.2893 10.5858 21.9142C10.2107 21.5391 10 21.0304 10 20.5" stroke="#E879F9" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
     ),
     pop: (
@@ -98,7 +98,7 @@ export default function NotificationPopup({ onClose, userId }) {
 
     return (
         <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-[500px] bg-luma-card border-white/10 p-6">
+            <DialogContent className="max-w-[500px] bg-luma-card border-transparent p-6">
                 <DialogTitle className="mb-4 text-[16px]">Bildirimler</DialogTitle>
 
                 {loading ? (
@@ -122,7 +122,7 @@ export default function NotificationPopup({ onClose, userId }) {
                                     <h4 className="mb-1 font-display text-[15px] font-semibold text-white">{notif.title_tr}</h4>
                                     <p className="text-sm text-white/70">{notif.message_tr}</p>
                                 </div>
-                                <span className="shrink-0 self-start text-xs text-white/40">{formatTime(notif.created_at)}</span>
+                                <span className="shrink-0 self-start text-caption text-luma-muted">{formatTime(notif.created_at)}</span>
                             </div>
                         ))}
                     </div>

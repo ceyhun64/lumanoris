@@ -5,6 +5,7 @@ import useSellerStatus from "@/shared/hooks/useSellerStatus";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import { Trash2 } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/lib/utils";
 
 function parseDiffgramRows(xmlString) {
@@ -63,14 +64,14 @@ function isoToDdmmyyyy(value) {
 }
 
 const SELLER_BANNER_STYLES = {
-    active: "border border-cyan-400 bg-cyan-400/10 text-cyan-100",
+    active: "border border-violet-400 bg-violet-400/10 text-violet-100",
     rejected: "border border-rose-400 bg-rose-400/10 text-rose-100",
     kyc_filled: "border border-amber-400/45 bg-amber-400/10 text-amber-200",
-    not_started: "border border-white/10 bg-white/5 text-white/70",
-    pending: "border border-white/10 bg-white/5 text-white/70",
+    not_started: "border border-transparent bg-white/5 text-white/70",
+    pending: "border border-transparent bg-white/5 text-white/70",
 };
 
-const selectClass = "flex h-11 w-full rounded-xl border border-indigo-400/14 bg-luma-input px-4 py-2 text-sm text-white font-sans transition-all duration-200 focus:outline-none focus:border-indigo-500/55 focus:ring-2 focus:ring-indigo-500/15 disabled:cursor-not-allowed disabled:opacity-50";
+const selectClass = "flex h-11 w-full rounded-xl border border-fuchsia-400/14 bg-luma-input px-4 py-2 text-sm text-white font-sans transition-all duration-200 focus:outline-none focus:border-fuchsia-500/55 focus:ring-2 focus:ring-fuchsia-500/15 disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function BankInfo({ userId }) {
     const [formData, setFormData] = useState({
@@ -310,7 +311,7 @@ export default function BankInfo({ userId }) {
     if (loading) return <div className="text-sm text-white/60">Yükleniyor...</div>;
 
     return (
-        <div className="flex flex-col rounded-xl border border-white/10 p-4">
+        <div className="flex flex-col rounded-xl border border-transparent p-4">
             <h3 className="mb-6 font-display text-base font-normal text-white">Banka Bilgileri</h3>
 
             {!sellerStatus.loading && (
@@ -321,27 +322,29 @@ export default function BankInfo({ userId }) {
                     {sellerStatus.status === "rejected" && (
                         <>
                             <span>Pazaryeri başvurunuz reddedildi: <em>{sellerStatus.lastError || "—"}</em></span>
-                            <button
+                            <Button
                                 type="button"
                                 onClick={handleResubmit}
                                 disabled={registering}
-                                className="rounded-md bg-gradient-btn px-3 py-1.5 text-xs font-medium text-white shadow-glow disabled:opacity-60"
+                                size="sm"
+                                className="h-auto rounded-md py-1.5 text-xs"
                             >
                                 {registering ? "Gönderiliyor..." : "Yeniden Gönder"}
-                            </button>
+                            </Button>
                         </>
                     )}
                     {sellerStatus.status === "kyc_filled" && (
                         <>
                             <span>Bilgileriniz hazır, henüz Param'a gönderilmedi.</span>
-                            <button
+                            <Button
                                 type="button"
                                 onClick={handleResubmit}
                                 disabled={registering}
-                                className="rounded-md bg-gradient-btn px-3 py-1.5 text-xs font-medium text-white shadow-glow disabled:opacity-60"
+                                size="sm"
+                                className="h-auto rounded-md py-1.5 text-xs"
                             >
                                 {registering ? "Gönderiliyor..." : "Pazaryeri Kaydını Tamamla"}
-                            </button>
+                            </Button>
                         </>
                     )}
                     {sellerStatus.status === "not_started" && (
@@ -358,14 +361,14 @@ export default function BankInfo({ userId }) {
                         value={formData.account_type || ""}
                         onFocus={() => isEditing && setShowAccountTypeOptions(true)}
                         readOnly
-                        className={cn("uppercase transition-colors", isEditing ? "cursor-pointer hover:border-indigo-400/40" : "cursor-not-allowed")}
+                        className={cn("uppercase transition-colors", isEditing ? "cursor-pointer hover:border-fuchsia-400/40" : "cursor-not-allowed")}
                     />
                     {showAccountTypeOptions && isEditing && (
                         <div className="absolute left-0 right-0 top-full z-10 mt-0.5 overflow-hidden rounded-lg bg-luma-panel shadow-modal">
                             {["Bireysel Hesap", "Şahıs Şirketi", "Kurumsal Hesap"].map((opt) => (
                                 <div
                                     key={opt}
-                                    className="cursor-pointer border-b border-white/10 px-3 py-3 text-[13px] text-white last:border-b-0 hover:bg-indigo-500/10"
+                                    className="cursor-pointer border-b border-transparent px-3 py-3 text-[13px] text-white last:border-b-0 hover:bg-fuchsia-500/10"
                                     onClick={() => { setFormData({...formData, account_type: opt}); setShowAccountTypeOptions(false); }}
                                 >
                                     {opt}
@@ -519,12 +522,9 @@ export default function BankInfo({ userId }) {
 
             <div className="mt-4 flex flex-col items-start gap-2.5">
                 {formError && <div className="text-[13px] text-rose-400">{formError}</div>}
-                <button
-                    onClick={handleSubmit}
-                    className="rounded-xl border border-white/70 bg-gradient-btn px-5 py-2.5 font-display text-sm font-medium text-white shadow-glow transition-all duration-300 hover:scale-[1.02] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
+                <Button onClick={handleSubmit} className="h-auto border border-transparent px-5 py-2.5">
                     {isEditing ? "Kaydet" : "Düzenle"}
-                </button>
+                </Button>
             </div>
 
             <DeleteConfirmModal

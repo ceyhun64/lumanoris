@@ -3,23 +3,20 @@ import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PackageSearch } from "lucide-react";
 import { UserContext } from "./layout";
-import BotGrid from "@/widgets/BotGrid";
+import BotList from "@/widgets/BotList";
 import CategoryFilter from "@/widgets/CategoryFilter";
-import MarketplaceHeader from "@/widgets/MarketplaceHeader";
+import MarketplaceSearchBar from "@/widgets/MarketplaceSearchBar";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { EmptyState as SharedEmptyState } from "@/shared/ui/empty-state";
 
-function SkeletonCard() {
+function SkeletonRow() {
     return (
-        <div className="bg-luma-card border border-white/5 rounded-2xl overflow-hidden">
-            <Skeleton className="w-full aspect-[4/3] rounded-none" />
-            <div className="p-3 flex flex-col gap-2">
-                <Skeleton className="h-3.5 w-3/4" />
-                <Skeleton className="h-2.5 w-1/2" />
-                <div className="flex items-center gap-2 mt-1">
-                    <Skeleton className="w-5 h-5 rounded-full" />
-                    <Skeleton className="h-2 w-1/3" />
-                </div>
+        <div className="flex items-start gap-4 bg-luma-card border border-transparent rounded-2xl p-3.5">
+            <Skeleton className="h-[84px] w-[84px] shrink-0 rounded-xl" />
+            <div className="flex flex-1 flex-col gap-2 pt-1">
+                <Skeleton className="h-3.5 w-1/3" />
+                <Skeleton className="h-2.5 w-2/3" />
+                <Skeleton className="h-2.5 w-1/4 mt-2" />
             </div>
         </div>
     );
@@ -42,10 +39,11 @@ export default function Dashboard() {
     const userId = useContext(UserContext);
     const router = useRouter();
 
-    const [bots, setBots] = useState([]);
     const [allBots, setAllBots] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState("Tümü");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sort, setSort] = useState("onerilen");
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -87,8 +85,8 @@ export default function Dashboard() {
                 const hiddenBotIds = Array.isArray(hideData?.hidden)
                     ? hideData.hidden.map(Number) : [];
 
-                if (Array.isArray(botsData)) {
-                    const mapped = botsData
+                if (Array.isArray(botsData?.bots)) {
+                    const mapped = botsData.bots
                         .filter(bot =>
                             !uninterestedCategoryIds.includes(Number(bot.kategori_id)) &&
                             !hiddenBotIds.includes(Number(bot.id))
@@ -96,12 +94,19 @@ export default function Dashboard() {
                         .map(bot => ({
                             id: bot.id,
                             title: bot.isim,
+                            description: bot.aciklama,
                             author: (bot.owner_name === "SYSTEM" ? "Lumanoris" : bot.owner_name) || "Anonim",
                             dialogues: bot.toplam_chats,
                             time: formatTime(bot.yayimlanma_tarih),
+                            publishedAt: bot.yayimlanma_tarih,
                             avatar: bot.profil_fotografi,
                             image: bot.kapak_fotografi,
                             kategori_id: bot.kategori_id,
+                            followers: bot.toplam_follows,
+                            likes: bot.toplam_likes,
+                            comments: bot.toplam_comments,
+                            saves: bot.toplam_lists,
+                            weeklyPrice: Number(bot.ucret_haftalik) || 0,
                             badge: {
                                 type: bot.durum == 0 ? "sold" : "produced",
                                 label: bot.durum == 1 ? "Daha önce satıldı" : "Üretildi"
@@ -109,7 +114,6 @@ export default function Dashboard() {
                             userLists: Array.isArray(listsData?.lists) ? listsData.lists : []
                         }));
                     setAllBots(mapped);
-                    setBots(mapped);
                 }
             } catch (err) {
                 console.error("Veri işleme hatası:", err);
@@ -120,16 +124,6 @@ export default function Dashboard() {
         fetchData();
     }, [userId]);
 
-    // Apply category filter whenever selection or allBots changes
-    useEffect(() => {
-        if (selectedCategory === "Tümü") {
-            setBots(allBots);
-        } else {
-            const cat = categories.find(c => c.kategori_adi_tr === selectedCategory);
-            setBots(cat ? allBots.filter(b => String(b.kategori_id) === String(cat.id)) : allBots);
-        }
-    }, [selectedCategory, allBots, categories]);
-
     const formatTime = (dateString) => {
         const date = new Date(dateString);
         const diffDays = Math.ceil(Math.abs(new Date() - date) / (1000 * 60 * 60 * 24));
@@ -137,60 +131,62 @@ export default function Dashboard() {
         return `${diffDays} Gün`;
     };
 
-    const handleRemoveBot = (id) => {
-        setAllBots(prev => prev.filter(bot => bot.id !== id));
-    };
+    // Category + search + sort are all derived from allBots — recomputed on
+    // every relevant change instead of chained state, so there's one source
+    // of truth for what's actually on screen.
+    const bots = (() => {
+        let result = allBots;
+
+        if (selectedCategory !== "Tümü") {
+            const cat = categories.find(c => c.kategori_adi_tr === selectedCategory);
+            result = cat ? result.filter(b => String(b.kategori_id) === String(cat.id)) : result;
+        }
+
+        if (searchQuery.trim()) {
+            const q = searchQuery.trim().toLocaleLowerCase('tr');
+            result = result.filter(b => b.title?.toLocaleLowerCase('tr').includes(q));
+        }
+
+        const sorted = [...result];
+        switch (sort) {
+            case 'fiyat_artan':   sorted.sort((a, b) => a.weeklyPrice - b.weeklyPrice); break;
+            case 'fiyat_azalan':  sorted.sort((a, b) => b.weeklyPrice - a.weeklyPrice); break;
+            case 'favoriler':     sorted.sort((a, b) => b.likes - a.likes); break;
+            case 'liste':         sorted.sort((a, b) => b.saves - a.saves); break;
+            case 'yeni':          sorted.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt)); break;
+            case 'diyalog':       sorted.sort((a, b) => b.dialogues - a.dialogues); break;
+            case 'degerlendirme': sorted.sort((a, b) => (b.likes + b.comments) - (a.likes + a.comments)); break;
+            default: break; // 'onerilen' — keep backend order
+        }
+        return sorted;
+    })();
 
     return (
         <div className="flex flex-col min-h-full bg-luma-base">
 
-            {/* ── Hero / Search area ── */}
-            <div className="relative overflow-hidden border-b border-white/5">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_0%,rgba(99,102,241,0.09)_0%,transparent_100%)] pointer-events-none" />
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[2px] bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent" />
-                <MarketplaceHeader />
-            </div>
+            {/* ── Search + sort ── */}
+            <MarketplaceSearchBar
+                query={searchQuery}
+                onQueryChange={setSearchQuery}
+                sort={sort}
+                onSortChange={setSort}
+            />
 
-            {/* ── Sticky category bar ── */}
-            <div className="sticky top-0 z-20 bg-luma-base/95 backdrop-blur-md border-b border-white/5">
-                <CategoryFilter
-                    categories={categories}
-                    selected={selectedCategory}
-                    onSelect={(cat) => setSelectedCategory(cat)}
-                />
-            </div>
+            {/* ── Category bar ── */}
+            <CategoryFilter
+                categories={categories}
+                selected={selectedCategory}
+                onSelect={(cat) => setSelectedCategory(cat)}
+            />
 
-            {/* ── Bot grid section ── */}
-            <div className="flex-1 px-6 pt-5 pb-10">
-
-                {/* Section header */}
-                {!loading && (
-                    <div className="flex items-center justify-between mb-5">
-                        <div className="flex items-center gap-3">
-                            <h2 className="text-[17px] font-semibold font-display text-white">
-                                {selectedCategory === "Tümü" ? "Pazaryeri" : selectedCategory}
-                            </h2>
-                            <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[13px] font-sans">
-                                {bots.length} bot
-                            </span>
-                        </div>
-
-                        {selectedCategory !== "Tümü" && (
-                            <button
-                                onClick={() => setSelectedCategory("Tümü")}
-                                className="text-[13px] text-white/30 hover:text-white/60 font-sans transition-colors flex items-center gap-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            >
-                                <span>×</span> Filtreyi temizle
-                            </button>
-                        )}
-                    </div>
-                )}
+            {/* ── Bot list section ── */}
+            <div className="flex-1 px-6 pt-2 pb-10">
 
                 {/* Loading skeletons */}
                 {loading && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pt-1">
-                        {Array.from({ length: 10 }).map((_, i) => (
-                            <SkeletonCard key={i} />
+                    <div className="flex flex-col gap-3 pt-1">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <SkeletonRow key={i} />
                         ))}
                     </div>
                 )}
@@ -198,9 +194,9 @@ export default function Dashboard() {
                 {/* Empty state */}
                 {!loading && bots.length === 0 && <EmptyState />}
 
-                {/* Bot grid */}
+                {/* Bot list */}
                 {!loading && bots.length > 0 && (
-                    <BotGrid bots={bots} userId={userId} onRemove={handleRemoveBot} />
+                    <BotList bots={bots} />
                 )}
             </div>
         </div>

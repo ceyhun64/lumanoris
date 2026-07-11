@@ -37,6 +37,12 @@ export default function DashboardLayout({ children }) {
 
     return (
         <UserContext.Provider value={userId}>
+            <a
+                href="#main-content"
+                className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-2 focus-visible:left-2 focus-visible:z-[999] focus-visible:rounded-lg focus-visible:bg-luma-panel focus-visible:px-4 focus-visible:py-2 focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+                İçeriğe geç
+            </a>
             <div className="flex h-screen overflow-hidden bg-[#09090F]">
                 {/* Sidebar — hidden on mobile, shown md+ */}
                 <div className="hidden md:flex shrink-0">
@@ -52,7 +58,7 @@ export default function DashboardLayout({ children }) {
 
                     <main className="flex flex-col flex-1 min-h-0">
                         <Header userId={userId} />
-                        <div className="flex-1">
+                        <div id="main-content" className="flex-1">
                             {children}
                         </div>
                     </main>

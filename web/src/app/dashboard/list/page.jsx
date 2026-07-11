@@ -9,6 +9,8 @@ import AddToListModalEmpty from "@/features/lists/AddToListModalEmpty";
 import { Splide, SplideSlide } from '@splidejs/react-splide';
 import '@splidejs/react-splide/css';
 import { Plus, ChevronLeft, ChevronRight, MessageSquare, Trash2 } from "lucide-react";
+import { toast } from "@/shared/hooks/use-toast";
+import { Button } from "@/shared/ui/button";
 
 export default function List() {
     const [modalVisible, setModalVisible] = useState(false);
@@ -78,11 +80,11 @@ export default function List() {
                     setUserId(result.user_id);
                     fetchUserLists(result.user_id);
                     } else {
-                    router.push("/login");
+                    // router.push("/login"); // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
                     }
                 } catch (err) {
                     console.error("Session check error:", err);
-                    router.push("/login");
+                    // router.push("/login"); // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
                 }
             }
             checkSession();
@@ -126,12 +128,12 @@ export default function List() {
                 setModalVisible(false);
                 setModalVisible2(false);
             } else {
-                alert("Veritabanı hatası: " + result.message);
+                toast({ variant: "destructive", title: "Veritabanı hatası", description: result.message });
             }
 
         } catch (error) {
             console.error("İstek gönderilirken hata oluştu:", error);
-            alert("Sunucuyla bağlantı kurulamadı.");
+            toast({ variant: "destructive", title: "Bağlantı hatası", description: "Sunucuyla bağlantı kurulamadı." });
         }
     };
 
@@ -140,7 +142,7 @@ export default function List() {
         const listToDelete = listData[indexToRemove];
 
         if (!listToDelete || !listToDelete.id) {
-            alert("Liste ID'si bulunamadı!");
+            toast({ variant: "destructive", title: "Liste ID'si bulunamadı" });
             return;
         }
 
@@ -160,11 +162,11 @@ export default function List() {
                 // Veritabanından başarıyla silindiyse state'den de kaldır
                 setListData(prev => prev.filter((_, index) => index !== indexToRemove));
             } else {
-                alert("Silme hatası: " + result.message);
+                toast({ variant: "destructive", title: "Silme hatası", description: result.message });
             }
         } catch (error) {
             console.error("Silme işlemi sırasında hata:", error);
-            alert("Sunucuyla iletişim kurulamadı.");
+            toast({ variant: "destructive", title: "Bağlantı hatası", description: "Sunucuyla iletişim kurulamadı." });
         }
     };
 
@@ -197,16 +199,17 @@ export default function List() {
             />
 
             <div className="mb-10 flex items-center justify-between">
-                <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
+                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
                     Liste
                 </h2>
                 {!isEmpty && (
-                    <button
+                    <Button
                         onClick={() => setModalVisible2(true)}
-                        className="flex items-center gap-2.5 rounded-xl border border-dashed border-indigo-400/12 bg-luma-input px-5 py-4 font-display text-[15px] text-white transition-colors duration-300 hover:border-indigo-400 hover:bg-[#13132A] max-md:px-4"
+                        variant="ghost"
+                        className="h-auto gap-2.5 border border-dashed border-fuchsia-400/12 bg-luma-input px-5 py-4 text-body-lg hover:border-fuchsia-400 hover:bg-[#13132A] max-md:px-4"
                     >
                         <Plus className="h-4 w-4" /> Yeni liste oluştur
-                    </button>
+                    </Button>
                 )}
             </div>
 
@@ -220,18 +223,19 @@ export default function List() {
                         Henüz Listeniz bulunmamaktadır
                     </h2>
 
-                    <button
+                    <Button
                         onClick={() => setModalVisible2(true)}
-                        className="flex items-center gap-2.5 rounded-xl border border-dashed border-indigo-400/12 bg-luma-input px-5 py-4 font-display text-[15px] text-white transition-colors duration-300 hover:border-indigo-400 hover:bg-[#13132A]"
+                        variant="ghost"
+                        className="h-auto gap-2.5 border border-dashed border-fuchsia-400/12 bg-luma-input px-5 py-4 text-body-lg hover:border-fuchsia-400 hover:bg-[#13132A]"
                     >
-                        <Plus className="h-5 w-5 text-indigo-400" /> İlk listenizi oluşturun
-                    </button>
+                        <Plus className="h-5 w-5 text-fuchsia-400" /> İlk listenizi oluşturun
+                    </Button>
                 </div>
             )}
 
             <div className="flex w-full flex-col gap-3">
                 {listData.map((item, index) => (
-                    <div key={index} className="relative flex w-full items-center gap-6 overflow-hidden rounded-lg border border-white/10 bg-luma-elevated p-2 max-md:flex-col max-md:items-start">
+                    <div key={index} className="relative flex w-full items-center gap-6 overflow-hidden rounded-lg border border-transparent bg-luma-elevated p-2 max-md:flex-col max-md:items-start">
                         <div
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -279,7 +283,7 @@ export default function List() {
                                             className="absolute left-0 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full transition-colors hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                             aria-label="Önceki"
                                         >
-                                            <ChevronLeft className="h-5 w-5 text-indigo-400" />
+                                            <ChevronLeft className="h-5 w-5 text-fuchsia-400" />
                                         </button>
                                         <button
                                             onClick={(e) => {
@@ -289,7 +293,7 @@ export default function List() {
                                             className="absolute right-0 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full transition-colors hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                             aria-label="Sonraki"
                                         >
-                                            <ChevronRight className="h-5 w-5 text-indigo-400" />
+                                            <ChevronRight className="h-5 w-5 text-fuchsia-400" />
                                         </button>
                                     </div>
                                 </div>

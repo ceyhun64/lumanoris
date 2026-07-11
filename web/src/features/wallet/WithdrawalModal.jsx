@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
 import { Checkbox } from '@/shared/ui/checkbox';
+import { Button } from '@/shared/ui/button';
 
 export default function WithdrawalModal({ isOpen, onClose, moneyAmount, userId, onWithdrawn }) {
     const [iban, setIban] = useState('');
@@ -123,7 +124,7 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount, userId, 
         <>
             {/* ANA PARA ÇEKME MODALI */}
             <Dialog open={isOpen && !showConfirmModal && !showSuccessModal} onOpenChange={(open) => !open && onClose()}>
-                <DialogContent className="max-w-[450px] bg-luma-card border-white/10 p-6 text-center">
+                <DialogContent className="max-w-[450px] bg-luma-card border-transparent p-6 text-center">
                     <DialogTitle className="mb-4 text-[16px]">Para çek</DialogTitle>
 
                     <div className="text-left">
@@ -171,13 +172,13 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount, userId, 
                         </div>
 
                         <div className="mt-5">
-                            <button
+                            <Button
                                 onClick={handleWithdraw}
                                 disabled={!isFormValid()}
-                                className="w-full rounded-xl bg-gradient-btn px-4 py-3 font-display text-[15px] font-medium text-white shadow-glow transition-all duration-200 hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                className="h-auto w-full py-3 text-body-lg"
                             >
                                 {loading ? "Bekleyin..." : "Para çekme talebi ver"}
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </DialogContent>
@@ -185,36 +186,34 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount, userId, 
 
             {/* ONAY MODALI */}
             <Dialog open={showConfirmModal} onOpenChange={(open) => !open && setShowConfirmModal(false)}>
-                <DialogContent className="max-w-[420px] bg-luma-card border-white/10 p-6">
+                <DialogContent className="max-w-[420px] bg-luma-card border-transparent p-6">
                     <DialogTitle className="mb-6 text-left text-[16px]">Para Çekme Onayı</DialogTitle>
 
-                    <div className="mb-6 rounded-xl border border-white/5 bg-white/[0.04] p-4">
+                    <div className="mb-6 rounded-xl border border-transparent bg-white/[0.04] p-4">
                         <p className="flex justify-between">
                             <span className="text-white/50">Tutar:</span>
-                            <strong className="text-indigo-400">{pendingPayload?.amount} ₺</strong>
+                            <strong className="text-fuchsia-400">{pendingPayload?.amount} ₺</strong>
                         </p>
                     </div>
 
                     <div className="flex justify-end gap-3">
-                        <button
+                        <Button
                             onClick={() => setShowConfirmModal(false)}
-                            className="rounded-xl border border-white/60 bg-white/10 px-4 py-2.5 font-display text-[14px] font-medium text-white transition-all duration-200 hover:border-white/80 hover:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            variant="secondary"
+                            className="h-auto border-transparent bg-white/10 px-4 py-2.5 text-[14px] hover:border-transparent hover:bg-white/18"
                         >
                             Vazgeç
-                        </button>
-                        <button
-                            onClick={confirmWithdraw}
-                            className="rounded-xl bg-gradient-btn px-4 py-2.5 font-display text-[14px] font-medium text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
+                        </Button>
+                        <Button onClick={confirmWithdraw} className="h-auto px-4 py-2.5 text-[14px]">
                             Onayla ve Çek
-                        </button>
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>
 
             {/* BAŞARI MODALI (PurchaseSuccessModal ile aynı yapı) */}
             <Dialog open={showSuccessModal} onOpenChange={(open) => !open && setShowSuccessModal(false)}>
-                <DialogContent className="max-w-[440px] bg-luma-card border-white/10 p-6 text-center">
+                <DialogContent className="max-w-[440px] bg-luma-card border-transparent p-6 text-center">
                     <div className="flex flex-col items-center">
                         <div className="mb-3 text-emerald-500" aria-hidden="true">
                             <svg width="88" height="89" viewBox="0 0 108 109" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -229,15 +228,16 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount, userId, 
                             Para çekme talebiniz başarıyla oluşturuldu ve işleme alındı.
                             Ödemeniz hesabınıza 7 iş günü içerisinde aktarılacaktır.
                         </DialogDescription>
-                        <button
+                        <Button
                             onClick={() => {
                                 setShowSuccessModal(false);
                                 onClose();
                             }}
-                            className="w-full rounded-xl border border-emerald-500 bg-emerald-500/10 px-3 py-3 font-display text-[15px] font-medium text-emerald-500 transition-all duration-200 hover:border-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            variant="outline"
+                            className="h-auto w-full border-emerald-500 bg-emerald-500/10 py-3 text-body-lg text-emerald-500 hover:border-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-400"
                         >
                             Tamam
-                        </button>
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>

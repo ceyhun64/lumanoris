@@ -10,6 +10,7 @@ import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/button";
 
 export default function Chat() {
   const [bot, setBot] = useState(null);
@@ -138,11 +139,11 @@ export default function Chat() {
       if (result.authenticated) {
         setUserId(result.user_id);
       } else {
-        router.push("/login");
+        // router.push("/login"); // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
       }
     } catch (err) {
       console.error("Session check error:", err);
-      router.push("/login");
+      // router.push("/login"); // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
     }
   }
 
@@ -157,7 +158,7 @@ export default function Chat() {
         return response.json();
       })
       .then((data) => {
-        setChatAdFrequency(Number(data));
+        setChatAdFrequency(Number(data.chat_reklam_sikligi));
       })
       .catch((error) => {
         console.error("Fetch error:", error);
@@ -293,12 +294,13 @@ export default function Chat() {
         // halde (sayfa yeni açıldı/yenilendi) her zaman temiz bir sohbetle
         // başlanır.
         const shouldRestoreHistory = conversationId >= 1;
-        const historyData = shouldRestoreHistory
+        const historyResult = shouldRestoreHistory
           ? await (
               await fetch(`/api/chat/getchat.php?chatbot_id=${bot.id}&user_id=${userId}`)
             ).json()
-          : [];
-        const hasHistory = Array.isArray(historyData) && historyData.length > 0;
+          : null;
+        const historyData = Array.isArray(historyResult?.messages) ? historyResult.messages : [];
+        const hasHistory = historyData.length > 0;
 
         if (hasHistory) {
           // 1. Eğer geçmişte mesajlar varsa onları yükle
@@ -521,21 +523,13 @@ export default function Chat() {
   }
 
   try {
-    const envRes = await fetch("/admin/ajax/readenv.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ key: "API_GOOGLE_GEMINI" }),
-    });
-    const envData = await envRes.json();
-    const apiKey = envData.value;
-
     const placeholderId = Date.now();
     setMessages((prev) => [...prev, { id: placeholderId, type: "received", text: "" }]);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-    const systemInstruction = `GÖREV: Aşağıdaki [BİLGİ KAYNAĞI] kısmına %100 sadık kalarak cevap ver. 
+    const systemInstruction = `GÖREV: Aşağıdaki [BİLGİ KAYNAĞI] kısmına %100 sadık kalarak cevap ver.
     Bilgi kaynağı dışına çıkma. [KİŞİLİK/STİL] direktiflerini uygula.
 
     [BİLGİ KAYNAĞI]:
@@ -544,20 +538,15 @@ export default function Chat() {
     [KİŞİLİK/STİL]:
     ${bot?.style_prompt}`;
 
-    parts = [
-      { text: systemInstruction },
-      { text: data.text }
-    ];
-
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:streamGenerateContent?alt=sse&key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
-        body: JSON.stringify({ contents: [{ role: "user", parts }] }),
-      },
-    );
+    // Gemini API anahtarı artık sunucuda kalıyor — istemci ona hiç dokunmuyor.
+    const geminiRes = await fetch("/api/chat/generatereply.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      signal: controller.signal,
+      body: new URLSearchParams({
+        data: JSON.stringify({ system_instruction: systemInstruction, message: data.text }),
+      }),
+    });
 
     const reader = geminiRes.body.getReader();
     const decoder = new TextDecoder("utf-8");
@@ -631,7 +620,7 @@ export default function Chat() {
         {bot && <ProfileCard bot={bot} comments={comments} />}
 
         <div className={cn("flex items-center justify-center mt-12", messages.length === 0 ? "flex-1" : "hidden")}>
-          <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text font-display text-2xl font-bold text-transparent md:text-4xl">
+          <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-bold text-transparent md:text-4xl">
             Merhaba
           </h2>
         </div>
@@ -765,14 +754,14 @@ export default function Chat() {
             if (e.target === e.currentTarget) setLimitReached(false);
           }}
         >
-          <div className="relative w-full max-w-[400px] rounded-2xl border border-indigo-400/15 bg-gradient-to-b from-[#15131f] to-[#0b0b16] p-8 text-center shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/25 to-cyan-500/15 shadow-[0_0_30px_rgba(99,102,241,0.35)]">
+          <div className="relative w-full max-w-[400px] rounded-2xl border border-fuchsia-400/15 bg-gradient-to-b from-[#15131f] to-[#0b0b16] p-8 text-center shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500/25 to-violet-500/15 shadow-[0_0_30px_rgba(217,70,239,0.35)]">
               <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#A5B4FC" />
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#F0ABFC" />
               </svg>
             </div>
 
-            <h3 className="mb-2 bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text text-lg font-display font-bold text-transparent">
+            <h3 className="mb-2 bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text text-lg font-display font-bold text-transparent">
               Sınır Aşıldı
             </h3>
             <p className="mb-1 text-[14px] text-white/70">
@@ -786,18 +775,19 @@ export default function Chat() {
             </p>
 
             <div className="flex items-center justify-center gap-3">
-              <button
+              <Button
                 onClick={() => setLimitReached(false)}
-                className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-[13px] font-medium text-white/80 transition-colors hover:bg-white/10"
+                variant="secondary"
+                className="h-auto border border-transparent bg-white/5 px-5 py-2.5 text-[13px] hover:bg-white/10"
               >
                 Kapat
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => { setLimitReached(false); setShowLimitBuyModal(true); }}
-                className="rounded-xl bg-gradient-btn px-6 py-2.5 text-[13px] font-semibold text-white shadow-glow transition-transform hover:scale-[1.03]"
+                className="h-auto px-6 py-2.5 text-[13px]"
               >
                 Satın Al
-              </button>
+              </Button>
             </div>
           </div>
         </div>

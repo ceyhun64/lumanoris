@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { Button } from "@/shared/ui/button";
 
 export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
@@ -123,22 +124,22 @@ export default function Register() {
     };
 
     const inputCls =
-        "w-full bg-luma-input border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-colors font-sans";
+        "w-full bg-luma-input border border-transparent rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/30 transition-colors font-sans";
 
     return (
         <GoogleOAuthProvider clientId="457680679934-poocs7d0n78r3eq8q53c6sedfdi1dh0c.apps.googleusercontent.com">
             <div className="min-h-screen bg-luma-base flex">
                 {/* ── Left branding panel (desktop only) ── */}
                 <div className="hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 via-purple-900/15 to-cyan-900/10" />
-                    <div className="absolute top-1/4 left-1/3 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-                    <div className="absolute bottom-1/4 right-1/4 w-56 h-56 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-600/20 via-purple-900/15 to-violet-900/10" />
+                    <div className="absolute top-1/4 left-1/3 w-72 h-72 bg-fuchsia-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute bottom-1/4 right-1/4 w-56 h-56 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
                     <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_39px,rgba(255,255,255,0.02)_39px,rgba(255,255,255,0.02)_40px),repeating-linear-gradient(90deg,transparent,transparent_39px,rgba(255,255,255,0.02)_39px,rgba(255,255,255,0.02)_40px)]" />
                     <div className="relative z-10 flex flex-col items-center text-center px-12 gap-6">
                         <img
                             src={ubeyazlogo.src}
                             alt="Lumanoris"
-                            className="w-20 h-20 drop-shadow-[0_0_32px_rgba(99,102,241,0.5)]"
+                            className="w-20 h-20 drop-shadow-[0_0_32px_rgba(217,70,239,0.5)]"
                         />
                         <h1 className="text-4xl font-bold text-white font-display tracking-tight">
                             LUMANORIS
@@ -157,7 +158,7 @@ export default function Register() {
                             <img src={ubeyazlogo.src} alt="Lumanoris" className="w-14 h-14" />
                         </div>
 
-                        <div className="bg-luma-elevated rounded-2xl p-8 border border-white/5 shadow-modal">
+                        <div className="bg-luma-elevated rounded-2xl p-8 border border-transparent shadow-modal">
                             <h2 className="text-xl font-bold text-white font-display mb-6">
                                 Kayıt Ol
                             </h2>
@@ -209,13 +210,9 @@ export default function Register() {
                                     </button>
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full py-3 rounded-xl bg-gradient-btn text-white text-sm font-semibold font-display shadow-glow hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-50 mt-2"
-                                >
+                                <Button type="submit" disabled={loading} className="mt-2 h-auto w-full py-3">
                                     {loading ? "İşleniyor..." : "Kayıt Yap"}
-                                </button>
+                                </Button>
 
                                 <div className="relative flex items-center gap-3 my-1">
                                     <div className="flex-1 h-px bg-white/10" />
@@ -240,21 +237,23 @@ export default function Register() {
 
                         <p className="text-center mt-6 text-[11px] text-white/25 font-sans px-4">
                             Devam ederek POE'un{" "}
-                            <button
+                            <Button
                                 type="button"
                                 onClick={() => openPolicy("terms")}
-                                className="text-indigo-400/70 hover:text-indigo-400 underline transition-colors"
+                                variant="link"
+                                className="h-auto p-0 text-[11px] text-fuchsia-400/70 hover:text-fuchsia-400"
                             >
                                 Kullanım Koşulları
-                            </button>{" "}
+                            </Button>{" "}
                             ve{" "}
-                            <button
+                            <Button
                                 type="button"
                                 onClick={() => openPolicy("privacy")}
-                                className="text-indigo-400/70 hover:text-indigo-400 underline transition-colors"
+                                variant="link"
+                                className="h-auto p-0 text-[11px] text-fuchsia-400/70 hover:text-fuchsia-400"
                             >
                                 Gizlilik Politikası
-                            </button>{" "}
+                            </Button>{" "}
                             ile aynı fikirde olduğunuzu kabul etmiş olursunuz.
                         </p>
                     </div>
@@ -268,7 +267,7 @@ export default function Register() {
                     onClick={closePolicy}
                 >
                     <div
-                        className="bg-luma-elevated border border-white/10 rounded-2xl p-8 max-w-lg w-full max-h-[80vh] overflow-y-auto shadow-modal"
+                        className="bg-luma-elevated border border-transparent rounded-2xl p-8 max-w-lg w-full max-h-[80vh] overflow-y-auto shadow-modal"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex justify-between items-center mb-6">
@@ -337,8 +336,8 @@ export default function Register() {
                                     <h2 className="text-white font-semibold">7. İletişim</h2>
                                     <p>Koşullarla ilgili sorularınız veya geri bildirimleriniz için bizimle iletişime geçebilirsiniz:</p>
                                     <ul className="list-disc pl-5 space-y-1">
-                                        <li>E-posta: <a href="mailto:lumanoris.ai@gmail.com" className="text-indigo-400">lumanoris.ai@gmail.com</a></li>
-                                        <li>Web: <a href="https://www.lumanoris.com/kullanim-kosullari" target="_blank" className="text-indigo-400">www.lumanoris.com/kullanim-kosullari</a></li>
+                                        <li>E-posta: <a href="mailto:lumanoris.ai@gmail.com" className="text-fuchsia-400">lumanoris.ai@gmail.com</a></li>
+                                        <li>Web: <a href="https://www.lumanoris.com/kullanim-kosullari" target="_blank" className="text-fuchsia-400">www.lumanoris.com/kullanim-kosullari</a></li>
                                     </ul>
                                 </>
                             ) : (
@@ -457,8 +456,8 @@ export default function Register() {
                                     <h2 className="text-white font-semibold">11. İletişim</h2>
                                     <p>Veri koruma ve gizlilikle ilgili her türlü soru için bizimle iletişime geçebilirsiniz:</p>
                                     <ul className="list-disc pl-5 space-y-1">
-                                        <li>E-posta: <a href="mailto:lumanoris.ai@gmail.com" className="text-indigo-400">lumanoris.ai@gmail.com</a></li>
-                                        <li>İletişim Formu: <a href="https://www.lumanoris.com/iletisim" target="_blank" className="text-indigo-400">www.lumanoris.com/iletisim</a></li>
+                                        <li>E-posta: <a href="mailto:lumanoris.ai@gmail.com" className="text-fuchsia-400">lumanoris.ai@gmail.com</a></li>
+                                        <li>İletişim Formu: <a href="https://www.lumanoris.com/iletisim" target="_blank" className="text-fuchsia-400">www.lumanoris.com/iletisim</a></li>
                                     </ul>
                                 </>
                             )}

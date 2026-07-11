@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
+import { Button } from "@/shared/ui/button";
 
 export default function ProfileImageEdit({ onChange, onRemove, userId }) {
     const [image, setImage] = useState(null);
@@ -90,34 +91,30 @@ export default function ProfileImageEdit({ onChange, onRemove, userId }) {
             <div className="flex gap-2.5">
                 {isEditing ? (
                     <>
-                        <button
-                            onClick={handleSave}
-                            className="min-w-[100px] rounded-xl border border-white/70 bg-gradient-btn px-3 py-3 font-display text-sm font-medium text-white shadow-glow transition-all duration-300 hover:scale-[1.03] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
+                        <Button onClick={handleSave} className="h-auto min-w-[100px] border border-transparent py-3">
                             Kaydet
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             onClick={handleRemove}
-                            className="min-w-[100px] rounded-xl border border-white/70 bg-white/10 px-3 py-3 font-display text-sm font-medium text-white transition-all duration-300 hover:scale-[1.03] hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            variant="secondary"
+                            className="h-auto min-w-[100px] border border-transparent bg-white/10 py-3 hover:bg-white/15"
                         >
                             İptal
-                        </button>
+                        </Button>
                     </>
                 ) : (
                     <>
-                        <button
-                            onClick={handleClick}
-                            className="min-w-[100px] rounded-xl border border-white/70 bg-gradient-btn px-3 py-3 font-display text-sm font-medium text-white shadow-glow transition-all duration-300 hover:scale-[1.03] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
+                        <Button onClick={handleClick} className="h-auto min-w-[100px] border border-transparent py-3">
                             Değiştir
-                        </button>
+                        </Button>
                         {image && (
-                            <button
+                            <Button
                                 onClick={handleRemove}
-                                className="min-w-[100px] rounded-xl border border-white/70 bg-white/10 px-3 py-3 font-display text-sm font-medium text-white transition-all duration-300 hover:scale-[1.03] hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                variant="secondary"
+                                className="h-auto min-w-[100px] border border-transparent bg-white/10 py-3 hover:bg-white/15"
                             >
                                 Kaldır
-                            </button>
+                            </Button>
                         )}
                     </>
                 )}

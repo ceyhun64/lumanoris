@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Crown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/button";
 
 // Başlangıç verileri (API'den gelmezse kullanılacak, İSİMLER VERİTABANIYLA AYNI OLMALI)
 const initialPlanData = [
@@ -98,7 +99,7 @@ export default function PricingPlans() {
         return (
             <div className="flex h-full w-full flex-col px-4 py-6 font-display text-white md:px-16">
                 <div className="mb-10 flex items-center justify-between">
-                    <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text text-2xl font-semibold text-transparent md:text-4xl">Ödeme Planları</h2>
+                    <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text text-2xl font-semibold text-transparent md:text-4xl">Ödeme Planları</h2>
                 </div>
                 <p className="text-white/60">Planlar yükleniyor...</p>
             </div>
@@ -108,7 +109,7 @@ export default function PricingPlans() {
     return (
         <div className="flex h-full w-full flex-col px-4 py-6 font-display text-white md:px-16">
             <div className="mb-10 flex items-center justify-between">
-                <h2 className="bg-gradient-to-br from-indigo-400 to-cyan-400 bg-clip-text text-2xl font-semibold text-transparent md:text-4xl">
+                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text text-2xl font-semibold text-transparent md:text-4xl">
                     Hesabını Yükselt
                 </h2>
             </div>
@@ -120,7 +121,7 @@ export default function PricingPlans() {
                     </p>
                 )}
                 {upgradedPlan && (
-                    <p className="mb-4 text-center text-[13px] text-cyan-400">
+                    <p className="mb-4 text-center text-[13px] text-violet-400">
                         "{upgradedPlan}" paketi seçildi.
                     </p>
                 )}
@@ -130,7 +131,7 @@ export default function PricingPlans() {
                         <div
                             key={index}
                             className={cn(
-                                "relative cursor-pointer rounded-2xl border border-white/[0.13] p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(162,89,255,0.2)]",
+                                "relative cursor-pointer rounded-2xl border border-transparent p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(162,89,255,0.2)]",
                                 "bg-[radial-gradient(circle_at_top_right,#3d1c7c_0%,#111014_70%)]",
                                 selectedPlan === index && "-translate-y-2 border-2 border-violet-400 shadow-[0_0_30px_rgba(162,89,255,0.35)]",
                             )}
@@ -141,7 +142,7 @@ export default function PricingPlans() {
                                     {plan.title}
                                 </div>
                                 {plan.badge && (
-                                    <span className="rounded-md border border-white/5 bg-[#1c1c1c] px-2.5 py-1 text-xs font-medium text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
+                                    <span className="rounded-md border border-transparent bg-[#1c1c1c] px-2.5 py-1 text-xs font-medium text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
                                         {plan.badge}
                                     </span>
                                 )}
@@ -151,18 +152,19 @@ export default function PricingPlans() {
                                 {plan.monthly_price !== "₺0" && <span className="ml-1 text-xs font-normal text-white/50">/Aylık</span>}
                             </p>
                             <p className="mb-4 text-sm leading-relaxed text-white/75">{plan.description}</p>
-                            <button
+                            <Button
                                 disabled={plan.title === "Ücretsiz" || upgrading === index}
                                 onClick={() => handleChoosePlan(plan.title, index)}
+                                variant={plan.buttonType === "primary" ? "default" : "secondary"}
                                 className={cn(
-                                    "mb-6 w-full rounded-lg py-3 text-xs font-semibold transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                    "h-auto mb-6 w-full rounded-lg py-3 text-xs",
                                     plan.buttonType === "primary"
-                                        ? "bg-violet-500 text-white hover:bg-violet-600"
-                                        : "border border-white/5 bg-[#1c1c1c] text-white hover:bg-[#333]",
+                                        ? "bg-violet-500 hover:bg-violet-600 hover:brightness-100 hover:translate-y-0"
+                                        : "border border-transparent bg-[#1c1c1c] hover:bg-[#333]",
                                 )}
                             >
                                 {upgrading === index ? "İşleniyor..." : plan.buttonText}
-                            </button>
+                            </Button>
                             <span className="mb-4 block text-sm text-white/75">
                                 Neler Dahil
                             </span>

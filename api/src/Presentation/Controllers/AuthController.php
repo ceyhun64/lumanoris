@@ -10,6 +10,8 @@ class AuthController {
         $password   = $data['sifre'] ?? '';
         $rememberMe = (bool) ($data['rememberMe'] ?? false);
 
+        checkRateLimit(Database::getInstance(), 'login:' . ($_SERVER['REMOTE_ADDR'] ?? '') . ':' . $identifier, 8, 300);
+
         try {
             $useCase = new LoginUseCase(new UserRepository());
             $result  = $useCase->execute($identifier, $password, $rememberMe);
@@ -17,6 +19,10 @@ class AuthController {
             JsonResponse::fromException($e);
         }
 
+        // Regenerate the session ID on successful auth so a session ID an
+        // attacker fixed before login (session fixation) doesn't carry over
+        // into the authenticated session.
+        session_regenerate_id(true);
         $_SESSION['user_id'] = $result['user_id'];
 
         if ($rememberMe && isset($result['remember_selector'])) {
@@ -39,6 +45,8 @@ class AuthController {
     public static function register(): void {
         require_method('POST');
         $data = parse_post_data();
+
+        checkRateLimit(Database::getInstance(), 'register:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 5, 600);
 
         try {
             $useCase = new RegisterUseCase(new UserRepository());
@@ -97,6 +105,7 @@ class AuthController {
             JsonResponse::fromException($e);
         }
 
+        session_regenerate_id(true);
         $_SESSION['user_id'] = $userId;
         JsonResponse::success(['user_id' => $userId, 'message' => 'Login successful']);
     }
@@ -115,6 +124,8 @@ class AuthController {
         if (!$email) {
             JsonResponse::error('Email zorunludur!', 400, AppConfig::ERR_VALIDATION);
         }
+
+        checkRateLimit(Database::getInstance(), 'passreset:' . ($_SERVER['REMOTE_ADDR'] ?? '') . ':' . $email, 3, 600);
 
         $users = new UserRepository();
         $user  = $users->findByEmail($email);
@@ -183,6 +194,10 @@ class AuthController {
         if ($password !== $passwordConfirm) {
             JsonResponse::error('Şifreler eşleşmiyor!', 400, AppConfig::ERR_VALIDATION);
         }
+
+        // The reset code is only 6 digits (1M combinations) — without this,
+        // it's brute-forceable within the 15-minute expiry window.
+        checkRateLimit(Database::getInstance(), 'resetcode:' . ($_SERVER['REMOTE_ADDR'] ?? '') . ':' . $email, 10, 600);
 
         $users = new UserRepository();
         $user  = $users->findByEmail($email);

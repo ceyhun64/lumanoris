@@ -4,6 +4,8 @@ class ContactController {
         require_method('POST');
         require_once __DIR__ . '/../../../functions/phpmailer.php';
 
+        checkRateLimit(Database::getInstance(), 'contact:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 5, 600);
+
         $fullName = InputSanitizer::text($_POST['fullName'] ?? '', 100);
         $email    = InputSanitizer::email($_POST['email'] ?? '');
         $subject  = InputSanitizer::text($_POST['subject'] ?? '', 200);

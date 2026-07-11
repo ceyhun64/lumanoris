@@ -5,8 +5,9 @@ import PurchaseSuccessModal from "@/features/purchasing/PurchaseSuccessModal";
 import { useRouter } from "next/navigation";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { Input } from "@/shared/ui/input";
-import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/shared/ui/dialog";
 import { Tag } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/lib/utils";
 
 function GradientBlob() {
@@ -23,8 +24,8 @@ function GradientBlob() {
                         <feGaussianBlur stdDeviation="61.873" result="effect1_foregroundBlur" />
                     </filter>
                     <linearGradient id="cartconfirm_grad" x1="0" y1="-5.00384" x2="138.657" y2="-5.00384" gradientUnits="userSpaceOnUse">
-                        <stop offset="0.211538" stopColor="#818CF8" />
-                        <stop offset="0.793269" stopColor="#22D3EE" />
+                        <stop offset="0.211538" stopColor="#E879F9" />
+                        <stop offset="0.793269" stopColor="#A78BFA" />
                     </linearGradient>
                 </defs>
             </svg>
@@ -40,6 +41,8 @@ export default function CartConfirm({ cartItems }) {
     const [activePolicy, setActivePolicy] = useState(null);
     const [aggrementCheck, setAggrementCheck] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [orderId, setOrderId] = useState(null);
+    const [sellerIssueMessage, setSellerIssueMessage] = useState(null);
 
     const [userId, setUserId] = useState(null);
     const [userEmail, setUserEmail] = useState("");
@@ -323,6 +326,7 @@ export default function CartConfirm({ cartItems }) {
                     localStorage.setItem('savedCard', JSON.stringify(cardData));
                 }
 
+                setOrderId(result.order_id || null);
                 setShowSuccessModal(true);
                 window.dispatchEvent(new Event('cartUpdated'));
 
@@ -334,10 +338,7 @@ export default function CartConfirm({ cartItems }) {
                 const msg = result.message || "Ödeme başlatılamadı.";
                 const isSellerIssue = /satıcı kaydı|pazaryeri/i.test(msg);
                 if (isSellerIssue) {
-                    const goCart = window.confirm(`${msg}\n\nSepetinizi gözden geçirmek için yönlendirilmek ister misiniz?`);
-                    if (goCart) {
-                        router.push('/dashboard/checkout');
-                    }
+                    setSellerIssueMessage(msg);
                 } else {
                     alert("Ödeme Hatası: " + msg);
                 }
@@ -379,9 +380,9 @@ export default function CartConfirm({ cartItems }) {
         <div>
             <div className="flex flex-col items-start gap-8 md:flex-row">
                 <div className="w-full flex-[2]">
-                    <div className="relative mb-8 overflow-hidden rounded-xl border border-white/10 bg-luma-elevated p-3">
+                    <div className="relative mb-8 overflow-hidden rounded-xl border border-transparent bg-luma-elevated p-3">
                         <GradientBlob />
-                        <h3 className="mb-3 border-b border-white/10 bg-gradient-to-br from-cyan-400 to-indigo-400 bg-clip-text pb-3 font-display text-2xl font-semibold text-transparent">
+                        <h3 className="mb-3 border-b border-transparent bg-gradient-to-br from-violet-400 to-fuchsia-400 bg-clip-text pb-3 font-display text-2xl font-semibold text-transparent">
                             Satın Alınacak Sohbet ({cartItems.length})
                         </h3>
                         {cartItems.map(item => (
@@ -391,7 +392,7 @@ export default function CartConfirm({ cartItems }) {
                                     width={120}
                                     height={120}
                                     alt={item.title}
-                                    className="aspect-square w-[120px] rounded-lg border border-white/55 object-cover"
+                                    className="aspect-square w-[120px] rounded-lg border border-transparent object-cover"
                                 />
                                 <div className="flex flex-col items-start gap-3">
                                     <p className="text-sm text-white">{item.title}</p>
@@ -403,9 +404,9 @@ export default function CartConfirm({ cartItems }) {
                     </div>
 
                     {/* Erişim Bilgisi */}
-                    <div className="relative mb-8 overflow-hidden rounded-xl border border-white/10 bg-luma-elevated p-3">
+                    <div className="relative mb-8 overflow-hidden rounded-xl border border-transparent bg-luma-elevated p-3">
                         <GradientBlob />
-                        <h4 className="mb-3 border-b border-white/10 bg-gradient-to-br from-cyan-400 to-indigo-400 bg-clip-text pb-3 font-display text-xs font-semibold text-transparent">
+                        <h4 className="mb-3 border-b border-transparent bg-gradient-to-br from-violet-400 to-fuchsia-400 bg-clip-text pb-3 font-display text-xs font-semibold text-transparent">
                             Erişim Bilgisi
                         </h4>
                         <p className="mb-3 text-sm font-semibold text-white">Kullanıcı: {((useSavedCard && savedCard?.holderName) || cardInfo.holderName || "-")}</p>
@@ -429,9 +430,9 @@ export default function CartConfirm({ cartItems }) {
                     </div>
 
                     {/* Ödeme Bilgileri */}
-                    <div className="relative mb-8 overflow-hidden rounded-xl border border-white/10 bg-luma-elevated p-3">
+                    <div className="relative mb-8 overflow-hidden rounded-xl border border-transparent bg-luma-elevated p-3">
                         <GradientBlob />
-                        <h4 className="mb-3 border-b border-white/10 bg-gradient-to-br from-cyan-400 to-indigo-400 bg-clip-text pb-3 font-display text-xs font-semibold text-transparent">
+                        <h4 className="mb-3 border-b border-transparent bg-gradient-to-br from-violet-400 to-fuchsia-400 bg-clip-text pb-3 font-display text-xs font-semibold text-transparent">
                             Ödeme Bilgileri
                         </h4>
 
@@ -551,7 +552,7 @@ export default function CartConfirm({ cartItems }) {
 
                 {/* Sağ Alan - Özet */}
                 <div className="flex w-full flex-1 flex-col items-start">
-                    <div className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-luma-elevated p-3">
+                    <div className="relative w-full overflow-hidden rounded-xl border border-transparent bg-luma-elevated p-3">
                         <GradientBlob />
                         <h4 className="mb-6 font-display text-xl font-medium text-white">Sipariş Özeti</h4>
                         <div className="my-2 flex justify-between font-display text-base font-medium text-white">
@@ -562,12 +563,12 @@ export default function CartConfirm({ cartItems }) {
                             <span>Hizmet Bedeli</span>
                             <span className="text-white/50">{serviceFee}₺</span>
                         </div>
-                        <div className="my-2 flex justify-between border-y border-white/10 py-3 font-display text-base font-medium text-white">
+                        <div className="my-2 flex justify-between border-y border-transparent py-3 font-display text-base font-medium text-white">
                             <strong>Toplam</strong>
                             <strong className="text-white/50">{total}TL</strong>
                         </div>
-                        <div className="mt-4 flex items-stretch rounded-xl border border-indigo-400 bg-white/10">
-                            <div className="flex items-center p-3.5 text-indigo-400">
+                        <div className="mt-4 flex items-stretch rounded-xl border border-fuchsia-400 bg-white/10">
+                            <div className="flex items-center p-3.5 text-fuchsia-400">
                                 <Tag className="h-5 w-5" />
                             </div>
                             <input
@@ -575,8 +576,8 @@ export default function CartConfirm({ cartItems }) {
                                 className="flex-1 bg-transparent py-3.5 pr-3.5 font-display text-base font-medium text-white placeholder:text-white/40 focus:outline-none"
                             />
                         </div>
-                        <button
-                            className="mt-4 w-full rounded-xl border border-white/10 bg-gradient-btn py-3.5 font-display text-sm font-bold uppercase text-white shadow-glow transition-transform duration-200 hover:scale-[1.02] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        <Button
+                            className="mt-4 h-auto w-full border border-transparent py-3.5 text-sm font-bold uppercase"
                             disabled={
                                 (!useSavedCard && (
                                     !isValidCardNumber(cardInfo.number) ||
@@ -590,10 +591,10 @@ export default function CartConfirm({ cartItems }) {
                             onClick={handlePaymentConfirm}
                         >
                             Ödemeyi Onayla
-                        </button>
+                        </Button>
                     </div>
 
-                    <div className="relative mt-8 w-full overflow-hidden rounded-xl border border-white/10 bg-luma-elevated p-3">
+                    <div className="relative mt-8 w-full overflow-hidden rounded-xl border border-transparent bg-luma-elevated p-3">
                         <GradientBlob />
                         <label className="flex cursor-pointer items-start gap-3 text-sm">
                             <Checkbox
@@ -602,7 +603,7 @@ export default function CartConfirm({ cartItems }) {
                                 className="mt-0.5"
                             />
                             <p className="text-white/85">
-                                <span className="cursor-pointer text-white underline transition-colors hover:text-indigo-300" onClick={() => openPolicy("terms")}>Ön Bilgilendirme Metni</span> ve <span className="cursor-pointer text-white underline transition-colors hover:text-indigo-300" onClick={() => openPolicy("privacy")}>Hizmet Sözleşmesi'ni</span> okudum, kabul ediyorum.
+                                <span className="cursor-pointer text-white underline transition-colors hover:text-fuchsia-300" onClick={() => openPolicy("terms")}>Ön Bilgilendirme Metni</span> ve <span className="cursor-pointer text-white underline transition-colors hover:text-fuchsia-300" onClick={() => openPolicy("privacy")}>Hizmet Sözleşmesi'ni</span> okudum, kabul ediyorum.
                             </p>
                         </label>
                     </div>
@@ -610,11 +611,11 @@ export default function CartConfirm({ cartItems }) {
                 </div>
             </div>
             <Dialog open={isPolicyOpen} onOpenChange={(open) => !open && closePolicy()}>
-                <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto bg-luma-card border-white/10 p-6">
+                <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto bg-luma-card border-transparent p-6">
                     <DialogTitle className="mb-4">
                         {activePolicy === "terms" ? "Ön Bilgilendirme Metni" : "Hizmet Sözleşmesi"}
                     </DialogTitle>
-                    <div className="flex flex-col gap-4 text-sm leading-relaxed text-white/80 [&_a]:text-indigo-400 [&_a]:underline [&_h1]:mt-4 [&_h1]:font-display [&_h1]:text-xl [&_h1]:font-semibold [&_h1]:text-white [&_h2]:mt-3 [&_h2]:font-display [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-white [&_li]:ml-5 [&_li]:list-disc [&_strong]:text-white [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1">
+                    <div className="flex flex-col gap-4 text-sm leading-relaxed text-white/80 [&_a]:text-fuchsia-400 [&_a]:underline [&_h1]:mt-4 [&_h1]:font-display [&_h1]:text-xl [&_h1]:font-semibold [&_h1]:text-white [&_h2]:mt-3 [&_h2]:font-display [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-white [&_li]:ml-5 [&_li]:list-disc [&_strong]:text-white [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1">
                         <h1>Ön Bilgilendirme Metni</h1>
                         <p><strong>Son Güncelleme:</strong> 24 Temmuz 2025</p>
 
@@ -725,7 +726,41 @@ export default function CartConfirm({ cartItems }) {
                 isOpen={showSuccessModal}
                 onClose={() => setShowSuccessModal(false)}
                 chatbotName={cartItems[0]?.title || "Travel Planner AI"}
+                orderId={orderId}
             />
+
+            <Dialog open={!!sellerIssueMessage} onOpenChange={(open) => !open && setSellerIssueMessage(null)}>
+                <DialogContent className="max-w-[440px] bg-luma-card border-transparent p-6 text-center">
+                    <div className="flex flex-col items-center">
+                        <DialogTitle className="mb-2.5 text-xl font-semibold text-white">
+                            Ödeme başlatılamadı
+                        </DialogTitle>
+                        <DialogDescription className="mb-8 text-[15px] leading-relaxed text-white/70">
+                            {sellerIssueMessage}
+                            <br /><br />
+                            Sepetinizi gözden geçirmek için yönlendirilmek ister misiniz?
+                        </DialogDescription>
+                        <div className="grid w-full grid-cols-2 gap-3">
+                            <Button
+                                onClick={() => setSellerIssueMessage(null)}
+                                variant="secondary"
+                                className="h-auto border-transparent bg-white/10 py-3 text-body-lg hover:border-transparent hover:bg-white/18"
+                            >
+                                İptal
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setSellerIssueMessage(null);
+                                    router.push('/dashboard/checkout');
+                                }}
+                                className="h-auto py-3 text-body-lg"
+                            >
+                                Sepete Git
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

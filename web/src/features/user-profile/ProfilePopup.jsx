@@ -37,7 +37,7 @@ export default function ProfilePopup({ user, onLogout }) {
     }, [user?.id]);
 
     return (
-        <div className="flex min-w-[230px] max-w-[calc(100vw-24px)] flex-col gap-3 rounded-xl border border-white/10 bg-luma-panel p-3 shadow-card transition-shadow duration-200 hover:shadow-modal">
+        <div className="flex min-w-[230px] max-w-[calc(100vw-24px)] flex-col gap-3 rounded-xl border border-transparent bg-luma-panel p-3 shadow-card transition-shadow duration-200 hover:shadow-modal">
             <div className="mb-0.5 flex w-full items-center gap-2">
                 <div className="flex h-[33px] w-[33px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-luma">
                     {profileImage ? (
@@ -50,15 +50,15 @@ export default function ProfilePopup({ user, onLogout }) {
                 </div>
             </div>
 
-            <div className="flex items-center justify-between border-b border-white/10 pb-3 text-[11px] font-medium text-white">
+            <div className="flex items-center justify-between border-b border-transparent pb-3 text-[11px] font-medium text-white">
                 {/* <span>{user.followerCount} Takipçi</span>
                 <span className="dot">•</span>
                 <span>{user.followingCount} Takip Edilen</span> */}
             </div>
-            <div className="border-b border-white/10 pb-3 text-[11px] font-medium text-white">
+            <div className="border-b border-transparent pb-3 text-[11px] font-medium text-white">
                 {user.chatbotCount} Üretilen chatbot
             </div>
-            <div className="border-b border-white/10 pb-3 text-[11px] font-medium text-white">
+            <div className="border-b border-transparent pb-3 text-[11px] font-medium text-white">
                 0 Satın Alınan chatbot
             </div>
             <div className="pb-3 text-[11px] font-medium text-white">
@@ -66,7 +66,7 @@ export default function ProfilePopup({ user, onLogout }) {
             </div>
             <button
                 className={cn(
-                    "flex items-center justify-center gap-4 rounded-xl border border-white/10 bg-transparent p-3 text-white/70 transition-all duration-200",
+                    "flex items-center justify-center gap-4 rounded-xl border border-transparent bg-transparent p-3 text-white/70 transition-all duration-200",
                     "hover:border-rose-400/25 hover:bg-rose-500/10 hover:text-rose-400 hover:shadow-[0_4px_18px_rgba(244,63,94,0.15)]",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 )}

@@ -20,7 +20,21 @@ app.prepare().then(() => {
   server.use(createProxyMiddleware({
     target: PHP_TARGET,
     changeOrigin: true,
-    pathFilter: ['/admin', '/api', '/assets']
+    pathFilter: ['/admin', '/api', '/assets'],
+    on: {
+      // Default on error is a plain-text page ("Error occurred while trying
+      // to proxy..."). Every /api/*.php consumer does JSON.parse(await
+      // res.text()) with no res.ok check, so when the PHP server is down
+      // that plain-text body throws a confusing "not valid JSON" syntax
+      // error instead of a clean, catchable failure — return real JSON here.
+      error: (err, req, res) => {
+        console.error('PHP proxy error:', err.message);
+        if (!res.headersSent) {
+          res.writeHead(502, { 'Content-Type': 'application/json' });
+        }
+        res.end(JSON.stringify({ success: false, message: 'Backend sunucusuna ulaşılamıyor.' }));
+      },
+    },
   }));
 
   // Next.js sayfaları ve asset’ler
