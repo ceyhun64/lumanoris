@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { Input } from "@/shared/ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/shared/ui/dialog";
-import { Tag } from "lucide-react";
+import { Percent, TriangleAlert } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +46,9 @@ export default function CartConfirm({ cartItems }) {
 
     const [userId, setUserId] = useState(null);
     const [userEmail, setUserEmail] = useState("");
-    const [invoiceAddress, setInvoiceAddress] = useState("");
+    const [userFullName, setUserFullName] = useState("");
+    const [userAddress, setUserAddress] = useState("");
+    const [addressChecked, setAddressChecked] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -66,13 +68,41 @@ export default function CartConfirm({ cartItems }) {
                 const data = await res.json();
                 if (data.success) {
                     setUserEmail(data.email);
-                    setInvoiceAddress(data.email);
                 }
             } catch (err) {
                 console.error("E-posta alınamadı:", err);
             }
         }
+        async function fetchUserNames() {
+            try {
+                const res = await fetch(`/api/user/getusernames.php?id=${userId}`);
+                const data = await res.json();
+                if (data.success) {
+                    setUserFullName(data.fullname || data.username || "");
+                }
+            } catch (err) {
+                console.error("Kullanıcı bilgisi alınamadı:", err);
+            }
+        }
+        async function fetchUserAddress() {
+            // Tek adres kaynağı: Ayarlar > Ödeme Bilgileri'nde (banka_bilgileri)
+            // girilen posta adresi — sepet burada ayrıca bir adres alanı
+            // tutmuyor, aynı kayda bakıyor.
+            try {
+                const res = await fetch(`/api/wallet/get_bank_info.php?userId=${userId}`);
+                const data = await res.json();
+                const info = data?.success ? data.bank_info : null;
+                const hasAddress = !!(info && info.il && info.ilce && info.mahalle && info.sokak && info.address);
+                setUserAddress(hasAddress ? [info.address, info.mahalle, info.sokak, info.ilce, info.il].filter(Boolean).join(', ') : "");
+            } catch (err) {
+                console.error("Adres bilgisi alınamadı:", err);
+            } finally {
+                setAddressChecked(true);
+            }
+        }
         fetchUserEmail();
+        fetchUserNames();
+        fetchUserAddress();
     }, [userId]);
 
     const openPolicy = (type) => {
@@ -254,6 +284,10 @@ export default function CartConfirm({ cartItems }) {
             alert("Devam etmek için sözleşmeleri onaylamanız gerekiyor.");
             return;
         }
+        if (!userAddress) {
+            alert("Devam edebilmek için Ayarlar sayfasından adres bilgilerinizi giriniz.");
+            return;
+        }
 
         const payload = {
             user_id: userId,
@@ -262,7 +296,7 @@ export default function CartConfirm({ cartItems }) {
             use_3d: use3DSecure,
             use_saved_card: useSavedCard && !!savedCard,
             send_invoice: sendInvoice,
-            invoice_address: invoiceAddress,
+            invoice_address: userAddress,
         };
 
         const formData = new FormData();
@@ -385,22 +419,21 @@ export default function CartConfirm({ cartItems }) {
                         <h3 className="mb-3 border-b border-transparent bg-gradient-to-br from-violet-400 to-fuchsia-400 bg-clip-text pb-3 font-display text-2xl font-semibold text-transparent">
                             Satın Alınacak Sohbet ({cartItems.length})
                         </h3>
-                        {cartItems.map(item => (
-                            <div key={item.id} className="mb-3 flex items-center gap-3">
-                                <Image
-                                    src={item.image}
-                                    width={120}
-                                    height={120}
-                                    alt={item.title}
-                                    className="aspect-square w-[120px] rounded-lg border border-transparent object-cover"
-                                />
-                                <div className="flex flex-col items-start gap-3">
-                                    <p className="text-sm text-white">{item.title}</p>
-                                    <span className="text-sm text-white/70">{item.duration_weeks === 4 ? '1 Aylık Paket' : `${item.duration_weeks} Haftalık Paket`}</span>
+                        <div className="flex flex-wrap gap-5">
+                            {cartItems.map(item => (
+                                <div key={item.id} className="flex w-[90px] flex-col items-start gap-1.5">
+                                    <Image
+                                        src={item.image}
+                                        width={90}
+                                        height={90}
+                                        alt={item.title}
+                                        className="aspect-square w-[90px] rounded-lg border border-transparent object-cover"
+                                        title={item.title}
+                                    />
                                     <span className="text-sm font-bold text-white">{getItemPrice(item).toFixed(2)} ₺</span>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
 
                     {/* Erişim Bilgisi */}
@@ -409,23 +442,14 @@ export default function CartConfirm({ cartItems }) {
                         <h4 className="mb-3 border-b border-transparent bg-gradient-to-br from-violet-400 to-fuchsia-400 bg-clip-text pb-3 font-display text-xs font-semibold text-transparent">
                             Erişim Bilgisi
                         </h4>
-                        <p className="mb-3 text-sm font-semibold text-white">Kullanıcı: {((useSavedCard && savedCard?.holderName) || cardInfo.holderName || "-")}</p>
+                        <p className="mb-3 text-sm font-semibold text-white">Kullanıcı: {userFullName || "-"}</p>
                         <p className="mb-3 text-sm font-semibold text-white">E-posta: {userEmail || "-"}</p>
-                        <div className="my-2.5">
-                            <label className="mb-1.5 block text-xs text-white/70">FATURA ADRESİ</label>
-                            <Input
-                                type="text"
-                                placeholder="Fatura adresi"
-                                value={invoiceAddress}
-                                onChange={(e) => setInvoiceAddress(e.target.value)}
-                            />
-                        </div>
                         <label className="flex cursor-pointer items-center gap-3 py-2 text-sm text-white">
                             <Checkbox
                                 checked={sendInvoice}
                                 onCheckedChange={() => setSendInvoice(!sendInvoice)}
                             />
-                            Faturamı bu e-posta adresine gönder
+                            Faturam adresim, kayıtlı adres bilgilerimle aynıdır.
                         </label>
                     </div>
 
@@ -545,7 +569,7 @@ export default function CartConfirm({ cartItems }) {
                                 checked={addCard}
                                 onCheckedChange={() => setAddCard(!addCard)}
                             />
-                            Kartımı Ekle
+                            Kartımı Kaydet
                         </label>
                     </div>
                 </div>
@@ -565,11 +589,11 @@ export default function CartConfirm({ cartItems }) {
                         </div>
                         <div className="my-2 flex justify-between border-y border-transparent py-3 font-display text-base font-medium text-white">
                             <strong>Toplam</strong>
-                            <strong className="text-white/50">{total}TL</strong>
+                            <strong className="text-white/50">{total}₺</strong>
                         </div>
                         <div className="mt-4 flex items-stretch rounded-xl border border-fuchsia-400 bg-white/10">
                             <div className="flex items-center p-3.5 text-fuchsia-400">
-                                <Tag className="h-5 w-5" />
+                                <Percent className="h-5 w-5" />
                             </div>
                             <input
                                 placeholder="İndirim kodu gir"
@@ -586,11 +610,12 @@ export default function CartConfirm({ cartItems }) {
                                     (cardInfo.holderName || "").trim().length < 3
                                 )) ||
                                 (useSavedCard && !validateCVV(cardInfo.cvv)) ||
-                                !aggrementCheck
+                                !aggrementCheck ||
+                                !userAddress
                             }
                             onClick={handlePaymentConfirm}
                         >
-                            Ödemeyi Onayla
+                            ÖDEME YAP
                         </Button>
                     </div>
 
@@ -607,6 +632,22 @@ export default function CartConfirm({ cartItems }) {
                             </p>
                         </label>
                     </div>
+
+                    {addressChecked && !userAddress && (
+                        <div className="relative mt-8 flex w-full items-start gap-3 overflow-hidden rounded-xl border border-rose-500/30 bg-rose-500/10 p-4">
+                            <TriangleAlert className="h-5 w-5 shrink-0 text-rose-400" />
+                            <p className="text-sm leading-relaxed text-rose-200">
+                                Adres bilgileri eksik. Devam edebilmek için{' '}
+                                <span
+                                    className="cursor-pointer underline transition-colors hover:text-rose-100"
+                                    onClick={() => router.push('/dashboard/settings?to=odeme')}
+                                >
+                                    Ayarlar sayfasından
+                                </span>
+                                {' '}adres bilgilerinizi giriniz.
+                            </p>
+                        </div>
+                    )}
 
                 </div>
             </div>

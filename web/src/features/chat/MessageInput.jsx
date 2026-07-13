@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import VoiceModal from '@/features/chat/VoiceModal';
-import { X, Plus, Send, Mic, Square, RotateCcw } from 'lucide-react';
+import { X, Plus, Send, Mic, Square, RotateCcw, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Tarayıcı desteği kontrolü
@@ -134,22 +134,17 @@ export default function MessageInput({ onSend, onResetChat }) {
         <>
             {(selectedFileName && !recordedAudioUrl) && (
                 <div className="mb-2.5 flex justify-start px-5">
-                    <div className="relative flex min-w-[130px] flex-col items-center gap-2 rounded-xl border-2 border-fuchsia-400 bg-black p-4">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#E879F9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                            <path d="M14 2v6h6" stroke="#E879F9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-
-                        <span className="text-center text-[13px] font-medium text-white">
+                    <div className="flex items-center gap-2 rounded-lg border border-fuchsia-400/30 bg-luma-elevated px-3.5 py-2">
+                        <FileText className="h-4 w-4 shrink-0 text-fuchsia-400" />
+                        <span className="max-w-[220px] truncate text-[13px] font-medium text-white/85">
                             {selectedFileName}
                         </span>
-
                         <button
                             onClick={() => {
                                 setSelectedFileName('');
                                 setSelectedFile(null);
                             }}
-                            className="absolute -right-2.5 -top-2.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-transparent bg-rose-500 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white/45 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             aria-label="Dosyayı kaldır"
                         >
                             <X className="h-3.5 w-3.5" />

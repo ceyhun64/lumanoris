@@ -11,13 +11,19 @@ import BuyModal from '@/features/purchasing/BuyModal';
 import DeleteConfirmModal from '@/shared/ui/DeleteConfirmModal';
 import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui/dropdown-menu';
-import { Bell, BellOff, ThumbsUp, ThumbsDown, Share2, MessageCircle, ListPlus, MoreHorizontal, ShoppingCart, EyeOff, Flag } from 'lucide-react';
+import { Bell, BellOff, ThumbsUp, ThumbsDown, Share2, MessageCircle, ListPlus, Info, ShoppingCart, EyeOff, Flag, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
 
 // Shared by the Paylaş/Yorum/Listeye Ekle/Diğer action chips below — was
 // copy-pasted onto 4 separate buttons before.
-const CHIP_BTN_CLASS = 'flex items-center gap-3 rounded-2xl border border-transparent bg-white/[0.04] px-3 py-3 font-display text-xs font-semibold capitalize text-white transition-all duration-200 hover:scale-[1.03] hover:bg-[#2a2a2a] hover:shadow-[0_4px_10px_rgba(255,255,255,0.05)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+const CHIP_BTN_CLASS = 'flex items-center gap-2 rounded-full border border-transparent bg-white/[0.04] px-3.5 py-2 font-display text-[11.5px] font-semibold capitalize text-white transition-all duration-200 hover:scale-[1.03] hover:bg-[#2a2a2a] hover:shadow-[0_4px_10px_rgba(255,255,255,0.05)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
+function formatCompact(n) {
+    const num = Number(n) || 0;
+    if (num >= 1000) return (num / 1000).toFixed(num % 1000 === 0 ? 0 : 1).replace('.', ',') + ' B';
+    return String(num);
+}
 
 export default function ProfileCard({bot, comments}) {
     const [isFollowing, setIsFollowing] = useState(false);
@@ -37,6 +43,7 @@ export default function ProfileCard({bot, comments}) {
     const [userId, setUserId] = useState(null);
     const [userLists, setUserLists] = useState([]);
     const [commentCount, setCommentCount] = useState(comments.length);
+    const [pastConversations, setPastConversations] = useState([]);
     const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
     const [notInterestedConfirmOpen, setNotInterestedConfirmOpen] = useState(false);
     const [cartDurationWeeks, setCartDurationWeeks] = useState(null);
@@ -117,6 +124,27 @@ export default function ProfileCard({bot, comments}) {
 
         if (userId && profile.id) {
             fetchCartStatus(userId);
+        }
+    }, [userId, profile.id]);
+
+    // "Örnek Geçmiş" — this bot's own past conversations with the current
+    // user, so they can jump straight back into one instead of starting over.
+    useEffect(() => {
+        const fetchPastConversations = async (uid) => {
+            try {
+                const res = await fetch(`/api/chat/gethistory.php?user_id=${uid}`);
+                const data = await res.json();
+                const items = Array.isArray(data?.results)
+                    ? data.results.filter(item => Number(item.chatbot_id) === Number(profile.id))
+                    : [];
+                setPastConversations(items.slice(0, 3));
+            } catch (err) {
+                console.error("Geçmiş sohbetler alınamadı:", err);
+            }
+        };
+
+        if (userId && profile.id) {
+            fetchPastConversations(userId);
         }
     }, [userId, profile.id]);
 
@@ -302,23 +330,23 @@ export default function ProfileCard({bot, comments}) {
     };
 
     return (
-        <div className="flex flex-col items-center gap-6 rounded-2xl border border-transparent bg-white/[0.04] p-3">
+        <div className="flex flex-col gap-4 rounded-2xl border border-transparent bg-white/[0.04] p-4">
             {/* Üst Bilgi */}
-            <div className="flex w-full flex-col items-center justify-between gap-8 md:flex-row">
-                <div className="flex w-full flex-col items-center gap-8 md:w-auto md:flex-row md:items-start">
-                    <div className="mx-auto h-[120px] w-[120px] shrink-0 overflow-hidden rounded-md md:mx-0">
+            <div className="flex w-full flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                <div className="flex w-full items-center gap-4 sm:w-auto">
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl">
                         {profile.image && <img src={profile.image} alt="" className="h-full w-full object-cover" />}
                     </div>
-                    <div className='flex flex-col items-start gap-3'>
-                        <h2 className="font-display text-2xl font-semibold text-white">{profile.title}</h2>
-                        <p className="text-sm font-medium text-white">{profile.follows} takipçi</p>
-                        <p className="text-sm font-medium text-white/55">{profile.seller}</p>
+                    <div className="flex flex-col items-start gap-0.5">
+                        <h2 className="font-display text-base font-semibold text-white sm:text-lg">{profile.title}</h2>
+                        <p className="text-[13px] text-white/55">Bu chatbot ile {formatCompact(bot.toplam_chats)} diyalog kuruldu</p>
+                        <p className="text-[13px] text-white/55">{formatCompact(profile.follows)} Takipçi</p>
                     </div>
                 </div>
-                <div className="flex items-center justify-center gap-3">
+                <div className="flex shrink-0 items-center gap-2">
                     <button
                         className={cn(
-                            "flex h-12 min-w-[220px] items-center justify-center rounded-lg border-[3px] border-transparent px-4 font-display text-xs font-bold text-white transition-all duration-200 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            "flex h-10 min-w-[110px] items-center justify-center rounded-lg border-[1.5px] border-transparent px-4 font-display text-[12.5px] font-bold text-white transition-all duration-200 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                             isFollowing
                                 ? "bg-origin-border [background-clip:padding-box,border-box] [background-image:linear-gradient(#18171F,#18171F),linear-gradient(150deg,#D946EF,#E879F9)] scale-[1.03]"
                                 : "bg-origin-border [background-clip:padding-box,border-box] [background-image:linear-gradient(#18171F,#18171F),linear-gradient(150deg,rgba(217,70,239,0.5),rgba(139,92,246,0.4))] hover:border-[#D946EF]",
@@ -368,10 +396,10 @@ export default function ProfileCard({bot, comments}) {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button
-                                className="flex items-center justify-center rounded-lg p-3 text-white/70 transition-transform duration-200 hover:scale-110 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.04] text-white/70 transition-transform duration-200 hover:scale-110 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 aria-label="Bildirim ayarları"
                             >
-                                {notificationsEnabled ? <Bell className="h-6 w-6" /> : <BellOff className="h-6 w-6" />}
+                                {notificationsEnabled ? <Bell className="h-[18px] w-[18px]" /> : <BellOff className="h-[18px] w-[18px]" />}
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -390,9 +418,9 @@ export default function ProfileCard({bot, comments}) {
             </div>
 
             {/* Orta Butonlar */}
-            <div className="flex w-full flex-wrap items-center justify-start gap-3">
-                <div className="flex items-center gap-3 rounded-2xl border border-transparent bg-white/[0.04] px-3 py-3 font-display text-xs font-semibold capitalize text-white transition-all duration-200 hover:scale-[1.03] hover:bg-[#2a2a2a] hover:shadow-[0_4px_10px_rgba(255,255,255,0.05)]">
-                    <button className={cn("flex items-center gap-1.5 border-r border-transparent pr-6", liked && "text-fuchsia-400")}
+            <div className="flex w-full flex-wrap items-center justify-start gap-2.5">
+                <div className="flex items-center gap-2.5 rounded-full border border-transparent bg-white/[0.04] px-3.5 py-2 font-display text-[11.5px] font-semibold capitalize text-white transition-all duration-200 hover:scale-[1.03] hover:bg-[#2a2a2a] hover:shadow-[0_4px_10px_rgba(255,255,255,0.05)]">
+                    <button className={cn("flex items-center gap-1.5 border-r border-transparent pr-2.5", liked && "text-fuchsia-400")}
                         onClick={async () => {
                         // if (!userId) { router.push('/login'); return; } // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
                         try {
@@ -426,8 +454,8 @@ export default function ProfileCard({bot, comments}) {
                         }
                     }}
                     >
-                        <ThumbsUp className="h-[18px] w-[18px]" />
-                        {likeCount}
+                        <ThumbsUp className="h-4 w-4" />
+                        {formatCompact(likeCount)}
                     </button>
                     <button className={cn("flex items-center gap-1.5", disliked && "text-rose-400")}
                         onClick={async () => {
@@ -463,36 +491,36 @@ export default function ProfileCard({bot, comments}) {
                         }
                     }}
                     >
-                        <ThumbsDown className="h-[18px] w-[18px]" />
-                        {dislikeCount}
+                        <ThumbsDown className="h-4 w-4" />
+                        {formatCompact(dislikeCount)}
                     </button>
                 </div>
                 <button
                     className={CHIP_BTN_CLASS}
                     onClick={() => setShareOpen(true)}
                 >
-                    <Share2 className="h-[18px] w-[18px]" />
+                    <Share2 className="h-4 w-4" />
                     Paylaş
                 </button>
                 <button
                     onClick={() => setCommentOpen(true)}
                     className={CHIP_BTN_CLASS}
                 >
-                    <MessageCircle className="h-[18px] w-[18px]" />
+                    <MessageCircle className="h-4 w-4" />
                     {commentCount} Yorum
                 </button>
                 <button
                     className={CHIP_BTN_CLASS}
                     onClick={() => setModalVisible(true)}
                 >
-                    <ListPlus className="h-[18px] w-[18px]" />
+                    <ListPlus className="h-4 w-4" />
                     Listeye Ekle
                 </button>
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button className={CHIP_BTN_CLASS}>
-                            <MoreHorizontal className="h-[18px] w-[18px]" />
+                            <Info className="h-4 w-4" />
                             Diğer
                         </button>
                     </DropdownMenuTrigger>
@@ -510,19 +538,19 @@ export default function ProfileCard({bot, comments}) {
 
                 <button
                     className={cn(
-                        "relative z-0 flex h-[47px] min-h-[47px] w-[47px] min-w-[47px] items-center justify-center rounded-full bg-[linear-gradient(329deg,#3730A3_-2.05%,rgba(139,92,246,0)_178.12%)] text-white shadow-[inset_0_0_0_1.5px_rgba(217,70,239,0.31)] transition-all duration-300 hover:bg-fuchsia-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        "relative z-0 flex h-9 min-h-9 w-9 min-w-9 items-center justify-center rounded-full bg-[linear-gradient(329deg,#3730A3_-2.05%,rgba(139,92,246,0)_178.12%)] text-white shadow-[inset_0_0_0_1.5px_rgba(217,70,239,0.31)] transition-all duration-300 hover:bg-fuchsia-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         isInCart && "pointer-events-none opacity-70",
                     )}
                     onClick={handleAddToCart}
                     aria-label="Sepete ekle"
                 >
-                    <ShoppingCart className="h-5 w-5" />
+                    <ShoppingCart className="h-4 w-4" />
                 </button>
                 <button
-                    className="relative z-0 flex h-[47px] min-w-[130px] items-center justify-center rounded-full bg-[linear-gradient(329deg,#3730A3_-2.05%,rgba(139,92,246,0)_178.12%)] px-7 font-display text-[15px] font-medium text-white shadow-[inset_0_0_0_1.5px_rgba(217,70,239,0.31)] transition-all duration-300 hover:bg-fuchsia-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="relative z-0 flex h-9 min-w-[110px] items-center justify-center rounded-full bg-[linear-gradient(329deg,#3730A3_-2.05%,rgba(139,92,246,0)_178.12%)] px-5 font-display text-[12.5px] font-semibold text-white shadow-[inset_0_0_0_1.5px_rgba(217,70,239,0.31)] transition-all duration-300 hover:bg-fuchsia-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={handleBuy}
                 >
-                    Satın Al - ₺{bot.ucret_haftalik}
+                    Satın Al · {bot.ucret_haftalik}₺
                 </button>
 
             </div>
@@ -532,6 +560,22 @@ export default function ProfileCard({bot, comments}) {
             <p className="w-full text-left text-sm leading-relaxed text-white/80">
                 {profile.description}
             </p>
+
+            {/* Örnek Geçmiş — bu bot ile daha önceki sohbetler */}
+            {pastConversations.length > 0 && (
+                <div className="flex w-full flex-col gap-2">
+                    {pastConversations.map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => router.push(`/dashboard/chat/?botId=${profile.id}&convId=${item.id}`)}
+                            className="flex w-full items-center justify-between rounded-lg bg-white/[0.04] px-4 py-2.5 text-left transition-colors duration-200 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                            <span className="truncate text-[13px] text-white/70">{item.conversation_name}</span>
+                            <ArrowRight className="h-4 w-4 shrink-0 text-white/40" />
+                        </button>
+                    ))}
+                </div>
+            )}
 
             <CommentModal
                 isOpen={commentOpen}

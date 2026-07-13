@@ -203,7 +203,8 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
                     c.ucret_haftalik, c.ucret_aylik,
                     (SELECT COUNT(*) FROM chatbot_likes   WHERE chatbot_id = c.id) AS likes,
                     (SELECT COUNT(*) FROM chatbot_dislikes WHERE chatbot_id = c.id) AS dislikes,
-                    (SELECT COUNT(*) FROM chatbot_follows  WHERE chatbot_id = c.id) AS follows
+                    (SELECT COUNT(*) FROM chatbot_follows  WHERE chatbot_id = c.id) AS follows,
+                    (SELECT COUNT(*) FROM chatbot_chats    WHERE chatbot_id = c.id) AS toplam_chats
              FROM `" . self::T . "` c
              LEFT JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id AND pms.status = 'active'
              WHERE c.id = ?

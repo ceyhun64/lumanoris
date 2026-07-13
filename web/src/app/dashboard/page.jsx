@@ -8,6 +8,7 @@ import CategoryFilter from "@/widgets/CategoryFilter";
 import MarketplaceSearchBar from "@/widgets/MarketplaceSearchBar";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { EmptyState as SharedEmptyState } from "@/shared/ui/empty-state";
+import avatarBot from "@/images/avatar-bot.jpg";
 
 function SkeletonRow() {
     return (
@@ -100,7 +101,7 @@ export default function Dashboard() {
                             time: formatTime(bot.yayimlanma_tarih),
                             publishedAt: bot.yayimlanma_tarih,
                             avatar: bot.profil_fotografi,
-                            image: bot.kapak_fotografi,
+                            image: bot.kapak_fotografi || avatarBot.src,
                             kategori_id: bot.kategori_id,
                             followers: bot.toplam_follows,
                             likes: bot.toplam_likes,

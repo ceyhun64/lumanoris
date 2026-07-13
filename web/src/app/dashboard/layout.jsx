@@ -9,8 +9,13 @@ export const UserContext = createContext(null);
 
 export default function DashboardLayout({ children }) {
     const router = useRouter();
+    const pathname = usePathname();
     const [userId, setUserId] = useState(null);
     const [authReady, setAuthReady] = useState(false);
+
+    // Checkout is a focused, distraction-free flow (common e-commerce
+    // pattern) — no main nav sidebar/mobile navbar while paying.
+    const hideNav = pathname?.startsWith('/dashboard/checkout');
 
     useEffect(() => {
         async function checkSession() {
@@ -44,17 +49,21 @@ export default function DashboardLayout({ children }) {
                 İçeriğe geç
             </a>
             <div className="flex h-screen overflow-hidden bg-[#09090F]">
-                {/* Sidebar — hidden on mobile, shown md+ */}
-                <div className="hidden md:flex shrink-0">
-                    <Sidebar />
-                </div>
+                {/* Sidebar — hidden on mobile, shown md+ (and hidden entirely during checkout) */}
+                {!hideNav && (
+                    <div className="hidden md:flex shrink-0">
+                        <Sidebar />
+                    </div>
+                )}
 
                 {/* Main area */}
                 <div className="flex flex-col flex-1 min-w-0 overflow-y-auto">
                     {/* Mobile navbar */}
-                    <div className="md:hidden">
-                        <NavbarMobile />
-                    </div>
+                    {!hideNav && (
+                        <div className="md:hidden">
+                            <NavbarMobile />
+                        </div>
+                    )}
 
                     <main className="flex flex-col flex-1 min-h-0">
                         <Header userId={userId} />

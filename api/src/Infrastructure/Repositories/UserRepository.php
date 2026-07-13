@@ -52,8 +52,15 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface {
         return self::insert(self::T, $data);
     }
 
+    /**
+     * Returns whether the target row exists, not whether any column value
+     * actually changed — MySQL's affected-rows count is 0 when the new
+     * value equals the old one, which previously made re-saving an
+     * unchanged field (phone/email/address/avatar) report as a failure.
+     */
     public function updateById(int $id, array $data): bool {
-        return self::update(self::T, $data, 'id = :_id', ['_id' => $id]) > 0;
+        self::update(self::T, $data, 'id = :_id', ['_id' => $id]);
+        return self::exists(self::T, 'id = ?', [$id]);
     }
 
     public function existsByEmail(string $email): bool {

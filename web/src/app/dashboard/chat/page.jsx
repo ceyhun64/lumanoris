@@ -11,6 +11,7 @@ import ReactMarkdown from "react-markdown";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/button";
+import { Lock } from "lucide-react";
 
 export default function Chat() {
   const [bot, setBot] = useState(null);
@@ -29,11 +30,9 @@ export default function Chat() {
   const [hasSubscription, setHasSubscription] = useState(false);
   const [checkingSub, setCheckingSub] = useState(true);
   const [fullTrainingPrompt, setFullTrainingPrompt] = useState("");
-  // Sohbet Luma Coini: mesaj hakkı tükendiğinde gösterilecek basit uyarı.
-  // Not: Figma'daki "Sınır Aşıldı" tasarımı henüz yok; bu işlevsel ama sade
-  // bir versiyon, görsel tasarım geldiğinde sadece bu blok güncellenecek.
+  // Sohbet Luma Coini: mesaj hakkı tükendiğinde mesaj kutusunun yerini alan
+  // "Sınır Aşıldı" bandı.
   const [limitReached, setLimitReached] = useState(false);
-  const [limitRetryAt, setLimitRetryAt] = useState(null);
   const [showLimitBuyModal, setShowLimitBuyModal] = useState(false);
 
   const checkSubscription = useCallback(async (uId, bId) => {
@@ -432,7 +431,6 @@ export default function Chat() {
     const allowanceResult = await allowanceRes.json();
     if (!allowanceResult.allowed) {
       setLimitReached(true);
-      setLimitRetryAt(allowanceResult.retry_at || null);
       return;
     }
   } catch (err) {
@@ -722,17 +720,40 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Fixed input at bottom */}
+      {/* Fixed input at bottom — günlük mesaj hakkı tükendiğinde, mesaj
+          kutusunun yerini "Sınır Aşıldı" bandı alır (artık ayrı bir modal
+          değil, sayfa akışının içinde kalıcı bir uyarı). */}
       <div
         className={cn(
           "fixed inset-x-0 bottom-0 z-[8] px-4 py-4 transition-all duration-300 md:px-16",
           logoClicked ? "md:ml-[90px]" : "md:ml-[280px]",
         )}
       >
-        <MessageInput
-          onSend={handleSendMessage}
-          onResetChat={handleResetChat}
-        />
+        {limitReached ? (
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-fuchsia-400/15 bg-luma-elevated px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500/25 to-violet-500/15">
+                <Lock className="h-4 w-4 text-fuchsia-300" />
+              </div>
+              <p className="text-[13px] leading-snug text-white/80">
+                Günlük mesajlaşma limitine ulaştınız.
+                <br className="hidden sm:block" />
+                Chatbotu satın alarak daha fazla mesaj limitine erişebilirsiniz.
+              </p>
+            </div>
+            <Button
+              onClick={() => setShowLimitBuyModal(true)}
+              className="h-auto shrink-0 px-5 py-2.5 text-[13px]"
+            >
+              Satın Al
+            </Button>
+          </div>
+        ) : (
+          <MessageInput
+            onSend={handleSendMessage}
+            onResetChat={handleResetChat}
+          />
+        )}
       </div>
 
       <DialogNotebookModal
@@ -745,53 +766,6 @@ export default function Chat() {
         onPublish={(title) => {
         }}
       />
-
-      {/* Günlük mesaj hakkı tükendiğinde gösterilen "Sınır Aşıldı" ekranı */}
-      {limitReached && (
-        <div
-          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/65 backdrop-blur-sm px-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setLimitReached(false);
-          }}
-        >
-          <div className="relative w-full max-w-[400px] rounded-2xl border border-fuchsia-400/15 bg-gradient-to-b from-[#15131f] to-[#0b0b16] p-8 text-center shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500/25 to-violet-500/15 shadow-[0_0_30px_rgba(217,70,239,0.35)]">
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#F0ABFC" />
-              </svg>
-            </div>
-
-            <h3 className="mb-2 bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text text-lg font-display font-bold text-transparent">
-              Sınır Aşıldı
-            </h3>
-            <p className="mb-1 text-[14px] text-white/70">
-              Bu chatbot için günlük mesaj hakkınızı kullandınız.
-            </p>
-            <p className="mb-6 text-[13px] text-white/48">
-              {limitRetryAt
-                ? `Hakkınız ${new Date(limitRetryAt).toLocaleString("tr-TR")} itibarıyla yenilenecek.`
-                : "Hakkınız yarın yenilenecek."}
-              {" "}Sınırsız kullanım için hemen satın alabilirsiniz.
-            </p>
-
-            <div className="flex items-center justify-center gap-3">
-              <Button
-                onClick={() => setLimitReached(false)}
-                variant="secondary"
-                className="h-auto border border-transparent bg-white/5 px-5 py-2.5 text-[13px] hover:bg-white/10"
-              >
-                Kapat
-              </Button>
-              <Button
-                onClick={() => { setLimitReached(false); setShowLimitBuyModal(true); }}
-                className="h-auto px-6 py-2.5 text-[13px]"
-              >
-                Satın Al
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <BuyModal
         isOpen={showLimitBuyModal}

@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ThumbsUp, MessageSquare, Bookmark } from 'lucide-react';
+import { ThumbsUp, MessageSquare, Bookmark, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function formatCompact(n) {
@@ -9,32 +9,51 @@ function formatCompact(n) {
     return String(num);
 }
 
-export default function MarketplaceListCard({ bot }) {
+// selectable/selected/onToggleSelect: used by the "add bots to a list" picker
+// flow (dashboard/explore?from=list) — clicking toggles selection instead of
+// navigating to the chat page.
+export default function MarketplaceListCard({ bot, selectable = false, selected = false, onToggleSelect }) {
     const router = useRouter();
     const {
         id, image, avatar, title, description, dialogues, time,
         followers = 0, likes = 0, comments = 0, saves = 0, weeklyPrice,
     } = bot;
 
+    const handleActivate = () => {
+        if (selectable) onToggleSelect?.(id);
+        else router.push(`/dashboard/chat/?botId=${id}`);
+    };
+
     return (
         <div
             role="button"
             tabIndex={0}
-            onClick={() => router.push(`/dashboard/chat/?botId=${id}`)}
+            onClick={handleActivate}
             onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    router.push(`/dashboard/chat/?botId=${id}`);
+                    handleActivate();
                 }
             }}
             className={cn(
                 'flex items-start gap-4 rounded-2xl border border-transparent bg-gradient-to-r from-[#111120] to-[#0D0D1A] p-3.5 cursor-pointer',
                 'transition-all duration-300 hover:-translate-y-0.5 hover:border-fuchsia-400/22 hover:shadow-[0_6px_24px_rgba(217,70,239,0.13)]',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
+                selectable && selected && 'border-fuchsia-400/45 bg-fuchsia-500/[0.06]',
             )}
         >
             <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-xl sm:h-[84px] sm:w-[84px]">
                 <Image src={image} alt={title} fill className="object-cover" sizes="84px" />
+                {selectable && (
+                    <div
+                        className={cn(
+                            'absolute bottom-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded border-2 border-fuchsia-400 bg-black/40',
+                            selected && 'bg-fuchsia-400',
+                        )}
+                    >
+                        {selected && <Check className="h-3.5 w-3.5 text-white" />}
+                    </div>
+                )}
             </div>
 
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">

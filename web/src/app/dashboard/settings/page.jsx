@@ -23,7 +23,9 @@ export default function Settings() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const target = searchParams.get('to');
-    const [activeTab, setActiveTab] = useState(target === "iletisim" ? "contact" : "user");
+    const [activeTab, setActiveTab] = useState(
+        target === "iletisim" ? "contact" : target === "odeme" ? "security" : "user"
+    );
 
     useEffect(() => {
         async function checkSession() {
@@ -115,7 +117,7 @@ export default function Settings() {
 
     const tabs = [
         { key: "user", label: "Kullanıcı" },
-        { key: "security", label: "Banka ve güvenlik" },
+        { key: "security", label: "Ödeme Bilgileri" },
         { key: "email", label: "E-posta" },
         { key: "phone", label: "Telefon Numarası" },
         { key: "language", label: "Dil" },

@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
+import { Percent, Coins } from 'lucide-react';
 
 const WEEKS_TO_DURATION = { 1: '1_week', 2: '2_weeks', 3: '3_weeks', 4: '1_month' };
 
@@ -154,16 +155,25 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
                 </div>
 
                 {selectedDuration === '1_month' && (
-                    <div className="mb-3 rounded-xl bg-emerald-500/10 px-4 py-2.5 text-[13px] text-emerald-400">
-                        👍 Aylık planı tercih et, haftalık toplam fiyata kıyasla %{Math.round((1 - (botData.ucret_aylik / (botData.ucret_haftalik * 4))) * 100)} kâr sağla.
+                    <div className="mb-3 flex items-center gap-3 rounded-xl border border-dashed border-fuchsia-400/40 bg-white/[0.03] px-4 py-3 text-left">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fuchsia-500/15 text-fuchsia-300">
+                            <Percent className="h-4 w-4" />
+                        </span>
+                        <p className="text-[13px] leading-snug text-white/80">
+                            Aylık planı tercih et, haftalık toplam fiyata kıyasla
+                            {' '}<b className="text-fuchsia-300">%{Math.round((1 - (botData.ucret_aylik / (botData.ucret_haftalik * 4))) * 100)} kâr</b> sağla.
+                        </p>
                     </div>
                 )}
 
-                <div className="my-3 rounded-xl border border-dashed border-fuchsia-400/40 bg-white/5 p-4 text-center">
-                    <span className="mb-1.5 block text-[11px] text-white/60">
-                        {selectedDuration === '1_month' ? 'BİR AYLIK SATIŞ FİYATI' : 'SEÇİLEN SÜREYE GÖRE SATIŞ FİYATI'}
+                <div className="my-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-fuchsia-400/40 bg-white/5 px-4 py-3.5 text-left">
+                    <span className="text-[11px] uppercase text-white/60">
+                        {selectedDuration === '1_month' ? 'Bir aylık satış fiyatı: ' : 'Seçilen süreye göre satış fiyatı: '}
+                        <b className="text-[13px] normal-case text-white">{price}{priceType === 'TL' ? '₺' : priceType}</b>
                     </span>
-                    <div className="text-2xl font-bold text-white">{price}{priceType}</div>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fuchsia-500/15 text-fuchsia-300">
+                        <Coins className="h-4 w-4" />
+                    </span>
                 </div>
 
                 {messageAllowance > 0 && (
@@ -175,8 +185,8 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
                 <div className="mt-4 flex gap-2.5">
                     <Button
                         onClick={onClose}
-                        variant="ghost"
-                        className="h-auto flex-1 border-b border-dashed border-fuchsia-700 bg-white/[0.04] py-3 text-body-lg hover:bg-white/[0.08]"
+                        variant="secondary"
+                        className="h-auto flex-1 border border-transparent bg-white/[0.06] py-3 text-body-lg hover:bg-white/[0.1]"
                     >
                         İptal
                     </Button>

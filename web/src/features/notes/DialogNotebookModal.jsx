@@ -80,8 +80,8 @@ export default function DialogNotebookModal({ userId, botId, inputMessage, outpu
                     <div className="flex justify-between gap-6">
                         <Button
                             onClick={onClose}
-                            variant="ghost"
-                            className="h-auto min-w-[120px] flex-1 border-b border-dashed border-fuchsia-700 bg-white/[0.04] py-3 text-[16px] hover:bg-white/[0.08]"
+                            variant="secondary"
+                            className="h-auto min-w-[120px] flex-1 border border-transparent bg-white/[0.06] py-3 text-[16px] hover:bg-white/[0.1]"
                         >
                             İptal
                         </Button>

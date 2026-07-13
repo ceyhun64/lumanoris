@@ -300,7 +300,7 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
                             )}
                             {isOwn && !isIndependent && (
                                 <ActionBtn onClick={(e) => { e.stopPropagation(); setAddOpen(true); }}>
-                                    Satış Fiyatını Düzenle
+                                    Satış Listesine Ekle
                                 </ActionBtn>
                             )}
                             {isPurchased && (
@@ -330,8 +330,8 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
                     } catch (err) { alert("Yorum eklenemedi: " + err.message); }
                 }}
             />
-            <AddToSaleListModal isOpen={addOpen} onClose={() => setAddOpen(false)} botId={id} weeklyPrice={weeklyPrice} monthlyPrice={monthlyPrice} />
-            <PublishModal isOpen={publishOpen} onClose={() => setPublishOpen(false)} onPublished={() => { if (onChanged) onChanged(); }} botId={id} userId={userId} weeklyPrice={weeklyPrice} monthlyPrice={monthlyPrice} />
+            <AddToSaleListModal isOpen={addOpen} onClose={() => setAddOpen(false)} botId={id} weeklyPrice={weeklyPrice} />
+            <PublishModal isOpen={publishOpen} onClose={() => setPublishOpen(false)} onPublished={() => { if (onChanged) onChanged(); }} botId={id} userId={userId} weeklyPrice={weeklyPrice} />
             <BuyModal isOpen={buyOpen} onClose={() => setBuyOpen(false)} botData={{ id, isim: title, ucret_haftalik: weeklyPrice, ucret_aylik: monthlyPrice }} userId={userId} />
             <DeleteConfirmModal isOpen={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)} onConfirm={() => { setConfirmDeleteOpen(false); if (onDelete) onDelete(); }} />
             <DeleteConfirmModal isOpen={unpublishConfirmOpen} onClose={() => setUnpublishConfirmOpen(false)} onConfirm={handleUnpublish} title="Yayından kaldırmayı onaylıyor musunuz?" description="Chatbotunuz pazaryerinden kaldırılacaktır. Botunuz silinmez, istediğiniz zaman tekrar yayınlayabilirsiniz." confirmLabel="Onayla" />

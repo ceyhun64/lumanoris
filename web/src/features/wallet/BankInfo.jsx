@@ -420,27 +420,15 @@ export default function BankInfo({ userId }) {
                 </div>
             )}
 
-            <div className="mt-2.5 flex items-center gap-2">
-                <Input
-                    type="text"
-                    name="iban"
-                    placeholder="TR IBAN NUMARASI"
-                    value={formData.iban || cards[0] || ""}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="flex-1 uppercase"
-                />
-                {!isEditing && cards.length > 0 && (
-                    <button
-                        type="button"
-                        onClick={() => { setDeleteTarget('iban'); setDeleteModalVisible(true); }}
-                        className="flex items-center justify-center rounded-lg p-2 text-white/50 transition-colors hover:text-rose-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        aria-label="IBAN'ı sil"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </button>
-                )}
-            </div>
+            <Input
+                type="text"
+                name="iban"
+                placeholder="TR IBAN NUMARASI"
+                value={formData.iban || cards[0] || ""}
+                onChange={handleChange}
+                disabled={!isEditing}
+                className="mt-2.5 w-full uppercase"
+            />
 
             <div className="mt-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {/* İl Alanı (Param) */}
@@ -526,6 +514,30 @@ export default function BankInfo({ userId }) {
                     {isEditing ? "Kaydet" : "Düzenle"}
                 </Button>
             </div>
+
+            {cards.length > 0 && (
+                <div className="mt-8">
+                    <h3 className="mb-3 font-display text-base font-normal text-white">Kayıtlı Kartlar</h3>
+                    <div className="flex flex-col gap-2.5">
+                        {cards.map((iban, i) => (
+                            <div key={i} className="flex items-center justify-between gap-3 rounded-xl border border-fuchsia-400/14 bg-luma-input px-4 py-3">
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="text-[11px] uppercase text-white/55">IBAN Numarası</span>
+                                    <span className="text-sm text-white">{iban}</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => { setDeleteTarget('iban'); setDeleteModalVisible(true); }}
+                                    className="flex items-center justify-center rounded-lg p-2 text-white/50 transition-colors hover:text-rose-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    aria-label="Kartı sil"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <DeleteConfirmModal
                 isOpen={deleteModalVisible}

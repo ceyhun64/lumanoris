@@ -30,6 +30,11 @@ function calculateMessageAllowance(totalPaid) {
     return Math.min(COIN_TIER_CAP, COIN_TIER_BASE + (tier - 1) * COIN_TIER_STEP);
 }
 
+// AppConfig::DISCOUNT_MONTHLY_FACTOR (api/src/Shared/Constants/AppConfig.php)
+// ile aynı: aylık fiyat artık ayrı bir alan olarak girilmiyor, haftalık
+// fiyattan otomatik türetiliyor (4 hafta bedeli üzerinden %10 indirim).
+const MONTHLY_DISCOUNT_FACTOR = 0.9;
+
 function ChatbotForm({bot, botId, userId, independentMode = false}) {
     const router = useRouter();
         const [open, setOpen] = useState(false);
@@ -103,6 +108,14 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
             }
         }
     }, [bot]);
+
+    // Aylık fiyat artık kullanıcıdan ayrıca alınmıyor — haftalık fiyattan
+    // otomatik türetiliyor (bkz. MONTHLY_DISCOUNT_FACTOR).
+    useEffect(() => {
+        const weekly = Number(formData.weeklyPrice) || 0;
+        const monthly = Math.round(weekly * 4 * MONTHLY_DISCOUNT_FACTOR);
+        setFormData(prev => (prev.monthlyPrice === monthly ? prev : { ...prev, monthlyPrice: monthly }));
+    }, [formData.weeklyPrice]);
 
     useEffect(() => {
             // Kütüphane Yüklemesi Sadece İstemcide Çalışır
@@ -728,7 +741,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
 
                         <div className="flex flex-col items-center gap-5 md:flex-row md:items-start md:justify-between">
                             <div className="w-full flex-1">
-                                {/* Haftalık Fiyat */}
+                                {/* Haftalık Fiyat — aylık fiyat artık ayrıca girilmiyor, bundan otomatik türetiliyor */}
                                 <div className={cn(
                                     "flex flex-col rounded-xl border border-[#1e1a24] bg-[#0c0c0e] px-5 py-4",
                                     showErrors && errors.weeklyPrice && "border-rose-500",
@@ -746,33 +759,6 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                                         />
                                         <span className="ml-2.5 text-xl font-bold text-fuchsia-400">₺</span>
                                     </div>
-                                </div>
-
-                                {/* Aylık Fiyat (Yeni Eklendi) */}
-                                <div className={cn(
-                                    "mt-12 flex flex-col rounded-xl border border-[#1e1a24] bg-[#0c0c0e] px-5 py-4",
-                                    showErrors && (errors.monthlyPrice || (formData.monthlyPrice < formData.weeklyPrice * 3 || formData.monthlyPrice > formData.weeklyPrice * 4)) && "border-rose-500",
-                                )}>
-                                    <label htmlFor="monthlyPrice" className="mb-1 text-sm text-white/90">Belirlediğin satış fiyatı (Bir Aylık)</label>
-                                    <div className="flex items-center justify-between">
-                                        <input
-                                            id="monthlyPrice"
-                                            type="number"
-                                            name="monthlyPrice"
-                                            value={formData.monthlyPrice}
-                                            onChange={handleChange}
-                                            placeholder="0"
-                                            className="w-full bg-transparent font-display text-xl font-medium text-white outline-none placeholder:text-white/30"
-                                        />
-                                        <span className="ml-2.5 text-xl font-bold text-fuchsia-400">₺</span>
-                                    </div>
-                                    {/* Dinamik Uyarı Mesajı */}
-                                    {formData.weeklyPrice > 0 && (formData.monthlyPrice < formData.weeklyPrice * 3 || formData.monthlyPrice > formData.weeklyPrice * 4) && (
-                                        <small className="mt-2 text-rose-400">
-                                            Aylık ücret, haftalık ücretin 3 ile 4 katı arasında olmalıdır.
-                                            ({formData.weeklyPrice * 3}₺ - {formData.weeklyPrice * 4}₺)
-                                        </small>
-                                    )}
                                 </div>
                             </div>
 

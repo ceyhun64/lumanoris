@@ -93,7 +93,7 @@ export default function Checkout() {
         <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
             <div className="mb-10 flex items-center justify-between">
                 <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
-                    {step === 1 ? "Sepetim" : "Onayla"}
+                    {step === 1 ? "Sepetim" : `Satın Alınacak Sohbet Modeli (${confirmedItems.length})`}
                 </h2>
             </div>
 
