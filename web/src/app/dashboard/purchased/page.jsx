@@ -1,8 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, ArrowUpRight } from "lucide-react";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { Card } from "@/shared/ui/card";
+import { Badge } from "@/shared/ui/badge";
 import { cn } from "@/lib/utils";
 
 const IMG_FALLBACK = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
@@ -24,6 +27,7 @@ export default function SatinAldiklarim() {
     const [bots, setBots] = useState([]);
     const [categories, setCategories] = useState([]);
     const [userId, setUserId] = useState(null);
+    const [sessionChecked, setSessionChecked] = useState(false);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -40,13 +44,16 @@ export default function SatinAldiklarim() {
             } catch (err) {
                 console.error("Session check error:", err);
                 // router.push("/login"); // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
+            } finally {
+                setSessionChecked(true);
             }
         }
         checkSession();
     }, [router]);
 
     useEffect(() => {
-        if (!userId) return;
+        if (!sessionChecked) return;
+        if (!userId) { setLoading(false); return; }
 
         fetch(`/api/wallet/getmysubscriptions.php?user_id=${userId}`)
             .then(res => res.text())
@@ -68,17 +75,35 @@ export default function SatinAldiklarim() {
                 }
             })
             .catch(err => console.error("Kategori fetch hatası:", err));
-    }, [userId]);
+    }, [userId, sessionChecked]);
 
     if (loading) {
-        return <div className="flex h-full w-full flex-col px-4 py-6 md:px-16"><p className="text-white/60">Yükleniyor...</p></div>;
+        return (
+            <div className="flex h-full w-full flex-col gap-8 px-4 py-6 md:px-16">
+                <Skeleton className="h-8 w-56" />
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="flex flex-col overflow-hidden rounded-2xl bg-luma-elevated">
+                            <Skeleton className="h-[150px] w-full rounded-none" />
+                            <div className="flex flex-col gap-2 p-3.5">
+                                <Skeleton className="h-3.5 w-2/3" />
+                                <Skeleton className="h-2.5 w-1/3" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
     }
 
     if (bots.length === 0) {
         return (
             <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
-                <div className="mb-10 flex items-center justify-between">
-                    <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
+                <div className="mb-8">
+                    <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
+                        Kütüphanem
+                    </span>
+                    <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
                         Satın Aldıklarım
                     </h2>
                 </div>
@@ -94,8 +119,11 @@ export default function SatinAldiklarim() {
 
     return (
         <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
-            <div className="mb-10 flex items-center justify-between">
-                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
+            <div className="mb-8">
+                <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
+                    Kütüphanem
+                </span>
+                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
                     Satın Aldıklarım
                 </h2>
             </div>
@@ -107,34 +135,48 @@ export default function SatinAldiklarim() {
                     const active = Number(bot.is_active) === 1;
 
                     return (
-                        <div
+                        <Card
                             key={bot.chatbot_id}
+                            interactive
+                            role="button"
+                            tabIndex={0}
                             onClick={() => router.push('/dashboard/chat?botId=' + bot.chatbot_id)}
-                            className="flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-transparent bg-luma-elevated transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_10px_24px_rgba(139,92,246,0.18)]"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    router.push('/dashboard/chat?botId=' + bot.chatbot_id);
+                                }
+                            }}
+                            className="group flex flex-col overflow-hidden p-0"
                         >
-                            <div className="relative h-[150px] w-full bg-luma-input">
-                                <img src={resolveImg(bot.kapak_fotografi)} alt={bot.isim} className="h-full w-full object-cover" />
-                                <span className={cn(
-                                    "absolute right-2.5 top-2.5 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white",
-                                    active ? "bg-gradient-btn" : "bg-black/60 text-white/75",
-                                )}>
+                            <div className="relative aspect-[4/3] w-full bg-luma-input">
+                                <img
+                                    src={resolveImg(bot.kapak_fotografi)}
+                                    alt={bot.isim}
+                                    className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+                                />
+                                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
+                                <Badge variant={active ? "success" : "default"} className="absolute right-2.5 top-2.5">
                                     {active ? "Aktif" : "Süresi Doldu"}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2.5 px-3.5 pb-1.5 pt-3.5">
-                                <img src={resolveImg(bot.profil_fotografi)} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
-                                <div className="flex min-w-0 flex-col">
-                                    <p className="truncate text-[15px] font-semibold text-white">{bot.isim}</p>
-                                    <span className="text-xs text-fuchsia-400">#{categoryLabel}</span>
+                                </Badge>
+                                <div className="absolute -bottom-4 left-3.5 h-9 w-9 overflow-hidden rounded-full ring-2 ring-luma-card">
+                                    <img src={resolveImg(bot.profil_fotografi)} alt="" className="h-full w-full object-cover" />
                                 </div>
                             </div>
-                            <div className="mt-auto flex items-center justify-between px-3.5 pb-4 pt-2.5">
-                                <span className="text-xs text-white/55">
-                                    {active ? "Bitiş" : "Bitti"}: {formatDate(bot.expiry_date)}
-                                </span>
-                                <span className="text-[13px] font-semibold text-violet-400">Sohbet Et →</span>
+                            <div className="flex flex-col gap-1.5 p-3.5 pt-5">
+                                <p className="truncate font-display text-[15px] font-bold text-white">{bot.isim}</p>
+                                <span className="text-[12px] text-fuchsia-400/80">#{categoryLabel}</span>
+                                <div className="mt-2 flex items-center justify-between border-t border-white/[0.06] pt-2.5">
+                                    <span className="text-[12px] text-white/45">
+                                        {active ? "Bitiş" : "Bitti"}: {formatDate(bot.expiry_date)}
+                                    </span>
+                                    <span className="flex items-center gap-1 text-[12.5px] font-semibold text-fuchsia-300">
+                                        Sohbet Et
+                                        <ArrowUpRight className="h-3.5 w-3.5 -translate-x-0.5 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
+                                    </span>
+                                </div>
                             </div>
-                        </div>
+                        </Card>
                     );
                 })}
             </div>

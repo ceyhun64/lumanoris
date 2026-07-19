@@ -9,29 +9,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/shared/
 import { Percent, TriangleAlert } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/lib/utils";
-
-function GradientBlob() {
-    return (
-        <div className="pointer-events-none absolute -top-11 left-0 opacity-60" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" width="263" height="160" viewBox="0 0 263 160" fill="none">
-                <g filter="url(#cartconfirm_blur)">
-                    <ellipse cx="69.3284" cy="-5.00384" rx="69.3284" ry="40.8673" fill="url(#cartconfirm_grad)" />
-                </g>
-                <defs>
-                    <filter id="cartconfirm_blur" x="-123.746" y="-169.617" width="386.148" height="329.226" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-                        <feFlood floodOpacity="0" result="BackgroundImageFix" />
-                        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
-                        <feGaussianBlur stdDeviation="61.873" result="effect1_foregroundBlur" />
-                    </filter>
-                    <linearGradient id="cartconfirm_grad" x1="0" y1="-5.00384" x2="138.657" y2="-5.00384" gradientUnits="userSpaceOnUse">
-                        <stop offset="0.211538" stopColor="#E879F9" />
-                        <stop offset="0.793269" stopColor="#A78BFA" />
-                    </linearGradient>
-                </defs>
-            </svg>
-        </div>
-    );
-}
+import { toast } from "@/shared/hooks/use-toast";
 
 export default function CartConfirm({ cartItems }) {
     const [sendInvoice, setSendInvoice] = useState(false);
@@ -253,7 +231,7 @@ export default function CartConfirm({ cartItems }) {
 
     const handlePaymentConfirm = async () => {
         if (!userId) {
-            alert("Oturum bulunamadı!");
+            toast({ variant: "destructive", title: "Oturum bulunamadı!" });
             return;
         }
 
@@ -277,15 +255,15 @@ export default function CartConfirm({ cartItems }) {
             };
 
         if (!activeCard.number || !activeCard.expiry || !activeCard.cvv || !activeCard.holder_name) {
-            alert("Kart bilgilerini eksiksiz girin.");
+            toast({ variant: "destructive", title: "Kart bilgilerini eksiksiz girin." });
             return;
         }
         if (!aggrementCheck) {
-            alert("Devam etmek için sözleşmeleri onaylamanız gerekiyor.");
+            toast({ variant: "destructive", title: "Devam etmek için sözleşmeleri onaylamanız gerekiyor." });
             return;
         }
         if (!userAddress) {
-            alert("Devam edebilmek için Ayarlar sayfasından adres bilgilerinizi giriniz.");
+            toast({ variant: "destructive", title: "Devam edebilmek için Ayarlar sayfasından adres bilgilerinizi giriniz." });
             return;
         }
 
@@ -374,12 +352,12 @@ export default function CartConfirm({ cartItems }) {
                 if (isSellerIssue) {
                     setSellerIssueMessage(msg);
                 } else {
-                    alert("Ödeme Hatası: " + msg);
+                    toast({ variant: "destructive", title: "Ödeme Hatası", description: msg });
                 }
             }
         } catch (error) {
             console.error("Ödeme hatası:", error);
-            alert("Sunucuyla bağlantı kurulamadı.");
+            toast({ variant: "destructive", title: "Sunucuyla bağlantı kurulamadı." });
         }
     };
 
@@ -415,7 +393,6 @@ export default function CartConfirm({ cartItems }) {
             <div className="flex flex-col items-start gap-8 md:flex-row">
                 <div className="w-full flex-[2]">
                     <div className="relative mb-8 overflow-hidden rounded-xl border border-transparent bg-luma-elevated p-3">
-                        <GradientBlob />
                         <h3 className="mb-3 border-b border-transparent bg-gradient-to-br from-violet-400 to-fuchsia-400 bg-clip-text pb-3 font-display text-2xl font-semibold text-transparent">
                             Satın Alınacak Sohbet ({cartItems.length})
                         </h3>
@@ -438,7 +415,6 @@ export default function CartConfirm({ cartItems }) {
 
                     {/* Erişim Bilgisi */}
                     <div className="relative mb-8 overflow-hidden rounded-xl border border-transparent bg-luma-elevated p-3">
-                        <GradientBlob />
                         <h4 className="mb-3 border-b border-transparent bg-gradient-to-br from-violet-400 to-fuchsia-400 bg-clip-text pb-3 font-display text-xs font-semibold text-transparent">
                             Erişim Bilgisi
                         </h4>
@@ -455,7 +431,6 @@ export default function CartConfirm({ cartItems }) {
 
                     {/* Ödeme Bilgileri */}
                     <div className="relative mb-8 overflow-hidden rounded-xl border border-transparent bg-luma-elevated p-3">
-                        <GradientBlob />
                         <h4 className="mb-3 border-b border-transparent bg-gradient-to-br from-violet-400 to-fuchsia-400 bg-clip-text pb-3 font-display text-xs font-semibold text-transparent">
                             Ödeme Bilgileri
                         </h4>
@@ -483,8 +458,8 @@ export default function CartConfirm({ cartItems }) {
                             <>
                                 <Input
                                     type="text"
-                                    className={cn("mb-3 uppercase", holderNameError && "border-rose-500")}
-                                    placeholder="KART ÜZERİNDEKİ İSİM"
+                                    className={cn("mb-3", holderNameError && "border-rose-400/60")}
+                                    placeholder="Kart Üzerindeki İsim"
                                     value={cardInfo.holderName}
                                     autoComplete="cc-name"
                                     onChange={(e) => {
@@ -505,7 +480,7 @@ export default function CartConfirm({ cartItems }) {
                                 )}
                                 <Input
                                     type="text"
-                                    placeholder="KART NUMARASI"
+                                    placeholder="Kart Numarası"
                                     value={cardInfo.number}
                                     inputMode="numeric"
                                     onChange={(e) => validateAndFormatCardNumber(e.target.value)}
@@ -524,7 +499,7 @@ export default function CartConfirm({ cartItems }) {
                             <div className="my-3 grid grid-cols-2 gap-3">
                                 <Input
                                     type="text"
-                                    className={expiryError ? "border-rose-500" : ""}
+                                    className={expiryError ? "border-rose-400/60" : ""}
                                     placeholder="AA/YY"
                                     value={cardInfo.expiry || ''}
                                     onChange={(e) => {
@@ -576,9 +551,9 @@ export default function CartConfirm({ cartItems }) {
 
                 {/* Sağ Alan - Özet */}
                 <div className="flex w-full flex-1 flex-col items-start">
-                    <div className="relative w-full overflow-hidden rounded-xl border border-transparent bg-luma-elevated p-3">
-                        <GradientBlob />
-                        <h4 className="mb-6 font-display text-xl font-medium text-white">Sipariş Özeti</h4>
+                    <div className="relative w-full overflow-hidden rounded-2xl border border-fuchsia-400/15 bg-gradient-to-br from-[#1a1030] via-[#150d28] to-[#0d0a1c] p-5 shadow-[0_8px_28px_rgba(139,0,180,0.2)]">
+                        <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-fuchsia-600/20 blur-[70px]" />
+                        <h4 className="relative mb-6 font-display text-lg font-bold text-white">Sipariş Özeti</h4>
                         <div className="my-2 flex justify-between font-display text-base font-medium text-white">
                             <span>Ürün Tutarı</span>
                             <span className="text-white/50">{subtotal}₺</span>
@@ -591,7 +566,7 @@ export default function CartConfirm({ cartItems }) {
                             <strong>Toplam</strong>
                             <strong className="text-white/50">{total}₺</strong>
                         </div>
-                        <div className="mt-4 flex items-stretch rounded-xl border border-fuchsia-400 bg-white/10">
+                        <div className="mt-4 flex items-stretch rounded-xl border border-fuchsia-400/25 bg-white/[0.04] transition-colors duration-200 focus-within:border-fuchsia-400/45">
                             <div className="flex items-center p-3.5 text-fuchsia-400">
                                 <Percent className="h-5 w-5" />
                             </div>
@@ -601,7 +576,7 @@ export default function CartConfirm({ cartItems }) {
                             />
                         </div>
                         <Button
-                            className="mt-4 h-auto w-full border border-transparent py-3.5 text-sm font-bold uppercase"
+                            className="mt-4 h-auto w-full border border-transparent py-3.5 text-sm"
                             disabled={
                                 (!useSavedCard && (
                                     !isValidCardNumber(cardInfo.number) ||
@@ -615,12 +590,11 @@ export default function CartConfirm({ cartItems }) {
                             }
                             onClick={handlePaymentConfirm}
                         >
-                            ÖDEME YAP
+                            Ödeme Yap
                         </Button>
                     </div>
 
                     <div className="relative mt-8 w-full overflow-hidden rounded-xl border border-transparent bg-luma-elevated p-3">
-                        <GradientBlob />
                         <label className="flex cursor-pointer items-start gap-3 text-sm">
                             <Checkbox
                                 checked={aggrementCheck}
@@ -785,7 +759,7 @@ export default function CartConfirm({ cartItems }) {
                             <Button
                                 onClick={() => setSellerIssueMessage(null)}
                                 variant="secondary"
-                                className="h-auto border-transparent bg-white/10 py-3 text-body-lg hover:border-transparent hover:bg-white/18"
+                                className="h-auto py-3 text-body-lg"
                             >
                                 İptal
                             </Button>

@@ -111,11 +111,11 @@ export default function PhoneEditor({ userId }) {
     <div className="flex flex-col items-stretch gap-3 rounded-xl border border-transparent p-4 sm:flex-row sm:items-center">
       <Input
         type="text"
-        className="flex-1 uppercase"
+        className="flex-1"
         value={isEditing ? newPhone : currentPhone || "Telefon numarası eklenmemiş"}
         onChange={isEditing ? handlePhoneChange : undefined}
         disabled={!isEditing}
-        placeholder={isEditing ? "TELEFON NUMARASI GİRİN" : "MEVCUT TELEFON"}
+        placeholder={isEditing ? "Telefon Numarası Girin" : "Mevcut Telefon"}
       />
       <Button
         onClick={isEditing ? handleAddPhone : handleEditClick}

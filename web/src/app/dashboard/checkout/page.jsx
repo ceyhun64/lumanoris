@@ -4,10 +4,13 @@ import React, { useEffect, useState } from "react";
 import CartFull from "@/entities/cart/ui/CartFull";
 import CartConfirm from "@/entities/cart/ui/CartConfirm";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { toast } from "@/shared/hooks/use-toast";
 
 export default function Checkout() {
     const [cartItems, setCartItems] = useState([]);
     const [userId, setUserId] = useState(null);
+    const [sessionChecked, setSessionChecked] = useState(false);
     const [loading, setLoading] = useState(true);
     const [step, setStep] = useState(1);
     const [confirmedItems, setConfirmedItems] = useState([]);
@@ -27,6 +30,8 @@ export default function Checkout() {
                 }
             } catch (err) {
                 console.error("Session check error:", err);
+            } finally {
+                setSessionChecked(true);
             }
         }
         checkSession();
@@ -35,7 +40,8 @@ export default function Checkout() {
     // 2. Sepet Verilerini DB'den Çekme
     useEffect(() => {
         const fetchCart = async () => {
-            if (!userId) return;
+            if (!sessionChecked) return;
+            if (!userId) { setLoading(false); return; }
             try {
                 const response = await fetch(`/api/marketplace/getcart.php?user_id=${userId}`);
                 const data = await response.json();
@@ -55,7 +61,7 @@ export default function Checkout() {
         };
 
         fetchCart();
-    }, [userId]);
+    }, [userId, sessionChecked]);
 
     // 3. Sepetten Ürün Silme (DB)
     const handleRemove = async (cartId) => {
@@ -75,7 +81,7 @@ export default function Checkout() {
                 // Opsiyonel: Header'daki sepet sayısını güncellemek için event tetikle
                 window.dispatchEvent(new Event('cartUpdated'));
             } else {
-                alert("Silme işlemi başarısız: " + result.message);
+                toast({ variant: "destructive", title: "Silme işlemi başarısız", description: result.message });
             }
         } catch (error) {
             console.error("Silme hatası:", error);
@@ -87,12 +93,26 @@ export default function Checkout() {
         setStep(2);
     };
 
-    if (loading) return <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16"><p className="text-white/60">Yükleniyor...</p></div>;
+    if (loading) {
+        return (
+            <div className="flex h-full w-full flex-col gap-5 px-4 py-6 text-white md:px-16">
+                <Skeleton className="h-8 w-48" />
+                <div className="flex flex-col gap-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} className="h-24 w-full rounded-2xl" />
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
-            <div className="mb-10 flex items-center justify-between">
-                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
+            <div className="mb-8">
+                <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
+                    Ödeme
+                </span>
+                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
                     {step === 1 ? "Sepetim" : `Satın Alınacak Sohbet Modeli (${confirmedItems.length})`}
                 </h2>
             </div>

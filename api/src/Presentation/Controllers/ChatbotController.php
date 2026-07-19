@@ -13,6 +13,14 @@ class ChatbotController {
             JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
         }
 
+        // ChatbotForm.jsx always sends id:-1 as a "this is a new bot" sentinel
+        // (botId is unset and bot is null on the create path). chatbotlar.id
+        // is an unsigned auto-increment column, so passing -1 straight into
+        // the INSERT's column list failed every single create with
+        // "SQLSTATE[22003]: Numeric value out of range" — id must never be
+        // client-supplied on create, the DB assigns it.
+        unset($data['id']);
+
         // Identity comes from the session, never from the client-supplied
         // author_user_id — otherwise anyone could create bots "as" another
         // user, or dodge their own free-tier limit by claiming someone else's id.
@@ -156,9 +164,8 @@ class ChatbotController {
         if (!$data || !$id) {
             JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
         }
-        if ($weekly <= 0 || $monthly <= 0) {
-            JsonResponse::error('Haftalık ve aylık fiyatlar geçerli pozitif sayı olmalıdır.', 400, AppConfig::ERR_VALIDATION);
-        }
+        self::assertValidPrice($weekly, 'Haftalık', AppConfig::MAX_WEEKLY_PRICE);
+        self::assertValidPrice($monthly, 'Aylık', AppConfig::MAX_WEEKLY_PRICE * 4);
 
         $repo = new ChatbotRepository();
         $bot  = $repo->findById($id);
@@ -275,6 +282,14 @@ class ChatbotController {
         $weekly  = InputSanitizer::price($data['ucret_haftalik'] ?? 0);
         $monthly = InputSanitizer::price($data['ucret_aylik'] ?? 0);
 
+        // InputSanitizer::price() only rejects negatives, not zero or
+        // absurdly large values — this endpoint previously had no range
+        // check at all (unlike publishChatbot's now-shared assertValidPrice),
+        // so a seller could silently zero out or wildly overprice an
+        // already-published bot via "Satış Listesine Ekle".
+        self::assertValidPrice($weekly, 'Haftalık', AppConfig::MAX_WEEKLY_PRICE);
+        self::assertValidPrice($monthly, 'Aylık', AppConfig::MAX_WEEKLY_PRICE * 4);
+
         $repo = new ChatbotRepository();
 
         // Previously had no ownership check at all — anyone who knew a
@@ -293,6 +308,21 @@ class ChatbotController {
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────
+
+    /**
+     * Single price-range check shared by publishChatbot and
+     * updateChatbotPrice — previously each endpoint enforced a different
+     * (or no) rule, so the same "set this bot's price" action behaved
+     * inconsistently depending on which screen triggered it.
+     */
+    private static function assertValidPrice(float $value, string $label, float $max): void {
+        if ($value <= 0 || $value > $max) {
+            JsonResponse::error(
+                sprintf('%s fiyat 0\'dan büyük ve en fazla %s₺ olmalıdır.', $label, number_format($max, 0, ',', '.')),
+                400, AppConfig::ERR_VALIDATION
+            );
+        }
+    }
 
     private static function handleImageUploads(array $data): array {
         foreach (['coverImage_file' => 'kapak_fotografi', 'profileImage_file' => 'profil_fotografi'] as $postKey => $dbCol) {

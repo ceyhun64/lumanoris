@@ -7,13 +7,34 @@ class UserController {
         $user = $repo->findById($userId);
         if (!$user) JsonResponse::error('Kullanıcı bulunamadı!', 404, AppConfig::ERR_NOT_FOUND);
 
-        $count = (int) Database::getInstance()->count(AppConfig::TABLE_CHATBOTS, 'author_user_id = ?', [$userId]);
+        $db    = Database::getInstance();
+        $count = (int) $db->count(AppConfig::TABLE_CHATBOTS, 'author_user_id = ?', [$userId]);
+
+        // Same "purchased" definition ChatbotRepository::getMenuItems uses
+        // for the Chatbotlarım list: owns access via an active subscription
+        // to a bot someone else authored — not just anything with
+        // owner_user_id set (that column isn't updated back to the author
+        // when a subscription expires).
+        $purchasedCount = (int) $db->selectSingle(
+            "COUNT(*) AS total FROM `" . AppConfig::TABLE_CHATBOTS . "` c
+             WHERE c.owner_user_id = ? AND c.author_user_id != ?
+               AND EXISTS (
+                    SELECT 1 FROM user_subscriptions us
+                    WHERE us.user_id = ? AND us.chatbot_id = c.id
+                      AND us.status = 1 AND us.expiry_date > NOW()
+                 )",
+            [$userId, $userId, $userId]
+        )['total'];
+
+        $sharedDialogueCount = $db->count('user_dialog_books', 'user_id = ?', [$userId]);
 
         JsonResponse::success([
-            'id'           => $user['id'],
-            'fullname'     => $user['ad_soyad'],
-            'username'     => $user['kullanici_adi'],
-            'chatbotCount' => $count,
+            'id'                  => $user['id'],
+            'fullname'            => $user['ad_soyad'],
+            'username'            => $user['kullanici_adi'],
+            'chatbotCount'        => $count,
+            'purchasedCount'      => $purchasedCount,
+            'sharedDialogueCount' => $sharedDialogueCount,
         ]);
     }
 

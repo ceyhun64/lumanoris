@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Textarea } from '@/shared/ui/textarea';
 import { Button } from '@/shared/ui/button';
+import { toast } from '@/shared/hooks/use-toast';
 
 export default function ReportModal({ isOpen, repId, onClose }) {
     const [step, setStep] = useState(1);
@@ -74,10 +75,10 @@ export default function ReportModal({ isOpen, repId, onClose }) {
                     setExtraDetail('');
                 }, 2000);
             } else {
-                alert("Hata: " + result.message);
+                toast({ variant: "destructive", title: "Hata", description: result.message });
             }
         } catch (error) {
-            alert("Bağlantı hatası!");
+            toast({ variant: "destructive", title: "Bağlantı hatası!" });
         }
     };
 

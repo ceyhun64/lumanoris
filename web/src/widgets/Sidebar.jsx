@@ -1,34 +1,26 @@
-﻿"use client";
+"use client";
 import headerLogo from '@/images/header-logo-icon.png';
-import homeIcon from '@/images/anasayfa-icon.svg';
-import chatIcon from '@/images/chatbotlarim-icon.svg';
-import storeIcon from '@/images/satilik-icon.svg';
-import followIcon from '@/images/takip-edilenler-icon.svg';
-import listIcon from '@/images/liste-icon.svg';
-import historyIcon from '@/images/gecmisim-icon.svg';
-import walletIcon from '@/images/bakiyom-icon.svg';
-import noteIcon from '@/images/diyalog-defteri-icon.svg';
-import settingsIcon from '@/images/ayarlar-icon.svg';
-import logoIcon from '@/images/header-dashboard-left.png';
 import Link from 'next/link';
 import QuitModal from '@/features/auth/QuitModal';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Plus, TrendingUp } from 'lucide-react';
+import {
+  Plus, TrendingUp, ChevronLeft,
+  Home, Bot, ShoppingBag, Users, ListChecks, History, Wallet, NotebookText, Settings,
+} from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/shared/ui/tooltip';
 
 const navItems = [
-  { href: '/dashboard',           icon: homeIcon,    label: 'Anasayfa',        exact: true },
-  { href: '/dashboard/chatbots',  icon: chatIcon,    label: 'Chatbotlarım' },
-  { href: '/dashboard/purchased', icon: storeIcon,   label: 'Satın Aldıklarım' },
-  { href: '/dashboard/following', icon: followIcon,  label: 'Takip Edilenler' },
-  { href: '/dashboard/list',      icon: listIcon,    label: 'Liste' },
-  { href: '/dashboard/history',   icon: historyIcon, label: 'Geçmişim' },
-  { href: '/dashboard/wallet',    icon: walletIcon,  label: 'Bakiyem' },
-  { href: '/dashboard/notes',     icon: noteIcon,    label: 'Diyalog Defteri' },
+  { href: '/dashboard',           icon: Home,         label: 'Anasayfa',        exact: true },
+  { href: '/dashboard/chatbots',  icon: Bot,          label: 'Chatbotlarım' },
+  { href: '/dashboard/purchased', icon: ShoppingBag,  label: 'Satın Aldıklarım' },
+  { href: '/dashboard/following', icon: Users,        label: 'Takip Edilenler' },
+  { href: '/dashboard/list',      icon: ListChecks,   label: 'Liste' },
+  { href: '/dashboard/history',   icon: History,      label: 'Geçmişim' },
+  { href: '/dashboard/wallet',    icon: Wallet,       label: 'Bakiyem' },
+  { href: '/dashboard/notes',     icon: NotebookText, label: 'Diyalog Defteri' },
 ];
 
 export default function Sidebar({ isMobileOpen = false }) {
@@ -49,104 +41,122 @@ export default function Sidebar({ isMobileOpen = false }) {
   return (
     <aside
       className={cn(
-        'flex flex-col justify-between h-screen sticky top-0 z-10',
-        'bg-[#07071A] border-r border-fuchsia-400/7',
-        'transition-all duration-300 ease-in-out',
-        collapsed ? 'w-[90px]' : 'w-[280px]',
+        'flex flex-col justify-between h-screen sticky top-0 z-40 overflow-hidden',
+        'bg-gradient-to-b from-[#0D0D22] via-[#0A0A18] to-[#050508]',
+        'border-r border-white/[0.06]',
+        'transition-[width] duration-300 ease-in-out',
+        collapsed ? 'w-[84px]' : 'w-[264px]',
         isMobileOpen ? 'translate-x-0' : '',
         'max-md:fixed max-md:left-0 max-md:top-0 max-md:z-[1000]',
         isMobileOpen ? 'max-md:translate-x-0' : 'max-md:-translate-x-full',
       )}
     >
+      {/* Ambient glow accent — gives the rail depth instead of a flat panel */}
+      <div className="pointer-events-none absolute -top-24 -left-16 h-64 w-64 rounded-full bg-fuchsia-600/[0.18] blur-[90px]" />
+      <div className="pointer-events-none absolute bottom-0 -right-10 h-56 w-56 rounded-full bg-violet-600/[0.14] blur-[90px]" />
+      {/* Hairline glow along the right edge */}
+      <div className="pointer-events-none absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-fuchsia-400/25 to-transparent" />
       {/* Collapse toggle */}
       <button
         onClick={handleCollapseToggle}
         className={cn(
-          'absolute top-[42px] -right-4 z-10',
-          'w-8 h-8 flex items-center justify-center',
-          'bg-[#0F0F24] border border-fuchsia-400/14 rounded-full',
-          'text-white/60 hover:text-white hover:bg-fuchsia-500/15 hover:border-fuchsia-400/35',
-          'transition-all duration-200',
+          'group absolute top-9 -right-3 z-10',
+          'w-6 h-6 flex items-center justify-center',
+          'rounded-full border border-white/10 bg-[#15152f] shadow-[0_2px_10px_rgba(0,0,0,0.5)]',
+          'text-white/55',
+          'hover:text-white hover:border-fuchsia-400/50 hover:bg-gradient-to-br hover:from-fuchsia-500/25 hover:to-violet-500/25 hover:shadow-[0_2px_14px_rgba(217,70,239,0.35)] hover:scale-110',
+          'active:scale-95',
+          'transition-all duration-200 ease-out',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
           collapsed ? 'rotate-180' : '',
           'max-md:hidden',
         )}
         aria-label={collapsed ? 'Menüyü genişlet' : 'Menüyü küçült'}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M15 18l-6-6 6-6"/>
-        </svg>
+        <ChevronLeft className="w-3.5 h-3.5 transition-transform duration-200 group-active:-translate-x-0.5" strokeWidth={2.5} />
       </button>
 
-      <div className="flex flex-col gap-1 overflow-hidden px-4 pt-8">
+      <div className="relative flex flex-col gap-1 overflow-hidden px-3 pt-7">
         {/* Logo */}
-        <Link href="/dashboard" className="flex items-center gap-3 mb-5 no-underline">
-          <div className="flex items-center justify-center shrink-0">
-            <img src={headerLogo.src} alt="Lumanoris" className="w-10 h-auto drop-shadow-[0_0_10px_rgba(217,70,239,0.5)]" />
+        <Link href="/dashboard" className={cn('relative flex items-center gap-2.5 mb-7 no-underline', collapsed ? 'justify-center px-0' : 'px-1.5')}>
+          <div className="relative flex items-center justify-center shrink-0">
+            <div className="absolute inset-0 -m-1.5 rounded-full bg-fuchsia-500/30 blur-md" />
+            <img src={headerLogo.src} alt="Lumanoris" className="relative w-8 h-auto drop-shadow-[0_0_10px_rgba(217,70,239,0.5)]" />
           </div>
           {!collapsed && (
-            <span className="font-display font-bold text-[17px] tracking-wide bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent whitespace-nowrap">
-              LUMANORIS
+            <span className="font-display font-semibold text-[16px] tracking-[0.02em] text-white whitespace-nowrap">
+              Lumanoris
             </span>
           )}
         </Link>
 
-        {/* Create button */}
+        {/* Create button — the primary CTA of the whole sidebar, now reads
+            as one: full gradient pill matching the Upgrade button's weight
+            instead of a quiet outlined box competing with nav items. */}
         <button
           onClick={() => router.push('/dashboard/chatbots/create')}
           className={cn(
-            'w-full flex items-center justify-between mb-1',
-            'border border-fuchsia-400/20 bg-fuchsia-500/7 rounded-xl',
-            'hover:bg-fuchsia-500/14 hover:border-fuchsia-400/40 hover:shadow-glow hover:-translate-y-0.5',
+            'group w-full flex items-center justify-between mb-5',
+            'bg-gradient-btn rounded-xl shadow-[0_4px_20px_rgba(192,38,211,0.35)]',
+            'hover:-translate-y-0.5 hover:shadow-[0_6px_28px_rgba(192,38,211,0.5)] hover:brightness-110',
+            'active:translate-y-0',
             'transition-all duration-200',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
-            collapsed ? 'p-3 justify-center' : 'px-4 py-3',
+            collapsed ? 'p-2.5 justify-center' : 'pl-3.5 pr-2.5 py-2.5',
           )}
         >
           {!collapsed && (
-            <span className="text-[13px] font-display font-semibold text-fuchsia-300 uppercase tracking-[0.08em]">
-              Oluştur
+            <span className="text-[13.5px] font-semibold text-white">
+              Yeni Chatbot
             </span>
           )}
           <span className={cn(
-            'flex items-center justify-center bg-gradient-btn rounded-md',
+            'flex items-center justify-center rounded-lg bg-white/15 shrink-0 transition-transform duration-200 group-hover:rotate-90',
             collapsed ? 'w-7 h-7' : 'w-6 h-6',
           )}>
-            <Plus className="w-3.5 h-3.5 text-white" />
+            <Plus className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
           </span>
         </button>
 
-        {/* Separator */}
-        <div className="h-px my-3 bg-gradient-to-r from-transparent via-fuchsia-500/35 to-transparent" />
+        {/* Section label */}
+        {!collapsed && (
+          <span className="px-1.5 mb-1.5 text-[10.5px] font-medium uppercase tracking-[0.09em] text-white/30">
+            Menü
+          </span>
+        )}
 
         {/* Nav items */}
-        <ul className="flex flex-col gap-0.5 m-0 p-0 list-none">
-          {navItems.map(({ href, icon, label, exact }) => {
+        <ul className="flex flex-col gap-1 m-0 p-0 list-none">
+          {navItems.map(({ href, icon: Icon, label, exact }) => {
             const active = isActive(href, exact);
             const link = (
               <Link
                 href={href}
                 className={cn(
-                  'flex items-center gap-3.5 w-full rounded-xl no-underline',
-                  'text-[15px] font-sans leading-snug',
+                  'relative flex items-center gap-3 w-full rounded-lg no-underline',
+                  'text-[13.5px] font-sans leading-snug',
                   'transition-all duration-200',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
-                  collapsed ? 'justify-center p-2.5' : 'px-3.5 py-2.5',
+                  collapsed ? 'justify-center p-2' : 'pl-3 pr-2.5 py-2.5',
                   active
-                    ? 'font-semibold border-l-2 border-fuchsia-500 bg-gradient-to-r from-fuchsia-500/14 to-violet-500/6 text-fuchsia-300'
-                    : 'text-white/72 border-l-2 border-transparent hover:bg-fuchsia-500/7 hover:text-white hover:translate-x-0.5',
+                    ? 'font-semibold bg-gradient-to-r from-fuchsia-500/[0.16] via-violet-500/[0.08] to-transparent text-white shadow-[0_0_0_1px_rgba(217,70,239,0.12)]'
+                    : 'text-white/50 hover:bg-white/[0.045] hover:text-white/90 hover:translate-x-0.5',
                 )}
               >
-                <img
-                  src={icon.src}
-                  alt={label}
-                  className={cn(
-                    'shrink-0 transition-all duration-200',
-                    collapsed ? 'w-6 h-6' : 'w-[22px] h-[22px]',
-                    active ? 'drop-shadow-[0_0_6px_rgba(217,70,239,0.65)] opacity-100' : 'opacity-70',
-                  )}
-                />
-                {!collapsed && <span>{label}</span>}
+                {/* Active accent bar — the single clearest "you are here" signal */}
+                {active && (
+                  <span className="absolute left-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b from-fuchsia-400 to-violet-400 shadow-[0_0_8px_rgba(217,70,239,0.8)]" />
+                )}
+                <span className={cn(
+                  'flex items-center justify-center shrink-0 rounded-lg transition-all duration-200',
+                  collapsed ? 'w-[30px] h-[30px]' : 'w-8 h-8',
+                  active
+                    ? 'bg-gradient-to-br from-fuchsia-500/40 to-violet-500/25 text-fuchsia-200 shadow-[0_0_14px_rgba(217,70,239,0.35)]'
+                    : 'bg-white/[0.03] text-white/45 group-hover:text-white/80',
+                )}>
+                  <Icon className={collapsed ? 'w-[18px] h-[18px]' : 'w-[17px] h-[17px]'} strokeWidth={1.75} />
+                </span>
+                {!collapsed && <span className="truncate">{label}</span>}
               </Link>
             );
             return (
@@ -164,76 +174,63 @@ export default function Sidebar({ isMobileOpen = false }) {
       </div>
 
       {/* Bottom: settings + upgrade */}
-      <div className="flex flex-col gap-2.5 px-4 pb-5">
-        <div className={cn(
-          'rounded-2xl border border-fuchsia-400/10 bg-fuchsia-500/4 overflow-hidden relative',
-        )}>
-          <div className="absolute -top-5 -left-5 opacity-30 pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="60" viewBox="0 0 134 96" fill="none">
-              <g filter="url(#sb_blur)">
-                <circle cx="21" cy="8" r="28" fill="url(#sb_grad)" />
-              </g>
-              <defs>
-                <filter id="sb_blur" x="-91.784" y="-104.784" width="225.568" height="225.568" filterUnits="userSpaceOnUse">
-                  <feGaussianBlur stdDeviation="42" result="blur" />
-                </filter>
-                <linearGradient id="sb_grad" x1="53" y1="49" x2="-6" y2="-29" gradientUnits="userSpaceOnUse">
-                  <stop offset="0.21" stopColor="#E879F9" />
-                  <stop offset="1" stopColor="#A78BFA" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-          {(() => {
-            const settingsLink = (
-              <Link
-                href="/dashboard/settings/"
-                className={cn(
-                  'relative z-[1] flex items-center gap-3.5 no-underline',
-                  'text-[15px] font-sans transition-all duration-200',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
-                  collapsed ? 'justify-center p-3' : 'px-3.5 py-3',
-                  pathname.startsWith('/dashboard/settings')
-                    ? 'border-l-2 border-fuchsia-500 bg-fuchsia-500/15 text-fuchsia-300 font-semibold'
-                    : 'text-white/65 hover:bg-fuchsia-500/8 hover:text-white/90 border-l-2 border-transparent',
-                )}
-              >
-                <img
-                  src={settingsIcon.src}
-                  alt="Ayarlar"
-                  className={cn(
-                    'w-[22px] h-[22px] shrink-0 transition-opacity duration-200',
-                    pathname.startsWith('/dashboard/settings') ? 'opacity-100 drop-shadow-[0_0_6px_rgba(217,70,239,0.65)]' : 'opacity-70',
-                  )}
-                />
-                {!collapsed && <span>Ayarlar</span>}
-              </Link>
-            );
-            return collapsed ? (
-              <Tooltip>
-                <TooltipTrigger asChild>{settingsLink}</TooltipTrigger>
-                <TooltipContent side="right">Ayarlar</TooltipContent>
-              </Tooltip>
-            ) : settingsLink;
-          })()}
-        </div>
+      <div className="flex flex-col gap-1 px-3 pb-5">
+        <div className="mb-2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+        {(() => {
+          const settingsActive = pathname.startsWith('/dashboard/settings');
+          const settingsLink = (
+            <Link
+              href="/dashboard/settings/"
+              className={cn(
+                'relative flex items-center gap-3 no-underline rounded-lg',
+                'text-[13.5px] font-sans transition-all duration-200',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
+                collapsed ? 'justify-center p-2' : 'pl-3 pr-2.5 py-2.5',
+                settingsActive
+                  ? 'font-semibold bg-gradient-to-r from-fuchsia-500/[0.16] via-violet-500/[0.08] to-transparent text-white'
+                  : 'text-white/50 hover:bg-white/[0.045] hover:text-white/90 hover:translate-x-0.5',
+              )}
+            >
+              {settingsActive && (
+                <span className="absolute left-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b from-fuchsia-400 to-violet-400 shadow-[0_0_8px_rgba(217,70,239,0.8)]" />
+              )}
+              <span className={cn(
+                'flex items-center justify-center shrink-0 rounded-lg transition-all duration-200',
+                collapsed ? 'w-[30px] h-[30px]' : 'w-8 h-8',
+                settingsActive
+                  ? 'bg-gradient-to-br from-fuchsia-500/40 to-violet-500/25 text-fuchsia-200 shadow-[0_0_14px_rgba(217,70,239,0.35)]'
+                  : 'bg-white/[0.03] text-white/45',
+              )}>
+                <Settings className={collapsed ? 'w-[18px] h-[18px]' : 'w-[17px] h-[17px]'} strokeWidth={1.75} />
+              </span>
+              {!collapsed && <span className="truncate">Ayarlar</span>}
+            </Link>
+          );
+          return collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>{settingsLink}</TooltipTrigger>
+              <TooltipContent side="right">Ayarlar</TooltipContent>
+            </Tooltip>
+          ) : settingsLink;
+        })()}
 
         {(() => {
           const upgradeLink = (
             <Link
               href="/dashboard/upgrade"
               className={cn(
-                'flex items-center justify-center no-underline rounded-xl',
-                'bg-gradient-btn text-white font-display font-semibold text-[14px] tracking-wide',
-                'shadow-[0_4px_16px_rgba(79,70,229,0.35)]',
-                'hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_8px_24px_rgba(79,70,229,0.5)]',
+                'flex items-center no-underline rounded-lg mt-1.5',
+                'bg-gradient-btn text-white font-sans font-semibold text-[13.5px]',
+                'shadow-[0_4px_18px_rgba(192,38,211,0.4)] ring-1 ring-white/10',
+                'hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_6px_24px_rgba(192,38,211,0.55)]',
                 'transition-all duration-200',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
-                collapsed ? 'w-10 h-10 mx-auto p-0' : 'py-3.5 px-4 gap-2',
+                collapsed ? 'w-10 h-10 mx-auto p-0 justify-center' : 'px-3 py-2.5 gap-2.5',
               )}
             >
-              <TrendingUp className={cn('shrink-0', collapsed ? 'w-5 h-5' : 'w-4 h-4')} />
-              {!collapsed && <span>Hesabınızı Yükseltin</span>}
+              <TrendingUp className="w-[17px] h-[17px] shrink-0" strokeWidth={2} />
+              {!collapsed && <span className="truncate">Hesabınızı Yükseltin</span>}
             </Link>
           );
           return collapsed ? (

@@ -5,20 +5,10 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
-import { Percent, Coins } from 'lucide-react';
+import { calculateMessageAllowance } from '@/shared/lib/pricing';
+import { Percent, Coins, Gift } from 'lucide-react';
 
 const WEEKS_TO_DURATION = { 1: '1_week', 2: '2_weeks', 3: '3_weeks', 4: '1_month' };
-
-// PHP tarafındaki coin_engine.php > calculateMessageAllowance() ile aynı
-// formülün JS aynası (Sohbet Luma Coini, satın alınan bota özel bonus hak).
-const COIN_TIER_BASE = 150;
-const COIN_TIER_STEP = 100;
-const COIN_TIER_CAP = 1000;
-function calculateMessageAllowance(totalPaid) {
-    if (!totalPaid || totalPaid < 100) return 0;
-    const tier = Math.floor(totalPaid / 100);
-    return Math.min(COIN_TIER_CAP, COIN_TIER_BASE + (tier - 1) * COIN_TIER_STEP);
-}
 
 const DURATIONS = [
     { key: '1_week', label: 'Bir Haftalık' },
@@ -155,7 +145,7 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
                 </div>
 
                 {selectedDuration === '1_month' && (
-                    <div className="mb-3 flex items-center gap-3 rounded-xl border border-dashed border-fuchsia-400/40 bg-white/[0.03] px-4 py-3 text-left">
+                    <div className="mb-3 flex items-center gap-3 rounded-xl border border-fuchsia-400/20 bg-white/[0.03] px-4 py-3 text-left">
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fuchsia-500/15 text-fuchsia-300">
                             <Percent className="h-4 w-4" />
                         </span>
@@ -166,10 +156,10 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
                     </div>
                 )}
 
-                <div className="my-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-fuchsia-400/40 bg-white/5 px-4 py-3.5 text-left">
-                    <span className="text-[11px] uppercase text-white/60">
+                <div className="my-3 flex items-center justify-between gap-3 rounded-xl border border-fuchsia-400/20 bg-white/5 px-4 py-3.5 text-left">
+                    <span className="text-[12px] text-white/60">
                         {selectedDuration === '1_month' ? 'Bir aylık satış fiyatı: ' : 'Seçilen süreye göre satış fiyatı: '}
-                        <b className="text-[13px] normal-case text-white">{price}{priceType === 'TL' ? '₺' : priceType}</b>
+                        <b className="text-[13px] text-white">{price}{priceType === 'TL' ? '₺' : priceType}</b>
                     </span>
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fuchsia-500/15 text-fuchsia-300">
                         <Coins className="h-4 w-4" />
@@ -177,8 +167,9 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
                 </div>
 
                 {messageAllowance > 0 && (
-                    <div className="mt-1.5 text-[13px] text-white/85">
-                        🎁 Bu chatbotu satın alırsan <b>{messageAllowance} mesaj hakkı</b> kazanırsın (sadece bu chatbotta geçerli).
+                    <div className="mt-1.5 flex items-start gap-2 text-[13px] text-white/85">
+                        <Gift className="mt-0.5 h-4 w-4 shrink-0 text-fuchsia-300" strokeWidth={1.75} />
+                        <span>Bu chatbotu satın alırsan <b>{messageAllowance} mesaj hakkı</b> kazanırsın (sadece bu chatbotta geçerli).</span>
                     </div>
                 )}
 

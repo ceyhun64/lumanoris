@@ -7,8 +7,10 @@ import AddToListModal from "@/features/lists/AddToListModal";
 import CommentModal from "@/features/comments/CommentModal";
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogTitle } from '@/shared/ui/dialog';
+import { resolveAvatarSrc } from '@/shared/lib/image';
 import { cn } from '@/lib/utils';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { toast } from '@/shared/hooks/use-toast';
 
 export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
     const inputRef = useRef(null);
@@ -314,7 +316,7 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
                             className="flex cursor-pointer items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-white/5"
                         >
                             <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full">
-                                <Image src={selectedHistory.chatbot_profil_fotografi} alt="avatar" width={48} height={48} className="h-full w-full object-cover" />
+                                <Image src={resolveAvatarSrc(selectedHistory.chatbot_profil_fotografi)} alt="avatar" width={48} height={48} className="h-full w-full object-cover" />
                             </div>
                             <div>
                                 <p className="font-display text-[14px] font-semibold text-white">{selectedHistory.chatbot_isim}</p>
@@ -359,12 +361,12 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
                         }
                         else
                         {
-                            alert(result.message);
+                            toast({ variant: "destructive", title: "Yorum eklenemedi", description: result.message });
                         }
                     }
                     catch (err)
                     {
-                        alert("Yorum eklenemedi: " + err.message);
+                        toast({ variant: "destructive", title: "Yorum eklenemedi", description: err.message });
                     }
                 }}
             />

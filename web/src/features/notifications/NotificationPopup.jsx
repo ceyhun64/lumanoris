@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/shared/ui/dialog';
 import { cn } from '@/lib/utils';
 import { Bell } from 'lucide-react';
 import { EmptyState } from '@/shared/ui/empty-state';
+import { Skeleton } from '@/shared/ui/skeleton';
 
 // İkonları merkezi bir yerden yönetiyoruz
 const ICONS = {
@@ -102,8 +103,16 @@ export default function NotificationPopup({ onClose, userId }) {
                 <DialogTitle className="mb-4 text-[16px]">Bildirimler</DialogTitle>
 
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-14 text-white/50">
-                        <p className="text-xs font-semibold">Yükleniyor...</p>
+                    <div className="flex flex-col gap-3">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="flex items-center gap-4 rounded-2xl bg-white/[0.03] p-3">
+                                <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+                                <div className="flex flex-1 flex-col gap-2">
+                                    <Skeleton className="h-3 w-2/3" />
+                                    <Skeleton className="h-2.5 w-1/3" />
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : notifications.length > 0 ? (
                     <div className="flex max-h-[60vh] flex-col gap-3 overflow-y-auto pr-1">

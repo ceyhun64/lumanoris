@@ -8,32 +8,25 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/shared/hooks/use-toast";
 import { Button } from "@/shared/ui/button";
 import DeleteConfirmModal from "@/shared/ui/DeleteConfirmModal";
-import { RefreshCw, Upload, ChevronDown, FileText } from "lucide-react";
+import {
+    MIN_WEEKLY_PRICE,
+    MAX_WEEKLY_PRICE,
+    SELLER_COMMISSION_WEEKLY,
+    SELLER_COMMISSION_MONTHLY,
+    deriveMonthlyPrice,
+    calculateMessageAllowance,
+    validatePrice,
+} from "@/shared/lib/pricing";
+import { RefreshCw, Upload, ChevronDown, FileText, Tag, AlertCircle } from "lucide-react";
 
 const inputClass = (hasError) => cn(
-    "mb-6 w-full rounded-lg border border-transparent bg-white/[0.04] px-3 py-4 font-display text-xs font-medium uppercase text-white/95 outline-none transition-all duration-300 max-md:mb-3",
-    hasError && "border-rose-400 bg-rose-400/10",
+    "mb-6 w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3.5 font-sans text-[14px] text-white placeholder:text-white/35 outline-none ring-1 ring-inset ring-transparent transition-all duration-200 focus:border-fuchsia-400/30 focus:ring-fuchsia-400/20 max-md:mb-3",
+    hasError && "border-rose-400/50 bg-rose-400/[0.06]",
 );
 const textareaClass = (hasError) => cn(
-    "mb-6 min-h-[180px] w-full resize-y rounded-lg border border-transparent bg-white/[0.04] px-3 py-4 font-display text-xs font-medium uppercase text-white/95 outline-none transition-all duration-300 max-md:mb-3",
-    hasError && "border-rose-400 bg-rose-400/10",
+    "mb-6 min-h-[160px] w-full resize-y rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3.5 font-sans text-[14px] leading-relaxed text-white placeholder:text-white/35 outline-none ring-1 ring-inset ring-transparent transition-all duration-200 focus:border-fuchsia-400/30 focus:ring-fuchsia-400/20 max-md:mb-3",
+    hasError && "border-rose-400/50 bg-rose-400/[0.06]",
 );
-
-// PHP tarafındaki coin_engine.php > calculateMessageAllowance() ile aynı
-// formülün JS aynası (Sohbet Luma Coini, satın alınan bota özel bonus hak).
-const COIN_TIER_BASE = 150;
-const COIN_TIER_STEP = 100;
-const COIN_TIER_CAP = 1000;
-function calculateMessageAllowance(totalPaid) {
-    if (!totalPaid || totalPaid < 100) return 0;
-    const tier = Math.floor(totalPaid / 100);
-    return Math.min(COIN_TIER_CAP, COIN_TIER_BASE + (tier - 1) * COIN_TIER_STEP);
-}
-
-// AppConfig::DISCOUNT_MONTHLY_FACTOR (api/src/Shared/Constants/AppConfig.php)
-// ile aynı: aylık fiyat artık ayrı bir alan olarak girilmiyor, haftalık
-// fiyattan otomatik türetiliyor (4 hafta bedeli üzerinden %10 indirim).
-const MONTHLY_DISCOUNT_FACTOR = 0.9;
 
 function ChatbotForm({bot, botId, userId, independentMode = false}) {
     const router = useRouter();
@@ -74,6 +67,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
     const [submitStatusText, setSubmitStatusText] = useState('');
     const [originalTrainingPrompt, setOriginalTrainingPrompt] = useState('');
     const [clearTrainingConfirmOpen, setClearTrainingConfirmOpen] = useState(false);
+    const [monthlyPriceTouched, setMonthlyPriceTouched] = useState(false);
 
     //const MAX_TRAINING_CHARS = 10000;
 
@@ -93,9 +87,13 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                 showInProfile: false,
                 recommendable: true,
                 isPublic: false,
-                weeklyPrice: Number(bot.chatbot.ucret_haftalik) || 0, 
+                weeklyPrice: Number(bot.chatbot.ucret_haftalik) || 0,
                 monthlyPrice: Number(bot.chatbot.ucret_aylik) || 0
             });
+            // Var olan bir bot düzenleniyor — kayıtlı aylık fiyat zaten
+            // belirlenmiş sayılır, haftalık fiyat sonradan değişirse
+            // handleChange'in otomatik türetmesiyle sessizce ezilmemeli.
+            setMonthlyPriceTouched(true);
             setOriginalTrainingPrompt(bot.chatbot.training_prompt || '');
             setCoverImage(bot.chatbot.kapak_fotografi || null);
             setProfileImage(bot.chatbot.profil_fotografi || null);
@@ -108,14 +106,6 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
             }
         }
     }, [bot]);
-
-    // Aylık fiyat artık kullanıcıdan ayrıca alınmıyor — haftalık fiyattan
-    // otomatik türetiliyor (bkz. MONTHLY_DISCOUNT_FACTOR).
-    useEffect(() => {
-        const weekly = Number(formData.weeklyPrice) || 0;
-        const monthly = Math.round(weekly * 4 * MONTHLY_DISCOUNT_FACTOR);
-        setFormData(prev => (prev.monthlyPrice === monthly ? prev : { ...prev, monthlyPrice: monthly }));
-    }, [formData.weeklyPrice]);
 
     useEffect(() => {
             // Kütüphane Yüklemesi Sadece İstemcide Çalışır
@@ -296,6 +286,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
 
             // 2. Durum: Sayısal fiyat alanları için özel kontrol (weeklyPrice ve monthlyPrice)
             if (name === 'weeklyPrice' || name === 'monthlyPrice') {
+                if (name === 'monthlyPrice') setMonthlyPriceTouched(true);
                 // Sayı olmayan her şeyi temizle
                 let cleanValue = value.replace(/[^\d]/g, "");
 
@@ -306,10 +297,19 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                     cleanValue = "0"; // Tamamen silinirse 0 kalsın
                 }
 
-                setFormData(prev => ({
-                    ...prev,
-                    [name]: cleanValue
-                }));
+                setFormData(prev => {
+                    const next = { ...prev, [name]: cleanValue };
+                    // Kullanıcı haftalık fiyatı değiştiriyor ve aylık fiyatı
+                    // henüz elle düzenlemediyse, önerilen aylık değeri de
+                    // aynı anda güncelle. Bunu ayrı bir effect yerine burada
+                    // yapmak, "programatik set" ile "kullanıcı girdisi"
+                    // arasındaki bir useEffect yarışını önlüyor (ikisi de
+                    // aynı state'e yazarsa sonuncusu kazanır sorunu).
+                    if (name === 'weeklyPrice' && !monthlyPriceTouched) {
+                        next.monthlyPrice = String(deriveMonthlyPrice(cleanValue));
+                    }
+                    return next;
+                });
             } else {
                 // 3. Durum: Diğer standart inputlar (Checkbox, text vs.)
                 setFormData(prev => ({
@@ -359,8 +359,12 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                 newErrors.profileImage = 'Profil görseli gereklidir';
             }
 
-            if (!independentMode && (formData.weeklyPrice === undefined || formData.weeklyPrice === null || formData.weeklyPrice <= 0)) {
-                newErrors.weeklyPrice = 'Haftalık satış fiyatı pozitif bir sayı olmalıdır';
+            if (!independentMode) {
+                const weeklyError = validatePrice(formData.weeklyPrice, 'Haftalık', MAX_WEEKLY_PRICE);
+                if (weeklyError) newErrors.weeklyPrice = weeklyError;
+
+                const monthlyError = validatePrice(formData.monthlyPrice, 'Aylık', MAX_WEEKLY_PRICE * 4);
+                if (monthlyError) newErrors.monthlyPrice = monthlyError;
             }
 
             setErrors(newErrors);
@@ -494,13 +498,13 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
         }, [categories, bot]);
 
   return (
-    <div className="flex flex-col items-start rounded-2xl p-6 max-md:p-3">
+    <div className="flex flex-col items-start rounded-2xl border border-white/[0.06] bg-white/[0.015] p-6 max-md:p-4 md:p-8">
             <form className="flex w-full flex-col items-start" onSubmit={handleSubmit}>
-                <div className="mb-6 grid w-full grid-cols-1 gap-3 md:grid-cols-2">
+                <div className="mb-6 grid w-full grid-cols-1 gap-4 md:grid-cols-2">
     {/* KAPAK GÖRSELİ KARTI */}
     <div className={cn(
-        "flex flex-1 gap-5 rounded-xl border border-[#24242e] bg-[#121218] p-5 transition-all duration-300",
-        showErrors && errors.coverImage && "border-rose-400 shadow-[0_0_10px_rgba(255,77,77,0.2)]",
+        "flex flex-1 gap-5 rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5 transition-all duration-200 hover:border-fuchsia-400/15",
+        showErrors && errors.coverImage && "border-rose-400/50 bg-rose-400/[0.05]",
     )}>
         <div className="flex min-w-[160px] flex-col items-center justify-center">
             <div className="mb-4 flex h-[100px] w-[100px] items-center justify-center overflow-hidden rounded-xl bg-fuchsia-500/5">
@@ -514,7 +518,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                     </svg>
                 )}
             </div>
-            <p className="text-center font-display text-[13px] font-bold uppercase leading-relaxed text-fuchsia-400">CHATBOT KAPAK <br /> GÖRSELİ EKLE</p>
+            <p className="text-center font-display text-[12px] font-semibold leading-relaxed text-fuchsia-300/90">Chatbot Kapak <br /> Görseli Ekle</p>
         </div>
         <div className="flex flex-1 flex-col justify-between">
             <h4 className="mb-3 font-display text-sm font-semibold text-white">Kapak Görseli — Temel Tavsiyeler</h4>
@@ -524,9 +528,9 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                 <li className="relative pl-3 text-[11px] leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Görseldeki yazılar ve önemli detaylar kenarlara çok yakın olmamalıdır.</li>
                 <li className="relative pl-3 text-[11px] leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Yüksek çözünürlüklü ve bulanık olmayan görseller kullanılmalıdır.</li>
             </ul>
-            <label htmlFor="cover-upload" className="flex w-fit cursor-pointer items-center justify-center gap-2 border border-transparent bg-transparent px-4 py-2.5 font-display text-xs font-bold uppercase text-white transition-colors duration-300 [border-image:linear-gradient(to_right,#A78BFA,#E879F9)_1] hover:bg-white/5">
-                <RefreshCw className="h-5 w-5" />
-                KAPAK GÖRSELİNİ DEĞİŞTİR
+            <label htmlFor="cover-upload" className="flex w-fit cursor-pointer items-center justify-center gap-2 rounded-lg border border-fuchsia-400/25 bg-fuchsia-400/[0.06] px-4 py-2.5 font-display text-[12px] font-semibold text-fuchsia-300 transition-all duration-200 hover:border-fuchsia-400/45 hover:bg-fuchsia-400/[0.1]">
+                <RefreshCw className="h-4 w-4" />
+                Kapak Görselini Değiştir
             </label>
             <input type="file" id="cover-upload" accept="image/*" hidden onChange={(e) => handleFileUpload(e, 'cover')} />
         </div>
@@ -534,8 +538,8 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
 
     {/* PROFİL GÖRSELİ KARTI */}
     <div className={cn(
-        "flex flex-1 gap-5 rounded-xl border border-[#24242e] bg-[#121218] p-5 transition-all duration-300",
-        showErrors && errors.profileImage && "border-rose-400 shadow-[0_0_10px_rgba(255,77,77,0.2)]",
+        "flex flex-1 gap-5 rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5 transition-all duration-200 hover:border-fuchsia-400/15",
+        showErrors && errors.profileImage && "border-rose-400/50 bg-rose-400/[0.05]",
     )}>
         <div className="flex min-w-[160px] flex-col items-center justify-center">
             <div className="mb-4 flex h-[100px] w-[100px] items-center justify-center overflow-hidden rounded-xl bg-fuchsia-500/5">
@@ -549,7 +553,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                     </svg>
                 )}
             </div>
-            <p className="text-center font-display text-[13px] font-bold uppercase leading-relaxed text-fuchsia-400">PROFİL GÖRSELİ <br /> EKLE</p>
+            <p className="text-center font-display text-[12px] font-semibold leading-relaxed text-fuchsia-300/90">Profil Görseli <br /> Ekle</p>
         </div>
         <div className="flex flex-1 flex-col justify-between">
             <h4 className="mb-3 font-display text-sm font-semibold text-white">Profil Görseli — Temel Tavsiyeler</h4>
@@ -559,9 +563,9 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                 <li className="relative pl-3 text-[11px] leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Bu nedenle logo, yüz veya simge tam ortada ve net şekilde görünmelidir.</li>
                 <li className="relative pl-3 text-[11px] leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Kenarlara yerleştirilen öğeler kırpma sırasında kaybolabilir.</li>
             </ul>
-            <label htmlFor="profile-upload" className="flex w-fit cursor-pointer items-center justify-center gap-2 border border-transparent bg-transparent px-4 py-2.5 font-display text-xs font-bold uppercase text-white transition-colors duration-300 [border-image:linear-gradient(to_right,#A78BFA,#E879F9)_1] hover:bg-white/5">
-                <RefreshCw className="h-5 w-5" />
-                PROFİL GÖRSELİNİ DEĞİŞTİR
+            <label htmlFor="profile-upload" className="flex w-fit cursor-pointer items-center justify-center gap-2 rounded-lg border border-fuchsia-400/25 bg-fuchsia-400/[0.06] px-4 py-2.5 font-display text-[12px] font-semibold text-fuchsia-300 transition-all duration-200 hover:border-fuchsia-400/45 hover:bg-fuchsia-400/[0.1]">
+                <RefreshCw className="h-4 w-4" />
+                Profil Görselini Değiştir
             </label>
             <input type="file" id="profile-upload" accept="image/*" hidden onChange={(e) => handleFileUpload(e, 'profile')} />
         </div>
@@ -573,8 +577,8 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                     name="botName"
                     value={formData.botName}
                     onChange={handleChange}
-                    placeholder="BOT İSMİ"
-                    className={cn(inputClass(showErrors && errors.botName), "normal-case")}
+                    placeholder="Bot İsmi"
+                    className={inputClass(showErrors && errors.botName)}
                     maxLength="20"
                 />
 
@@ -582,29 +586,32 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
-                    placeholder="AÇIKLAMA"
-                    className={cn(textareaClass(showErrors && errors.description), "normal-case")}
+                    placeholder="Açıklama"
+                    className={textareaClass(showErrors && errors.description)}
                     maxLength="300"
                 ></textarea>
 
-                <h4 className="mb-6 font-display text-sm font-medium uppercase text-fuchsia-400 max-md:mb-3">DAVRANIŞ AYARLARI</h4>
+                <h4 className="mb-5 flex items-center gap-2 font-display text-[11px] font-semibold uppercase tracking-[0.12em] text-fuchsia-400/70 max-md:mb-3">Davranış Ayarları</h4>
 
-                <div className="relative mb-6 w-full text-white transition-all duration-300 max-md:mb-3">
+                <div className="relative mb-6 w-full text-white transition-all duration-200 max-md:mb-3">
                     <div
                         onClick={() => setOpen(!open)}
                         className={cn(
-                            "flex cursor-pointer items-center justify-between rounded-lg border border-transparent bg-white/[0.04] px-3 py-4 transition-all duration-300",
-                            showErrors && errors.category && "border-rose-400 bg-rose-400/10",
+                            "flex cursor-pointer items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3.5 transition-all duration-200 hover:border-fuchsia-400/20",
+                            showErrors && errors.category && "border-rose-400/50 bg-rose-400/[0.06]",
                         )}
                     >
-                        <span className="font-display text-xs font-medium uppercase text-white/95">{selectedCategory ? selectedCategory.kategori_adi_tr : 'KATEGORİ SEÇ'}</span>
-                        <div className={cn("flex h-7 w-7 items-center justify-center rounded-full bg-white/30 transition-transform duration-300", open && "rotate-180")}>
-                            <ChevronDown className="h-4 w-4 text-white" />
+                        <span className="flex items-center gap-2 font-sans text-[14px] text-white/90">
+                            <Tag className="h-4 w-4 text-fuchsia-400/70" />
+                            {selectedCategory ? selectedCategory.kategori_adi_tr : 'Kategori Seç'}
+                        </span>
+                        <div className={cn("flex h-6 w-6 items-center justify-center rounded-full bg-white/[0.06] transition-transform duration-300", open && "rotate-180")}>
+                            <ChevronDown className="h-3.5 w-3.5 text-white/70" />
                         </div>
                     </div>
 
                     {open && (
-                        <div className="mt-1.5 grid grid-cols-2 gap-2 rounded-2xl bg-luma-card p-4 sm:grid-cols-3 md:grid-cols-5">
+                        <div className="mt-1.5 grid grid-cols-2 gap-2 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:grid-cols-3 md:grid-cols-5">
                             {categories.map((cat) => (
                                 <div
                                     key={cat.id}
@@ -613,8 +620,8 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                                         setOpen(false);
                                     }}
                                     className={cn(
-                                        "flex cursor-pointer items-center justify-center rounded-lg bg-luma-elevated p-3 text-center font-display text-sm text-white transition-colors duration-200 hover:bg-white/10",
-                                        selectedCategory?.id === cat.id && "bg-gradient-btn",
+                                        "flex cursor-pointer items-center justify-center rounded-lg bg-white/[0.04] p-3 text-center font-display text-sm text-white/85 transition-colors duration-200 hover:bg-white/[0.08]",
+                                        selectedCategory?.id === cat.id && "bg-gradient-btn text-white",
                                     )}
                                 >
                                     {cat.kategori_adi_tr}
@@ -628,26 +635,25 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                     name="stylePrompt"
                     value={formData.stylePrompt}
                     onChange={handleChange}
-                    placeholder="STYLE PROMPT*"
+                    placeholder="Style Prompt*"
                     className={cn(
                         textareaClass(showErrors && errors.stylePrompt),
-                        "normal-case transition-all duration-300",
-                        promptGenerationStatus === 'processing' && "border-fuchsia-400",
+                        promptGenerationStatus === 'processing' && "border-fuchsia-400/50",
                     )}
                 ></textarea>
 
                 {formData.trainingPrompt && (
-                    <div className="mb-4 mt-4 flex items-center justify-between gap-3 rounded-xl border border-dashed border-fuchsia-400/40 bg-fuchsia-400/[0.03] px-4 py-3 shadow-[0_2px_15px_rgba(0,0,0,0.1)]">
+                    <div className="mb-4 mt-4 flex items-center justify-between gap-3 rounded-xl border border-fuchsia-400/20 bg-fuchsia-400/[0.04] px-4 py-3">
                         <div className="flex flex-1 items-center gap-2.5">
-                            <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg bg-fuchsia-400 text-white">
-                                <FileText className="h-[18px] w-[18px]" />
+                            <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-500/25 to-fuchsia-500/10">
+                                <FileText className="h-[18px] w-[18px] text-fuchsia-300" />
                             </div>
                             <div>
-                                <p className="text-[11px] font-extrabold uppercase text-fuchsia-400">
+                                <p className="text-[12px] font-semibold text-fuchsia-300">
                                     Eğitim Verisi Birleştirildi
                                 </p>
-                                <p className="text-[10px] text-white/70">
-                                    Toplam: <strong>{formData.trainingPrompt.length.toLocaleString()}</strong> karakter
+                                <p className="text-[11px] text-white/60">
+                                    Toplam: <strong className="text-white/80">{formData.trainingPrompt.length.toLocaleString()}</strong> karakter
                                 </p>
                             </div>
                         </div>
@@ -655,7 +661,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                         <button
                             type="button"
                             onClick={() => setClearTrainingConfirmOpen(true)}
-                            className="rounded-md border border-rose-500 bg-rose-500/10 px-3 py-1.5 text-[10px] font-bold uppercase text-rose-500 transition-colors hover:bg-rose-500/20"
+                            className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-[12px] font-medium text-rose-400 transition-colors hover:bg-rose-500/20"
                         >
                             Sıfırla
                         </button>
@@ -669,8 +675,8 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                     onDragLeave={handleGeneralDragLeave}
                     onClick={() => generalFileInputRef.current?.click()}
                     className={cn(
-                        "mb-6 flex h-[180px] w-full cursor-pointer flex-col items-center justify-center gap-6 rounded-2xl border border-dashed border-fuchsia-400/30 p-4 transition-all duration-300 max-md:mb-3",
-                        isDragging && "scale-[1.02] border-2 border-fuchsia-400 bg-fuchsia-500/[0.08]",
+                        "mb-6 flex h-[170px] w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/[0.12] bg-white/[0.015] p-4 transition-all duration-200 hover:border-fuchsia-400/30 hover:bg-fuchsia-500/[0.03] max-md:mb-3",
+                        isDragging && "scale-[1.01] border-fuchsia-400/60 bg-fuchsia-500/[0.08]",
                     )}
                 >
                     <input
@@ -690,15 +696,18 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                         }}
                     />
 
-                    <Upload className="h-9 w-9 text-fuchsia-400" />
-                    <p className="font-display text-xs font-medium uppercase text-white/95">DOSYALARINIZI BURAYA SÜRÜKLEYİN VE BIRAKIN</p>
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-fuchsia-500/10">
+                        <Upload className="h-5 w-5 text-fuchsia-400" />
+                    </div>
+                    <p className="font-display text-[13px] font-medium text-white/80">Dosyalarını buraya sürükle ve bırak</p>
+                    <p className="text-[11.5px] text-white/35">PDF veya görsel — otomatik olarak eğitim verisine eklenir</p>
                 </div>
 
                 {/* Yüklenen Belge Kutusu (Konumu burası, inputun hemen üstü) */}
                 {uploadedFiles.length > 0 && (
-                    <div className="mb-4 flex flex-wrap gap-4">
+                    <div className="mb-4 flex flex-wrap gap-3">
                         {uploadedFiles.map((f, index) => (
-                            <div key={index} className="relative min-w-[120px] rounded-lg border-2 border-fuchsia-400 p-4">
+                            <div key={index} className="relative min-w-[120px] rounded-xl border border-fuchsia-400/25 bg-white/[0.03] p-4">
                                 {f.status === 'processing' && <div className="absolute inset-x-0 top-0 rounded-t-md bg-black/70 p-1 text-center text-xs text-white">İşleniyor...</div>}
                                 {f.status === 'error' && <div className="absolute inset-x-0 top-0 rounded-t-md bg-rose-500/80 p-1 text-center text-xs text-white">Hata</div>}
                                 {f.url && f.type?.startsWith('image/') ? (
@@ -706,7 +715,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                                 ) : (
                                     <div className="text-center">
                                         <FileText className="mx-auto h-8 w-8 text-fuchsia-400" />
-                                        <div className="mt-2 text-xs">{f.name}</div>
+                                        <div className="mt-2 text-xs text-white/70">{f.name}</div>
                                     </div>
                                 )}
                             </div>
@@ -714,7 +723,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                         <button
                             type="button"
                             onClick={() => setUploadedFiles([])}
-                            className="rounded-lg bg-rose-500 px-4 text-white transition-colors hover:bg-rose-600"
+                            className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 text-[13px] font-medium text-rose-400 transition-colors hover:bg-rose-500/20"
                         >
                             Dosyaları Temizle
                         </button>
@@ -725,28 +734,26 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
-                    placeholder="SOHBET BAŞI MESAJI"
-                    className={cn(textareaClass(showErrors && errors.message), "normal-case")}
+                    placeholder="Sohbet Başı Mesajı"
+                    className={textareaClass(showErrors && errors.message)}
                     maxLength="300"
                 ></textarea>
 
                 {!independentMode && (
                     <div className="my-5 w-full font-display text-white">
-                        <h3 className="mb-2.5 text-lg font-semibold">Satış Fiyatını Belirle</h3>
-                        <hr className="mb-5 border-t border-[#2c2833]" />
-                        <p className="mb-7 text-[13px] leading-relaxed text-white/60">
-                            Yapay zekânızın haftalık satış fiyatını belirleyiniz. Belirlediğiniz ücret, kullanıcıların yapay zekânıza erişim bedeli olarak uygulanır
-                            ve haftalık kazanç hesabında esas alınır. Aylık satın alma seçeneğinde, haftalık ücretlerin toplamına göre indirim uygulanır.
+                        <h3 className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-fuchsia-400/70">Fiyatlandırma</h3>
+                        <p className="mb-6 max-w-2xl text-[13.5px] leading-relaxed text-white/55">
+                            Yapay zekânızın haftalık ve aylık satış fiyatını belirleyiniz. Belirlediğiniz ücretler, kullanıcıların yapay zekânıza erişim bedeli olarak uygulanır
+                            ve kazanç hesabında esas alınır. Aylık fiyat için haftalık fiyatın 4 katının %10 indirimlisi önerilir, ancak dilediğiniz gibi düzenleyebilirsiniz.
                         </p>
 
-                        <div className="flex flex-col items-center gap-5 md:flex-row md:items-start md:justify-between">
-                            <div className="w-full flex-1">
-                                {/* Haftalık Fiyat — aylık fiyat artık ayrıca girilmiyor, bundan otomatik türetiliyor */}
+                        <div className="flex flex-col items-start gap-5 md:flex-row">
+                            <div className="flex w-full flex-1 flex-col gap-3">
                                 <div className={cn(
-                                    "flex flex-col rounded-xl border border-[#1e1a24] bg-[#0c0c0e] px-5 py-4",
-                                    showErrors && errors.weeklyPrice && "border-rose-500",
+                                    "flex flex-col rounded-2xl border border-white/[0.06] bg-white/[0.03] px-5 py-4 transition-all duration-200 focus-within:border-fuchsia-400/30",
+                                    showErrors && errors.weeklyPrice && "border-rose-400/50 bg-rose-400/[0.06]",
                                 )}>
-                                    <label htmlFor="weeklyPrice" className="mb-1 text-sm text-white/90">Belirlediğin satış fiyatı (Bir Haftalık)</label>
+                                    <label htmlFor="weeklyPrice" className="mb-1 text-[13px] text-white/60">Belirlediğin satış fiyatı (Bir Haftalık)</label>
                                     <div className="flex items-center justify-between">
                                         <input
                                             id="weeklyPrice"
@@ -755,21 +762,53 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                                             value={formData.weeklyPrice}
                                             onChange={handleChange}
                                             placeholder="0"
-                                            className="w-full bg-transparent font-display text-xl font-medium text-white outline-none placeholder:text-white/30"
+                                            className="w-full bg-transparent font-display text-xl font-bold text-white outline-none placeholder:text-white/30"
                                         />
                                         <span className="ml-2.5 text-xl font-bold text-fuchsia-400">₺</span>
                                     </div>
                                 </div>
+                                <p className="text-[11px] text-white/40">
+                                    İzin verilen aralık: {MIN_WEEKLY_PRICE}₺ – {MAX_WEEKLY_PRICE.toLocaleString('tr-TR')}₺
+                                </p>
+
+                                <div className={cn(
+                                    "flex flex-col rounded-2xl border border-white/[0.06] bg-white/[0.03] px-5 py-4 transition-all duration-200 focus-within:border-fuchsia-400/30",
+                                    showErrors && errors.monthlyPrice && "border-rose-400/50 bg-rose-400/[0.06]",
+                                )}>
+                                    <label htmlFor="monthlyPrice" className="mb-1 text-[13px] text-white/60">Belirlediğin satış fiyatı (Bir Aylık)</label>
+                                    <div className="flex items-center justify-between">
+                                        <input
+                                            id="monthlyPrice"
+                                            type="number"
+                                            name="monthlyPrice"
+                                            value={formData.monthlyPrice}
+                                            onChange={handleChange}
+                                            placeholder="0"
+                                            className="w-full bg-transparent font-display text-xl font-bold text-white outline-none placeholder:text-white/30"
+                                        />
+                                        <span className="ml-2.5 text-xl font-bold text-fuchsia-400">₺</span>
+                                    </div>
+                                </div>
+                                <p className="text-[11px] text-white/40">
+                                    İzin verilen aralık: {MIN_WEEKLY_PRICE}₺ – {(MAX_WEEKLY_PRICE * 4).toLocaleString('tr-TR')}₺
+                                </p>
                             </div>
 
-                            <div className="flex w-full flex-1 flex-col justify-center gap-3 pt-2.5 md:pl-10">
-                                <p className="flex justify-start gap-2.5 whitespace-nowrap text-[15px] text-fuchsia-400">Haftalık Satıştan Kazancın: <span className="font-medium text-white">{(formData.weeklyPrice * 0.85).toFixed(2)} ₺</span></p>
-                                <p className="flex justify-start gap-2.5 whitespace-nowrap text-[15px] text-fuchsia-400">Aylık Satıştan Kazancın: <span className="font-medium text-white">{(formData.monthlyPrice * 0.80).toFixed(2)} ₺</span></p>
+                            <div className="relative w-full flex-1 overflow-hidden rounded-2xl border border-fuchsia-400/15 bg-gradient-to-br from-[#1a1030] via-[#150d28] to-[#0d0a1c] p-5">
+                                <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-fuchsia-600/15 blur-[60px]" />
+                                <p className="relative flex items-center justify-between text-[13.5px] text-white/60">
+                                    Haftalık satıştan kazancın
+                                    <span className="font-display text-lg font-bold text-white">{(formData.weeklyPrice * SELLER_COMMISSION_WEEKLY).toFixed(2)} ₺</span>
+                                </p>
+                                <p className="relative mt-3 flex items-center justify-between text-[13.5px] text-white/60">
+                                    Aylık satıştan kazancın
+                                    <span className="font-display text-lg font-bold text-white">{(formData.monthlyPrice * SELLER_COMMISSION_MONTHLY).toFixed(2)} ₺</span>
+                                </p>
                                 {formData.weeklyPrice > 0 && (
-                                    <p className="mt-2 text-[13px] text-white/85">
-                                        🎁 Alıcılarınız bu fiyatla, 1 haftalık satın almada <b>{calculateMessageAllowance(Number(formData.weeklyPrice))} mesaj hakkı</b>
+                                    <p className="relative mt-4 border-t border-white/[0.06] pt-4 text-[13px] leading-relaxed text-white/70">
+                                        Alıcıların bu fiyatla, 1 haftalık satın almada <b className="text-fuchsia-300">{calculateMessageAllowance(Number(formData.weeklyPrice))} mesaj hakkı</b>
                                         {formData.monthlyPrice > 0 && (
-                                            <>, 1 aylık satın almada <b>{calculateMessageAllowance(Number(formData.monthlyPrice) * 0.95)} mesaj hakkı</b></>
+                                            <>, 1 aylık satın almada <b className="text-fuchsia-300">{calculateMessageAllowance(Number(formData.monthlyPrice) * 0.95)} mesaj hakkı</b></>
                                         )} kazanacak.
                                     </p>
                                 )}
@@ -779,17 +818,22 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                 )}
 
                 {showErrors && Object.keys(errors).length > 0 && (
-                    <div className="mb-4 w-full rounded-lg border border-rose-400 bg-rose-400/10 p-4">
-                        <h4 className="mb-3 font-display text-sm font-semibold text-rose-400">Lütfen aşağıdaki hataları düzeltin:</h4>
-                        <ul className="pl-5">
-                            {errors.botName && <li className="mb-1 text-[13px] leading-relaxed text-rose-400">• {errors.botName}</li>}
-                            {errors.description && <li className="mb-1 text-[13px] leading-relaxed text-rose-400">• {errors.description}</li>}
-                            {errors.category && <li className="mb-1 text-[13px] leading-relaxed text-rose-400">• {errors.category}</li>}
-                            {errors.stylePrompt && <li className="mb-1 text-[13px] leading-relaxed text-rose-400">• {errors.stylePrompt}</li>}
-                            {errors.message && <li className="mb-1 text-[13px] leading-relaxed text-rose-400">• {errors.message}</li>}
-                            {errors.coverImage && <li className="mb-1 text-[13px] leading-relaxed text-rose-400">• {errors.coverImage}</li>}
-                            {errors.profileImage && <li className="mb-1 text-[13px] leading-relaxed text-rose-400">• {errors.profileImage}</li>}
-                        </ul>
+                    <div className="mb-4 flex w-full items-start gap-3 rounded-2xl border border-rose-400/25 bg-rose-400/[0.06] p-4">
+                        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+                        <div>
+                            <h4 className="mb-2 font-display text-[13px] font-semibold text-rose-400">Lütfen aşağıdaki hataları düzeltin</h4>
+                            <ul className="flex flex-col gap-1">
+                                {errors.botName && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.botName}</li>}
+                                {errors.description && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.description}</li>}
+                                {errors.category && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.category}</li>}
+                                {errors.stylePrompt && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.stylePrompt}</li>}
+                                {errors.message && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.message}</li>}
+                                {errors.coverImage && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.coverImage}</li>}
+                                {errors.profileImage && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.profileImage}</li>}
+                                {errors.weeklyPrice && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.weeklyPrice}</li>}
+                                {errors.monthlyPrice && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.monthlyPrice}</li>}
+                            </ul>
+                        </div>
                     </div>
                 )}
 

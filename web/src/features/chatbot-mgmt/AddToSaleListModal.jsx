@@ -2,42 +2,65 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
 import { Button } from '@/shared/ui/button';
-
-// ChatbotForm.jsx (bot oluşturma/düzenleme) ile aynı: aylık fiyat ayrıca
-// girilmiyor, haftalık fiyattan otomatik türetiliyor (AppConfig::DISCOUNT_MONTHLY_FACTOR).
-const MONTHLY_DISCOUNT_FACTOR = 0.9;
+import {
+    MIN_WEEKLY_PRICE,
+    MAX_WEEKLY_PRICE,
+    SELLER_COMMISSION_WEEKLY,
+    SELLER_COMMISSION_MONTHLY,
+    deriveMonthlyPrice,
+    validatePrice,
+} from '@/shared/lib/pricing';
 
 export default function AddToSaleListModal({
     isOpen,
     onClose,
     botId,
     weeklyPrice, // Mevcut haftalık fiyat (örn: 100)
+    monthlyPrice, // Mevcut aylık fiyat (varsa)
     header = "Satış Listesine Ekle",
 }) {
     const [wPrice, setWPrice] = useState(weeklyPrice || '');
+    const [mPrice, setMPrice] = useState('');
+    const [monthlyTouched, setMonthlyTouched] = useState(false);
     const [showFeedback, setShowFeedback] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
 
     // Modal her açıldığında proplardan gelen güncel fiyatı state'e yükle
     useEffect(() => {
         if (isOpen) {
-            setWPrice(weeklyPrice);
+            setWPrice(weeklyPrice || '');
+            setMPrice(monthlyPrice ? String(monthlyPrice) : (weeklyPrice ? String(deriveMonthlyPrice(weeklyPrice)) : ''));
+            setMonthlyTouched(false);
             setErrorMsg('');
         }
-    }, [isOpen, weeklyPrice]);
+    }, [isOpen, weeklyPrice, monthlyPrice]);
+
+    // Haftalık fiyat değiştiğinde ve aylık fiyat henüz elle düzenlenmediyse
+    // önerilen aylık değeri de güncelle. Bunu bir useEffect yerine burada
+    // (onChange içinde) yapmak, "modal açılışında proptan seed edilen
+    // gerçek fiyat" ile "haftalık değişince otomatik türetme" arasındaki bir
+    // yarışı önlüyor — ikisi de aynı state'e (mPrice) yazan ayrı efektler
+    // olsaydı, modal her açıldığında sonuncusu çalışıp gerçek kayıtlı aylık
+    // fiyatı sessizce ezerdi.
+    const handleWeeklyChange = (value) => {
+        setWPrice(value);
+        if (!monthlyTouched) {
+            setMPrice(value ? String(deriveMonthlyPrice(value)) : '');
+        }
+    };
 
     const weekly = parseFloat(wPrice) || 0;
-    const monthly = Math.round(weekly * 4 * MONTHLY_DISCOUNT_FACTOR);
-    const weeklyEarning = (weekly * 0.85).toFixed(2);
-    const monthlyEarning = (monthly * 0.80).toFixed(2);
+    const monthly = parseFloat(mPrice) || 0;
+    const weeklyEarning = (weekly * SELLER_COMMISSION_WEEKLY).toFixed(2);
+    const monthlyEarning = (monthly * SELLER_COMMISSION_MONTHLY).toFixed(2);
 
     const handleSave = async () => {
         setErrorMsg('');
 
-        if (isNaN(weekly) || weekly <= 0) {
-            setErrorMsg("Haftalık fiyat geçerli pozitif bir sayı olmalıdır.");
-            return;
-        }
+        const weeklyError = validatePrice(weekly, 'Haftalık', MAX_WEEKLY_PRICE);
+        if (weeklyError) { setErrorMsg(weeklyError); return; }
+        const monthlyError = validatePrice(monthly, 'Aylık', MAX_WEEKLY_PRICE * 4);
+        if (monthlyError) { setErrorMsg(monthlyError); return; }
 
         const payload = {
             id: botId, // Modal'a prop olarak botun ID'sini de geçmelisin
@@ -83,19 +106,40 @@ export default function AddToSaleListModal({
                     Satış fiyatını düzenleyin ve değişiklikleri kaydedin.
                 </DialogDescription>
 
-                <div className="mb-4 flex items-center justify-between gap-2 rounded-xl bg-luma-input px-5 py-4">
+                <div className="mb-1.5 flex items-center justify-between gap-2 rounded-xl bg-luma-input px-5 py-4">
                     <div className="flex flex-col gap-0.5">
                         <span className="text-[13px] text-white/85">Bir Haftalık Satış Fiyatını Düzenle</span>
                         <input
                             type="number"
                             value={wPrice}
-                            onChange={(e) => setWPrice(e.target.value)}
+                            onChange={(e) => handleWeeklyChange(e.target.value)}
                             placeholder="0.00"
                             className="w-full bg-transparent font-display text-[17px] font-medium text-white placeholder:text-white/30 focus:outline-none"
                         />
                     </div>
                     <span className="shrink-0 text-lg font-bold text-fuchsia-400">₺</span>
                 </div>
+                <p className="mb-4 text-[11px] text-white/40">
+                    İzin verilen aralık: {MIN_WEEKLY_PRICE}₺ – {MAX_WEEKLY_PRICE.toLocaleString('tr-TR')}₺
+                </p>
+
+                <div className="mb-1.5 flex items-center justify-between gap-2 rounded-xl bg-luma-input px-5 py-4">
+                    <div className="flex flex-col gap-0.5">
+                        <span className="text-[13px] text-white/85">Bir Aylık Satış Fiyatını Düzenle</span>
+                        <input
+                            type="number"
+                            value={mPrice}
+                            onChange={(e) => { setMonthlyTouched(true); setMPrice(e.target.value); }}
+                            placeholder="0.00"
+                            className="w-full bg-transparent font-display text-[17px] font-medium text-white placeholder:text-white/30 focus:outline-none"
+                        />
+                    </div>
+                    <span className="shrink-0 text-lg font-bold text-fuchsia-400">₺</span>
+                </div>
+                <p className="mb-4 text-[11px] text-white/40">
+                    İzin verilen aralık: {MIN_WEEKLY_PRICE}₺ – {(MAX_WEEKLY_PRICE * 4).toLocaleString('tr-TR')}₺
+                    {' · '}Önerilen: haftalık fiyatın 4 katının %10 indirimlisi
+                </p>
 
                 {errorMsg && (
                     <div className="mb-4 text-[13px] text-rose-400">

@@ -139,16 +139,16 @@ export default function ForgotPassword() {
     };
 
     const inputCls =
-        "w-full bg-luma-input border border-transparent rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/30 transition-colors font-sans";
+        "w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3.5 text-[14px] text-white placeholder-white/35 outline-none ring-1 ring-inset ring-transparent focus:border-fuchsia-400/30 focus:ring-fuchsia-400/20 transition-all duration-200 font-sans";
 
     return (
-        <div className="min-h-screen bg-luma-base flex">
+        <div className="min-h-screen bg-[#09090F] flex">
             {/* ── Left branding panel (desktop only) ── */}
             <div className="hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-600/20 via-purple-900/15 to-violet-900/10" />
-                <div className="absolute top-1/4 left-1/3 w-72 h-72 bg-fuchsia-500/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute bottom-1/4 right-1/4 w-56 h-56 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_39px,rgba(255,255,255,0.02)_39px,rgba(255,255,255,0.02)_40px),repeating-linear-gradient(90deg,transparent,transparent_39px,rgba(255,255,255,0.02)_39px,rgba(255,255,255,0.02)_40px)]" />
+                <div className="pointer-events-none absolute -top-32 left-[10%] h-[500px] w-[500px] rounded-full bg-fuchsia-600/20 blur-[120px]" />
+                <div className="pointer-events-none absolute top-[45%] right-[-10%] h-[400px] w-[400px] rounded-full bg-violet-600/15 blur-[110px]" />
+                <div className="pointer-events-none absolute bottom-[-20%] left-[20%] h-[420px] w-[420px] rounded-full bg-fuchsia-500/[0.12] blur-[120px]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.05)_1px,transparent_0)] bg-[length:28px_28px]" />
                 <div className="relative z-10 flex flex-col items-center text-center px-12 gap-6">
                     <img
                         src={ubeyazlogo.src}
@@ -165,21 +165,26 @@ export default function ForgotPassword() {
             </div>
 
             {/* ── Right form panel ── */}
-            <div className="flex-1 flex items-center justify-center p-6 min-h-screen">
-                <div className="w-full max-w-md">
+            <div className="flex-1 flex items-center justify-center p-6 min-h-screen relative overflow-hidden">
+                <div className="pointer-events-none absolute top-[10%] right-[15%] h-72 w-72 rounded-full bg-fuchsia-600/[0.08] blur-[100px] lg:hidden" />
+                <div className="w-full max-w-md relative">
                     {/* Mobile logo */}
                     <div className="flex justify-center mb-8 lg:hidden">
-                        <img src={ubeyazlogo.src} alt="Lumanoris" className="w-14 h-14" />
+                        <img src={ubeyazlogo.src} alt="Lumanoris" className="w-14 h-14 drop-shadow-[0_0_24px_rgba(217,70,239,0.4)]" />
                     </div>
 
-                    <div className="bg-luma-elevated rounded-2xl p-8 border border-transparent shadow-modal">
-                        <h2 className="text-xl font-bold text-white font-display mb-6">
+                    <div className="relative overflow-hidden rounded-2xl border border-fuchsia-400/15 bg-gradient-card p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(232,121,249,0.03)]">
+                        <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-fuchsia-600/15 blur-[70px]" />
+                        <span className="relative mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
+                            Şifre Sıfırlama
+                        </span>
+                        <h2 className="relative bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text text-2xl font-bold text-transparent font-display mb-6">
                             Şifremi Unuttum
                         </h2>
 
                         {/* Step 1 - Email gönder */}
                         {step === 1 && (
-                            <div className="flex flex-col gap-4">
+                            <div className="relative flex flex-col gap-4">
                                 <p className="text-sm text-white/60 font-sans leading-relaxed">
                                     <strong className="block text-white font-semibold mb-1">
                                         E-posta Adresinizi Girin
@@ -202,7 +207,7 @@ export default function ForgotPassword() {
 
                         {/* Step 2 - Yeni şifre belirle */}
                         {step === 2 && (
-                            <div className="flex flex-col gap-4">
+                            <div className="relative flex flex-col gap-4">
                                 <p className="text-sm text-white/60 font-sans leading-relaxed">
                                     <strong className="block text-white font-semibold mb-1">Yeni Şifrenizi Belirleyin</strong>
                                     E-posta adresinize gönderilen kodu girin ve yeni bir şifre oluşturun.

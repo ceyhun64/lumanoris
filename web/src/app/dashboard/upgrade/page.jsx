@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import { Crown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/button";
+import { Badge } from "@/shared/ui/badge";
+import { toast } from "@/shared/hooks/use-toast";
 
 // Başlangıç verileri (API'den gelmezse kullanılacak, İSİMLER VERİTABANIYLA AYNI OLMALI)
 const initialPlanData = [
@@ -72,7 +74,7 @@ export default function PricingPlans() {
 
     const handleChoosePlan = async (planTitle, index) => {
         if (!userId) {
-            alert("Paket seçebilmek için giriş yapmalısınız.");
+            toast({ variant: "destructive", title: "Paket seçebilmek için giriş yapmalısınız." });
             return;
         }
         setSelectedPlan(index);
@@ -85,10 +87,10 @@ export default function PricingPlans() {
             if (result.success) {
                 setUpgradedPlan(planTitle);
             } else {
-                alert(result.message || "Paket seçimi başarısız oldu.");
+                toast({ variant: "destructive", title: result.message || "Paket seçimi başarısız oldu." });
             }
         } catch (err) {
-            alert("Sunucuyla bağlantı kurulamadı.");
+            toast({ variant: "destructive", title: "Sunucuyla bağlantı kurulamadı." });
         } finally {
             setUpgrading(null);
         }
@@ -108,8 +110,11 @@ export default function PricingPlans() {
 
     return (
         <div className="flex h-full w-full flex-col px-4 py-6 font-display text-white md:px-16">
-            <div className="mb-10 flex items-center justify-between">
-                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text text-2xl font-semibold text-transparent md:text-4xl">
+            <div className="mb-8">
+                <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
+                    Planlar
+                </span>
+                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text text-3xl font-bold text-transparent md:text-4xl">
                     Hesabını Yükselt
                 </h2>
             </div>
@@ -131,44 +136,37 @@ export default function PricingPlans() {
                         <div
                             key={index}
                             className={cn(
-                                "relative cursor-pointer rounded-2xl border border-transparent p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(162,89,255,0.2)]",
-                                "bg-[radial-gradient(circle_at_top_right,#3d1c7c_0%,#111014_70%)]",
-                                selectedPlan === index && "-translate-y-2 border-2 border-violet-400 shadow-[0_0_30px_rgba(162,89,255,0.35)]",
+                                "group relative cursor-pointer overflow-hidden rounded-2xl border border-fuchsia-400/10 bg-gradient-to-br from-[#1a1030] via-[#150d28] to-[#0d0a1c] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-fuchsia-400/25 hover:shadow-[0_10px_32px_rgba(192,38,211,0.2)]",
+                                selectedPlan === index && "-translate-y-2 border-fuchsia-400/50 shadow-[0_10px_36px_rgba(192,38,211,0.3)]",
                             )}
                         >
-                            <h3 className="mb-4 flex items-center justify-between text-xl font-medium text-white/80">
+                            <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-fuchsia-600/15 blur-[70px] transition-opacity duration-300 group-hover:opacity-150" />
+                            <h3 className="relative mb-4 flex items-center justify-between text-xl font-medium text-white/80">
                                 <div className="flex items-center gap-2.5">
-                                    <Crown className="h-6 w-6 text-violet-400" />
+                                    <Crown className="h-6 w-6 text-fuchsia-300" />
                                     {plan.title}
                                 </div>
                                 {plan.badge && (
-                                    <span className="rounded-md border border-transparent bg-[#1c1c1c] px-2.5 py-1 text-xs font-medium text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
-                                        {plan.badge}
-                                    </span>
+                                    <Badge variant="default">{plan.badge}</Badge>
                                 )}
                             </h3>
-                            <p className="mb-3 text-2xl font-bold text-white">
+                            <p className="relative mb-3 text-2xl font-bold text-white">
                                 {plan.monthly_price}
                                 {plan.monthly_price !== "₺0" && <span className="ml-1 text-xs font-normal text-white/50">/Aylık</span>}
                             </p>
-                            <p className="mb-4 text-sm leading-relaxed text-white/75">{plan.description}</p>
+                            <p className="relative mb-4 text-sm leading-relaxed text-white/75">{plan.description}</p>
                             <Button
                                 disabled={plan.title === "Ücretsiz" || upgrading === index}
                                 onClick={() => handleChoosePlan(plan.title, index)}
-                                variant={plan.buttonType === "primary" ? "default" : "secondary"}
-                                className={cn(
-                                    "h-auto mb-6 w-full rounded-lg py-3 text-xs",
-                                    plan.buttonType === "primary"
-                                        ? "bg-violet-500 hover:bg-violet-600 hover:brightness-100 hover:translate-y-0"
-                                        : "border border-transparent bg-[#1c1c1c] hover:bg-[#333]",
-                                )}
+                                variant={plan.buttonType === "primary" ? "default" : plan.title === "Ücretsiz" ? "secondary" : "outline"}
+                                className="relative h-auto mb-6 w-full rounded-lg py-3 text-xs"
                             >
                                 {upgrading === index ? "İşleniyor..." : plan.buttonText}
                             </Button>
-                            <span className="mb-4 block text-sm text-white/75">
+                            <span className="relative mb-4 block text-sm text-white/75">
                                 Neler Dahil
                             </span>
-                            <ul className="flex flex-col gap-2.5 text-[13px] text-white">
+                            <ul className="relative flex flex-col gap-2.5 text-[13px] text-white">
                                 {plan.features.map((feature, i) => (
                                     <li key={i} className="flex items-center gap-2">
                                         <Check className="h-4 w-4 shrink-0 text-violet-400" /> {feature}

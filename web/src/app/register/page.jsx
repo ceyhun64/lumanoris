@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Button } from "@/shared/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
+import { toast } from "@/shared/hooks/use-toast";
 
 export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
@@ -40,10 +42,10 @@ export default function Register() {
             const result = JSON.parse(resultText);
             //const result = await res.json();
             if (result.success) {
-                alert(result.message);
+                toast({ variant: "success", title: result.message });
                 router.push("/dashboard");
             } else {
-                alert("Google girişi başarısız: " + result.message);
+                toast({ variant: "destructive", title: "Google girişi başarısız", description: result.message });
             }
         } catch (err) {
             console.error("Hata:", err);
@@ -80,14 +82,14 @@ export default function Register() {
             const result = JSON.parse(resultText);
 
             if (result.success) {
-                alert("Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz.");
+                toast({ variant: "success", title: "Kayıt başarılı!", description: "Giriş sayfasına yönlendiriliyorsunuz." });
                 router.push("/login");
             } else {
-                alert("Hata: " + result.message);
+                toast({ variant: "destructive", title: "Hata", description: result.message });
             }
         } catch (err) {
             console.error("Kayıt hatası:", err);
-            alert("Sunucuyla bağlantı kurulamadı.");
+            toast({ variant: "destructive", title: "Sunucuyla bağlantı kurulamadı." });
         } finally {
             setLoading(false);
         }
@@ -124,17 +126,17 @@ export default function Register() {
     };
 
     const inputCls =
-        "w-full bg-luma-input border border-transparent rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/30 transition-colors font-sans";
+        "w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3.5 text-[14px] text-white placeholder-white/35 outline-none ring-1 ring-inset ring-transparent focus:border-fuchsia-400/30 focus:ring-fuchsia-400/20 transition-all duration-200 font-sans";
 
     return (
         <GoogleOAuthProvider clientId="457680679934-poocs7d0n78r3eq8q53c6sedfdi1dh0c.apps.googleusercontent.com">
-            <div className="min-h-screen bg-luma-base flex">
+            <div className="min-h-screen bg-[#09090F] flex">
                 {/* ── Left branding panel (desktop only) ── */}
                 <div className="hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-600/20 via-purple-900/15 to-violet-900/10" />
-                    <div className="absolute top-1/4 left-1/3 w-72 h-72 bg-fuchsia-500/10 rounded-full blur-3xl pointer-events-none" />
-                    <div className="absolute bottom-1/4 right-1/4 w-56 h-56 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
-                    <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_39px,rgba(255,255,255,0.02)_39px,rgba(255,255,255,0.02)_40px),repeating-linear-gradient(90deg,transparent,transparent_39px,rgba(255,255,255,0.02)_39px,rgba(255,255,255,0.02)_40px)]" />
+                    <div className="pointer-events-none absolute -top-32 left-[10%] h-[500px] w-[500px] rounded-full bg-fuchsia-600/20 blur-[120px]" />
+                    <div className="pointer-events-none absolute top-[45%] right-[-10%] h-[400px] w-[400px] rounded-full bg-violet-600/15 blur-[110px]" />
+                    <div className="pointer-events-none absolute bottom-[-20%] left-[20%] h-[420px] w-[420px] rounded-full bg-fuchsia-500/[0.12] blur-[120px]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.05)_1px,transparent_0)] bg-[length:28px_28px]" />
                     <div className="relative z-10 flex flex-col items-center text-center px-12 gap-6">
                         <img
                             src={ubeyazlogo.src}
@@ -151,19 +153,24 @@ export default function Register() {
                 </div>
 
                 {/* ── Right form panel ── */}
-                <div className="flex-1 flex items-center justify-center p-6 min-h-screen">
-                    <div className="w-full max-w-md">
+                <div className="flex-1 flex items-center justify-center p-6 min-h-screen relative overflow-hidden">
+                    <div className="pointer-events-none absolute top-[10%] right-[15%] h-72 w-72 rounded-full bg-fuchsia-600/[0.08] blur-[100px] lg:hidden" />
+                    <div className="w-full max-w-md relative">
                         {/* Mobile logo */}
                         <div className="flex justify-center mb-8 lg:hidden">
-                            <img src={ubeyazlogo.src} alt="Lumanoris" className="w-14 h-14" />
+                            <img src={ubeyazlogo.src} alt="Lumanoris" className="w-14 h-14 drop-shadow-[0_0_24px_rgba(217,70,239,0.4)]" />
                         </div>
 
-                        <div className="bg-luma-elevated rounded-2xl p-8 border border-transparent shadow-modal">
-                            <h2 className="text-xl font-bold text-white font-display mb-6">
+                        <div className="relative overflow-hidden rounded-2xl border border-fuchsia-400/15 bg-gradient-card p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(232,121,249,0.03)]">
+                            <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-fuchsia-600/15 blur-[70px]" />
+                            <span className="relative mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
+                                Kayıt
+                            </span>
+                            <h2 className="relative bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text text-2xl font-bold text-transparent font-display mb-6">
                                 Kayıt Ol
                             </h2>
 
-                            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                            <form onSubmit={handleSubmit} className="relative flex flex-col gap-4">
                                 <input
                                     type="email"
                                     name="eposta"
@@ -236,7 +243,7 @@ export default function Register() {
                         </div>
 
                         <p className="text-center mt-6 text-[11px] text-white/25 font-sans px-4">
-                            Devam ederek POE'un{" "}
+                            Devam ederek Lumanoris'in{" "}
                             <Button
                                 type="button"
                                 onClick={() => openPolicy("terms")}
@@ -261,28 +268,13 @@ export default function Register() {
             </div>
 
             {/* ── Policy modal ── */}
-            {isPolicyOpen && (
-                <div
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
-                    onClick={closePolicy}
-                >
-                    <div
-                        className="bg-luma-elevated border border-transparent rounded-2xl p-8 max-w-lg w-full max-h-[80vh] overflow-y-auto shadow-modal"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-white font-semibold text-lg font-display">
-                                {activePolicy === "terms" ? "Kullanım Koşulları" : "Gizlilik Politikası"}
-                            </h3>
-                            <button
-                                onClick={closePolicy}
-                                className="text-white/40 hover:text-white text-xl transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5"
-                            >
-                                ×
-                            </button>
-                        </div>
-                        <div className="text-white/70 text-sm font-sans leading-relaxed space-y-4">
-                            {activePolicy === "terms" ? (
+            <Dialog open={isPolicyOpen} onOpenChange={(open) => !open && closePolicy()}>
+                <DialogContent className="max-h-[80vh] max-w-lg overflow-y-auto">
+                    <DialogTitle>
+                        {activePolicy === "terms" ? "Kullanım Koşulları" : "Gizlilik Politikası"}
+                    </DialogTitle>
+                    <div className="text-white/70 text-sm font-sans leading-relaxed space-y-4">
+                        {activePolicy === "terms" ? (
                                 <>
                                     <h1 className="text-white font-bold text-base">Kullanım Koşulları</h1>
                                     <p><strong className="text-white/90">Son Güncelleme:</strong> 24 Temmuz 2025</p>
@@ -461,10 +453,9 @@ export default function Register() {
                                     </ul>
                                 </>
                             )}
-                        </div>
                     </div>
-                </div>
-            )}
+                </DialogContent>
+            </Dialog>
         </GoogleOAuthProvider>
     );
 }

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Button } from '@/shared/ui/button';
+import { toast } from '@/shared/hooks/use-toast';
 
 export default function VoiceModal({ isOpen, onClose, onConfirm }) {
     const [doNotShowAgain, setDoNotShowAgain] = useState(false);
@@ -13,7 +14,7 @@ export default function VoiceModal({ isOpen, onClose, onConfirm }) {
             onConfirm(); // sadece izin verildiğini bildir
             onClose();
         } catch (error) {
-            alert('Mikrofon izni reddedildi.');
+            toast({ variant: "destructive", title: "Mikrofon izni reddedildi." });
             console.error(error);
             onClose();
         }

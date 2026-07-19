@@ -5,10 +5,14 @@ import smartHelper from "@/images/smarthelper.png";
 import { useRouter } from "next/navigation";
 import { Users } from "lucide-react";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { Card } from "@/shared/ui/card";
 
 export default function Following() {
     const [followedBots, setFollowedBots] = useState([]);
     const [userId, setUserId] = useState(null);
+    const [sessionChecked, setSessionChecked] = useState(false);
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
 
     useEffect(() => {
@@ -18,22 +22,31 @@ export default function Following() {
                 const result = await res.json();
                 if (result.authenticated) setUserId(result.user_id);
                 // else router.push("/login"); // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
-            } catch (err) { console.error("Session check error:", err); /* router.push("/login"); */ }
+            } catch (err) {
+                console.error("Session check error:", err); /* router.push("/login"); */
+            } finally {
+                setSessionChecked(true);
+            }
         };
         checkSession();
     }, [router]);
 
     useEffect(() => {
-        if (!userId) return;
+        if (!sessionChecked) return;
+        if (!userId) { setLoading(false); return; }
         const fetchFollowedBots = async () => {
             try {
                 const res = await fetch(`/api/social/getfollowedbots.php?user_id=${userId}`);
                 const result = await res.json();
                 if (result.success !== false) setFollowedBots(result.bots || []);
-            } catch (err) { console.error("getfollowedbots API error:", err); }
+            } catch (err) {
+                console.error("getfollowedbots API error:", err);
+            } finally {
+                setLoading(false);
+            }
         };
         fetchFollowedBots();
-    }, [userId]);
+    }, [userId, sessionChecked]);
 
     const formatImage = (img) => {
         if (!img) return "";
@@ -41,60 +54,72 @@ export default function Following() {
     };
 
     return (
-        <div className="flex flex-col gap-5 px-6 py-5">
-            <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
-                Takip Edilenler
-            </h2>
-
-            <div className="flex flex-col gap-3">
-                {followedBots.length === 0 && (
-                    <EmptyState
-                        icon={Users}
-                        title="Henüz takip ettiğiniz bir bot yok."
-                        description="Beğendiğiniz sohbet botlarını takip ederek burada görün."
-                    />
-                )}
-                {followedBots.map((bot) => (
-                    <div
-                        key={bot.id}
-                        className="relative flex items-center gap-4 p-4 rounded-2xl cursor-pointer overflow-hidden bg-gradient-to-r from-[#111120] to-[#0D0D1A] border border-fuchsia-400/10 hover:-translate-y-0.5 hover:border-fuchsia-400/22 hover:shadow-[0_6px_24px_rgba(217,70,239,0.13)] transition-all duration-300"
-                        onClick={() => router.push("/dashboard/chat/?botId=" + bot.id)}
-                    >
-                        {/* Glow blob */}
-                        <div className="absolute top-0 left-0 h-full w-[100px] pointer-events-none overflow-hidden opacity-35">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="201" height="132" viewBox="0 0 201 132" fill="none">
-                                <g filter="url(#fb_blur)">
-                                    <ellipse cx="15.5" cy="61.2" rx="66.5" ry="39.2" fill="url(#fb_grad)" />
-                                </g>
-                                <defs>
-                                    <filter id="fb_blur" x="-169.698" y="-96.6976" width="370.395" height="315.796" filterUnits="userSpaceOnUse">
-                                        <feGaussianBlur stdDeviation="59.3488" />
-                                    </filter>
-                                    <linearGradient id="fb_grad" x1="-51" y1="61.2" x2="82" y2="61.2" gradientUnits="userSpaceOnUse">
-                                        <stop offset="0.21" stopColor="#C026D3" />
-                                        <stop offset="0.79" stopColor="#8B5CF6" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                        </div>
-
-                        <div className="relative z-10 w-14 h-14 shrink-0 rounded-xl overflow-hidden border border-fuchsia-400/20">
-                            <Image
-                                src={bot.profil_fotografi ? formatImage(bot.profil_fotografi) : smartHelper}
-                                alt={bot.isim}
-                                fill
-                                className="object-cover"
-                                sizes="56px"
-                            />
-                        </div>
-
-                        <div className="relative z-10 flex flex-col gap-1 min-w-0">
-                            <h4 className="text-[14px] font-semibold text-white/90 leading-snug truncate">{bot.isim}</h4>
-                            <p className="text-[12px] text-white/48 leading-relaxed line-clamp-2">{bot.aciklama}</p>
-                        </div>
-                    </div>
-                ))}
+        <div className="flex flex-col gap-6 px-4 py-6 md:px-16">
+            <div>
+                <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
+                    Topluluk
+                </span>
+                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
+                    Takip Edilenler
+                </h2>
             </div>
+
+            {loading && (
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="flex flex-col overflow-hidden rounded-2xl bg-luma-card">
+                            <Skeleton className="aspect-[4/3] w-full rounded-none" />
+                            <div className="flex flex-col gap-2 p-3.5">
+                                <Skeleton className="h-3.5 w-2/3" />
+                                <Skeleton className="h-2.5 w-full" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+            {!loading && followedBots.length === 0 && (
+                <EmptyState
+                    icon={Users}
+                    title="Henüz takip ettiğiniz bir bot yok."
+                    description="Beğendiğiniz sohbet botlarını takip ederek burada görün."
+                />
+            )}
+            {!loading && followedBots.length > 0 && (
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {followedBots.map((bot) => (
+                        <Card
+                            key={bot.id}
+                            interactive
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => router.push("/dashboard/chat/?botId=" + bot.id)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    router.push("/dashboard/chat/?botId=" + bot.id);
+                                }
+                            }}
+                            className="group flex flex-col overflow-hidden p-0"
+                        >
+                            <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-luma-input">
+                                <Image
+                                    src={bot.profil_fotografi ? formatImage(bot.profil_fotografi) : smartHelper}
+                                    alt={bot.isim}
+                                    fill
+                                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                                />
+                                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-fuchsia-600/25 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                            </div>
+                            <div className="flex flex-col gap-1.5 p-3.5 pt-3.5">
+                                <h4 className="truncate font-display text-[15px] font-bold text-white">{bot.isim}</h4>
+                                <p className="text-[12.5px] leading-relaxed text-white/48 line-clamp-2">{bot.aciklama}</p>
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

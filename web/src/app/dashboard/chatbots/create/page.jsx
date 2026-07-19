@@ -8,11 +8,33 @@ import useSellerStatus from "@/shared/hooks/useSellerStatus";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/button";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { Card } from "@/shared/ui/card";
+import { Badge } from "@/shared/ui/badge";
+import { Lock, Globe2, Sparkles, ArrowRight, Crown } from "lucide-react";
+
+function PageHeader({ eyebrow, title, subtitle }) {
+    return (
+        <div className="mb-10">
+            <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
+                {eyebrow}
+            </span>
+            <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
+                {title}
+            </h2>
+            {subtitle && (
+                <p className="mt-2 max-w-xl text-[14.5px] leading-relaxed text-white/50">{subtitle}</p>
+            )}
+        </div>
+    );
+}
 
 export default function CreateChatbot() {
     // İlk adım gizli, direkt form göster
     const [bot, setBot] = useState(null); //düzenlenecek bot
-    const [botId, setBotId] = useState(0);
+    // null: henüz URL'den okunmadı (create/edit ayrımı belli değil), -1: yeni
+    // bot oluşturuluyor, başka bir değer: düzenlenen botun id'si.
+    const [botId, setBotId] = useState(null);
     const router = useRouter();
     const [userId, setUserId] = useState(null);
     const [selectedCard, setSelectedCard] = useState({
@@ -28,6 +50,8 @@ export default function CreateChatbot() {
         bgColor: "#9BC8FF"
     });
 
+    const [sessionChecked, setSessionChecked] = useState(false);
+
     useEffect(() => {
                     async function checkSession() {
                         try {
@@ -36,7 +60,7 @@ export default function CreateChatbot() {
                             });
                             const resultText = await res.text();
                             const result = JSON.parse(resultText);
-            
+
                             if (result.authenticated) {
                             setUserId(result.user_id);
                             } else {
@@ -45,18 +69,26 @@ export default function CreateChatbot() {
                         } catch (err) {
                             console.error("Session check error:", err);
                             // router.push("/login"); // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
+                        } finally {
+                            setSessionChecked(true);
                         }
                     }
                     checkSession();
                 }, [router]);
 
+    // URL'deki ?id= parametresini oturumdan bağımsız olarak hemen okuyoruz —
+    // giriş yapılmamış bir ziyaretçi bile "yeni bot oluştur" formunu (botId=-1)
+    // görebilmeli; bunu userId'ye bağlamak botId'yi sonsuza dek başlangıç
+    // değerinde (0) kilitleyip formun hiç görünmemesine sebep oluyordu.
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get("id") || -1;
+        setBotId(id);
+    }, []);
+
     useEffect(() => {
         if (!userId) return;
-        const params = new URLSearchParams(window.location.search);
-        let botId = params.get("id") || -1;
-        setBotId(botId);
-        if(botId !== -1)
-        {
+        if (botId && botId !== -1) {
             fetch(`/api/chatbot/getchatbot.php?id=${botId}&user_id=${userId}`)
             .then(res => res.text())
             .then(async (tdata) => {
@@ -73,10 +105,32 @@ export default function CreateChatbot() {
             .catch(err => console.error("Bot fetch error:", err));
         }
 
-    }, [userId]);
+    }, [userId, botId]);
 
-    if (botId !== -1 && !bot) {
-        return <div className="px-4 py-6 text-white/60 md:px-16">Bot bilgileri yükleniyor...</div>;
+    if (botId === null || (botId !== -1 && !bot)) {
+        return (
+            <div className="flex flex-col gap-5 px-4 py-6 md:px-16">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-64 w-full rounded-2xl" />
+                <Skeleton className="h-40 w-full rounded-2xl" />
+            </div>
+        );
+    }
+
+    if (sessionChecked && !userId) {
+        return (
+            <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 px-4 text-center">
+                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-3xl">
+                    Bot oluşturmak için giriş yapın
+                </h2>
+                <p className="max-w-md text-[15px] leading-relaxed text-white/55">
+                    Yeni bir sohbet botu oluşturabilmek için önce hesabınıza giriş yapmanız gerekiyor.
+                </p>
+                <Button onClick={() => router.push('/login')} className="h-auto px-6 py-3 text-[14px]">
+                    Giriş Yap
+                </Button>
+            </div>
+        );
     }
 
     return <CreateChatbotInner userId={userId} bot={bot} botId={botId} selectedCard={selectedCard} />;
@@ -110,71 +164,128 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
     }, [isEditing, userId]);
 
     if (!userId || (!isEditing && !limits)) {
-        return <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16"><p className="text-white/60">Yükleniyor...</p></div>;
+        return (
+            <div className="flex flex-col gap-5 px-4 py-6 md:px-16">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-64 w-full rounded-2xl" />
+                <Skeleton className="h-40 w-full rounded-2xl" />
+            </div>
+        );
     }
 
     // Yeni bot oluşturuluyor ve henüz seçim yapılmadıysa: iki seçenekli ekran.
     if (!isEditing && choice === null) {
+        const canBuyPlan = (!limits.can_create_independent || !limits.can_create_public) && planActive === false;
+
         return (
             <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
-                <div className="mb-10 flex items-center justify-between">
-                    <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
-                        Oluştur
-                    </h2>
-                </div>
-                <div className="flex max-w-[560px] flex-col gap-4">
+                <PageHeader
+                    eyebrow="Oluştur"
+                    title="Yeni Bir Chatbot Yarat"
+                    subtitle="Yapay zeka botunu birkaç adımda hayata geçir; önce erişimini nasıl kısıtlayacağına karar ver, gerisini birlikte tamamlayalım."
+                />
+
+                <div className="grid w-full max-w-3xl grid-cols-1 gap-5 md:grid-cols-2">
                     <button
                         type="button"
                         disabled={!limits.can_create_independent}
                         onClick={() => setChoice('independent')}
                         className={cn(
-                            "rounded-2xl border border-transparent bg-luma-elevated p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-fuchsia-400/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            limits.can_create_independent ? "cursor-pointer" : "cursor-not-allowed opacity-50",
+                            "group relative w-full text-left",
+                            !limits.can_create_independent && "cursor-not-allowed",
                         )}
                     >
-                        <h3 className="mb-1.5 font-display text-base font-semibold text-white">Pazaryeri Sistemine Kayıt Olmadan Devam Et</h3>
-                        <p className="text-[13px] text-white/70">
-                            Bu seçeneği seçtiğinizde oluşturduğunuz chatbot yalnızca sizin erişiminize açık olacaktır.
-                            Chatbotunuzu daha sonra istediğiniz zaman herkese açık olarak yayınlayabilirsiniz.
-                        </p>
-                        {!limits.can_create_independent && (
-                            <p className="mt-2 text-xs text-rose-400">
-                                Ücretsiz bağımsız chatbot hakkınızı ({limits.independent_limit}) kullandınız.
-                            </p>
-                        )}
-                    </button>
-
-                    {(!limits.can_create_independent || !limits.can_create_public) && planActive === false && (
-                        <Button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); setShowBuyPlan(true); }}
-                            className="h-auto rounded-2xl p-3.5 text-center"
+                        <Card
+                            interactive={limits.can_create_independent}
+                            className={cn(
+                                "relative h-full overflow-hidden p-6",
+                                !limits.can_create_independent && "opacity-50",
+                            )}
                         >
-                            750₺ ile Üretici Hesabı Satın Al (5 herkese açık + 2 bağımsız chatbot hakkı)
-                        </Button>
-                    )}
+                            <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-violet-500/15 blur-[60px] transition-opacity duration-300 group-hover:opacity-150" />
+                            <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/25 to-violet-500/10">
+                                <Lock className="h-5 w-5 text-violet-300" />
+                            </div>
+                            <h3 className="relative mb-1.5 mt-4 font-display text-lg font-bold text-white">
+                                Kayıt Olmadan Devam Et
+                            </h3>
+                            <p className="relative text-[13.5px] leading-relaxed text-white/60">
+                                Oluşturduğun chatbot yalnızca sana özel kalır. İstediğin zaman herkese açık olarak yayınlayabilirsin.
+                            </p>
+                            {!limits.can_create_independent ? (
+                                <Badge variant="destructive" className="relative mt-4">
+                                    Hakkınız Doldu ({limits.independent_limit})
+                                </Badge>
+                            ) : (
+                                <span className="relative mt-4 flex items-center gap-1.5 text-[13px] font-semibold text-violet-300 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                    Bu seçimle devam et <ArrowRight className="h-3.5 w-3.5" />
+                                </span>
+                            )}
+                        </Card>
+                    </button>
 
                     <button
                         type="button"
                         disabled={!limits.can_create_public}
                         onClick={() => setChoice('public')}
                         className={cn(
-                            "rounded-2xl border border-transparent bg-luma-elevated p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-fuchsia-400/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            limits.can_create_public ? "cursor-pointer" : "cursor-not-allowed opacity-50",
+                            "group relative w-full text-left",
+                            !limits.can_create_public && "cursor-not-allowed",
                         )}
                     >
-                        <h3 className="mb-1.5 font-display text-base font-semibold text-white">Herkese Açık Yayınlamak İstiyorum</h3>
-                        <p className="text-[13px] text-white/70">
-                            Bu seçeneği seçtiğinizde chatbotunuz pazaryerinde yayınlanır, herkes tarafından erişilebilir
-                            hale gelir ve gelir elde etmeye başlayabilirsiniz.
-                        </p>
-                        {!limits.can_create_public && (
-                            <p className="mt-2 text-xs text-rose-400">
-                                Ücretsiz herkese açık chatbot hakkınızı ({limits.public_limit}) kullandınız.
+                        <Card
+                            interactive={limits.can_create_public}
+                            className={cn(
+                                "relative h-full overflow-hidden p-6",
+                                !limits.can_create_public && "opacity-50",
+                            )}
+                        >
+                            <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-fuchsia-500/15 blur-[60px] transition-opacity duration-300 group-hover:opacity-150" />
+                            <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500/25 to-fuchsia-500/10">
+                                <Globe2 className="h-5 w-5 text-fuchsia-300" />
+                            </div>
+                            <h3 className="relative mb-1.5 mt-4 font-display text-lg font-bold text-white">
+                                Herkese Açık Yayınla
+                            </h3>
+                            <p className="relative text-[13.5px] leading-relaxed text-white/60">
+                                Chatbotun pazaryerinde yayınlanır, herkes tarafından erişilebilir hale gelir ve gelir elde etmeye başlarsın.
                             </p>
-                        )}
+                            {!limits.can_create_public ? (
+                                <Badge variant="destructive" className="relative mt-4">
+                                    Hakkınız Doldu ({limits.public_limit})
+                                </Badge>
+                            ) : (
+                                <span className="relative mt-4 flex items-center gap-1.5 text-[13px] font-semibold text-fuchsia-300 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                    Bu seçimle devam et <ArrowRight className="h-3.5 w-3.5" />
+                                </span>
+                            )}
+                        </Card>
                     </button>
                 </div>
+
+                {canBuyPlan && (
+                    <div className="relative mt-6 w-full max-w-3xl overflow-hidden rounded-2xl border border-fuchsia-400/15 bg-gradient-to-br from-[#1a1030] via-[#150d28] to-[#0d0a1c] p-6 shadow-[0_8px_28px_rgba(139,0,180,0.18)]">
+                        <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-fuchsia-600/20 blur-[80px]" />
+                        <div className="relative flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                            <div className="flex items-center gap-4">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500/25 to-violet-500/15">
+                                    <Crown className="h-6 w-6 text-fuchsia-300" />
+                                </div>
+                                <div>
+                                    <h4 className="font-display text-base font-bold text-white">Üretici Hesabı Satın Al</h4>
+                                    <p className="mt-0.5 text-[13px] text-white/60">750₺ karşılığında 5 herkese açık + 2 bağımsız chatbot hakkı kazan.</p>
+                                </div>
+                            </div>
+                            <Button
+                                type="button"
+                                onClick={() => setShowBuyPlan(true)}
+                                className="h-auto w-full shrink-0 px-5 py-3 text-[13px] sm:w-auto"
+                            >
+                                Şimdi Satın Al
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 <BuyProducerAccountModal
                     isOpen={showBuyPlan}
@@ -193,11 +304,11 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
     if (!independentMode && !seller.loading && seller.status !== "active") {
         return (
             <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
-                <div className="mb-10 flex items-center justify-between">
-                    <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
-                        Satıcı Kaydı Gerekli
-                    </h2>
-                </div>
+                <PageHeader
+                    eyebrow="Pazaryeri"
+                    title="Satıcı Kaydı Gerekli"
+                    subtitle="Chatbotunu pazaryerinde yayınlayabilmen için önce kısa bir satıcı kaydı tamamlaman gerekiyor."
+                />
                 <SellerOnboardingWizard
                     userId={userId}
                     initialStatus={seller}
@@ -208,16 +319,21 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
     }
 
     if (!independentMode && seller.loading) {
-        return <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16"><p className="text-white/60">Yükleniyor...</p></div>;
+        return (
+            <div className="flex h-full w-full flex-col gap-5 px-4 py-6 md:px-16">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-48 w-full rounded-2xl" />
+            </div>
+        );
     }
 
     return (
         <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
-            <div className="mb-10 flex items-center justify-between">
-                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
-                    Oluştur
-                </h2>
-            </div>
+            <PageHeader
+                eyebrow="Oluştur"
+                title={bot ? "Chatbotunu Düzenle" : "Yeni Chatbot Oluştur"}
+                subtitle={bot ? "Görselleri, davranışını ve fiyatlandırmasını güncelle." : "Kimliğini, davranışını ve (varsa) fiyatlandırmasını belirleyerek yayına hazırla."}
+            />
             {bot
                 ? <ChatbotForm selectedCard={selectedCard} bot={bot} botId={botId} userId={userId} independentMode={independentMode} />
                 : <ChatbotForm selectedCard={selectedCard} userId={userId} independentMode={independentMode} />}

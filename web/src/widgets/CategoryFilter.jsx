@@ -16,7 +16,7 @@ export default function CategoryFilter({ categories, onSelect, selected: externa
     };
 
     return (
-        <div className="flex flex-wrap gap-2 px-6 py-3">
+        <div className="mx-6 mt-2 flex flex-nowrap gap-2 overflow-x-auto rounded-2xl border border-white/[0.06] bg-white/[0.02] p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {categories.map((cat, index) => {
                 const isActive = selected === cat.kategori_adi_tr;
                 return (
@@ -24,10 +24,10 @@ export default function CategoryFilter({ categories, onSelect, selected: externa
                         key={`${cat.kategori_adi_tr}-${index}`}
                         onClick={() => handleClick(cat)}
                         className={cn(
-                            'rounded-xl px-4 py-2 text-[14px] font-sans font-medium whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                            'shrink-0 rounded-xl px-4 py-2 text-[13.5px] font-sans font-semibold whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                             isActive
-                                ? 'bg-[rgba(217,70,239,0.22)] text-fuchsia-300 border border-fuchsia-400/40 shadow-[0_2px_12px_rgba(217,70,239,0.20)]'
-                                : 'bg-transparent text-white/55 border border-transparent hover:bg-fuchsia-500/8 hover:text-white/80 hover:border-fuchsia-400/18',
+                                ? 'bg-gradient-btn text-white shadow-[0_4px_16px_rgba(192,38,211,0.4)]'
+                                : 'bg-transparent text-white/50 border border-transparent hover:bg-white/[0.05] hover:text-white/85',
                         )}
                     >
                         {cat.kategori_adi_tr}

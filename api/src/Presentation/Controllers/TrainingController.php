@@ -36,17 +36,27 @@ class TrainingController {
     }
 
     public static function getTrainingChunks(): void {
-        // Any logged-in user needs read access here — chat/page.jsx loads a
-        // bot's full training_prompt client-side for every conversation, not
-        // just the bot's own owner — but it was previously reachable with no
-        // session at all, letting anyone scrape any bot's full system prompt
-        // by looping botId with zero authentication.
-        AuthMiddleware::requireAuth();
+        // chat/page.jsx loads a bot's full training_prompt client-side for
+        // every conversation, not just the bot's own owner — a logged-in
+        // buyer or anyone previewing a published marketplace bot needs read
+        // access here too. Previously this only checked "is there a
+        // session at all", with no check that the session's user was
+        // actually entitled to *this* botId — anyone logged in could scrape
+        // any bot's full training corpus (private/independent bots
+        // included) by looping botId. Authorization now goes through the
+        // same policy as the chat page's own bot lookup (see
+        // ChatbotRepository::userHasAccess) so both endpoints agree on who
+        // may see a bot's private content.
+        $userId = AuthMiddleware::requireAuth();
         $botId  = InputSanitizer::positiveInt($_GET['botId'] ?? 0);
         $offset = InputSanitizer::positiveInt($_GET['offset'] ?? 0);
         $limit  = 10000;
 
         if (!$botId) JsonResponse::error('Bot ID eksik', 400, AppConfig::ERR_VALIDATION);
+
+        if (!(new ChatbotRepository())->userHasAccess($botId, $userId)) {
+            JsonResponse::error('Bu chatbot üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
+        }
 
         $conn  = Database::getInstance()->getConnection();
         $stmt  = $conn->prepare('SELECT SUBSTRING(training_prompt, :start, :limit) as chunk, LENGTH(training_prompt) as total_length FROM chatbotlar WHERE id = :id');

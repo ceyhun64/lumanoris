@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
+import { toast } from "@/shared/hooks/use-toast";
 
 export default function EmailEditor({ userId }) {
   const [currentEmail, setCurrentEmail] = useState("");
@@ -43,7 +44,7 @@ export default function EmailEditor({ userId }) {
         setCurrentEmail(newEmail.trim());
         setNewEmail("");
       } else {
-        alert(result.message || "E-posta güncellenemedi.");
+        toast({ variant: "destructive", title: result.message || "E-posta güncellenemedi." });
       }
     } catch (err) {
       console.error("E-posta güncelleme hatası:", err);
@@ -54,17 +55,17 @@ export default function EmailEditor({ userId }) {
     <div className="flex flex-col items-stretch gap-3 rounded-xl border border-transparent p-4 sm:flex-row sm:items-center">
       <Input
         type="text"
-        className="flex-1 uppercase"
+        className="flex-1"
         value={currentEmail}
         disabled
-        placeholder="MEVCUT E-POSTA"
+        placeholder="Mevcut E-posta"
       />
       <Input
         type="email"
-        className="flex-1 uppercase"
+        className="flex-1"
         value={newEmail}
         onChange={(e) => setNewEmail(e.target.value)}
-        placeholder="YENİ E-POSTA"
+        placeholder="Yeni E-posta"
       />
       <Button onClick={handleAddEmail} className="h-auto min-w-[100px] shrink-0 border border-transparent py-2.5">
         Güncelle

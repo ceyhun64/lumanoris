@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import VoiceModal from '@/features/chat/VoiceModal';
 import { X, Plus, Send, Mic, Square, RotateCcw, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from '@/shared/hooks/use-toast';
 
 // Tarayıcı desteği kontrolü
 const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -116,7 +117,7 @@ export default function MessageInput({ onSend, onResetChat }) {
             mediaRecorder.start();
             setIsRecording(true);
         } catch (error) {
-            alert('Mikrofon erişimi reddedildi.');
+            toast({ variant: "destructive", title: "Mikrofon erişimi reddedildi." });
             console.error(error);
         }
     };
@@ -153,30 +154,31 @@ export default function MessageInput({ onSend, onResetChat }) {
                 </div>
             )}
 
-            {/* SOHBET BARI (Message Input Container) */}
+            {/* SOHBET BARI (Message Input Container) — tek birleşik kompozitör */}
             <div className="relative z-0 flex w-full items-end">
                 <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} />
 
-                <div className="flex w-full items-end rounded-xl bg-luma-input">
+                <div className="flex w-full items-end rounded-2xl bg-luma-input ring-1 ring-inset ring-white/[0.07] transition-all duration-150 focus-within:ring-fuchsia-400/40 focus-within:shadow-[0_0_0_3px_rgba(217,70,239,0.08)]">
                     {recordedAudioUrl && (
-                        <div className="flex items-center gap-2 px-3 text-sm text-white">
-                            <span>🎤 Ses Kaydedildi</span>
+                        <div className="flex h-[67px] shrink-0 items-center gap-2 pl-4 text-sm text-white/85">
+                            <Mic className="h-4 w-4 text-fuchsia-300" />
+                            <span>Ses Kaydedildi</span>
                             <button
                                 onClick={() => {
                                     setRecordedAudioUrl('');
                                     setMessage('');
                                 }}
-                                className="text-white/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+                                className="flex h-6 w-6 items-center justify-center rounded-md text-white/45 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 aria-label="Ses kaydını kaldır"
                             >
-                                <X className="h-4 w-4" />
+                                <X className="h-3.5 w-3.5" />
                             </button>
                         </div>
                     )}
 
                     <button
                         onClick={() => fileInputRef.current.click()}
-                        className="flex h-[67px] shrink-0 items-center justify-center border-none bg-transparent p-2.5 text-fuchsia-400 transition-transform duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+                        className="flex h-[67px] shrink-0 items-center justify-center border-none bg-transparent p-2.5 text-fuchsia-400 transition-colors duration-150 hover:text-fuchsia-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
                         aria-label="Dosya ekle"
                     >
                         <Plus className="h-5 w-5" />
@@ -199,50 +201,48 @@ export default function MessageInput({ onSend, onResetChat }) {
                         }}
                         disabled={isRecording}
                         className={cn(
-                            "h-[68px] max-h-[180px] flex-1 resize-none border-none bg-transparent py-[25px] pl-0 pr-2.5 font-sans text-[15px] font-light text-white placeholder:text-white/45 focus:text-fuchsia-200 focus:outline-none disabled:opacity-60",
+                            "h-[68px] max-h-[180px] flex-1 resize-none border-none bg-transparent py-[25px] pl-0 pr-2.5 font-sans text-[15px] font-normal text-white placeholder:text-white/45 focus:outline-none disabled:opacity-60",
                             message.length < 150 ? "overflow-hidden" : "overflow-y-auto",
                         )}
                     />
 
-                    <button
-                        onClick={handleSend}
-                        disabled={isRecording || !(message.trim() || selectedFileName || recordedAudioUrl)}
-                        className="flex h-[67px] shrink-0 items-center justify-center border-none bg-transparent p-2.5 text-fuchsia-300 transition-transform duration-200 hover:scale-110 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
-                        aria-label="Gönder"
-                    >
-                        <Send className="h-5 w-5 -rotate-45" />
-                    </button>
-                </div>
+                    <div className="flex h-[67px] shrink-0 items-center gap-1 pr-2">
+                        {isRecording ? (
+                            <button
+                                onClick={stopRecording}
+                                className="flex h-9 w-9 items-center justify-center rounded-lg text-rose-400 transition-colors duration-150 hover:bg-rose-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label="Kaydı durdur"
+                            >
+                                <Square className="h-4 w-4 fill-rose-500/20" />
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => setVoiceModalOpen(true)}
+                                disabled={!!selectedFileName}
+                                className="flex h-9 w-9 items-center justify-center rounded-lg text-fuchsia-300 transition-colors duration-150 hover:bg-fuchsia-500/10 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label="Sesli mesaj"
+                            >
+                                <Mic className="h-4 w-4" />
+                            </button>
+                        )}
 
-                <div className="ml-2 flex h-[67px] items-center gap-5 rounded-xl bg-luma-input px-5">
-                    {isRecording ? (
                         <button
-                            onClick={stopRecording}
-                            className="flex items-center justify-center text-rose-500 transition-transform duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
-                            aria-label="Kaydı durdur"
+                            onClick={onResetChat}
+                            className="flex h-9 w-9 items-center justify-center rounded-lg text-fuchsia-300 transition-colors duration-150 hover:bg-fuchsia-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            aria-label="Sohbeti sıfırla"
                         >
-                            <Square className="h-5 w-5 fill-rose-500/20" />
+                            <RotateCcw className="h-4 w-4" />
                         </button>
-                    ) : (
+
                         <button
-                            onClick={() => setVoiceModalOpen(true)}
-                            disabled={!!selectedFileName}
-                            className="flex items-center justify-center text-fuchsia-300 transition-transform duration-200 hover:scale-110 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
-                            aria-label="Sesli mesaj"
+                            onClick={handleSend}
+                            disabled={isRecording || !(message.trim() || selectedFileName || recordedAudioUrl)}
+                            className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-btn text-white transition-all duration-150 hover:brightness-110 disabled:opacity-30 disabled:hover:brightness-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            aria-label="Gönder"
                         >
-                            <Mic className="h-5 w-5" />
+                            <Send className="h-4 w-4 -rotate-45" />
                         </button>
-                    )}
-
-                    <span className="h-full w-px bg-white/10" />
-
-                    <button
-                        onClick={onResetChat}
-                        className="flex items-center justify-center text-fuchsia-300 transition-transform duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
-                        aria-label="Sohbeti sıfırla"
-                    >
-                        <RotateCcw className="h-5 w-5" />
-                    </button>
+                    </div>
                 </div>
             </div>
 

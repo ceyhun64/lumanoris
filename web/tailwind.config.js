@@ -83,7 +83,7 @@ module.exports = {
       },
       fontFamily: {
         sans:      ["Public Sans", "sans-serif"],
-        display:   ["Montserrat", "sans-serif"],
+        display:   ["Space Grotesk", "sans-serif"],
       },
       /* Named scale for new/touched components — replaces ad-hoc text-[Npx]
          arbitrary values (260+ distinct uses in the codebase) with a single

@@ -9,6 +9,7 @@ import { Checkbox } from "@/shared/ui/checkbox";
 import { Trash2, Tag } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/lib/utils";
+import { toast } from "@/shared/hooks/use-toast";
 
 const DURATIONS = [
     { id: 1, label: 'Bir Haftalık' },
@@ -158,7 +159,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
             }));
 
         if (dataToConfirm.length === 0) {
-            alert("Lütfen en az bir ürün seçin.");
+            toast({ variant: "destructive", title: "Lütfen en az bir ürün seçin." });
             return;
         }
 
@@ -180,7 +181,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                         <span className="text-sm text-white/70">Tümünü seç</span>
                     </label>
 
-                    <div className="my-3 h-0.5 w-full bg-gradient-to-r from-[#1B1A22] to-[#D946EF]" />
+                    <div className="my-3 h-px w-full bg-white/10" />
 
                     {cartItems.map((item) => {
         const isSelected = selectedItems.includes(item.id);
@@ -276,7 +277,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                     <strong>Toplam</strong>
                     <strong className="text-white/50">{total.toFixed(2)}₺</strong>
                 </div>
-                <div className="mt-4 flex items-stretch rounded-xl border border-fuchsia-400 bg-white/10">
+                <div className="mt-4 flex items-stretch rounded-xl border border-fuchsia-400/25 bg-white/[0.04] focus-within:border-fuchsia-400/45 transition-colors duration-200">
                     <div className="flex items-center p-3.5 text-fuchsia-400">
                         <Tag className="h-5 w-5" />
                     </div>
@@ -285,7 +286,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                         className="flex-1 bg-transparent py-3.5 pr-3.5 font-display text-base font-medium text-white placeholder:text-white/40 focus:outline-none"
                     />
                 </div>
-                <Button onClick={handleFinalConfirm} className="mt-4 h-auto w-full border border-transparent py-3.5 text-sm font-bold uppercase">
+                <Button onClick={handleFinalConfirm} className="mt-4 h-auto w-full border border-transparent py-3.5 text-sm">
                     Sepeti Onayla
                 </Button>
             </div>

@@ -4,6 +4,7 @@ import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import { Paperclip } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { toast } from "@/shared/hooks/use-toast";
 
 export default function ContactForm() {
     const [formData, setFormData] = useState({
@@ -42,46 +43,45 @@ export default function ContactForm() {
             });
 
             const result = await res.json();
-            alert(result.message);
+            toast({ variant: result.success ? "success" : "destructive", title: result.message });
         } catch (err) {
             console.error("Form gönderim hatası:", err);
         }
     };
 
     return (
-        <div className="rounded-xl border border-transparent bg-luma-elevated p-6">
-            <h3 className="mb-5 font-display text-lg font-semibold text-white">Bize Ulaşın</h3>
+        <div className="rounded-xl border border-transparent p-4">
+            <h3 className="mb-5 font-display text-base font-semibold text-white">Bize Ulaşın</h3>
             <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
                 <div className="flex flex-col gap-3.5 sm:flex-row">
                     <Input
-                        className="flex-1 uppercase"
+                        className="flex-1"
                         type="text"
                         name="fullName"
-                        placeholder="AD SOYAD"
+                        placeholder="Ad Soyad"
                         value={formData.fullName}
                         onChange={handleChange}
                     />
                     <Input
-                        className="flex-1 uppercase"
+                        className="flex-1"
                         type="email"
                         name="email"
-                        placeholder="E-POSTA"
+                        placeholder="E-posta"
                         value={formData.email}
                         onChange={handleChange}
                     />
                 </div>
                 <Input
-                    className="uppercase"
                     type="text"
                     name="subject"
-                    placeholder="KONU BAŞLIĞI"
+                    placeholder="Konu Başlığı"
                     value={formData.subject}
                     onChange={handleChange}
                 />
                 <Textarea
-                    className="min-h-[120px] uppercase"
+                    className="min-h-[120px]"
                     name="message"
-                    placeholder="MESAJINIZ"
+                    placeholder="Mesajınız"
                     value={formData.message}
                     onChange={handleChange}
                 />

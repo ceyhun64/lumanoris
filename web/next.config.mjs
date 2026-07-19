@@ -9,9 +9,11 @@ const nextConfig = {
   // Statik export'ta route uyumu için (custom server'da gereksiz ama zararsız)
   trailingSlash: true,
 
-  // next/image optimizasyonunu kapatıyoruz (Node.js süreci yok)
+  // Statik export'ta Next'in image optimizasyon API route'u çalışmaz (Node.js
+  // süreci yok), o yüzden orada unoptimized zorunlu. Custom server (server.js)
+  // ile çalışırken optimizasyon süreci mevcut, kapatmaya gerek yok.
   images: {
-    unoptimized: true,
+    unoptimized: isStaticExport,
   },
 
   reactStrictMode: false,

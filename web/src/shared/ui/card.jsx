@@ -1,11 +1,22 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-const Card = React.forwardRef(({ className, ...props }, ref) => (
+const Card = React.forwardRef(({ className, interactive = false, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
-      "rounded-xl border border-fuchsia-400/10 bg-gradient-card text-white shadow-card transition-all duration-250",
+      // rounded-2xl (not the shadcn-default rounded-xl) because that's what
+      // every hand-rolled "card" div in this app already converged on
+      // (ChatbotCard, wallet balance card, MarketplaceListCard, following
+      // list items) — codifying the de facto standard rather than fighting
+      // it on every migration.
+      "rounded-2xl border border-fuchsia-400/10 bg-gradient-card text-white shadow-card transition-all duration-250",
+      // `interactive` codifies the "clickable card" hover treatment that was
+      // independently hand-copied (with tiny drifting variations in the
+      // lift amount / glow color / duration) into ChatbotCard, following's
+      // list items, MarketplaceListCard and others — one lift+glow now, not
+      // N slightly-different ones.
+      interactive && "cursor-pointer border-transparent hover:-translate-y-0.5 hover:border-fuchsia-400/22 hover:shadow-[0_6px_24px_rgba(217,70,239,0.13)]",
       className
     )}
     {...props}

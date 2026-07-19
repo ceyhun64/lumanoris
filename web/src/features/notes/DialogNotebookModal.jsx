@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
 import { Button } from '@/shared/ui/button';
+import { toast } from '@/shared/hooks/use-toast';
 
 export default function DialogNotebookModal({ userId, botId, inputMessage, outputMessage, isOpen, onClose, onPublish }) {
     const [title, setTitle] = useState("");
@@ -42,12 +43,12 @@ export default function DialogNotebookModal({ userId, botId, inputMessage, outpu
                     onClose();
                 }, 1800);
             } else {
-                alert("Hata: " + result.message);
+                toast({ variant: "destructive", title: "Hata", description: result.message });
             }
         }
         catch (err) {
             console.error("Yayınlama hatası:", err);
-            alert("Bir hata oluştu.");
+            toast({ variant: "destructive", title: "Bir hata oluştu." });
         } finally {
             setIsSubmitting(false);
         }

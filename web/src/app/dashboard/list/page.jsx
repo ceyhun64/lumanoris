@@ -1,16 +1,16 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import AddToListModal from "@/features/lists/AddToListModal";
-import listBlankIcon from "@/images/list-blank.svg";
-import Image from "next/image";
 import DeleteConfirmModal from "@/shared/ui/DeleteConfirmModal";
 import { useRouter } from "next/navigation";
 import AddToListModalEmpty from "@/features/lists/AddToListModalEmpty";
 import { Splide, SplideSlide } from '@splidejs/react-splide';
 import '@splidejs/react-splide/css';
-import { Plus, ChevronLeft, ChevronRight, MessageSquare, Trash2 } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, MessageSquare, Trash2, ListChecks } from "lucide-react";
 import { toast } from "@/shared/hooks/use-toast";
 import { Button } from "@/shared/ui/button";
+import { EmptyState } from "@/shared/ui/empty-state";
+import { Card } from "@/shared/ui/card";
 
 export default function List() {
     const [modalVisible, setModalVisible] = useState(false);
@@ -198,15 +198,19 @@ export default function List() {
                 }}
             />
 
-            <div className="mb-10 flex items-center justify-between">
-                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
-                    Liste
-                </h2>
+            <div className="mb-8 flex items-end justify-between">
+                <div>
+                    <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
+                        Koleksiyonlar
+                    </span>
+                    <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
+                        Liste
+                    </h2>
+                </div>
                 {!isEmpty && (
                     <Button
                         onClick={() => setModalVisible2(true)}
-                        variant="ghost"
-                        className="h-auto gap-2.5 border border-dashed border-fuchsia-400/12 bg-luma-input px-5 py-4 text-body-lg hover:border-fuchsia-400 hover:bg-[#13132A] max-md:px-4"
+                        className="h-auto gap-2 px-5 py-3 text-[13px] max-md:px-4"
                     >
                         <Plus className="h-4 w-4" /> Yeni liste oluştur
                     </Button>
@@ -214,28 +218,17 @@ export default function List() {
             </div>
 
             {isEmpty && (
-                <div className="flex flex-col items-center py-16 text-center">
-                    <div className="relative mb-6">
-                        <Image src={listBlankIcon} alt="Logo" />
-                    </div>
-
-                    <h2 className="mb-6 font-display text-xl font-semibold text-white">
-                        Henüz Listeniz bulunmamaktadır
-                    </h2>
-
-                    <Button
-                        onClick={() => setModalVisible2(true)}
-                        variant="ghost"
-                        className="h-auto gap-2.5 border border-dashed border-fuchsia-400/12 bg-luma-input px-5 py-4 text-body-lg hover:border-fuchsia-400 hover:bg-[#13132A]"
-                    >
-                        <Plus className="h-5 w-5 text-fuchsia-400" /> İlk listenizi oluşturun
-                    </Button>
-                </div>
+                <EmptyState
+                    icon={ListChecks}
+                    title="Henüz listeniz bulunmamaktadır"
+                    actionLabel="İlk listenizi oluşturun"
+                    onAction={() => setModalVisible2(true)}
+                />
             )}
 
-            <div className="flex w-full flex-col gap-3">
+            <div className="flex w-full flex-col gap-3.5">
                 {listData.map((item, index) => (
-                    <div key={index} className="relative flex w-full items-center gap-6 overflow-hidden rounded-lg border border-transparent bg-luma-elevated p-2 max-md:flex-col max-md:items-start">
+                    <Card key={index} className="relative flex w-full items-center gap-6 overflow-hidden p-3.5 max-md:flex-col max-md:items-start">
                         <div
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -306,8 +299,8 @@ export default function List() {
                             )}
                         </div>
 
-                        <div className="flex flex-1 flex-col items-start gap-2">
-                            <h4 className="font-display text-base font-semibold capitalize text-white">{item.title}</h4>
+                        <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
+                            <h4 className="w-full truncate font-display text-base font-semibold capitalize text-white">{item.title}</h4>
                             <p className="text-[10px] capitalize text-white/55">{item.username}</p>
                             <p className="font-display text-xs font-semibold capitalize text-white">{item.summary}</p>
                             <div className="flex items-center gap-1">
@@ -327,7 +320,7 @@ export default function List() {
                         >
                             <Trash2 className="h-6 w-6" />
                         </button>
-                    </div>
+                    </Card>
                 ))}
             </div>
         </div>

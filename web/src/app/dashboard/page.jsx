@@ -1,23 +1,30 @@
 "use client";
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PackageSearch } from "lucide-react";
+import { PackageSearch, Bot, MessageSquare, Layers, Users } from "lucide-react";
 import { UserContext } from "./layout";
 import BotList from "@/widgets/BotList";
 import CategoryFilter from "@/widgets/CategoryFilter";
 import MarketplaceSearchBar from "@/widgets/MarketplaceSearchBar";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { EmptyState as SharedEmptyState } from "@/shared/ui/empty-state";
+import { StatCard } from "@/shared/ui/stat-card";
 import avatarBot from "@/images/avatar-bot.jpg";
 
-function SkeletonRow() {
+function formatCompactNumber(n) {
+    const num = Number(n) || 0;
+    if (num >= 1000) return (num / 1000).toFixed(num % 1000 === 0 ? 0 : 1).replace('.', ',') + 'B';
+    return String(num);
+}
+
+function SkeletonCard() {
     return (
-        <div className="flex items-start gap-4 bg-luma-card border border-transparent rounded-2xl p-3.5">
-            <Skeleton className="h-[84px] w-[84px] shrink-0 rounded-xl" />
-            <div className="flex flex-1 flex-col gap-2 pt-1">
-                <Skeleton className="h-3.5 w-1/3" />
-                <Skeleton className="h-2.5 w-2/3" />
-                <Skeleton className="h-2.5 w-1/4 mt-2" />
+        <div className="flex flex-col overflow-hidden rounded-2xl bg-luma-card">
+            <Skeleton className="aspect-[4/3] w-full rounded-none" />
+            <div className="flex flex-col gap-2 p-3.5">
+                <Skeleton className="h-3.5 w-2/3" />
+                <Skeleton className="h-2.5 w-full" />
+                <Skeleton className="h-2.5 w-1/3" />
             </div>
         </div>
     );
@@ -162,8 +169,15 @@ export default function Dashboard() {
         return sorted;
     })();
 
+    // Real, already-fetched numbers — no extra API calls. Reflects the
+    // whole marketplace (allBots), not just the currently filtered/searched
+    // subset, so the row doesn't jitter as the user types/filters.
+    const totalDialogues = allBots.reduce((sum, b) => sum + (Number(b.dialogues) || 0), 0);
+    const totalFollowers = allBots.reduce((sum, b) => sum + (Number(b.followers) || 0), 0);
+    const categoryCount = Math.max(0, categories.length - 1); // exclude synthetic "Tümü"
+
     return (
-        <div className="flex flex-col min-h-full bg-luma-base">
+        <div className="flex flex-col min-h-full">
 
             {/* ── Search + sort ── */}
             <MarketplaceSearchBar
@@ -181,13 +195,29 @@ export default function Dashboard() {
             />
 
             {/* ── Bot list section ── */}
-            <div className="flex-1 px-6 pt-2 pb-10">
+            <div className="flex-1 px-6 pt-5 pb-10">
+                <div className="mb-6">
+                    <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
+                        Genel Bakış
+                    </span>
+                    <h1 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
+                        Anasayfa
+                    </h1>
+                </div>
+
+                {/* Overview widgets — real marketplace numbers, not filler */}
+                <div className="mb-8 grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+                    <StatCard icon={Bot} label="Toplam Chatbot" value={loading ? "—" : formatCompactNumber(allBots.length)} />
+                    <StatCard icon={MessageSquare} label="Toplam Diyalog" value={loading ? "—" : formatCompactNumber(totalDialogues)} />
+                    <StatCard icon={Users} label="Toplam Takipçi" value={loading ? "—" : formatCompactNumber(totalFollowers)} />
+                    <StatCard icon={Layers} label="Kategori" value={loading ? "—" : formatCompactNumber(categoryCount)} />
+                </div>
 
                 {/* Loading skeletons */}
                 {loading && (
-                    <div className="flex flex-col gap-3 pt-1">
-                        {Array.from({ length: 6 }).map((_, i) => (
-                            <SkeletonRow key={i} />
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                            <SkeletonCard key={i} />
                         ))}
                     </div>
                 )}

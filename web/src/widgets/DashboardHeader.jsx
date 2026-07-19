@@ -1,9 +1,6 @@
 ﻿"use client";
 import Image from 'next/image';
-import searchIcon from '@/images/search-icon.svg';
-import bellIcon from '@/images/bell-icon.svg';
-import cartIcon from '@/images/cart-icon.svg';
-import userIcon from '@/images/user-icon.svg';
+import { Search, Bell, ShoppingCart, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import NotificationPopup from '@/features/notifications/NotificationPopup';
@@ -25,6 +22,8 @@ export default function Header({ userId }) {
         fullname: "",
         followerCount: 0,
         chatbotCount: 0,
+        purchasedCount: 0,
+        sharedDialogueCount: 0,
     });
 
     const fetchCartCount = async () => {
@@ -55,6 +54,8 @@ export default function Header({ userId }) {
                     fullname: result.fullname,
                     followerCount: 0,
                     chatbotCount: result.chatbotCount,
+                    purchasedCount: result.purchasedCount || 0,
+                    sharedDialogueCount: result.sharedDialogueCount || 0,
                 });
             }
         }
@@ -148,56 +149,55 @@ export default function Header({ userId }) {
                 <NotificationPopup onClose={() => setShowNotification(false)} userId={user.id} />
             )}
 
-            <header className="sticky top-0 z-[100] flex items-center justify-between px-6 py-3 bg-[rgba(9,9,15,0.80)] backdrop-blur-xl border-b border-fuchsia-400/8">
+            <header className="sticky top-0 z-30 flex h-20 items-center justify-between gap-6 px-7 bg-gradient-to-b from-[rgba(11,11,30,0.82)] to-[#09090F] backdrop-blur-xl">
                 {/* Search */}
-                <div className="flex items-center gap-2 flex-1 max-w-[440px]">
-                    <div className="flex items-center w-full rounded-2xl bg-[rgba(15,15,34,0.90)] border border-fuchsia-400/12 overflow-hidden focus-within:border-fuchsia-500/45 focus-within:shadow-[0_0_0_2px_rgba(217,70,239,0.10)] transition-all duration-200">
-                        <input
-                            type="text"
-                            placeholder="KEŞFET"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={handleSearchKey}
-                            className="flex-1 bg-transparent border-none outline-none px-4 py-2.5 text-[15px] text-white/80 placeholder:text-white/28 placeholder:font-display placeholder:tracking-[0.12em] placeholder:text-[13px]"
-                        />
+                <div className="flex flex-1 items-center max-w-[380px]">
+                    <div className="flex h-11 w-full items-center gap-2.5 rounded-full bg-white/[0.045] px-3.5 ring-1 ring-inset ring-white/[0.07] transition-all duration-150 focus-within:bg-gradient-to-r focus-within:from-fuchsia-500/[0.06] focus-within:to-violet-500/[0.04] focus-within:ring-fuchsia-400/40 focus-within:shadow-[0_0_0_3px_rgba(217,70,239,0.08)]">
                         <button
+                            type="button"
                             onClick={goToExplore}
                             onTouchStart={goToExplore}
                             aria-label="Keşfet"
-                            className={cn('flex items-center justify-center w-10 h-10 text-white/50 hover:text-fuchsia-400 transition-colors duration-150 rounded-lg', ICON_BTN_FOCUS)}
+                            className={cn('flex shrink-0 items-center justify-center text-white/35 transition-colors duration-150 hover:text-white/70', ICON_BTN_FOCUS)}
                         >
-                            <Image src={searchIcon} alt="" width={18} height={18} />
+                            <Search className="h-[15px] w-[15px]" strokeWidth={2} />
                         </button>
+                        <input
+                            type="text"
+                            placeholder="Chatbot ara..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={handleSearchKey}
+                            className="min-w-0 flex-1 bg-transparent text-[13.5px] text-white/85 outline-none placeholder:text-white/30"
+                        />
                     </div>
                 </div>
 
-                {/* Right icons */}
-                <div className="flex items-center gap-1.5">
-                    {/* Bell */}
+                {/* Right toolbar */}
+                <div className="flex items-center gap-1">
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <button
                                 onClick={() => setShowNotification(true)}
                                 aria-label="Bildirimler"
-                                className={cn('relative flex items-center justify-center w-10 h-10 rounded-xl bg-[rgba(15,15,28,0.70)] border border-fuchsia-400/10 text-white/60 hover:bg-fuchsia-500/10 hover:text-fuchsia-300 hover:border-fuchsia-400/30 transition-all duration-150', ICON_BTN_FOCUS)}
+                                className={cn('relative flex h-11 w-11 items-center justify-center rounded-lg text-white/45 transition-all duration-150 hover:bg-gradient-to-br hover:from-fuchsia-500/20 hover:to-violet-500/12 hover:text-fuchsia-200', ICON_BTN_FOCUS)}
                             >
-                                <Image src={bellIcon} alt="" width={20} height={20} />
+                                <Bell className="h-[18px] w-[18px]" strokeWidth={1.75} />
                             </button>
                         </TooltipTrigger>
                         <TooltipContent>Bildirimler</TooltipContent>
                     </Tooltip>
 
-                    {/* Cart */}
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <button
                                 onClick={() => router.push('/dashboard/checkout')}
                                 aria-label="Sepetim"
-                                className={cn('relative flex items-center justify-center w-10 h-10 rounded-xl bg-[rgba(15,15,28,0.70)] border border-fuchsia-400/10 text-white/60 hover:bg-fuchsia-500/10 hover:text-fuchsia-300 hover:border-fuchsia-400/30 transition-all duration-150', ICON_BTN_FOCUS)}
+                                className={cn('relative flex h-11 w-11 items-center justify-center rounded-lg text-white/45 transition-all duration-150 hover:bg-gradient-to-br hover:from-fuchsia-500/20 hover:to-violet-500/12 hover:text-fuchsia-200', ICON_BTN_FOCUS)}
                             >
-                                <Image src={cartIcon} alt="" width={20} height={20} />
+                                <ShoppingCart className="h-[18px] w-[18px]" strokeWidth={1.75} />
                                 {cartCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-gradient-btn text-white text-[10px] font-bold font-display leading-none">
+                                    <span className="absolute top-0.5 right-0.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-gradient-btn px-1 text-[10px] font-semibold leading-none tabular-nums text-white shadow-[0_1px_6px_rgba(192,38,211,0.5)]">
                                         {cartCount}
                                     </span>
                                 )}
@@ -209,24 +209,28 @@ export default function Header({ userId }) {
                     {/* Profile / Login */}
                     {userId ? (
                         <div
-                            className="relative"
+                            className="relative ml-2"
                             onMouseEnter={() => setShowProfile(true)}
                             onMouseLeave={() => setShowProfile(false)}
                         >
                             <button
                                 aria-label="Profil menüsü"
-                                className={cn('flex items-center justify-center w-10 h-10 rounded-xl bg-[rgba(15,15,28,0.70)] border border-fuchsia-400/10 text-white/60 hover:bg-fuchsia-500/10 hover:border-fuchsia-400/30 transition-all duration-150 overflow-hidden', ICON_BTN_FOCUS)}
+                                className={cn('flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500/15 to-violet-500/10 text-white/60 ring-1 ring-white/[0.12] transition-all duration-150 hover:ring-fuchsia-400/45', ICON_BTN_FOCUS)}
                             >
-                                <Image
-                                    src={profileImage || userIcon}
-                                    alt=""
-                                    width={24}
-                                    height={24}
-                                    className="rounded-full object-cover"
-                                />
+                                {profileImage ? (
+                                    <Image
+                                        src={profileImage}
+                                        alt=""
+                                        width={44}
+                                        height={44}
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    <User className="h-[19px] w-[19px]" strokeWidth={1.75} />
+                                )}
                             </button>
                             {showProfile && (
-                                <div className="absolute top-[50px] right-0 z-[100000]">
+                                <div className="absolute top-[54px] right-0 z-[100000]">
                                     <ProfilePopup user={user} onLogout={handleLogout} />
                                 </div>
                             )}
@@ -234,7 +238,7 @@ export default function Header({ userId }) {
                     ) : (
                         <Button
                             onClick={() => router.push('/login')}
-                            className="h-auto px-5 py-2 text-[15px] shadow-[0_4px_16px_rgba(79,70,229,0.35)]"
+                            className="ml-2 h-11 px-5 text-[13.5px]"
                         >
                             Giriş Yap
                         </Button>

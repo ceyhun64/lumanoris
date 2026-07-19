@@ -1,7 +1,4 @@
 import { useState, useEffect } from 'react'
-import btnbell from "@/images/btn-bell.svg";
-import btnbellclosed from "@/images/bell-closed.png";
-
 import ShareModal from '@/features/sharing/ShareModal';
 import ReportModal from '@/features/moderation/ReportModal';
 import AddToListModal from '@/features/lists/AddToListModal';
@@ -9,11 +6,13 @@ import BlockModal from '@/features/moderation/BlockModal';
 import CommentModal from '@/features/comments/CommentModal';
 import BuyModal from '@/features/purchasing/BuyModal';
 import DeleteConfirmModal from '@/shared/ui/DeleteConfirmModal';
+import { Card } from '@/shared/ui/card';
 import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui/dropdown-menu';
 import { Bell, BellOff, ThumbsUp, ThumbsDown, Share2, MessageCircle, ListPlus, Info, ShoppingCart, EyeOff, Flag, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
+import { requireLogin } from '@/shared/lib/auth-guard';
 
 // Shared by the Paylaş/Yorum/Listeye Ekle/Diğer action chips below — was
 // copy-pasted onto 4 separate buttons before.
@@ -227,7 +226,7 @@ export default function ProfileCard({bot, comments}) {
     const handleAddToCart = async (e) => {
     e?.stopPropagation && e.stopPropagation();
 
-    // if (!userId) { router.push('/login'); return; } // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
+    if (!requireLogin(userId, router)) return;
     if (!profile.id) {
         return;
     }
@@ -284,12 +283,12 @@ export default function ProfileCard({bot, comments}) {
     // Satın al fonksiyonu
     const handleBuy = (e) => {
         e?.stopPropagation && e.stopPropagation();
-        // if (!userId) { router.push('/login'); return; } // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
+        if (!requireLogin(userId, router)) return;
         setIsBuyModalOpen(true); // Modalı aç
     };
 
     const handleNotInterested = () => {
-        // if (!userId) { router.push('/login'); return; } // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
+        if (!requireLogin(userId, router)) return;
         setNotInterestedConfirmOpen(true);
     };
 
@@ -330,15 +329,16 @@ export default function ProfileCard({bot, comments}) {
     };
 
     return (
-        <div className="flex flex-col gap-4 rounded-2xl border border-transparent bg-white/[0.04] p-4">
+        <Card className="relative flex flex-col gap-4 overflow-hidden border-fuchsia-400/10 bg-gradient-to-br from-white/[0.05] to-transparent p-5">
+            <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-fuchsia-600/20 blur-[70px]" />
             {/* Üst Bilgi */}
-            <div className="flex w-full flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            <div className="relative flex w-full flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                 <div className="flex w-full items-center gap-4 sm:w-auto">
-                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl">
+                    <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-2xl ring-2 ring-fuchsia-400/20 shadow-[0_4px_20px_rgba(217,70,239,0.25)]">
                         {profile.image && <img src={profile.image} alt="" className="h-full w-full object-cover" />}
                     </div>
                     <div className="flex flex-col items-start gap-0.5">
-                        <h2 className="font-display text-base font-semibold text-white sm:text-lg">{profile.title}</h2>
+                        <h2 className="font-display text-lg font-bold text-white sm:text-xl">{profile.title}</h2>
                         <p className="text-[13px] text-white/55">Bu chatbot ile {formatCompact(bot.toplam_chats)} diyalog kuruldu</p>
                         <p className="text-[13px] text-white/55">{formatCompact(profile.follows)} Takipçi</p>
                     </div>
@@ -352,7 +352,7 @@ export default function ProfileCard({bot, comments}) {
                                 : "bg-origin-border [background-clip:padding-box,border-box] [background-image:linear-gradient(#18171F,#18171F),linear-gradient(150deg,rgba(217,70,239,0.5),rgba(139,92,246,0.4))] hover:border-[#D946EF]",
                         )}
                         onClick={async () => {
-                            // if (!userId) { router.push('/login'); return; } // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
+                            if (!requireLogin(userId, router)) return;
                             try {
                             const res = await fetch("/api/social/followchatbot.php", {
                                 method: "POST",
@@ -422,7 +422,7 @@ export default function ProfileCard({bot, comments}) {
                 <div className="flex items-center gap-2.5 rounded-full border border-transparent bg-white/[0.04] px-3.5 py-2 font-display text-[11.5px] font-semibold capitalize text-white transition-all duration-200 hover:scale-[1.03] hover:bg-[#2a2a2a] hover:shadow-[0_4px_10px_rgba(255,255,255,0.05)]">
                     <button className={cn("flex items-center gap-1.5 border-r border-transparent pr-2.5", liked && "text-fuchsia-400")}
                         onClick={async () => {
-                        // if (!userId) { router.push('/login'); return; } // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
+                        if (!requireLogin(userId, router)) return;
                         try {
                         const res = await fetch("/api/social/likechatbot.php", {
                             method: "POST",
@@ -459,7 +459,7 @@ export default function ProfileCard({bot, comments}) {
                     </button>
                     <button className={cn("flex items-center gap-1.5", disliked && "text-rose-400")}
                         onClick={async () => {
-                        // if (!userId) { router.push('/login'); return; } // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
+                        if (!requireLogin(userId, router)) return;
                         try {
                         const res = await fetch("/api/social/dislikechatbot.php", {
                             method: "POST",
@@ -538,7 +538,7 @@ export default function ProfileCard({bot, comments}) {
 
                 <button
                     className={cn(
-                        "relative z-0 flex h-9 min-h-9 w-9 min-w-9 items-center justify-center rounded-full bg-[linear-gradient(329deg,#3730A3_-2.05%,rgba(139,92,246,0)_178.12%)] text-white shadow-[inset_0_0_0_1.5px_rgba(217,70,239,0.31)] transition-all duration-300 hover:bg-fuchsia-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        "flex h-9 min-h-9 w-9 min-w-9 items-center justify-center rounded-full bg-gradient-btn text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         isInCart && "pointer-events-none opacity-70",
                     )}
                     onClick={handleAddToCart}
@@ -547,7 +547,7 @@ export default function ProfileCard({bot, comments}) {
                     <ShoppingCart className="h-4 w-4" />
                 </button>
                 <button
-                    className="relative z-0 flex h-9 min-w-[110px] items-center justify-center rounded-full bg-[linear-gradient(329deg,#3730A3_-2.05%,rgba(139,92,246,0)_178.12%)] px-5 font-display text-[12.5px] font-semibold text-white shadow-[inset_0_0_0_1.5px_rgba(217,70,239,0.31)] transition-all duration-300 hover:bg-fuchsia-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex h-9 min-w-[110px] items-center justify-center rounded-full bg-gradient-btn px-5 font-display text-[12.5px] font-semibold text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={handleBuy}
                 >
                     Satın Al · {bot.ucret_haftalik}₺
@@ -582,7 +582,7 @@ export default function ProfileCard({bot, comments}) {
                 onClose={() => setCommentOpen(false)}
                 comments={comments}
                 onSend={async (commentText) => {
-                    // if (!userId) { router.push('/login'); return; } // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
+                    if (!requireLogin(userId, router)) return;
                     const payload = {
                     user_id: userId,      // giriş yapan kullanıcı id'si
                     chatbot_id: profile.id,   // yorum yapılan chatbot id'si
@@ -640,6 +640,6 @@ export default function ProfileCard({bot, comments}) {
                     Sepete eklendi!
                 </div>
             )}
-        </div>
+        </Card>
     )
 }

@@ -3,9 +3,12 @@ import WithdrawalModal from "@/features/wallet/WithdrawalModal";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { ArrowDownToLine, Receipt } from "lucide-react";
+import { ArrowDownToLine, Receipt, ListOrdered, ShoppingBag } from "lucide-react";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
+import { StatCard } from "@/shared/ui/stat-card";
 
 function formatDate(value) {
     if (!value) return "";
@@ -21,6 +24,8 @@ export default function Wallet() {
     const [balance, setBalance] = useState(0);
     const [balanceTx, setBalanceTx] = useState([]);
     const [payments, setPayments] = useState([]);
+    const [sessionChecked, setSessionChecked] = useState(false);
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
 
     useEffect(() => {
@@ -30,7 +35,11 @@ export default function Wallet() {
                 const result = JSON.parse(await res.text());
                 if (result.authenticated) setUserId(result.user_id);
                 // else router.push("/login"); // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
-            } catch (err) { console.error("Session check error:", err); /* router.push("/login"); */ }
+            } catch (err) {
+                console.error("Session check error:", err); /* router.push("/login"); */
+            } finally {
+                setSessionChecked(true);
+            }
         }
         checkSession();
     }, [router]);
@@ -49,13 +58,15 @@ export default function Wallet() {
     };
 
     useEffect(() => {
-        if (!userId) return;
+        if (!sessionChecked) return;
+        if (!userId) { setLoading(false); return; }
         fetchBalance();
         fetch(`/api/wallet/getmypayments.php?user_id=${userId}`)
             .then(r => r.json())
             .then(data => { if (data?.success && Array.isArray(data.payments)) setPayments(data.payments); })
-            .catch(err => console.error("Ödemeler yüklenemedi:", err));
-    }, [userId]);
+            .catch(err => console.error("Ödemeler yüklenemedi:", err))
+            .finally(() => setLoading(false));
+    }, [userId, sessionChecked]);
 
     const transactions = activeTab === "bakiye"
         ? balanceTx.map((tx, i) => ({
@@ -89,46 +100,55 @@ export default function Wallet() {
             });
         })();
 
+    // Real totals across both tabs — independent of which tab is active, so
+    // the overview row doesn't change meaning when the user switches tabs.
+    const uniqueOrderCount = new Set(payments.map(p => p.order_id)).size;
+    const totalSpent = (() => {
+        const seen = new Set();
+        let sum = 0;
+        for (const p of payments) {
+            if (seen.has(p.order_id)) continue;
+            seen.add(p.order_id);
+            sum += Math.abs(Number(p.total_amount) || 0);
+        }
+        return sum;
+    })();
+
     return (
-        <div className="flex flex-col gap-5 px-6 py-5">
+        <div className="flex flex-col gap-6 px-4 py-6 md:px-16">
             {/* Page title */}
-            <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-4xl">
-                Bakiyem
-            </h2>
+            <div>
+                <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
+                    Finans
+                </span>
+                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
+                    Bakiyem
+                </h2>
+            </div>
 
-            {/* Balance card */}
-            <div className="relative overflow-hidden rounded-2xl border border-fuchsia-400/14 bg-gradient-to-br from-[#111120] to-[#0D0D1A] p-6">
-                {/* Glow blob */}
-                <div className="absolute top-0 left-0 pointer-events-none opacity-50">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="205" height="121" viewBox="0 0 205 121" fill="none">
-                        <g filter="url(#wb_blur)">
-                            <ellipse cx="19.5" cy="61.2" rx="66.5" ry="39.2" fill="url(#wb_grad)" />
-                        </g>
-                        <defs>
-                            <filter id="wb_blur" x="-165.698" y="-96.6976" width="370.395" height="315.796" filterUnits="userSpaceOnUse">
-                                <feGaussianBlur stdDeviation="59.3488" />
-                            </filter>
-                            <linearGradient id="wb_grad" x1="-47" y1="61.2" x2="86" y2="61.2" gradientUnits="userSpaceOnUse">
-                                <stop offset="0.21" stopColor="#C026D3" />
-                                <stop offset="0.79" stopColor="#8B5CF6" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                </div>
-
-                <div className="relative z-10 flex items-center justify-between gap-4">
-                    <div className="flex flex-col gap-1">
-                        <span className="text-[11px] font-display font-semibold uppercase tracking-[0.1em] text-white/40">
-                            Toplam Bakiye
-                        </span>
-                        <p className="text-3xl font-display font-bold bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text text-transparent leading-none">
-                            {balance} ₺
-                        </p>
+            {/* Overview: hero balance + supporting numbers */}
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                <div className="relative overflow-hidden rounded-2xl border border-fuchsia-400/15 bg-gradient-to-br from-[#1a1030] via-[#150d28] to-[#0d0a1c] p-7 shadow-[0_8px_32px_rgba(139,0,180,0.25)] lg:col-span-2">
+                    <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-fuchsia-600/25 blur-[80px]" />
+                    <div className="pointer-events-none absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-violet-600/20 blur-[80px]" />
+                    <div className="relative flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
+                        <div className="flex flex-col gap-1.5">
+                            <span className="text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-white/45">
+                                Toplam Bakiye
+                            </span>
+                            <p className="font-display text-5xl font-bold leading-none text-white">
+                                {balance} <span className="text-3xl text-white/50">₺</span>
+                            </p>
+                        </div>
+                        <Button onClick={() => setIsModalOpen(true)} className="h-auto px-5 py-3.5 text-[13px] tracking-wide shadow-[0_4px_18px_rgba(192,38,211,0.4)]">
+                            <ArrowDownToLine className="w-4 h-4" />
+                            Para Çek
+                        </Button>
                     </div>
-                    <Button onClick={() => setIsModalOpen(true)} className="h-auto px-5 py-3 text-[13px] tracking-wide">
-                        <ArrowDownToLine className="w-4 h-4" />
-                        PARA ÇEK
-                    </Button>
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                    <StatCard icon={ListOrdered} label="Toplam İşlem" value={loading ? "—" : balanceTx.length + uniqueOrderCount} />
+                    <StatCard icon={ShoppingBag} label="Toplam Harcama" value={loading ? "—" : `${totalSpent} ₺`} />
                 </div>
             </div>
 
@@ -155,7 +175,11 @@ export default function Wallet() {
 
             {/* Transactions */}
             <div className="flex flex-col gap-2">
-                {transactions.length === 0 ? (
+                {loading ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                        <Skeleton key={i} className="h-[62px] w-full rounded-xl" />
+                    ))
+                ) : transactions.length === 0 ? (
                     <EmptyState
                         icon={Receipt}
                         title={activeTab === "bakiye" ? "Henüz bakiye işlemi yok." : "Henüz bir ödeme yok."}

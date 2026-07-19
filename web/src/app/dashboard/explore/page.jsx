@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { SearchX } from "lucide-react";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { Button } from "@/shared/ui/button";
+import { Skeleton } from "@/shared/ui/skeleton";
 import avatarBot from "@/images/avatar-bot.jpg";
 import BotList from "@/widgets/BotList";
 import CategoryFilter from "@/widgets/CategoryFilter";
@@ -160,10 +161,6 @@ export default function Explore() {
         );
     };
 
-    if (loading) {
-        return <div className="flex h-full w-full flex-col gap-6 px-4 py-6 text-white md:px-16">Yükleniyor...</div>;
-    }
-
     return (
         <div className="flex h-full w-full flex-col gap-2 pb-24 text-white">
             {error && (
@@ -183,8 +180,40 @@ export default function Explore() {
                 onSelect={setActiveCategory}
             />
 
-            <div className="flex-1 px-6">
-                {sortedBots.length === 0 ? (
+            <div className="flex-1 px-6 pt-6">
+                <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+                    <div>
+                        <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
+                            Pazaryeri
+                        </span>
+                        <h1 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
+                            Keşfet
+                        </h1>
+                        <p className="mt-1.5 max-w-md text-[13.5px] text-white/45">
+                            Topluluğun oluşturduğu chatbotları keşfet, sohbet et ve favorilerini kaydet.
+                        </p>
+                    </div>
+                    {!loading && (
+                        <span className="rounded-full border border-fuchsia-400/20 bg-fuchsia-500/[0.08] px-3.5 py-1.5 text-[12.5px] font-semibold text-fuchsia-300">
+                            {sortedBots.length} chatbot bulundu
+                        </span>
+                    )}
+                </div>
+
+                {loading ? (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                            <div key={i} className="flex flex-col overflow-hidden rounded-2xl bg-luma-card">
+                                <Skeleton className="aspect-[4/3] w-full rounded-none" />
+                                <div className="flex flex-col gap-2 p-3.5">
+                                    <Skeleton className="h-3.5 w-2/3" />
+                                    <Skeleton className="h-2.5 w-full" />
+                                    <Skeleton className="h-2.5 w-1/3" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : sortedBots.length === 0 ? (
                     <EmptyState
                         icon={SearchX}
                         title="Bu kategoriye/aramaya uygun bot bulunamadı."

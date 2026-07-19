@@ -279,15 +279,26 @@ class WalletController {
             JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
         }
 
+        // Looks at the most recent subscription regardless of whether it has
+        // expired — `duration_weeks` from it is used by the frontend to
+        // preselect a duration on "Tekrar Satın Al", which is exactly the
+        // case where the previous term has already ended. `has_active_sub`
+        // still only reflects a currently-valid (non-expired, status=1) row.
         $sub = Database::getInstance()->selectSingle(
-            'id, expiry_date FROM user_subscriptions WHERE user_id = ? AND chatbot_id = ? AND status = 1 AND expiry_date > NOW() ORDER BY expiry_date DESC LIMIT 1',
+            "id, expiry_date, duration_weeks, (status = 1 AND expiry_date > NOW()) AS is_active
+             FROM user_subscriptions WHERE user_id = ? AND chatbot_id = ? ORDER BY id DESC LIMIT 1",
             [$userId, $chatbotId]
         );
 
         if ($sub) {
-            JsonResponse::success(['has_active_sub' => true, 'expiry_date' => $sub['expiry_date']]);
+            $isActive = (bool) $sub['is_active'];
+            JsonResponse::success([
+                'has_active_sub' => $isActive,
+                'expiry_date'    => $isActive ? $sub['expiry_date'] : null,
+                'duration_weeks' => (int) $sub['duration_weeks'],
+            ]);
         } else {
-            JsonResponse::success(['has_active_sub' => false]);
+            JsonResponse::success(['has_active_sub' => false, 'duration_weeks' => null]);
         }
     }
 }

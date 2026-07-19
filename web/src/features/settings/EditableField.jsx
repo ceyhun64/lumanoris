@@ -41,7 +41,7 @@ export default function EditableField({ fields, onSubmit }) {
                     <Input
                         key={field.name}
                         type="text"
-                        className="flex-1 uppercase"
+                        className="flex-1"
                         placeholder={field.placeholder}
                         value={values[field.name]}
                         onChange={(e) => handleChange(e, field.name)}

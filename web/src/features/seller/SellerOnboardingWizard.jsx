@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
 import { Check } from "lucide-react";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/shared/ui/select";
 import { cn } from "@/lib/utils";
 
 const STEP_LABELS = ["Hesap Tipi", "Kimlik & Banka", "Adres", "Önizleme"];
@@ -87,8 +89,6 @@ function isoToDdmmyyyy(value) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
     return m ? `${m[3]}.${m[2]}.${m[1]}` : "";
 }
-
-const selectClass = "flex h-11 w-full rounded-xl border border-fuchsia-400/14 bg-luma-input px-4 py-2 text-sm text-white font-sans transition-all duration-200 focus:outline-none focus:border-fuchsia-500/55 focus:ring-2 focus:ring-fuchsia-500/15 disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function SellerOnboardingWizard({ userId, initialStatus, onComplete }) {
     const [step, setStep] = useState(0);
@@ -272,7 +272,13 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
     );
 
     if (bootstrapping) {
-        return <div className="rounded-2xl border border-transparent bg-luma-elevated p-6"><p className="text-white/60">Yükleniyor...</p></div>;
+        return (
+            <div className="flex flex-col gap-4 rounded-2xl border border-transparent bg-luma-elevated p-6">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-10 w-full rounded-lg" />
+                <Skeleton className="h-10 w-full rounded-lg" />
+            </div>
+        );
     }
 
     return (
@@ -381,22 +387,37 @@ export default function SellerOnboardingWizard({ userId, initialStatus, onComple
 
             {step === 2 && (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <select className={selectClass} value={form.il_kod} onChange={(e) => { update("il_kod", e.target.value); update("ilce_kod", ""); }}>
-                        <option value="">{loadingIller ? "İl listesi yükleniyor..." : "İl seçin"}</option>
-                        {iller.map((il) => {
-                            const kod = il.IL_Kodu ?? il.Il_Kodu ?? il.IL_KOD ?? il.kod;
-                            const ad = il.IL_Adi ?? il.Il_Adi ?? il.ad;
-                            return <option key={kod} value={kod}>{ad}</option>;
-                        })}
-                    </select>
-                    <select className={selectClass} value={form.ilce_kod} onChange={(e) => update("ilce_kod", e.target.value)} disabled={!form.il_kod}>
-                        <option value="">{loadingIlceler ? "İlçeler yükleniyor..." : "İlçe seçin"}</option>
-                        {ilceler.map((il) => {
-                            const kod = il.Ilce_Kodu ?? il.ILCE_Kodu ?? il.kod;
-                            const ad = il.Ilce_Adi ?? il.ILCE_Adi ?? il.ad;
-                            return <option key={kod} value={kod}>{ad}</option>;
-                        })}
-                    </select>
+                    <Select
+                        value={form.il_kod ? String(form.il_kod) : ""}
+                        onValueChange={(kod) => { update("il_kod", kod); update("ilce_kod", ""); }}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder={loadingIller ? "İl listesi yükleniyor..." : "İl seçin"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {iller.map((il) => {
+                                const kod = il.IL_Kodu ?? il.Il_Kodu ?? il.IL_KOD ?? il.kod;
+                                const ad = il.IL_Adi ?? il.Il_Adi ?? il.ad;
+                                return <SelectItem key={kod} value={String(kod)}>{ad}</SelectItem>;
+                            })}
+                        </SelectContent>
+                    </Select>
+                    <Select
+                        value={form.ilce_kod ? String(form.ilce_kod) : ""}
+                        onValueChange={(kod) => update("ilce_kod", kod)}
+                        disabled={!form.il_kod}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder={loadingIlceler ? "İlçeler yükleniyor..." : "İlçe seçin"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {ilceler.map((il) => {
+                                const kod = il.Ilce_Kodu ?? il.ILCE_Kodu ?? il.kod;
+                                const ad = il.Ilce_Adi ?? il.ILCE_Adi ?? il.ad;
+                                return <SelectItem key={kod} value={String(kod)}>{ad}</SelectItem>;
+                            })}
+                        </SelectContent>
+                    </Select>
                     <Input placeholder="Mahalle" value={form.mahalle} onChange={(e) => update("mahalle", e.target.value)} />
                     <Input placeholder="Cadde" value={form.cadde} onChange={(e) => update("cadde", e.target.value)} />
                     <Input placeholder="Sokak" value={form.sokak} onChange={(e) => update("sokak", e.target.value)} />

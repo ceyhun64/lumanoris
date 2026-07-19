@@ -37,6 +37,14 @@ final class AppConfig {
     const DISCOUNT_MONTHLY_FACTOR  = 0.9;  // 10% discount on monthly subscription
     const SELLER_COMMISSION_WEEKLY  = 0.85; // Seller keeps 85% of weekly sales
     const SELLER_COMMISSION_MONTHLY = 0.80; // Seller keeps 80% of monthly sales
+    // Bounds a seller may set a bot's weekly sale price to. Enforced in
+    // ChatbotController::publishChatbot/updateChatbotPrice; mirrored on the
+    // frontend in shared/lib/pricing.js so the popup can show the same
+    // range as an inline note instead of only rejecting out-of-range values
+    // after submit. Placeholder business limits — confirm actual values
+    // with product/finance before relying on them long-term.
+    const MIN_WEEKLY_PRICE = 1;
+    const MAX_WEEKLY_PRICE = 5000; // ₺
 
     // ── Database table names ───────────────────────────────────────────────
     const TABLE_USERS          = 'kullanicilar';

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Sidebar from '@/widgets/Sidebar';
 import logo from '@/images/header-logo-icon.png';
 import { useRouter } from 'next/navigation';
+import { Menu, X } from 'lucide-react';
 
 export default function NavbarMobile() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -11,26 +12,21 @@ export default function NavbarMobile() {
 
     return (
         <>
-            <div className="flex items-center justify-between px-4 py-3 bg-luma-base border-b border-transparent">
+            <div className="flex h-16 items-center justify-between px-4 bg-gradient-to-b from-[rgba(11,11,30,0.9)] to-[#09090F] backdrop-blur-xl">
                 <div
-                    className="flex items-center gap-2 cursor-pointer select-none transition-opacity hover:opacity-80"
+                    className="flex items-center gap-2.5 cursor-pointer select-none transition-opacity hover:opacity-80"
                     onClick={() => router.push('/dashboard')}
                 >
-                    {logo?.src && <img src={logo.src} alt="logo" className="w-7 h-7 object-contain" />}
-                    <span className="text-white font-semibold text-sm tracking-widest font-display">LUMANORIS</span>
+                    {logo?.src && <img src={logo.src} alt="Lumanoris" className="w-7 h-7 object-contain" />}
+                    <span className="text-white font-semibold text-[14px] tracking-[0.02em] font-display">Lumanoris</span>
                 </div>
 
                 <button
-                    className="p-2 rounded-lg text-white hover:bg-white/5 transition-colors active:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg text-white/70 transition-all duration-150 hover:bg-gradient-to-br hover:from-fuchsia-500/20 hover:to-violet-500/12 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
                     aria-label={sidebarOpen ? "Menüyü kapat" : "Menüyü aç"}
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M4.00001 18.0002C3.86797 18.0032 3.73672 17.9792 3.61429 17.9297C3.49186 17.8802 3.38083 17.8062 3.28801 17.7122C3.19406 17.6194 3.12006 17.5084 3.07053 17.386C3.02101 17.2635 2.99701 17.1323 3.00001 17.0002C3.00001 16.7176 3.09601 16.4802 3.28801 16.2882C3.38083 16.1943 3.49186 16.1203 3.61429 16.0708C3.73672 16.0213 3.86797 15.9973 4.00001 16.0002H15C15.2833 16.0002 15.521 16.0962 15.713 16.2882C15.8068 16.3812 15.8806 16.4922 15.9299 16.6147C15.9793 16.7371 16.0031 16.8683 16 17.0002C16 17.2829 15.9043 17.5202 15.713 17.7122C15.6201 17.8063 15.5089 17.8804 15.3863 17.9299C15.2637 17.9794 15.1322 18.0034 15 18.0002H4.00001Z" fill="white" />
-                        <path opacity="0.3" d="M17.4 11.9993L20.3 14.8993C20.3911 14.9912 20.4624 15.1006 20.5097 15.221C20.557 15.3413 20.5792 15.4701 20.575 15.5993C20.5792 15.7286 20.557 15.8573 20.5097 15.9777C20.4624 16.0981 20.3911 16.2075 20.3 16.2993C20.2082 16.3904 20.0987 16.4618 19.9784 16.5091C19.858 16.5563 19.7293 16.5786 19.6 16.5743C19.4708 16.5786 19.342 16.5563 19.2216 16.5091C19.1013 16.4618 18.9918 16.3904 18.9 16.2993L15.3 12.6993C15.2049 12.6093 15.1292 12.5007 15.0776 12.3804C15.026 12.26 14.9996 12.1303 15 11.9993C15 11.7327 15.1 11.4993 15.3 11.2993L18.9 7.69933C18.9918 7.60826 19.1013 7.5369 19.2216 7.48961C19.342 7.44233 19.4708 7.42011 19.6 7.42433C19.8833 7.42433 20.1167 7.516 20.3 7.69933C20.3911 7.79115 20.4624 7.9006 20.5097 8.02096C20.557 8.14133 20.5792 8.27008 20.575 8.39933C20.5792 8.52859 20.557 8.65734 20.5097 8.77771C20.4624 8.89807 20.3911 9.00752 20.3 9.09933L17.4 11.9993Z" fill="white" />
-                        <path d="M4.00003 8.0003C3.86807 8.00342 3.73685 7.97958 3.61443 7.93023C3.492 7.88088 3.38093 7.80706 3.28803 7.7133C3.19396 7.62036 3.11988 7.50917 3.07036 7.38655C3.02083 7.26394 2.9969 7.1325 3.00003 7.0003C3.00003 6.71696 3.09603 6.4793 3.28803 6.2873C3.38093 6.19353 3.492 6.11971 3.61443 6.07036C3.73685 6.02101 3.86807 5.99717 4.00003 6.0003H15C15.1322 5.99703 15.2636 6.02081 15.3862 6.07016C15.5088 6.11952 15.62 6.19341 15.713 6.2873C15.8069 6.38032 15.8808 6.49155 15.9302 6.61416C15.9795 6.73677 16.0033 6.86817 16 7.0003C16.0033 7.13242 15.9795 7.26383 15.9302 7.38643C15.8808 7.50904 15.8069 7.62027 15.713 7.7133C15.62 7.80719 15.5088 7.88107 15.3862 7.93043C15.2636 7.97978 15.1322 8.00356 15 8.0003H4.00003Z" fill="white" />
-                        <path opacity="0.3" d="M4.00001 13.0003C3.86797 13.0033 3.73672 12.9793 3.61429 12.9298C3.49186 12.8802 3.38083 12.8062 3.28801 12.7123C3.19406 12.6195 3.12006 12.5084 3.07053 12.386C3.02101 12.2636 2.99701 12.1323 3.00001 12.0003C3.00001 11.717 3.09601 11.4793 3.28801 11.2873C3.38091 11.1935 3.49198 11.1197 3.61441 11.0704C3.73683 11.021 3.86804 10.9972 4.00001 11.0003H12C12.1321 10.997 12.2635 11.0208 12.3861 11.0702C12.5088 11.1195 12.62 11.1934 12.713 11.2873C12.8069 11.3803 12.8808 11.4915 12.9301 11.6142C12.9795 11.7368 13.0033 11.8682 13 12.0003C13 12.283 12.9043 12.5203 12.713 12.7123C12.6201 12.8064 12.5089 12.8804 12.3863 12.93C12.2637 12.9795 12.1322 13.0034 12 13.0003H4.00001Z" fill="white" />
-                    </svg>
+                    {sidebarOpen ? <X className="h-5 w-5" strokeWidth={1.75} /> : <Menu className="h-5 w-5" strokeWidth={1.75} />}
                 </button>
             </div>
 

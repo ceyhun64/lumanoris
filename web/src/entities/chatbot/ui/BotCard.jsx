@@ -1,5 +1,5 @@
 ﻿import Image from 'next/image';
-import { useEffect, useState, useRef } from 'react';
+import { useState } from 'react';
 import ShareModal from '@/features/sharing/ShareModal';
 import ReportModal from '@/features/moderation/ReportModal';
 import AddToListModal from '@/features/lists/AddToListModal';
@@ -7,18 +7,17 @@ import DeleteConfirmModal from '@/shared/ui/DeleteConfirmModal';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
-
-const BADGE_CLASSES = {
-    sold:     'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
-    produced: 'bg-fuchsia-500/15 text-fuchsia-300 border border-fuchsia-500/30',
-    rented:   'bg-violet-500/15 text-violet-300 border border-violet-500/30',
-};
+import { requireLogin } from '@/shared/lib/auth-guard';
+import { MoreVertical, Bookmark, Share2, ThumbsDown, EyeOff, Flag } from 'lucide-react';
+import {
+    DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
+} from '@/shared/ui/dropdown-menu';
+import { Card } from '@/shared/ui/card';
+import { Badge } from '@/shared/ui/badge';
 
 export default function BotCard({ bot, userId, onRemove }) {
     const router = useRouter();
     const { image, title, author, dialogues, time, badge, avatar } = bot;
-    const [menuOpen, setMenuOpen] = useState(false);
-    const menuRef = useRef();
     const [shareOpen, setShareOpen] = useState(false);
     const [reportOpen, setReportOpen] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
@@ -27,8 +26,7 @@ export default function BotCard({ bot, userId, onRemove }) {
     const userLists = bot.userLists || [];
 
     const handleNotInterested = () => {
-        // if (!userId) { router.push('/login'); return; } // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
-        setMenuOpen(false);
+        if (!requireLogin(userId, router)) return;
         setConfirmAction('notInterested');
     };
 
@@ -48,20 +46,9 @@ export default function BotCard({ bot, userId, onRemove }) {
         }
     };
 
-    const toggleMenu = () => setMenuOpen(prev => !prev);
 
-    useEffect(() => {
-        function handleClickOutside(event) {
-            if (menuRef.current && !menuRef.current.contains(event.target)) setMenuOpen(false);
-        }
-        if (menuOpen) document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [menuOpen]);
-
-    const handleHideBot = (e) => {
-        e.stopPropagation();
-        // if (!userId) { router.push('/login'); return; } // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
-        setMenuOpen(false);
+    const handleHideBot = () => {
+        if (!requireLogin(userId, router)) return;
         setConfirmAction('hideBot');
     };
 
@@ -86,37 +73,25 @@ export default function BotCard({ bot, userId, onRemove }) {
     };
 
     return (
-        <div
-            className="relative flex flex-col rounded-2xl overflow-hidden cursor-pointer bg-gradient-to-b from-[#111120] to-[#0D0D1A] border border-fuchsia-400/10 transition-all duration-300 hover:-translate-y-1 hover:border-fuchsia-400/25 hover:shadow-[0_8px_32px_rgba(217,70,239,0.18)]"
+        <Card
+            interactive
+            role="button"
+            tabIndex={0}
+            className="relative flex flex-col overflow-hidden p-0"
             onClick={() => router.push(`/dashboard/chat/?botId=${bot.id}`)}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    router.push(`/dashboard/chat/?botId=${bot.id}`);
+                }
+            }}
         >
-            {/* Glow blob top */}
-            <div className="absolute top-0 left-0 right-0 h-[80px] pointer-events-none overflow-hidden opacity-60">
-                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="161" viewBox="0 0 200 161" fill="none" preserveAspectRatio="xMidYTop slice">
-                    <g filter="url(#bc_blur)">
-                        <ellipse cx="101.044" cy="-4.511" rx="69.328" ry="40.867" fill="url(#bc_grad)" />
-                    </g>
-                    <defs>
-                        <filter id="bc_blur" x="-92" y="-169" width="386" height="329" filterUnits="userSpaceOnUse">
-                            <feGaussianBlur stdDeviation="61.873" result="blur" />
-                        </filter>
-                        <linearGradient id="bc_grad" x1="31.7" y1="-4.5" x2="170.4" y2="-4.5" gradientUnits="userSpaceOnUse">
-                            <stop offset="0.21" stopColor="#C026D3" />
-                            <stop offset="0.79" stopColor="#8B5CF6" />
-                        </linearGradient>
-                    </defs>
-                </svg>
-            </div>
-
             {/* Image */}
             <div className="relative w-full aspect-[3/2] overflow-hidden">
                 {badge && (
-                    <span className={cn(
-                        'absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-md text-[10px] font-semibold font-display tracking-wide',
-                        BADGE_CLASSES[badge.type] ?? 'bg-white/10 text-white/80 border border-transparent',
-                    )}>
+                    <Badge variant={badge.type} className="absolute top-2.5 left-2.5 z-10">
                         {badge.label}
-                    </span>
+                    </Badge>
                 )}
                 <Image src={image} alt={title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 300px" />
             </div>
@@ -136,31 +111,35 @@ export default function BotCard({ bot, userId, onRemove }) {
                     </div>
 
                     {/* Context menu trigger */}
-                    <div className="relative shrink-0" ref={menuRef}>
-                        <button
-                            className="flex items-center justify-center w-7 h-7 rounded-lg text-white/40 hover:text-white/80 hover:bg-fuchsia-500/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            onClick={(e) => { e.stopPropagation(); toggleMenu(); }}
-                            aria-label="Diğer seçenekler"
-                        >
-                            <svg width="16" height="16" viewBox="0 0 18 18" fill="currentColor">
-                                <path d="M9 12.4a1.4 1.4 0 1 1 0 2.8A1.4 1.4 0 0 1 9 12.4ZM9 7.5a1.4 1.4 0 1 1 0 2.8A1.4 1.4 0 0 1 9 7.5ZM9 2.6a1.4 1.4 0 1 1 0 2.8A1.4 1.4 0 0 1 9 2.6Z" />
-                            </svg>
-                        </button>
-
-                        {menuOpen && (
-                            <div
-                                className="absolute right-0 top-8 z-50 min-w-[180px] rounded-xl border border-fuchsia-400/12 bg-[#0E0E22] shadow-[0_8px_32px_rgba(0,0,0,0.55)] overflow-hidden"
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                className="flex shrink-0 items-center justify-center w-7 h-7 rounded-lg text-white/40 hover:text-white/80 hover:bg-fuchsia-500/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 onClick={(e) => e.stopPropagation()}
+                                aria-label="Diğer seçenekler"
                             >
-                                <MenuItem onClick={() => { setModalVisible(true); setMenuOpen(false); }} icon="📑">Listeye Kaydet</MenuItem>
-                                <MenuItem onClick={() => { setShareOpen(true); setMenuOpen(false); }} icon="↗">Paylaş</MenuItem>
-                                <div className="h-px bg-fuchsia-400/10 mx-2" />
-                                <MenuItem onClick={handleNotInterested} icon="👎">İlgilenmiyorum</MenuItem>
-                                <MenuItem onClick={handleHideBot} icon="—">Bu Profili Önermeyin</MenuItem>
-                                <MenuItem onClick={(e) => { e.stopPropagation(); setReportOpen(true); setMenuOpen(false); }} icon="⚠" danger>Bildir</MenuItem>
-                            </div>
-                        )}
-                    </div>
+                                <MoreVertical className="h-4 w-4" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem onClick={() => setModalVisible(true)}>
+                                <Bookmark className="h-4 w-4" /> Listeye Kaydet
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setShareOpen(true)}>
+                                <Share2 className="h-4 w-4" /> Paylaş
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleNotInterested}>
+                                <ThumbsDown className="h-4 w-4" /> İlgilenmiyorum
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleHideBot}>
+                                <EyeOff className="h-4 w-4" /> Bu Profili Önermeyin
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setReportOpen(true)} className="text-rose-400 focus:text-rose-400">
+                                <Flag className="h-4 w-4" /> Bildir
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
 
                 <p className="text-[12.5px] text-white/38 leading-none">
@@ -194,21 +173,6 @@ export default function BotCard({ bot, userId, onRemove }) {
                     Uyarınız alındı
                 </div>
             )}
-        </div>
-    );
-}
-
-function MenuItem({ onClick, icon, danger, children }) {
-    return (
-        <button
-            className={cn(
-                'flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13.5px] transition-colors text-left',
-                danger ? 'text-rose-400 hover:bg-rose-500/10' : 'text-white/75 hover:bg-fuchsia-500/10 hover:text-white',
-            )}
-            onClick={onClick}
-        >
-            <span className="w-4 text-center opacity-70">{icon}</span>
-            {children}
-        </button>
+        </Card>
     );
 }

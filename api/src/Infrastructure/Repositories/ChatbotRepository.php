@@ -193,7 +193,56 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
         return self::all($sql, $params);
     }
 
+    /**
+     * Single source of truth for "may this user see this chatbot's private
+     * content" (full detail, style_prompt, training data — anywhere that
+     * content is gated, this is the one policy to call). A user has access
+     * when any of:
+     *
+     *  - they are the chatbot's author/owner — regardless of publish state,
+     *    so an author can always view/edit their own independent or
+     *    unpublished bot;
+     *  - the chatbot is currently published to the marketplace by a seller
+     *    in active standing — public marketplace bots are open to everyone
+     *    to browse/chat, purchased or not (paying unlocks a larger per-bot
+     *    message allowance via coin_engine.php, not access itself);
+     *  - they hold a subscription to it that has not yet expired, even if
+     *    the seller has since unpublished it — unpublishing must not cut
+     *    off a customer who already paid for the remaining term (this is
+     *    the branch that was previously missing entirely).
+     *
+     * Deliberately excluded: an *expired* subscription falls through and is
+     * denied unless the bot is also still publicly published — this is what
+     * actually revokes access once the paid term ends. There is no admin
+     * bypass here because the customer-facing API has no admin-role concept;
+     * the separate legacy admin panel (api/admin/) uses its own session and
+     * queries `chatbotlar` directly, so it is unaffected by this policy.
+     */
+    public function userHasAccess(int $chatbotId, int $userId): bool {
+        $row = self::one(
+            "SELECT 1
+             FROM `" . self::T . "` c
+             LEFT JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id AND pms.status = 'active'
+             WHERE c.id = ?
+               AND (
+                    c.author_user_id = ?
+                 OR (c.is_independent = 0 AND pms.user_id IS NOT NULL)
+                 OR EXISTS (
+                      SELECT 1 FROM user_subscriptions us
+                      WHERE us.user_id = ? AND us.chatbot_id = c.id
+                        AND us.status = 1 AND us.expiry_date > NOW()
+                    )
+               )",
+            [$chatbotId, $userId, $userId]
+        );
+        return $row !== null;
+    }
+
     public function getDetail(int $id, int $userId): ?array {
+        if (!$this->userHasAccess($id, $userId)) {
+            return null;
+        }
+
         return self::one(
             "SELECT c.id, c.isim, c.is_independent,
                     (SELECT kullanici_adi FROM kullanicilar WHERE id = c.author_user_id) AS author_username,
@@ -206,11 +255,8 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
                     (SELECT COUNT(*) FROM chatbot_follows  WHERE chatbot_id = c.id) AS follows,
                     (SELECT COUNT(*) FROM chatbot_chats    WHERE chatbot_id = c.id) AS toplam_chats
              FROM `" . self::T . "` c
-             LEFT JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id AND pms.status = 'active'
-             WHERE c.id = ?
-               AND ((c.is_independent = 0 AND pms.user_id IS NOT NULL)
-                 OR (c.is_independent = 1 AND c.author_user_id = ?))",
-            [$id, $userId]
+             WHERE c.id = ?",
+            [$id]
         );
     }
 

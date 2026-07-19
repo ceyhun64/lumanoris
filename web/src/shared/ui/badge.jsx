@@ -21,8 +21,13 @@ const badgeVariants = cva(
           "border-transparent bg-amber-500/15 text-amber-400",
         sold:
           "border-transparent bg-rose-500/15 text-rose-400",
+        // Matches the fuchsia treatment BotCard.jsx already used live for its
+        // one real-world "produced" badge ("Önerilen" in cart suggestions) —
+        // this variant previously shipped as unused emerald/green, which
+        // would have visually contradicted the badge BotCard actually shows
+        // the moment anything else in the app started using this variant.
         produced:
-          "border-transparent bg-emerald-500/15 text-emerald-400",
+          "border-transparent bg-fuchsia-500/15 text-fuchsia-300",
         rented:
           "border-transparent bg-amber-500/15 text-amber-400",
       },
