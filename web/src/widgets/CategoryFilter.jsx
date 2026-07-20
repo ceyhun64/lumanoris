@@ -16,7 +16,7 @@ export default function CategoryFilter({ categories, onSelect, selected: externa
     };
 
     return (
-        <div className="mx-6 mt-2 flex flex-nowrap gap-2 overflow-x-auto rounded-2xl border border-white/[0.06] bg-white/[0.02] p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mt-3 flex flex-nowrap gap-2 overflow-x-auto rounded-2xl border border-white/[0.06] bg-white/[0.02] p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {categories.map((cat, index) => {
                 const isActive = selected === cat.kategori_adi_tr;
                 return (

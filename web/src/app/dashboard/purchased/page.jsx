@@ -7,6 +7,7 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { Card } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { cn } from "@/lib/utils";
+import { PageLayout, PageHeader, CardGrid } from "@/shared/ui/page-layout";
 
 const IMG_FALLBACK = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 
@@ -79,9 +80,9 @@ export default function SatinAldiklarim() {
 
     if (loading) {
         return (
-            <div className="flex h-full w-full flex-col gap-8 px-4 py-6 md:px-16">
-                <Skeleton className="h-8 w-56" />
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <PageLayout>
+                <Skeleton className="mb-8 h-8 w-56" />
+                <CardGrid>
                     {Array.from({ length: 8 }).map((_, i) => (
                         <div key={i} className="flex flex-col overflow-hidden rounded-2xl bg-luma-elevated">
                             <Skeleton className="h-[150px] w-full rounded-none" />
@@ -91,44 +92,30 @@ export default function SatinAldiklarim() {
                             </div>
                         </div>
                     ))}
-                </div>
-            </div>
+                </CardGrid>
+            </PageLayout>
         );
     }
 
     if (bots.length === 0) {
         return (
-            <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
-                <div className="mb-8">
-                    <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
-                        Kütüphanem
-                    </span>
-                    <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
-                        Satın Aldıklarım
-                    </h2>
-                </div>
+            <PageLayout>
+                <PageHeader eyebrow="Kütüphanem" title="Satın Aldıklarım" />
                 <EmptyState
                     icon={ShoppingBag}
                     title="Henüz bir sohbet botu satın almadınız."
                     actionLabel="Pazaryerini Keşfet"
                     onAction={() => router.push("/dashboard/explore")}
                 />
-            </div>
+            </PageLayout>
         );
     }
 
     return (
-        <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
-            <div className="mb-8">
-                <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
-                    Kütüphanem
-                </span>
-                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
-                    Satın Aldıklarım
-                </h2>
-            </div>
+        <PageLayout>
+            <PageHeader eyebrow="Kütüphanem" title="Satın Aldıklarım" />
 
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <CardGrid>
                 {bots.map((bot) => {
                     const cat = categories.find(c => String(c.id) === String(bot.kategori_id));
                     const categoryLabel = cat ? cat.kategori_adi_tr : "Genel";
@@ -179,7 +166,7 @@ export default function SatinAldiklarim() {
                         </Card>
                     );
                 })}
-            </div>
-        </div>
+            </CardGrid>
+        </PageLayout>
     );
 }

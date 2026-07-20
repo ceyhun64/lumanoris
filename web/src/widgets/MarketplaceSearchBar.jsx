@@ -25,7 +25,7 @@ export default function MarketplaceSearchBar({ query, onQueryChange, sort, onSor
     const activeLabel = SORT_OPTIONS.find((o) => o.value === sort)?.label ?? 'Önerilen';
 
     return (
-        <div className="flex items-center gap-3 px-6 pt-5">
+        <div className="flex items-center gap-3">
             {query?.trim() ? (
                 <div className="flex flex-1 items-center gap-2 rounded-xl border border-fuchsia-400/20 bg-fuchsia-500/[0.06] py-2.5 pl-4 pr-2.5 text-[14px] text-white/85">
                     <Search className="h-3.5 w-3.5 shrink-0 text-fuchsia-300" />

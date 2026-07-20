@@ -3,6 +3,7 @@ import EmptyCart from "@/features/purchasing/EmptyCart";
 import React, { useEffect, useState } from "react";
 import CartFull from "@/entities/cart/ui/CartFull";
 import CartConfirm from "@/entities/cart/ui/CartConfirm";
+import { PageLayout, PageHeader } from "@/shared/ui/page-layout";
 
 export default function Checkout() {
     const [cartItems, setCartItems] = useState([]);
@@ -36,16 +37,8 @@ export default function Checkout() {
     };
 
     return (
-        <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
-
-            <div className="mb-8">
-                <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
-                    Ödeme
-                </span>
-                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
-                    {step === 1 ? "Sepetim" : "Onayla"}
-                </h2>
-            </div>
+        <PageLayout>
+            <PageHeader eyebrow="Ödeme" title={step === 1 ? "Sepetim" : "Onayla"} />
 
             {cartItems.length === 0 ? (
                 <EmptyCart />
@@ -54,6 +47,6 @@ export default function Checkout() {
             ) : (
                 <CartConfirm cartItems={cartItems} />
             )}
-        </div>
+        </PageLayout>
     );
 }

@@ -49,16 +49,17 @@ export default function DashboardLayout({ children }) {
                 İçeriğe geç
             </a>
             <div className="relative flex h-screen overflow-hidden bg-[#09090F]">
-                {/* Ambient glow layer — gives the whole shell depth/atmosphere
-                    instead of a flat black canvas. Fixed so it doesn't scroll
-                    with page content; z-0 so it always sits behind the real
-                    UI regardless of paint-order quirks between positioned and
+                {/* Ambient glow layer — a quiet hint of depth, not a colored
+                    wash. Black stays dominant; the two blobs are faint and
+                    tucked into corners so they read as ambient light rather
+                    than a background color. Fixed so it doesn't scroll with
+                    page content; z-0 so it always sits behind the real UI
+                    regardless of paint-order quirks between positioned and
                     non-positioned siblings. */}
                 <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                    <div className="absolute -top-32 left-[30%] h-[900px] w-[900px] rounded-full bg-fuchsia-600/25 blur-[130px]" />
-                    <div className="absolute top-[20%] right-[5%] h-[700px] w-[700px] rounded-full bg-violet-600/20 blur-[130px]" />
-                    <div className="absolute bottom-[-25%] left-[15%] h-[750px] w-[750px] rounded-full bg-fuchsia-500/[0.16] blur-[140px]" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.05)_1px,transparent_0)] bg-[length:28px_28px]" />
+                    <div className="absolute -top-40 left-[20%] h-[820px] w-[820px] rounded-full bg-fuchsia-600/[0.07] blur-[160px]" />
+                    <div className="absolute bottom-[-30%] right-[0%] h-[720px] w-[720px] rounded-full bg-violet-600/[0.06] blur-[160px]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.035)_1px,transparent_0)] bg-[length:28px_28px]" />
                 </div>
 
                 <div className="relative z-10 flex h-full w-full">

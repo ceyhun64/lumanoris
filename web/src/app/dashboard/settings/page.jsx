@@ -14,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { Crown } from "lucide-react";
+import { PageLayout, PageHeader, PageSection } from "@/shared/ui/page-layout";
 
 export default function Settings() {
     const [userId, setUserId] = useState(null);
@@ -129,19 +130,11 @@ export default function Settings() {
     ];
 
     return (
-        <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
+        <PageLayout>
+            <PageHeader eyebrow="Hesap" title="Ayarlar" />
 
-            <div className="mb-7">
-                <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
-                    Hesap
-                </span>
-                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
-                    Ayarlar
-                </h2>
-            </div>
-
-            <div className="relative mb-5 flex flex-col items-stretch gap-4 overflow-hidden rounded-2xl border border-fuchsia-400/15 bg-gradient-to-br from-[#1a1030] via-[#150d28] to-[#0d0a1c] p-5 shadow-[0_8px_28px_rgba(139,0,180,0.2)] sm:flex-row sm:items-center sm:justify-between">
-                <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-fuchsia-600/20 blur-[70px]" />
+            <PageSection className="relative flex flex-col items-stretch gap-4 overflow-hidden rounded-2xl border border-fuchsia-400/15 bg-gradient-to-br from-[#1a1030] via-[#150d28] to-[#0d0a1c] p-5 shadow-[0_8px_28px_rgba(139,0,180,0.2)] sm:flex-row sm:items-center sm:justify-between">
+                <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-fuchsia-600/[0.10] blur-[90px]" />
                 <div className="relative flex items-center gap-3.5">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-fuchsia-500/15 text-fuchsia-300">
                         <Crown className="h-5 w-5" strokeWidth={1.75} />
@@ -157,8 +150,9 @@ export default function Settings() {
                 >
                     Abonelik seçeneklerini görüntüle
                 </Button>
-            </div>
+            </PageSection>
 
+            <PageSection>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="mb-5 h-auto w-full flex-wrap justify-start gap-1">
                     {tabs.map((tab) => (
@@ -238,6 +232,7 @@ export default function Settings() {
                 <TabsContent value="contact" className="mt-0"><ContactForm /></TabsContent>
                 </Card>
             </Tabs>
-        </div>
+            </PageSection>
+        </PageLayout>
     );
 }

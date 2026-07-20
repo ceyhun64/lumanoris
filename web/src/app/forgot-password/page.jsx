@@ -145,9 +145,8 @@ export default function ForgotPassword() {
         <div className="min-h-screen bg-[#09090F] flex">
             {/* ── Left branding panel (desktop only) ── */}
             <div className="hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center overflow-hidden">
-                <div className="pointer-events-none absolute -top-32 left-[10%] h-[500px] w-[500px] rounded-full bg-fuchsia-600/20 blur-[120px]" />
-                <div className="pointer-events-none absolute top-[45%] right-[-10%] h-[400px] w-[400px] rounded-full bg-violet-600/15 blur-[110px]" />
-                <div className="pointer-events-none absolute bottom-[-20%] left-[20%] h-[420px] w-[420px] rounded-full bg-fuchsia-500/[0.12] blur-[120px]" />
+                <div className="pointer-events-none absolute -top-32 left-[10%] h-[480px] w-[480px] rounded-full bg-fuchsia-600/[0.07] blur-[140px]" />
+                <div className="pointer-events-none absolute bottom-[-25%] right-[-10%] h-[420px] w-[420px] rounded-full bg-violet-600/[0.06] blur-[140px]" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.05)_1px,transparent_0)] bg-[length:28px_28px]" />
                 <div className="relative z-10 flex flex-col items-center text-center px-12 gap-6">
                     <img
@@ -174,11 +173,11 @@ export default function ForgotPassword() {
                     </div>
 
                     <div className="relative overflow-hidden rounded-2xl border border-fuchsia-400/15 bg-gradient-card p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6),0_0_0_1px_rgba(232,121,249,0.03)]">
-                        <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-fuchsia-600/15 blur-[70px]" />
+                        <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-fuchsia-600/[0.08] blur-[90px]" />
                         <span className="relative mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
                             Şifre Sıfırlama
                         </span>
-                        <h2 className="relative bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text text-2xl font-bold text-transparent font-display mb-6">
+                        <h2 className="relative text-2xl font-bold text-white font-display mb-6">
                             Şifremi Unuttum
                         </h2>
 

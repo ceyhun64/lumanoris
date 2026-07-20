@@ -9,6 +9,7 @@ import avatarBot from "@/images/avatar-bot.jpg";
 import BotList from "@/widgets/BotList";
 import CategoryFilter from "@/widgets/CategoryFilter";
 import MarketplaceSearchBar from "@/widgets/MarketplaceSearchBar";
+import { PageLayout, PageHeader, PageSection, CardGrid } from "@/shared/ui/page-layout";
 
 function formatTime(dateString) {
     const date = new Date(dateString);
@@ -162,46 +163,40 @@ export default function Explore() {
     };
 
     return (
-        <div className="flex h-full w-full flex-col gap-2 pb-24 text-white">
+        <PageLayout className="pb-24">
+            <PageHeader
+                eyebrow="Pazaryeri"
+                title="Keşfet"
+                description="Topluluğun oluşturduğu chatbotları keşfet, sohbet et ve favorilerini kaydet."
+                action={!loading && (
+                    <span className="rounded-full border border-fuchsia-400/20 bg-fuchsia-500/[0.08] px-3.5 py-1.5 text-[12.5px] font-semibold text-fuchsia-300">
+                        {sortedBots.length} chatbot bulundu
+                    </span>
+                )}
+            />
+
             {error && (
-                <p className="px-6 pt-5 text-rose-400">Veri yüklenemedi: {error}</p>
+                <p className="mb-4 text-rose-400">Veri yüklenemedi: {error}</p>
             )}
 
-            <MarketplaceSearchBar
-                query={searchTerm}
-                onQueryChange={setSearchTerm}
-                sort={sortType}
-                onSortChange={setSortType}
-            />
+            <PageSection>
+                <MarketplaceSearchBar
+                    query={searchTerm}
+                    onQueryChange={setSearchTerm}
+                    sort={sortType}
+                    onSortChange={setSortType}
+                />
 
-            <CategoryFilter
-                categories={categories}
-                selected={activeCategory}
-                onSelect={setActiveCategory}
-            />
+                <CategoryFilter
+                    categories={categories}
+                    selected={activeCategory}
+                    onSelect={setActiveCategory}
+                />
+            </PageSection>
 
-            <div className="flex-1 px-6 pt-6">
-                <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-                    <div>
-                        <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
-                            Pazaryeri
-                        </span>
-                        <h1 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
-                            Keşfet
-                        </h1>
-                        <p className="mt-1.5 max-w-md text-[13.5px] text-white/45">
-                            Topluluğun oluşturduğu chatbotları keşfet, sohbet et ve favorilerini kaydet.
-                        </p>
-                    </div>
-                    {!loading && (
-                        <span className="rounded-full border border-fuchsia-400/20 bg-fuchsia-500/[0.08] px-3.5 py-1.5 text-[12.5px] font-semibold text-fuchsia-300">
-                            {sortedBots.length} chatbot bulundu
-                        </span>
-                    )}
-                </div>
-
+            <PageSection className="flex-1 pt-6">
                 {loading ? (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <CardGrid>
                         {Array.from({ length: 8 }).map((_, i) => (
                             <div key={i} className="flex flex-col overflow-hidden rounded-2xl bg-luma-card">
                                 <Skeleton className="aspect-[4/3] w-full rounded-none" />
@@ -212,7 +207,7 @@ export default function Explore() {
                                 </div>
                             </div>
                         ))}
-                    </div>
+                    </CardGrid>
                 ) : sortedBots.length === 0 ? (
                     <EmptyState
                         icon={SearchX}
@@ -227,7 +222,7 @@ export default function Explore() {
                         onToggleSelect={toggleBotSelection}
                     />
                 )}
-            </div>
+            </PageSection>
 
             {isFromList && selectedBots.length > 0 && (
                 <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-xl border border-transparent bg-luma-elevated px-6 py-4 shadow-modal">
@@ -243,6 +238,6 @@ export default function Explore() {
                     </Button>
                 </div>
             )}
-        </div>
+        </PageLayout>
     );
 }

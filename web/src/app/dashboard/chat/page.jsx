@@ -625,7 +625,7 @@ export default function Chat() {
               className="h-14 w-14 rounded-full object-cover ring-1 ring-fuchsia-400/20"
             />
           )}
-          <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-bold text-transparent md:text-4xl">
+          <h2 className="font-display text-2xl font-bold text-white md:text-4xl">
             {bot?.isim ? `Merhaba, ben ${bot.isim}` : "Merhaba"}
           </h2>
           {bot?.aciklama && (

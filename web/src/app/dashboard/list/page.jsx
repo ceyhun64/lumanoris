@@ -11,6 +11,7 @@ import { toast } from "@/shared/hooks/use-toast";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { Card } from "@/shared/ui/card";
+import { PageLayout, PageHeader } from "@/shared/ui/page-layout";
 
 export default function List() {
     const [modalVisible, setModalVisible] = useState(false);
@@ -173,7 +174,7 @@ export default function List() {
     const isEmpty = listData.length === 0;
 
     return (
-        <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
+        <PageLayout>
             <AddToListModal
                 isOpen={modalVisible}
                 header="Yeni Liste Oluştur"
@@ -198,16 +199,10 @@ export default function List() {
                 }}
             />
 
-            <div className="mb-8 flex items-end justify-between">
-                <div>
-                    <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
-                        Koleksiyonlar
-                    </span>
-                    <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
-                        Liste
-                    </h2>
-                </div>
-                {!isEmpty && (
+            <PageHeader
+                eyebrow="Koleksiyonlar"
+                title="Liste"
+                action={!isEmpty && (
                     <Button
                         onClick={() => setModalVisible2(true)}
                         className="h-auto gap-2 px-5 py-3 text-[13px] max-md:px-4"
@@ -215,7 +210,7 @@ export default function List() {
                         <Plus className="h-4 w-4" /> Yeni liste oluştur
                     </Button>
                 )}
-            </div>
+            />
 
             {isEmpty && (
                 <EmptyState
@@ -323,6 +318,6 @@ export default function List() {
                     </Card>
                 ))}
             </div>
-        </div>
+        </PageLayout>
     );
 }

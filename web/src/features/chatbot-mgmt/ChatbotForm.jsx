@@ -795,7 +795,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                             </div>
 
                             <div className="relative w-full flex-1 overflow-hidden rounded-2xl border border-fuchsia-400/15 bg-gradient-to-br from-[#1a1030] via-[#150d28] to-[#0d0a1c] p-5">
-                                <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-fuchsia-600/15 blur-[60px]" />
+                                <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-fuchsia-600/[0.08] blur-[70px]" />
                                 <p className="relative flex items-center justify-between text-[13.5px] text-white/60">
                                     Haftalık satıştan kazancın
                                     <span className="font-display text-lg font-bold text-white">{(formData.weeklyPrice * SELLER_COMMISSION_WEEKLY).toFixed(2)} ₺</span>

@@ -7,6 +7,7 @@ import { Users } from "lucide-react";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Card } from "@/shared/ui/card";
+import { PageLayout, PageHeader, PageSection, CardGrid } from "@/shared/ui/page-layout";
 
 export default function Following() {
     const [followedBots, setFollowedBots] = useState([]);
@@ -54,18 +55,11 @@ export default function Following() {
     };
 
     return (
-        <div className="flex flex-col gap-6 px-4 py-6 md:px-16">
-            <div>
-                <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
-                    Topluluk
-                </span>
-                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
-                    Takip Edilenler
-                </h2>
-            </div>
+        <PageLayout>
+            <PageHeader eyebrow="Topluluk" title="Takip Edilenler" />
 
             {loading && (
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <CardGrid>
                     {Array.from({ length: 4 }).map((_, i) => (
                         <div key={i} className="flex flex-col overflow-hidden rounded-2xl bg-luma-card">
                             <Skeleton className="aspect-[4/3] w-full rounded-none" />
@@ -75,7 +69,7 @@ export default function Following() {
                             </div>
                         </div>
                     ))}
-                </div>
+                </CardGrid>
             )}
             {!loading && followedBots.length === 0 && (
                 <EmptyState
@@ -85,7 +79,7 @@ export default function Following() {
                 />
             )}
             {!loading && followedBots.length > 0 && (
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <CardGrid>
                     {followedBots.map((bot) => (
                         <Card
                             key={bot.id}
@@ -118,8 +112,8 @@ export default function Following() {
                             </div>
                         </Card>
                     ))}
-                </div>
+                </CardGrid>
             )}
-        </div>
+        </PageLayout>
     );
 }

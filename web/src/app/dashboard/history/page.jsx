@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { MoreVertical, Trash2, Pencil, Search, MessageSquare } from "lucide-react";
 import { toast } from "@/shared/hooks/use-toast";
 import { Card } from "@/shared/ui/card";
+import { PageLayout, PageHeader } from "@/shared/ui/page-layout";
 
 export default function History() {
     const router = useRouter();
@@ -166,14 +167,8 @@ export default function History() {
     });
 
     return (
-        <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
-            <div className="mb-8 flex flex-col items-start">
-                <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
-                    Zaman Çizelgesi
-                </span>
-                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
-                    Geçmişim
-                </h2>
+        <PageLayout>
+            <PageHeader eyebrow="Zaman Çizelgesi" title="Geçmişim">
                 {filteredItems.length > 0 && (
                     <div className="mt-6 flex w-full items-center gap-2.5 rounded-2xl border border-white/[0.06] bg-white/[0.03] px-5 py-1 ring-1 ring-inset ring-transparent transition-all duration-200 focus-within:border-fuchsia-400/30 focus-within:ring-fuchsia-400/20">
                         <Search className="h-4 w-4 shrink-0 text-fuchsia-300/70" />
@@ -189,7 +184,7 @@ export default function History() {
                         />
                     </div>
                 )}
-            </div>
+            </PageHeader>
 
             {filteredItems.length == 0 && <EmptyCart />}
             {filteredItems.length > 0 && (
@@ -278,6 +273,6 @@ export default function History() {
                 onClose={() => setDeleteTargetId(null)}
                 onConfirm={handleDelete}
             />
-        </div>
+        </PageLayout>
     );
 }

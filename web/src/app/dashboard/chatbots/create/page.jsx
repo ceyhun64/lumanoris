@@ -12,22 +12,7 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { Card } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { Lock, Globe2, Sparkles, ArrowRight, Crown } from "lucide-react";
-
-function PageHeader({ eyebrow, title, subtitle }) {
-    return (
-        <div className="mb-10">
-            <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
-                {eyebrow}
-            </span>
-            <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
-                {title}
-            </h2>
-            {subtitle && (
-                <p className="mt-2 max-w-xl text-[14.5px] leading-relaxed text-white/50">{subtitle}</p>
-            )}
-        </div>
-    );
-}
+import { PageLayout, PageHeader } from "@/shared/ui/page-layout";
 
 export default function CreateChatbot() {
     // İlk adım gizli, direkt form göster
@@ -109,18 +94,18 @@ export default function CreateChatbot() {
 
     if (botId === null || (botId !== -1 && !bot)) {
         return (
-            <div className="flex flex-col gap-5 px-4 py-6 md:px-16">
+            <PageLayout className="gap-5">
                 <Skeleton className="h-8 w-64" />
                 <Skeleton className="h-64 w-full rounded-2xl" />
                 <Skeleton className="h-40 w-full rounded-2xl" />
-            </div>
+            </PageLayout>
         );
     }
 
     if (sessionChecked && !userId) {
         return (
             <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 px-4 text-center">
-                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-2xl font-semibold text-transparent md:text-3xl">
+                <h2 className="font-display text-2xl font-semibold text-white md:text-3xl">
                     Bot oluşturmak için giriş yapın
                 </h2>
                 <p className="max-w-md text-[15px] leading-relaxed text-white/55">
@@ -165,11 +150,11 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
 
     if (!userId || (!isEditing && !limits)) {
         return (
-            <div className="flex flex-col gap-5 px-4 py-6 md:px-16">
+            <PageLayout className="gap-5">
                 <Skeleton className="h-8 w-64" />
                 <Skeleton className="h-64 w-full rounded-2xl" />
                 <Skeleton className="h-40 w-full rounded-2xl" />
-            </div>
+            </PageLayout>
         );
     }
 
@@ -178,11 +163,11 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
         const canBuyPlan = (!limits.can_create_independent || !limits.can_create_public) && planActive === false;
 
         return (
-            <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
+            <PageLayout>
                 <PageHeader
                     eyebrow="Oluştur"
                     title="Yeni Bir Chatbot Yarat"
-                    subtitle="Yapay zeka botunu birkaç adımda hayata geçir; önce erişimini nasıl kısıtlayacağına karar ver, gerisini birlikte tamamlayalım."
+                    description="Yapay zeka botunu birkaç adımda hayata geçir; önce erişimini nasıl kısıtlayacağına karar ver, gerisini birlikte tamamlayalım."
                 />
 
                 <div className="grid w-full max-w-3xl grid-cols-1 gap-5 md:grid-cols-2">
@@ -202,7 +187,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                                 !limits.can_create_independent && "opacity-50",
                             )}
                         >
-                            <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-violet-500/15 blur-[60px] transition-opacity duration-300 group-hover:opacity-150" />
+                            <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-violet-500/[0.08] blur-[70px] transition-opacity duration-300 group-hover:opacity-150" />
                             <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/25 to-violet-500/10">
                                 <Lock className="h-5 w-5 text-violet-300" />
                             </div>
@@ -240,7 +225,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                                 !limits.can_create_public && "opacity-50",
                             )}
                         >
-                            <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-fuchsia-500/15 blur-[60px] transition-opacity duration-300 group-hover:opacity-150" />
+                            <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-fuchsia-500/[0.08] blur-[70px] transition-opacity duration-300 group-hover:opacity-150" />
                             <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500/25 to-fuchsia-500/10">
                                 <Globe2 className="h-5 w-5 text-fuchsia-300" />
                             </div>
@@ -265,7 +250,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
 
                 {canBuyPlan && (
                     <div className="relative mt-6 w-full max-w-3xl overflow-hidden rounded-2xl border border-fuchsia-400/15 bg-gradient-to-br from-[#1a1030] via-[#150d28] to-[#0d0a1c] p-6 shadow-[0_8px_28px_rgba(139,0,180,0.18)]">
-                        <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-fuchsia-600/20 blur-[80px]" />
+                        <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-fuchsia-600/[0.10] blur-[90px]" />
                         <div className="relative flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                             <div className="flex items-center gap-4">
                                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500/25 to-violet-500/15">
@@ -293,7 +278,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                     userId={userId}
                     onPurchased={() => { setPlanActive(true); fetchLimits(); }}
                 />
-            </div>
+            </PageLayout>
         );
     }
 
@@ -303,40 +288,40 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
     // pazaryeri satıcı kaydını gerektirir.
     if (!independentMode && !seller.loading && seller.status !== "active") {
         return (
-            <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
+            <PageLayout>
                 <PageHeader
                     eyebrow="Pazaryeri"
                     title="Satıcı Kaydı Gerekli"
-                    subtitle="Chatbotunu pazaryerinde yayınlayabilmen için önce kısa bir satıcı kaydı tamamlaman gerekiyor."
+                    description="Chatbotunu pazaryerinde yayınlayabilmen için önce kısa bir satıcı kaydı tamamlaman gerekiyor."
                 />
                 <SellerOnboardingWizard
                     userId={userId}
                     initialStatus={seller}
                     onComplete={() => seller.refetch()}
                 />
-            </div>
+            </PageLayout>
         );
     }
 
     if (!independentMode && seller.loading) {
         return (
-            <div className="flex h-full w-full flex-col gap-5 px-4 py-6 md:px-16">
+            <PageLayout className="gap-5">
                 <Skeleton className="h-8 w-64" />
                 <Skeleton className="h-48 w-full rounded-2xl" />
-            </div>
+            </PageLayout>
         );
     }
 
     return (
-        <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
+        <PageLayout>
             <PageHeader
                 eyebrow="Oluştur"
                 title={bot ? "Chatbotunu Düzenle" : "Yeni Chatbot Oluştur"}
-                subtitle={bot ? "Görselleri, davranışını ve fiyatlandırmasını güncelle." : "Kimliğini, davranışını ve (varsa) fiyatlandırmasını belirleyerek yayına hazırla."}
+                description={bot ? "Görselleri, davranışını ve fiyatlandırmasını güncelle." : "Kimliğini, davranışını ve (varsa) fiyatlandırmasını belirleyerek yayına hazırla."}
             />
             {bot
                 ? <ChatbotForm selectedCard={selectedCard} bot={bot} botId={botId} userId={userId} independentMode={independentMode} />
                 : <ChatbotForm selectedCard={selectedCard} userId={userId} independentMode={independentMode} />}
-        </div>
+        </PageLayout>
     );
 }

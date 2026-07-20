@@ -10,6 +10,7 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { EmptyState as SharedEmptyState } from "@/shared/ui/empty-state";
 import { StatCard } from "@/shared/ui/stat-card";
 import avatarBot from "@/images/avatar-bot.jpg";
+import { PageLayout, PageHeader, PageSection, CardGrid, StatGrid } from "@/shared/ui/page-layout";
 
 function formatCompactNumber(n) {
     const num = Number(n) || 0;
@@ -177,49 +178,45 @@ export default function Dashboard() {
     const categoryCount = Math.max(0, categories.length - 1); // exclude synthetic "Tümü"
 
     return (
-        <div className="flex flex-col min-h-full">
+        <PageLayout className="min-h-full">
+            <PageHeader eyebrow="Genel Bakış" title="Anasayfa" />
 
-            {/* ── Search + sort ── */}
-            <MarketplaceSearchBar
-                query={searchQuery}
-                onQueryChange={setSearchQuery}
-                sort={sort}
-                onSortChange={setSort}
-            />
-
-            {/* ── Category bar ── */}
-            <CategoryFilter
-                categories={categories}
-                selected={selectedCategory}
-                onSelect={(cat) => setSelectedCategory(cat)}
-            />
-
-            {/* ── Bot list section ── */}
-            <div className="flex-1 px-6 pt-5 pb-10">
-                <div className="mb-6">
-                    <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
-                        Genel Bakış
-                    </span>
-                    <h1 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
-                        Anasayfa
-                    </h1>
-                </div>
-
-                {/* Overview widgets — real marketplace numbers, not filler */}
-                <div className="mb-8 grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+            {/* Overview widgets — real marketplace numbers, not filler */}
+            <PageSection>
+                <StatGrid>
                     <StatCard icon={Bot} label="Toplam Chatbot" value={loading ? "—" : formatCompactNumber(allBots.length)} />
                     <StatCard icon={MessageSquare} label="Toplam Diyalog" value={loading ? "—" : formatCompactNumber(totalDialogues)} />
                     <StatCard icon={Users} label="Toplam Takipçi" value={loading ? "—" : formatCompactNumber(totalFollowers)} />
                     <StatCard icon={Layers} label="Kategori" value={loading ? "—" : formatCompactNumber(categoryCount)} />
-                </div>
+                </StatGrid>
+            </PageSection>
 
+            <PageSection>
+                {/* ── Search + sort ── */}
+                <MarketplaceSearchBar
+                    query={searchQuery}
+                    onQueryChange={setSearchQuery}
+                    sort={sort}
+                    onSortChange={setSort}
+                />
+
+                {/* ── Category bar ── */}
+                <CategoryFilter
+                    categories={categories}
+                    selected={selectedCategory}
+                    onSelect={(cat) => setSelectedCategory(cat)}
+                />
+            </PageSection>
+
+            {/* ── Bot list section ── */}
+            <PageSection className="flex-1 pt-6">
                 {/* Loading skeletons */}
                 {loading && (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <CardGrid>
                         {Array.from({ length: 8 }).map((_, i) => (
                             <SkeletonCard key={i} />
                         ))}
-                    </div>
+                    </CardGrid>
                 )}
 
                 {/* Empty state */}
@@ -229,7 +226,7 @@ export default function Dashboard() {
                 {!loading && bots.length > 0 && (
                     <BotList bots={bots} />
                 )}
-            </div>
-        </div>
+            </PageSection>
+        </PageLayout>
     );
 }

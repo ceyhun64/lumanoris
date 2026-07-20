@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { toast } from "@/shared/hooks/use-toast";
+import { PageLayout, PageHeader } from "@/shared/ui/page-layout";
 
 // Başlangıç verileri (API'den gelmezse kullanılacak, İSİMLER VERİTABANIYLA AYNI OLMALI)
 const initialPlanData = [
@@ -99,25 +100,16 @@ export default function PricingPlans() {
     // --- UI KISMI ---
     if (loading) {
         return (
-            <div className="flex h-full w-full flex-col px-4 py-6 font-display text-white md:px-16">
-                <div className="mb-10 flex items-center justify-between">
-                    <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text text-2xl font-semibold text-transparent md:text-4xl">Ödeme Planları</h2>
-                </div>
+            <PageLayout className="font-display">
+                <PageHeader eyebrow="Planlar" title="Hesabını Yükselt" />
                 <p className="text-white/60">Planlar yükleniyor...</p>
-            </div>
+            </PageLayout>
         );
     }
 
     return (
-        <div className="flex h-full w-full flex-col px-4 py-6 font-display text-white md:px-16">
-            <div className="mb-8">
-                <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
-                    Planlar
-                </span>
-                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text text-3xl font-bold text-transparent md:text-4xl">
-                    Hesabını Yükselt
-                </h2>
-            </div>
+        <PageLayout className="font-display">
+            <PageHeader eyebrow="Planlar" title="Hesabını Yükselt" />
 
             <div>
                 {error && (
@@ -132,15 +124,22 @@ export default function PricingPlans() {
                 )}
 
                 <div className="grid grid-cols-1 gap-6 pt-8 sm:grid-cols-2 lg:grid-cols-4">
-                    {plansData.map((plan, index) => (
+                    {plansData.map((plan, index) => {
+                        const isFeatured = !!plan.badge;
+                        return (
                         <div
                             key={index}
                             className={cn(
-                                "group relative cursor-pointer overflow-hidden rounded-2xl border border-fuchsia-400/10 bg-gradient-to-br from-[#1a1030] via-[#150d28] to-[#0d0a1c] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-fuchsia-400/25 hover:shadow-[0_10px_32px_rgba(192,38,211,0.2)]",
-                                selectedPlan === index && "-translate-y-2 border-fuchsia-400/50 shadow-[0_10px_36px_rgba(192,38,211,0.3)]",
+                                "group relative cursor-pointer overflow-hidden rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1",
+                                isFeatured
+                                    ? "border border-fuchsia-400/15 bg-gradient-to-br from-[#1a1030] via-[#150d28] to-[#0d0a1c] hover:border-fuchsia-400/30 hover:shadow-[0_10px_32px_rgba(192,38,211,0.16)]"
+                                    : "border border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]",
+                                selectedPlan === index && "-translate-y-2 border-fuchsia-400/40 shadow-[0_10px_32px_rgba(192,38,211,0.16)]",
                             )}
                         >
-                            <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-fuchsia-600/15 blur-[70px] transition-opacity duration-300 group-hover:opacity-150" />
+                            {isFeatured && (
+                                <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-fuchsia-600/[0.10] blur-[80px] transition-opacity duration-300 group-hover:opacity-150" />
+                            )}
                             <h3 className="relative mb-4 flex items-center justify-between text-xl font-medium text-white/80">
                                 <div className="flex items-center gap-2.5">
                                     <Crown className="h-6 w-6 text-fuchsia-300" />
@@ -174,9 +173,10 @@ export default function PricingPlans() {
                                 ))}
                             </ul>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
-        </div>
+        </PageLayout>
     );
 }

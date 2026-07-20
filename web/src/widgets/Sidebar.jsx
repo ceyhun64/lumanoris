@@ -51,11 +51,11 @@ export default function Sidebar({ isMobileOpen = false }) {
         isMobileOpen ? 'max-md:translate-x-0' : 'max-md:-translate-x-full',
       )}
     >
-      {/* Ambient glow accent — gives the rail depth instead of a flat panel */}
-      <div className="pointer-events-none absolute -top-24 -left-16 h-64 w-64 rounded-full bg-fuchsia-600/[0.18] blur-[90px]" />
-      <div className="pointer-events-none absolute bottom-0 -right-10 h-56 w-56 rounded-full bg-violet-600/[0.14] blur-[90px]" />
+      {/* Ambient glow accent — a quiet hint of depth, not a colored panel */}
+      <div className="pointer-events-none absolute -top-24 -left-16 h-64 w-64 rounded-full bg-fuchsia-600/[0.07] blur-[100px]" />
+      <div className="pointer-events-none absolute bottom-0 -right-10 h-56 w-56 rounded-full bg-violet-600/[0.05] blur-[100px]" />
       {/* Hairline glow along the right edge */}
-      <div className="pointer-events-none absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-fuchsia-400/25 to-transparent" />
+      <div className="pointer-events-none absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-fuchsia-400/15 to-transparent" />
       {/* Collapse toggle */}
       <button
         onClick={handleCollapseToggle}
@@ -80,8 +80,8 @@ export default function Sidebar({ isMobileOpen = false }) {
         {/* Logo */}
         <Link href="/dashboard" className={cn('relative flex items-center gap-2.5 mb-7 no-underline', collapsed ? 'justify-center px-0' : 'px-1.5')}>
           <div className="relative flex items-center justify-center shrink-0">
-            <div className="absolute inset-0 -m-1.5 rounded-full bg-fuchsia-500/30 blur-md" />
-            <img src={headerLogo.src} alt="Lumanoris" className="relative w-8 h-auto drop-shadow-[0_0_10px_rgba(217,70,239,0.5)]" />
+            <div className="absolute inset-0 -m-1.5 rounded-full bg-fuchsia-500/15 blur-md" />
+            <img src={headerLogo.src} alt="Lumanoris" className="relative w-8 h-auto drop-shadow-[0_0_8px_rgba(217,70,239,0.3)]" />
           </div>
           {!collapsed && (
             <span className="font-display font-semibold text-[16px] tracking-[0.02em] text-white whitespace-nowrap">
@@ -139,19 +139,19 @@ export default function Sidebar({ isMobileOpen = false }) {
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
                   collapsed ? 'justify-center p-2' : 'pl-3 pr-2.5 py-2.5',
                   active
-                    ? 'font-semibold bg-gradient-to-r from-fuchsia-500/[0.16] via-violet-500/[0.08] to-transparent text-white shadow-[0_0_0_1px_rgba(217,70,239,0.12)]'
+                    ? 'font-semibold bg-white/[0.045] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.06)]'
                     : 'text-white/50 hover:bg-white/[0.045] hover:text-white/90 hover:translate-x-0.5',
                 )}
               >
                 {/* Active accent bar — the single clearest "you are here" signal */}
                 {active && (
-                  <span className="absolute left-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b from-fuchsia-400 to-violet-400 shadow-[0_0_8px_rgba(217,70,239,0.8)]" />
+                  <span className="absolute left-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b from-fuchsia-400 to-violet-400 shadow-[0_0_6px_rgba(217,70,239,0.4)]" />
                 )}
                 <span className={cn(
                   'flex items-center justify-center shrink-0 rounded-lg transition-all duration-200',
                   collapsed ? 'w-[30px] h-[30px]' : 'w-8 h-8',
                   active
-                    ? 'bg-gradient-to-br from-fuchsia-500/40 to-violet-500/25 text-fuchsia-200 shadow-[0_0_14px_rgba(217,70,239,0.35)]'
+                    ? 'bg-fuchsia-500/[0.14] text-fuchsia-300 shadow-[0_0_0_1px_rgba(232,121,249,0.12)]'
                     : 'bg-white/[0.03] text-white/45 group-hover:text-white/80',
                 )}>
                   <Icon className={collapsed ? 'w-[18px] h-[18px]' : 'w-[17px] h-[17px]'} strokeWidth={1.75} />
@@ -188,18 +188,18 @@ export default function Sidebar({ isMobileOpen = false }) {
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
                 collapsed ? 'justify-center p-2' : 'pl-3 pr-2.5 py-2.5',
                 settingsActive
-                  ? 'font-semibold bg-gradient-to-r from-fuchsia-500/[0.16] via-violet-500/[0.08] to-transparent text-white'
+                  ? 'font-semibold bg-white/[0.045] text-white'
                   : 'text-white/50 hover:bg-white/[0.045] hover:text-white/90 hover:translate-x-0.5',
               )}
             >
               {settingsActive && (
-                <span className="absolute left-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b from-fuchsia-400 to-violet-400 shadow-[0_0_8px_rgba(217,70,239,0.8)]" />
+                <span className="absolute left-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b from-fuchsia-400 to-violet-400 shadow-[0_0_6px_rgba(217,70,239,0.4)]" />
               )}
               <span className={cn(
                 'flex items-center justify-center shrink-0 rounded-lg transition-all duration-200',
                 collapsed ? 'w-[30px] h-[30px]' : 'w-8 h-8',
                 settingsActive
-                  ? 'bg-gradient-to-br from-fuchsia-500/40 to-violet-500/25 text-fuchsia-200 shadow-[0_0_14px_rgba(217,70,239,0.35)]'
+                  ? 'bg-fuchsia-500/[0.14] text-fuchsia-300 shadow-[0_0_0_1px_rgba(232,121,249,0.12)]'
                   : 'bg-white/[0.03] text-white/45',
               )}>
                 <Settings className={collapsed ? 'w-[18px] h-[18px]' : 'w-[17px] h-[17px]'} strokeWidth={1.75} />
@@ -220,10 +220,9 @@ export default function Sidebar({ isMobileOpen = false }) {
             <Link
               href="/dashboard/upgrade"
               className={cn(
-                'flex items-center no-underline rounded-lg mt-1.5',
-                'bg-gradient-btn text-white font-sans font-semibold text-[13.5px]',
-                'shadow-[0_4px_18px_rgba(192,38,211,0.4)] ring-1 ring-white/10',
-                'hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_6px_24px_rgba(192,38,211,0.55)]',
+                'flex items-center no-underline rounded-lg mt-1.5 border border-fuchsia-400/20',
+                'text-fuchsia-300 font-sans font-semibold text-[13.5px]',
+                'hover:border-fuchsia-400/40 hover:bg-fuchsia-500/[0.06] hover:text-fuchsia-200',
                 'transition-all duration-200',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
                 collapsed ? 'w-10 h-10 mx-auto p-0 justify-center' : 'px-3 py-2.5 gap-2.5',

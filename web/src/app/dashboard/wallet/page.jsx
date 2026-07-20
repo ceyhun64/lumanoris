@@ -9,6 +9,7 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { StatCard } from "@/shared/ui/stat-card";
+import { PageLayout, PageHeader, PageSection } from "@/shared/ui/page-layout";
 
 function formatDate(value) {
     if (!value) return "";
@@ -115,22 +116,13 @@ export default function Wallet() {
     })();
 
     return (
-        <div className="flex flex-col gap-6 px-4 py-6 md:px-16">
-            {/* Page title */}
-            <div>
-                <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
-                    Finans
-                </span>
-                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
-                    Bakiyem
-                </h2>
-            </div>
+        <PageLayout>
+            <PageHeader eyebrow="Finans" title="Bakiyem" />
 
-            {/* Overview: hero balance + supporting numbers */}
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <PageSection className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                 <div className="relative overflow-hidden rounded-2xl border border-fuchsia-400/15 bg-gradient-to-br from-[#1a1030] via-[#150d28] to-[#0d0a1c] p-7 shadow-[0_8px_32px_rgba(139,0,180,0.25)] lg:col-span-2">
-                    <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-fuchsia-600/25 blur-[80px]" />
-                    <div className="pointer-events-none absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-violet-600/20 blur-[80px]" />
+                    <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-fuchsia-600/[0.12] blur-[90px]" />
+                    <div className="pointer-events-none absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-violet-600/[0.10] blur-[90px]" />
                     <div className="relative flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
                         <div className="flex flex-col gap-1.5">
                             <span className="text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-white/45">
@@ -150,10 +142,10 @@ export default function Wallet() {
                     <StatCard icon={ListOrdered} label="Toplam İşlem" value={loading ? "—" : balanceTx.length + uniqueOrderCount} />
                     <StatCard icon={ShoppingBag} label="Toplam Harcama" value={loading ? "—" : `${totalSpent} ₺`} />
                 </div>
-            </div>
+            </PageSection>
 
             {/* Tabs */}
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-[rgba(15,15,34,0.70)] border border-fuchsia-400/10 w-fit">
+            <PageSection className="flex items-center gap-1 p-1 rounded-xl bg-[rgba(15,15,34,0.70)] border border-fuchsia-400/10 w-fit">
                 {[
                     { key: 'bakiye', label: 'Bakiye İşlemleri' },
                     { key: 'odeme', label: 'Yaptığım Ödemeler' },
@@ -171,10 +163,10 @@ export default function Wallet() {
                         {label}
                     </button>
                 ))}
-            </div>
+            </PageSection>
 
             {/* Transactions */}
-            <div className="flex flex-col gap-2">
+            <PageSection className="flex flex-col gap-2">
                 {loading ? (
                     Array.from({ length: 4 }).map((_, i) => (
                         <Skeleton key={i} className="h-[62px] w-full rounded-xl" />
@@ -216,7 +208,7 @@ export default function Wallet() {
                         );
                     })
                 )}
-            </div>
+            </PageSection>
 
             <WithdrawalModal
                 isOpen={isModalOpen}
@@ -225,6 +217,6 @@ export default function Wallet() {
                 userId={userId}
                 onWithdrawn={fetchBalance}
             />
-        </div>
+        </PageLayout>
     );
 }

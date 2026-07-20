@@ -6,6 +6,7 @@ import CartConfirm from "@/entities/cart/ui/CartConfirm";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { toast } from "@/shared/hooks/use-toast";
+import { PageLayout, PageHeader } from "@/shared/ui/page-layout";
 
 export default function Checkout() {
     const [cartItems, setCartItems] = useState([]);
@@ -95,27 +96,23 @@ export default function Checkout() {
 
     if (loading) {
         return (
-            <div className="flex h-full w-full flex-col gap-5 px-4 py-6 text-white md:px-16">
+            <PageLayout className="gap-5">
                 <Skeleton className="h-8 w-48" />
                 <div className="flex flex-col gap-3">
                     {Array.from({ length: 3 }).map((_, i) => (
                         <Skeleton key={i} className="h-24 w-full rounded-2xl" />
                     ))}
                 </div>
-            </div>
+            </PageLayout>
         );
     }
 
     return (
-        <div className="flex h-full w-full flex-col px-4 py-6 text-white md:px-16">
-            <div className="mb-8">
-                <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
-                    Ödeme
-                </span>
-                <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
-                    {step === 1 ? "Sepetim" : `Satın Alınacak Sohbet Modeli (${confirmedItems.length})`}
-                </h2>
-            </div>
+        <PageLayout>
+            <PageHeader
+                eyebrow="Ödeme"
+                title={step === 1 ? "Sepetim" : `Satın Alınacak Sohbet Modeli (${confirmedItems.length})`}
+            />
 
             {cartItems.length === 0 ? (
                 <EmptyCart />
@@ -128,8 +125,8 @@ export default function Checkout() {
                 />
             ) : (
                 // CartItems yerine confirmedItems gönderiyoruz
-                <CartConfirm cartItems={confirmedItems} /> 
+                <CartConfirm cartItems={confirmedItems} />
             )}
-        </div>
+        </PageLayout>
     );
 }

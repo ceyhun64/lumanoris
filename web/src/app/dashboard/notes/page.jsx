@@ -17,6 +17,7 @@ import {
 import { Card } from '@/shared/ui/card';
 import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
+import { PageLayout, PageHeader } from '@/shared/ui/page-layout';
 
 export default function DialoguePage() {
     const router = useRouter();
@@ -201,50 +202,41 @@ export default function DialoguePage() {
     
     return (
         <>
-            <div className="flex flex-col w-full h-full px-4 py-6 text-white relative md:px-16">
-                <div className="flex justify-between items-end mb-8 z-10">
-                    <div>
-                        <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
-                            Arşiv
-                        </span>
-                        <h2 className="bg-gradient-to-br from-fuchsia-400 to-violet-400 bg-clip-text font-display text-3xl font-bold text-transparent md:text-4xl">
-                            Diyalog Defteri
-                        </h2>
-                    </div>
-
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button className="flex items-center gap-2 rounded-xl border border-fuchsia-400/25 bg-fuchsia-500/10 px-5 py-3 text-[13px] font-medium text-fuchsia-200 transition-colors hover:bg-fuchsia-500/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                                {sortOptions.find(o => o.value === tab)?.label || "Filtrele"}
-                                <ChevronDown className="h-4 w-4" />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="min-w-[190px]">
-                            {sortOptions.map(opt => (
-                                <DropdownMenuItem
-                                    key={opt.value}
-                                    onClick={() => setTab(opt.value)}
-                                    className={cn('justify-between', tab === opt.value && 'text-fuchsia-300')}
-                                >
-                                    {opt.label}
-                                    {tab === opt.value && <Check className="h-3.5 w-3.5" />}
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
+            <PageLayout className="relative">
+                <PageHeader
+                    className="z-10"
+                    eyebrow="Arşiv"
+                    title="Diyalog Defteri"
+                    action={(
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button className="flex items-center gap-2 rounded-xl border border-fuchsia-400/25 bg-fuchsia-500/10 px-5 py-3 text-[13px] font-medium text-fuchsia-200 transition-colors hover:bg-fuchsia-500/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                    {sortOptions.find(o => o.value === tab)?.label || "Filtrele"}
+                                    <ChevronDown className="h-4 w-4" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="min-w-[190px]">
+                                {sortOptions.map(opt => (
+                                    <DropdownMenuItem
+                                        key={opt.value}
+                                        onClick={() => setTab(opt.value)}
+                                        className={cn('justify-between', tab === opt.value && 'text-fuchsia-300')}
+                                    >
+                                        {opt.label}
+                                        {tab === opt.value && <Check className="h-3.5 w-3.5" />}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                />
 
                 {(categories.length > 0) && (
-                    // Sayfa sarmalayıcısı px-4/md:px-16 uyguluyor; CategoryFilter kendi
-                    // px-6'sını zaten ekliyor, bu yüzden diğer sayfalarla aynı boyutta
-                    // görünmesi için üst dolguyu burada iptal ediyoruz.
-                    <div className="-mx-4 md:-mx-16">
-                        <CategoryFilter
-                            categories={categories} // Direkt obje dizisini gönder
-                            onSelect={(catName) => setFiltered(catName)} // Gelen veri string: "Aşk"
-                            selected={filtered} // Gönderilen veri string: "Tümü" veya "Aşk"
-                        />
-                    </div>
+                    <CategoryFilter
+                        categories={categories} // Direkt obje dizisini gönder
+                        onSelect={(catName) => setFiltered(catName)} // Gelen veri string: "Aşk"
+                        selected={filtered} // Gönderilen veri string: "Tümü" veya "Aşk"
+                    />
                 )}
 
                 {filteredCards.length == 0 && <NotesEmpty />}
@@ -358,8 +350,8 @@ export default function DialoguePage() {
                             Uyarınız alındı
                         </div>
                     )}
-                
-            </div>
+
+            </PageLayout>
         </>
     );
 }

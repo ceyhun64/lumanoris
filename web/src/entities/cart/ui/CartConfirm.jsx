@@ -552,7 +552,7 @@ export default function CartConfirm({ cartItems }) {
                 {/* Sağ Alan - Özet */}
                 <div className="flex w-full flex-1 flex-col items-start">
                     <div className="relative w-full overflow-hidden rounded-2xl border border-fuchsia-400/15 bg-gradient-to-br from-[#1a1030] via-[#150d28] to-[#0d0a1c] p-5 shadow-[0_8px_28px_rgba(139,0,180,0.2)]">
-                        <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-fuchsia-600/20 blur-[70px]" />
+                        <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-fuchsia-600/[0.10] blur-[90px]" />
                         <h4 className="relative mb-6 font-display text-lg font-bold text-white">Sipariş Özeti</h4>
                         <div className="my-2 flex justify-between font-display text-base font-medium text-white">
                             <span>Ürün Tutarı</span>
