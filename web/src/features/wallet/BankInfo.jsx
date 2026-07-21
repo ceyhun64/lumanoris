@@ -151,6 +151,14 @@ export default function BankInfo({ userId }) {
     const [loading, setLoading] = useState(true);
     const [formError, setFormError] = useState("");
 
+    // Adres bilgisi (checkout'un tek okuduğu alanlar) artık Banka
+    // Bilgileri'nden (satıcı KYC — TC Kimlik/IBAN/Hesap Türü) tamamen
+    // bağımsız düzenlenip kaydedilebiliyor — bkz. handleSaveAddress.
+    const ADDRESS_FIELDS = ["address", "il", "ilce", "mahalle", "sokak"];
+    const [addressEditing, setAddressEditing] = useState(true);
+    const [addressErrors, setAddressErrors] = useState({});
+    const [addressFormError, setAddressFormError] = useState("");
+
     useEffect(() => {
         if (!userId) return;
 
@@ -168,8 +176,11 @@ export default function BankInfo({ userId }) {
                     setFormData({ ...data });
                     if (data.iban) setCards([data.iban]);
                     setIsEditing(false);
+                    const hasAddr = ADDRESS_FIELDS.every((f) => data[f]?.toString().trim());
+                    setAddressEditing(!hasAddr);
                 } else {
                     setIsEditing(true);
+                    setAddressEditing(true);
                 }
             } catch (err) {
                 console.error("Veri çekme hatası:", err);
@@ -181,6 +192,43 @@ export default function BankInfo({ userId }) {
         fetchBankInfo();
     }, [userId]);
 
+    const handleSaveAddress = async () => {
+        if (!addressEditing) { setAddressEditing(true); return; }
+
+        const newErrors = {};
+        ADDRESS_FIELDS.forEach((field) => {
+            if (!formData[field]?.toString().trim()) newErrors[field] = "Eksik girdi";
+        });
+        setAddressErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) {
+            setAddressFormError("Lütfen adres alanlarını doldurunuz.");
+            return;
+        }
+
+        const payload = {
+            user_id: userId,
+            address: formData.address, il: formData.il, ilce: formData.ilce,
+            il_kod: formData.il_kod, ilce_kod: formData.ilce_kod, mahalle: formData.mahalle,
+            cadde: formData.cadde, sokak: formData.sokak, bina_no: formData.bina_no,
+            kapi_no: formData.kapi_no, posta_kodu: formData.posta_kodu,
+        };
+        const fData = new FormData();
+        fData.append("data", JSON.stringify(payload));
+
+        try {
+            const res = await fetch("/api/wallet/save_bank_info.php", { method: "POST", body: fData });
+            const result = await res.json();
+            if (result.success) {
+                setAddressFormError("");
+                setAddressEditing(false);
+            } else {
+                setAddressFormError(result.message || "Adres kaydedilemedi.");
+            }
+        } catch (err) {
+            setAddressFormError("Bağlantı hatası oluştu.");
+        }
+    };
+
     const tip = formData.account_type === "Kurumsal Hesap" ? 3
         : formData.account_type === "Şahıs Şirketi" ? 2
         : formData.account_type === "Bireysel Hesap" ? 1
@@ -190,7 +238,9 @@ export default function BankInfo({ userId }) {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        if (!isEditing) return;
+        // Not: ayrı bir "genel" düzenleme guard'ı burada tutulmuyor — her
+        // input kendi disabled durumunu (isEditing ya da addressEditing)
+        // zaten uyguluyor, disabled bir input tarayıcıda onChange tetiklemez.
 
         // name artık id_number olarak gelecek
         if (name === "id_number") {
@@ -294,8 +344,102 @@ export default function BankInfo({ userId }) {
     }
 
     return (
-        <div className="flex flex-col rounded-xl border border-transparent p-4">
-            <h3 className="mb-6 font-display text-base font-semibold text-white">Banka Bilgileri</h3>
+        <div className="flex flex-col gap-8">
+            {/* Teslimat/fatura adresi — checkout'un tek okuduğu alanlar bunlar;
+                bir chatbot satın almak için TC Kimlik No/IBAN gerekmiyor, bu
+                yüzden aşağıdaki Banka Bilgileri (Pazaryeri Satıcısı) formundan
+                tamamen bağımsız olarak dolduruluyor ve kaydediliyor. */}
+            <div className="flex flex-col rounded-xl border border-transparent p-4">
+                <h3 className="mb-1.5 font-display text-base font-semibold text-white">Teslimat / Fatura Adresi</h3>
+                <p className="mb-5 text-[13px] text-white/45">Satın alma işlemlerinde kullanılır. Kimlik veya banka bilgisi gerektirmez.</p>
+
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                    <div className="flex flex-col">
+                        <Select
+                            value={formData.il_kod ? String(formData.il_kod) : ""}
+                            disabled={!addressEditing}
+                            onValueChange={(code) => {
+                                const opt = iller.find((il) => String(il.IL_Kodu ?? il.Il_Kodu ?? il.IL_KOD ?? il.kod) === String(code));
+                                const ad = opt ? (opt.IL_Adi ?? opt.Il_Adi ?? opt.ad ?? "") : "";
+                                setFormData((prev) => ({ ...prev, il_kod: code, il: ad, ilce_kod: "", ilce: "" }));
+                            }}
+                        >
+                            <SelectTrigger className={cn(addressErrors.il && "border-rose-400/60")}>
+                                <SelectValue placeholder="İl Seç" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {iller.map((il) => {
+                                    const kod = il.IL_Kodu ?? il.Il_Kodu ?? il.IL_KOD ?? il.kod;
+                                    const ad = il.IL_Adi ?? il.Il_Adi ?? il.ad;
+                                    return <SelectItem key={kod} value={String(kod)}>{ad}</SelectItem>;
+                                })}
+                            </SelectContent>
+                        </Select>
+                        {addressErrors.il && <span className="mt-0.5 text-[11px] text-rose-400">{addressErrors.il}</span>}
+                    </div>
+
+                    <div className="flex flex-col">
+                        <Select
+                            value={formData.ilce_kod ? String(formData.ilce_kod) : ""}
+                            disabled={!addressEditing || !formData.il_kod}
+                            onValueChange={(code) => {
+                                const opt = ilceler.find((il) => String(il.Ilce_Kodu ?? il.ILCE_Kodu ?? il.kod) === String(code));
+                                const ad = opt ? (opt.Ilce_Adi ?? opt.ILCE_Adi ?? opt.ad ?? "") : "";
+                                setFormData((prev) => ({ ...prev, ilce_kod: code, ilce: ad }));
+                            }}
+                        >
+                            <SelectTrigger className={cn(addressErrors.ilce && "border-rose-400/60")}>
+                                <SelectValue placeholder="İlçe Seç" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {ilceler.map((il) => {
+                                    const kod = il.Ilce_Kodu ?? il.ILCE_Kodu ?? il.kod;
+                                    const ad = il.Ilce_Adi ?? il.ILCE_Adi ?? il.ad;
+                                    return <SelectItem key={kod} value={String(kod)}>{ad}</SelectItem>;
+                                })}
+                            </SelectContent>
+                        </Select>
+                        {addressErrors.ilce && <span className="mt-0.5 text-[11px] text-rose-400">{addressErrors.ilce}</span>}
+                    </div>
+                </div>
+
+                <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+                    <div className="flex flex-col">
+                        <Input type="text" className={cn(addressErrors.mahalle && "border-rose-400/60")} name="mahalle" placeholder="Mahalle" value={formData.mahalle || ""} onChange={handleChange} disabled={!addressEditing} />
+                        {addressErrors.mahalle && <span className="mt-0.5 text-[11px] text-rose-400">{addressErrors.mahalle}</span>}
+                    </div>
+                    <div className="flex flex-col">
+                        <Input type="text" name="cadde" placeholder="Cadde" value={formData.cadde || ""} onChange={handleChange} disabled={!addressEditing} />
+                    </div>
+                    <div className="flex flex-col">
+                        <Input type="text" className={cn(addressErrors.sokak && "border-rose-400/60")} name="sokak" placeholder="Sokak" value={formData.sokak || ""} onChange={handleChange} disabled={!addressEditing} />
+                        {addressErrors.sokak && <span className="mt-0.5 text-[11px] text-rose-400">{addressErrors.sokak}</span>}
+                    </div>
+                    <div className="flex flex-col">
+                        <Input type="text" name="bina_no" placeholder="Bina No" value={formData.bina_no || ""} onChange={handleChange} disabled={!addressEditing} />
+                    </div>
+                    <div className="flex flex-col">
+                        <Input type="text" name="kapi_no" placeholder="Kapı No" value={formData.kapi_no || ""} onChange={handleChange} disabled={!addressEditing} />
+                    </div>
+                    <div className="flex flex-col">
+                        <Input type="text" name="posta_kodu" placeholder="Posta Kodu" value={formData.posta_kodu || ""} onChange={handleChange} disabled={!addressEditing} />
+                    </div>
+                </div>
+
+                <Textarea name="address" className={cn("mt-2.5 min-h-[100px]", addressErrors.address && "border-rose-400/60")} placeholder="Adres Bilgileri" value={formData.address || ""} onChange={handleChange} disabled={!addressEditing}></Textarea>
+                {addressErrors.address && <span className="mt-0.5 text-[11px] text-rose-400">{addressErrors.address}</span>}
+
+                <div className="mt-4 flex flex-col items-start gap-2.5">
+                    {addressFormError && <div className="text-[13px] text-rose-400">{addressFormError}</div>}
+                    <Button onClick={handleSaveAddress} className="h-auto border border-transparent px-5 py-2.5">
+                        {addressEditing ? "Adresi Kaydet" : "Düzenle"}
+                    </Button>
+                </div>
+            </div>
+
+            <div className="flex flex-col rounded-xl border border-transparent p-4">
+            <h3 className="mb-1.5 font-display text-base font-semibold text-white">Banka Bilgileri</h3>
+            <p className="mb-5 text-[13px] text-white/45">Yalnızca pazaryerinde chatbot satıp gelir elde etmek istiyorsan gerekli.</p>
 
             {!sellerStatus.loading && (
                 <div className={cn("mb-4 flex flex-wrap items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-[13px]", SELLER_BANNER_STYLES[sellerStatus.status])}>
@@ -394,95 +538,13 @@ export default function BankInfo({ userId }) {
                 className="mt-2.5 w-full"
             />
 
-            <div className="mt-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                {/* İl Alanı (Param) */}
-                <div className="flex flex-col">
-                    <Select
-                        value={formData.il_kod ? String(formData.il_kod) : ""}
-                        disabled={!isEditing}
-                        onValueChange={(code) => {
-                            const opt = iller.find((il) => String(il.IL_Kodu ?? il.Il_Kodu ?? il.IL_KOD ?? il.kod) === String(code));
-                            const ad = opt ? (opt.IL_Adi ?? opt.Il_Adi ?? opt.ad ?? "") : "";
-                            setFormData((prev) => ({ ...prev, il_kod: code, il: ad, ilce_kod: "", ilce: "" }));
-                        }}
-                    >
-                        <SelectTrigger className={cn(errors.il && "border-rose-400/60")}>
-                            <SelectValue placeholder="İl Seç" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {iller.map((il) => {
-                                const kod = il.IL_Kodu ?? il.Il_Kodu ?? il.IL_KOD ?? il.kod;
-                                const ad = il.IL_Adi ?? il.Il_Adi ?? il.ad;
-                                return <SelectItem key={kod} value={String(kod)}>{ad}</SelectItem>;
-                            })}
-                        </SelectContent>
-                    </Select>
-                    {errors.il && <span className="mt-0.5 text-[11px] text-rose-400">{errors.il}</span>}
-                </div>
-
-                {/* İlçe Alanı (Param) */}
-                <div className="flex flex-col">
-                    <Select
-                        value={formData.ilce_kod ? String(formData.ilce_kod) : ""}
-                        disabled={!isEditing || !formData.il_kod}
-                        onValueChange={(code) => {
-                            const opt = ilceler.find((il) => String(il.Ilce_Kodu ?? il.ILCE_Kodu ?? il.kod) === String(code));
-                            const ad = opt ? (opt.Ilce_Adi ?? opt.ILCE_Adi ?? opt.ad ?? "") : "";
-                            setFormData((prev) => ({ ...prev, ilce_kod: code, ilce: ad }));
-                        }}
-                    >
-                        <SelectTrigger className={cn(errors.ilce && "border-rose-400/60")}>
-                            <SelectValue placeholder="İlçe Seç" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {ilceler.map((il) => {
-                                const kod = il.Ilce_Kodu ?? il.ILCE_Kodu ?? il.kod;
-                                const ad = il.Ilce_Adi ?? il.ILCE_Adi ?? il.ad;
-                                return <SelectItem key={kod} value={String(kod)}>{ad}</SelectItem>;
-                            })}
-                        </SelectContent>
-                    </Select>
-                    {errors.ilce && <span className="mt-0.5 text-[11px] text-rose-400">{errors.ilce}</span>}
-                </div>
-            </div>
-
-            <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-                <div className="flex flex-col">
-                    <Input type="text" className={cn(errors.mahalle && "border-rose-400/60")} name="mahalle" placeholder="Mahalle" value={formData.mahalle || ""} onChange={handleChange} disabled={!isEditing} />
-                    {errors.mahalle && <span className="mt-0.5 text-[11px] text-rose-400">{errors.mahalle}</span>}
-                </div>
-
-                <div className="flex flex-col">
-                    <Input type="text" name="cadde" placeholder="Cadde" value={formData.cadde || ""} onChange={handleChange} disabled={!isEditing} />
-                </div>
-
-                <div className="flex flex-col">
-                    <Input type="text" className={cn(errors.sokak && "border-rose-400/60")} name="sokak" placeholder="Sokak" value={formData.sokak || ""} onChange={handleChange} disabled={!isEditing} />
-                    {errors.sokak && <span className="mt-0.5 text-[11px] text-rose-400">{errors.sokak}</span>}
-                </div>
-
-                <div className="flex flex-col">
-                    <Input type="text" name="bina_no" placeholder="Bina No" value={formData.bina_no || ""} onChange={handleChange} disabled={!isEditing} />
-                </div>
-
-                <div className="flex flex-col">
-                    <Input type="text" name="kapi_no" placeholder="Kapı No" value={formData.kapi_no || ""} onChange={handleChange} disabled={!isEditing} />
-                </div>
-
-                <div className="flex flex-col">
-                    <Input type="text" name="posta_kodu" placeholder="Posta Kodu" value={formData.posta_kodu || ""} onChange={handleChange} disabled={!isEditing} />
-                </div>
-            </div>
-
-            <Textarea name="address" className="mt-2.5 min-h-[100px]" placeholder="Adres Bilgileri" value={formData.address || ""} onChange={handleChange} disabled={!isEditing}></Textarea>
-
             <div className="mt-4 flex flex-col items-start gap-2.5">
                 {formError && <div className="text-[13px] text-rose-400">{formError}</div>}
                 <Button onClick={handleSubmit} className="h-auto border border-transparent px-5 py-2.5">
                     {isEditing ? "Kaydet" : "Düzenle"}
                 </Button>
             </div>
-
+            </div>
         </div>
     );
 }

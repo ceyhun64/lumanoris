@@ -80,9 +80,8 @@ export default function Chatbotlarim() {
     if (loading) {
         return (
             <PageLayout>
-                <div className="mb-8 flex items-center justify-between gap-4">
+                <div className="mb-8">
                     <Skeleton className="h-7 w-40" />
-                    <Skeleton className="h-10 w-44 rounded-xl" />
                 </div>
                 <CardGrid>
                     {Array.from({ length: 4 }).map((_, i) => (
@@ -136,24 +135,35 @@ export default function Chatbotlarim() {
 
     return (
         <PageLayout>
-            <PageHeader
-                eyebrow="Yönetim"
-                title="Chatbotlarım"
-                action={(
-                    <Link
-                        href="/dashboard/chatbots/create"
-                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-btn text-white font-display font-semibold text-[13px] shadow-[0_4px_18px_rgba(192,38,211,0.4)] hover:-translate-y-0.5 hover:brightness-110 transition-all duration-200"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Yeni Chatbot Oluştur
-                    </Link>
-                )}
-            />
+            {/* "Yeni Chatbot" zaten sidebar'da kalıcı olarak duruyor — burada
+                aynı işi yapan ikinci bir CTA, kullanıcıya "hangisine
+                tıklayacağım" sorusu sordurur. Sayfa başlığının tek odağı
+                başlığın kendisi. */}
+            <PageHeader eyebrow="Stüdyo" eyebrowClassName="text-violet-300/80" title="Chatbotlarım" />
 
             {/* Same card family as the discovery grid (BotList/MarketplaceListCard)
                 — ChatbotCard now shares that visual language, so this reads as
                 a sibling surface instead of a separate "management list" style. */}
             <CardGrid>
+                {/* Grid'in kendisi her zaman bir "yeni oluştur" eylemi
+                    barındırıyor — 2 botla da 20 botla da sayfa "içerik +
+                    boşluk" değil, her zaman bir sonraki adımı öneren
+                    tamamlanmış bir kompozisyon gibi hissettiriyor. */}
+                <Link
+                    href="/dashboard/chatbots/create"
+                    className="group flex flex-col overflow-hidden rounded-2xl border border-dashed border-violet-400/25 bg-violet-500/[0.03] transition-all duration-200 hover:border-violet-400/50 hover:bg-violet-500/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                    <div className="flex aspect-[4/3] w-full items-center justify-center">
+                        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-violet-500/10 text-violet-300 transition-transform duration-200 group-hover:scale-110 group-hover:bg-violet-500/20">
+                            <Plus className="h-6 w-6" strokeWidth={2} />
+                        </span>
+                    </div>
+                    <div className="flex flex-col gap-0.5 p-3.5 pt-0 text-center">
+                        <p className="font-display text-[14px] font-bold text-violet-200">Yeni Chatbot Oluştur</p>
+                        <p className="text-[12px] text-white/40">Fikrini birkaç adımda hayata geçir</p>
+                    </div>
+                </Link>
+
                 {chatbots.map((bot) => {
                     const targetCategory = categories.find(cat => String(cat.id) === String(bot.kategori_id));
                     const categoryLabel = targetCategory ? targetCategory.kategori_adi_tr : "Genel";

@@ -35,7 +35,7 @@ export default function EditableField({ fields, onSubmit }) {
     };
 
     return (
-        <div className="mb-5 flex items-stretch gap-3 rounded-xl border border-transparent p-4">
+        <div className="flex items-stretch gap-3 rounded-xl border border-transparent p-4">
             <div className="flex flex-1 flex-wrap gap-3">
                 {fields.map((field) => (
                     <Input

@@ -12,6 +12,7 @@ import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { Card } from "@/shared/ui/card";
 import { PageLayout, PageHeader } from "@/shared/ui/page-layout";
+import { resolveAvatarSrc } from "@/shared/lib/image";
 
 export default function List() {
     const [modalVisible, setModalVisible] = useState(false);
@@ -40,7 +41,6 @@ export default function List() {
                     return {
                     id: list.id,
                     title: list.name,
-                    username: "@kullanıcı",
                     summary: `${botData.count} Bot İçeriyor`,
                     dialog: `${botData.total_chats} Diyalog`,
                     bots: botData.bots, // profil fotoğrafları array
@@ -51,7 +51,6 @@ export default function List() {
                     return {
                     id: list.id,
                     title: list.name,
-                    username: "@kullanıcı",
                     summary: "Bot bilgisi alınamadı",
                     dialog: "...",
                     bots: [],
@@ -115,7 +114,6 @@ export default function List() {
                 const formattedList = {
                     id: result.listId,
                     title: name,
-                    username: "@kullanıcı",
                     summary: "0 bot içeriyor",
                     dialog: `0 Bot`,
                     bots: [],
@@ -257,7 +255,7 @@ export default function List() {
                                     >
                                         {item.bots.map((bot, botIndex) => (
                                             <SplideSlide key={botIndex}>
-                                                <img src={bot.profil_fotografi} alt={`Bot ${botIndex + 1}`} className="h-11 w-11 rounded-full object-cover shadow-[0_4px_4px_5px_rgba(0,0,0,0.6)]" />
+                                                <img src={resolveAvatarSrc(bot.profil_fotografi)} alt={`Bot ${botIndex + 1}`} className="h-11 w-11 rounded-full object-cover shadow-[0_4px_4px_5px_rgba(0,0,0,0.6)]" />
                                             </SplideSlide>
                                         ))}
                                     </Splide>
@@ -288,7 +286,7 @@ export default function List() {
                             ) : (
                                 item.bots && item.bots.length > 0 && (
                                     item.bots.map((bot, botIndex) => (
-                                        <img key={botIndex} src={bot.profil_fotografi} alt={`Bot ${botIndex + 1}`} className="h-11 w-11 rounded-full object-cover shadow-[0_4px_4px_5px_rgba(0,0,0,0.6)]" />
+                                        <img key={botIndex} src={resolveAvatarSrc(bot.profil_fotografi)} alt={`Bot ${botIndex + 1}`} className="h-11 w-11 rounded-full object-cover shadow-[0_4px_4px_5px_rgba(0,0,0,0.6)]" />
                                     ))
                                 )
                             )}
@@ -296,8 +294,7 @@ export default function List() {
 
                         <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
                             <h4 className="w-full truncate font-display text-base font-semibold capitalize text-white">{item.title}</h4>
-                            <p className="text-[10px] capitalize text-white/55">{item.username}</p>
-                            <p className="font-display text-xs font-semibold capitalize text-white">{item.summary}</p>
+                            <p className="font-display text-xs font-semibold capitalize text-white/70">{item.summary}</p>
                             <div className="flex items-center gap-1">
                                 <MessageSquare className="h-4 w-4 text-white" />
                                 <span className="font-display text-xs font-semibold capitalize text-white">{item.dialog}</span>

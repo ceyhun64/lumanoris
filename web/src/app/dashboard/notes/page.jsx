@@ -1,7 +1,6 @@
 ﻿'use client';
 import { useEffect, useState } from 'react';
-import Masonry from 'react-masonry-css';
-import avatar from "@/images/avatar-bot.jpg";
+import { resolveAvatarSrc } from "@/shared/lib/image";
 import CategoryFilter from '@/widgets/CategoryFilter';
 import { useRouter } from 'next/navigation';
 import DialogueModal from '@/features/notes/DialogueModal';
@@ -17,7 +16,7 @@ import {
 import { Card } from '@/shared/ui/card';
 import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
-import { PageLayout, PageHeader } from '@/shared/ui/page-layout';
+import { PageLayout, PageHeader, CardGrid } from '@/shared/ui/page-layout';
 
 export default function DialoguePage() {
     const router = useRouter();
@@ -59,8 +58,6 @@ export default function DialoguePage() {
             id: historyItem.id
         }));
     })();
-
-    const breakpoints = { default: 5, 1200: 4, 900: 3, 600: 2, 350: 1 };
 
     const [shareOpen, setShareOpen] = useState(false);
     const [reportOpen, setReportOpen] = useState(false);
@@ -242,17 +239,13 @@ export default function DialoguePage() {
                 {filteredCards.length == 0 && <NotesEmpty />}
 
                 {filteredCards.length > 0 && (
-                                <Masonry
-                                    breakpointCols={breakpoints}
-                                    className="my-masonry-grid"
-                                    columnClassName="my-masonry-grid_column"
-                                >
+                                <CardGrid className="mt-6">
                                     {filteredCards.map((card, index) => (
                                         <Card
                                             interactive
                                             role="button"
                                             tabIndex={0}
-                                            className="mb-3.5 flex cursor-pointer flex-col gap-2.5 p-3 animate-[fadeInUp_0.4s_ease-out_forwards]"
+                                            className="flex cursor-pointer flex-col gap-2.5 p-3 animate-[fadeInUp_0.4s_ease-out_forwards]"
                                             key={card.id}
                                             onClick={(e) => { selectHistory(card); setIsModalOpen(true) }}
                                             onKeyDown={(e) => {
@@ -268,7 +261,7 @@ export default function DialoguePage() {
                                             </div>
                                             <div className="flex items-center justify-between px-0.5">
                                                 <div className="flex min-w-0 items-center gap-2">
-                                                    <img src={card.chatbot_profil_fotografi} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-fuchsia-400/20" />
+                                                    <img src={card.chatbot_profil_fotografi || resolveAvatarSrc(null).src} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-fuchsia-400/20" />
                                                     <div className="flex min-w-0 flex-col gap-0.5">
                                                         <span className="truncate text-[11.5px] font-medium text-white/85">{card.name}</span>
                                                         <span className="truncate text-[10px] text-white/40">{card.chatbot_isim} · {card.owner_kullanici_adi}</span>
@@ -320,7 +313,7 @@ export default function DialoguePage() {
                                             </div>
                                         </Card>
                                     ))}
-                                </Masonry>
+                                </CardGrid>
                             )}
 
                     <DialogueModal isOpen={isModalOpen} onClose={handleCloseModal} selectedHistory={selectedHistory} />

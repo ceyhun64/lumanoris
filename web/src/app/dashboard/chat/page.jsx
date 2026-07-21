@@ -4,14 +4,14 @@ import ProfileCard from "@/entities/user/ui/ProfileCard";
 import WithdrawalModal from "@/features/wallet/WithdrawalModal";
 import BuyModal from "@/features/purchasing/BuyModal";
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import avatarImg from "@/images/avatar-bot.jpg";
+import { resolveAvatarSrc } from "@/shared/lib/image";
 import DialogNotebookModal from "@/features/notes/DialogNotebookModal";
 import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/button";
-import { Lock, NotebookPen } from "lucide-react";
+import { Lock, NotebookPen, RotateCcw } from "lucide-react";
 
 export default function Chat() {
   const [bot, setBot] = useState(null);
@@ -72,7 +72,7 @@ export default function Chat() {
   }
 
   const formatImage = (img) => {
-    if (!img) return "";
+    if (!img) return resolveAvatarSrc(null).src;
     return img.startsWith("data:") ? img : `data:image/jpeg;base64,${img}`;
   };
 
@@ -288,56 +288,60 @@ export default function Chat() {
 
     const loadHistory = async () => {
       try {
-        // Sadece kullanıcı URL üzerinden (geçmiş sohbetler listesinden)
-        // belirli bir sohbeti açtıysa eski mesajlar geri yüklenir. Aksi
-        // halde (sayfa yeni açıldı/yenilendi) her zaman temiz bir sohbetle
-        // başlanır.
-        const shouldRestoreHistory = conversationId >= 1;
-        const historyResult = shouldRestoreHistory
-          ? await (
-              await fetch(`/api/chat/getchat.php?chatbot_id=${bot.id}&user_id=${userId}`)
-            ).json()
-          : null;
+        // Gerçek geçmişi artık HER ZAMAN çekiyoruz — sadece "kullanıcı
+        // belirli bir sohbeti mi açtı" değil, "botun karşılama mesajı bu
+        // kullanıcı için daha önce hiç kaydedilmiş mi" sorusuna da cevap
+        // vermemiz gerekiyor. Eskiden convId yoksa bu kontrol hiç
+        // yapılmıyordu, bu yüzden convId'siz her sayfa yüklemesinde botun
+        // karşılama mesajı DB'ye yeni, tekrar eden bir satır olarak
+        // ekleniyordu.
+        const historyResult = await (
+          await fetch(`/api/chat/getchat.php?chatbot_id=${bot.id}&user_id=${userId}`)
+        ).json();
         const historyData = Array.isArray(historyResult?.messages) ? historyResult.messages : [];
         const hasHistory = historyData.length > 0;
+        const shouldRestoreHistory = conversationId >= 1;
 
-        if (hasHistory) {
-          // 1. Eğer geçmişte mesajlar varsa onları yükle
+        if (hasHistory && shouldRestoreHistory) {
+          // Kullanıcı Geçmişim üzerinden belirli bir sohbeti açtı — tüm
+          // geçmişi göster.
           setMessages(
             historyData.map((m) => ({
               type: m.sent_by === "user" ? "sent" : "received",
               text: m.message,
             })),
           );
-        } else {
-          // 2. EĞER GEÇMİŞ BOŞSA (YENİ SOHBET) VE BOTUN BAŞLANGIÇ MESAJI VARSA
-          if (bot.sohbet_basi_mesaj && bot.sohbet_basi_mesaj.trim() !== "") {
-            
-            
-            // Botun ilk mesajını ekrana bas
-            const initialMsg = {
-              type: "received",
-              text: bot.sohbet_basi_mesaj,
+        } else if (hasHistory) {
+          // convId yok (bot'a yeni tıklandı) ama bu bot+kullanıcı için
+          // geçmiş zaten var — "temiz" görünüm için yalnızca botun daha
+          // önce kaydedilmiş karşılama mesajını ekranda göster, DB'ye
+          // tekrar YAZMA.
+          const firstBotMsg = historyData.find((m) => m.sent_by !== "user");
+          setMessages(firstBotMsg ? [{ type: "received", text: firstBotMsg.message }] : []);
+        } else if (bot.sohbet_basi_mesaj && bot.sohbet_basi_mesaj.trim() !== "") {
+          // Bu bot+kullanıcı için hiç geçmiş yok — karşılama mesajını ilk
+          // ve tek kez ekle.
+          const initialMsg = {
+            type: "received",
+            text: bot.sohbet_basi_mesaj,
+          };
+          setMessages([initialMsg]);
+
+          try {
+            const botPayload = {
+              chatbot_id: bot.id,
+              user_id: userId,
+              sent_by: "bot",
+              message: bot.sohbet_basi_mesaj,
             };
-            setMessages([initialMsg]);
 
-            // Bu mesajı veritabanına da kaydet ki sayfa yenilenince uçmasın
-            try {
-              const botPayload = {
-                chatbot_id: bot.id,
-                user_id: userId,
-                sent_by: "bot",
-                message: bot.sohbet_basi_mesaj,
-              };
-
-              fetch("/api/chat/addchat.php", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({ data: JSON.stringify(botPayload) }),
-              });
-            } catch (dbErr) {
-              console.error("Bot başlangıç mesajı kaydedilemedi:", dbErr);
-            }
+            fetch("/api/chat/addchat.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: new URLSearchParams({ data: JSON.stringify(botPayload) }),
+            });
+          } catch (dbErr) {
+            console.error("Bot başlangıç mesajı kaydedilemedi:", dbErr);
           }
         }
       } catch (err) {
@@ -520,12 +524,30 @@ export default function Chat() {
     }
   }
 
-  try {
-    const placeholderId = Date.now();
-    setMessages((prev) => [...prev, { id: placeholderId, type: "received", text: "" }]);
+  await generateReply(data.text);
 
+  if (isNewConversation) {
+    setConversationId(currentConvId);
+    setConversation(newConvData);
+  }
+};
+
+// Bot cevabını üretip akışını ekrana basan kısım, orijinal kullanıcı
+// mesajını tekrar göndermeden/mesaj hakkını tekrar tüketmeden "Tekrar
+// Dene" ile yeniden çağrılabilsin diye handleSendMessage'dan ayrıldı.
+// placeholderId/timeoutId artık try'ın DIŞINDA tanımlı — önceki halinde
+// try içinde const olarak tanımlanıp catch bloğunda kullanılıyordu, bu da
+// bir hata oluştuğunda (AbortError dahil) "placeholderId is not defined"
+// ReferenceError'ı ile catch'in kendisinin patlamasına ve sahte
+// "yazıyor..." animasyonunun sonsuza kadar ekranda kalmasına yol açıyordu.
+const generateReply = async (userText) => {
+  const placeholderId = Date.now();
+  let timeoutId;
+  setMessages((prev) => [...prev, { id: placeholderId, type: "received", text: "" }]);
+
+  try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    timeoutId = setTimeout(() => controller.abort(), 15000);
 
     const systemInstruction = `GÖREV: Aşağıdaki [BİLGİ KAYNAĞI] kısmına %100 sadık kalarak cevap ver.
     Bilgi kaynağı dışına çıkma. [KİŞİLİK/STİL] direktiflerini uygula.
@@ -542,7 +564,7 @@ export default function Chat() {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       signal: controller.signal,
       body: new URLSearchParams({
-        data: JSON.stringify({ system_instruction: systemInstruction, message: data.text }),
+        data: JSON.stringify({ system_instruction: systemInstruction, message: userText }),
       }),
     });
 
@@ -572,8 +594,10 @@ export default function Chat() {
       }
     }
 
-    // 4. Akış bittikten sonra BOT cevabını DB'ye kaydet
+    clearTimeout(timeoutId);
+
     if (fullText) {
+      // Akış bittikten sonra BOT cevabını DB'ye kaydet
       await fetch("/api/chat/addchat.php", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -586,90 +610,99 @@ export default function Chat() {
           }),
         }),
       });
+      return;
     }
 
-    // 5. EN ÖNEMLİ KISIM: Her şey bittikten sonra conversation state'ini güncelle
-    // Bu sayede useEffect içindeki loadHistory tetiklendiğinde DB'de veriler hazır olacak
-    if (isNewConversation) {
-      setConversationId(currentConvId);
-      setConversation(newConvData);
-    }
-
+    // Akış hata fırlatmadan tamamlandı ama Gemini'den hiç içerik dönmedi
+    // (ör. servise erişilemedi) — sahte "yazıyor..." animasyonunu sonsuza
+    // kadar ekranda bırakmak yerine açık bir hata + yeniden dene göster.
+    setMessages((prev) => prev.map((msg) =>
+      msg.id === placeholderId
+        ? { ...msg, text: "Şu anda cevap veremiyorum.", error: true, retryText: userText }
+        : msg
+    ));
   } catch (err) {
+    clearTimeout(timeoutId);
     console.error("Hata:", err);
-    if (err.name === 'AbortError') {
-        setMessages((prev) => prev.map((msg) => 
-            msg.id === placeholderId ? { ...msg, text: "Üzgünüm, cevap çok gecikti. Lütfen tekrar deneyin." } : msg
-        ));
-    }
-    else
-    {
-      setMessages((prev) => [
-      ...prev,
-      { type: "received", text: "Bir hata oluştu, lütfen tekrar deneyin." },
-    ]);
-    }
+    const errorText = err.name === "AbortError"
+      ? "Cevap çok gecikti. Lütfen tekrar deneyin."
+      : "Bir hata oluştu. Lütfen tekrar deneyin.";
+    setMessages((prev) => prev.map((msg) =>
+      msg.id === placeholderId ? { ...msg, text: errorText, error: true, retryText: userText } : msg
+    ));
   }
 };
 
-  return (
-    <div className="relative flex h-[calc(100vh-84.5px)] w-full flex-col justify-between overflow-auto px-4 pb-[150px] pt-6 text-white md:px-16">
-      <div className="flex h-full min-h-0 flex-col justify-between">
-        {bot && <ProfileCard bot={bot} comments={comments} />}
+const handleRetryReply = (retryText) => {
+  generateReply(retryText);
+};
 
-        <div className={cn("flex flex-col items-center justify-center gap-3 mt-12 text-center", messages.length === 0 ? "flex-1" : "hidden")}>
-          {bot?.profil_fotografi && (
+  return (
+    <div className="relative flex h-[calc(100vh-84.5px)] w-full flex-col px-4 text-white md:px-16">
+      {bot && <ProfileCard bot={bot} comments={comments} />}
+
+      {/* Sohbetin kendisi artık ekranın tamamını dolduruyor — üstteki
+          başlık ile ilk mesaj arasında eskiden `justify-between`in
+          zorladığı boş alan kalmıyor. */}
+      <div className="flex flex-1 flex-col overflow-y-auto pb-[150px] pt-5">
+        {messages.length === 0 ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
             <img
-              src={formatImage(bot.profil_fotografi)}
+              src={formatImage(bot?.profil_fotografi)}
               alt=""
-              className="h-14 w-14 rounded-full object-cover ring-1 ring-fuchsia-400/20"
+              className="h-16 w-16 rounded-full object-cover ring-1 ring-fuchsia-400/20"
             />
-          )}
-          <h2 className="font-display text-2xl font-bold text-white md:text-4xl">
-            {bot?.isim ? `Merhaba, ben ${bot.isim}` : "Merhaba"}
-          </h2>
-          {bot?.aciklama && (
-            <p className="max-w-md text-sm leading-relaxed text-white/45">{bot.aciklama}</p>
-          )}
-        </div>
-        <div className={cn("relative flex w-full flex-col", messages.length === 0 && "flex-none")}>
-          {messages.length > 0 && (
-            <div className="mx-auto mb-2 mt-5 rounded-full bg-luma-card px-5 py-1 text-center text-xs font-semibold text-white/60">
+            <h2 className="font-display text-2xl font-bold text-white md:text-3xl">
+              {bot?.isim ? `${bot.isim} ile sohbete başla` : "Sohbete başla"}
+            </h2>
+            <p className="max-w-sm text-sm leading-relaxed text-white/45">
+              Aşağıya bir mesaj yazarak sohbete başlayabilirsin.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <div className="mx-auto mb-2 w-fit rounded-full bg-luma-card px-5 py-1 text-center text-xs font-semibold text-white/60">
               Bugün
             </div>
-          )}
-          {messages.length > 0 && (
-            <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4 pb-24">
-              {messages.map((msg, index) => (
-                <React.Fragment key={index}>
-                  <div className={cn(
-                    "max-w-[70%] break-words text-sm leading-relaxed",
-                    msg.type === "received"
-                      ? "flex animate-[fadeInUp_0.4s_ease-out] items-start gap-3 py-3"
-                      : "flex flex-col items-end self-end",
-                  )}>
-                    {msg.type === "received" ? (
-                      <>
-                        <div className="shrink-0">
-                          <img
-                            src={formatImage(bot?.profil_fotografi)}
-                            alt="avatar"
-                            className="h-[38px] w-[38px] rounded-full object-cover"
-                          />
+            {messages.map((msg, index) => (
+              <React.Fragment key={index}>
+                <div className={cn(
+                  "max-w-[70%] break-words text-sm leading-relaxed",
+                  msg.type === "received"
+                    ? "flex animate-[fadeInUp_0.4s_ease-out] items-start gap-3 py-3"
+                    : "flex flex-col items-end self-end",
+                )}>
+                  {msg.type === "received" ? (
+                    <>
+                      <div className="shrink-0">
+                        <img
+                          src={formatImage(bot?.profil_fotografi)}
+                          alt="avatar"
+                          className="h-[38px] w-[38px] rounded-full object-cover"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <p className="font-display text-[13px] font-semibold capitalize text-white/55">{bot?.isim}</p>
+                        <div className={cn("font-sans text-[15px] font-normal leading-relaxed", msg.error ? "text-rose-300" : "text-white")}>
+                          {msg.text ? (
+                            <ReactMarkdown>{msg.text}</ReactMarkdown>
+                          ) : (
+                            <div className="flex gap-1 py-2">
+                              <span className="h-2 w-2 animate-bounce rounded-full bg-white/40 [animation-delay:-0.32s]" />
+                              <span className="h-2 w-2 animate-bounce rounded-full bg-white/40 [animation-delay:-0.16s]" />
+                              <span className="h-2 w-2 animate-bounce rounded-full bg-white/40" />
+                            </div>
+                          )}
                         </div>
-                        <div className="flex flex-col">
-                          <p className="font-display text-[13px] font-semibold capitalize text-white/55">{bot?.isim}</p>
-                          <div className="font-sans text-[15px] font-normal leading-relaxed text-white">
-                            {msg.text ? (
-                              <ReactMarkdown>{msg.text}</ReactMarkdown>
-                            ) : (
-                              <div className="flex gap-1 py-2">
-                                <span className="h-2 w-2 animate-bounce rounded-full bg-white/40 [animation-delay:-0.32s]" />
-                                <span className="h-2 w-2 animate-bounce rounded-full bg-white/40 [animation-delay:-0.16s]" />
-                                <span className="h-2 w-2 animate-bounce rounded-full bg-white/40" />
-                              </div>
-                            )}
-                          </div>
+                        {msg.error ? (
+                          <button
+                            className="mt-1.5 flex w-max items-center justify-center gap-1.5 rounded-md bg-rose-500/10 px-2.5 py-1 text-rose-300 transition-all duration-200 hover:-translate-y-px hover:bg-rose-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            onClick={() => handleRetryReply(msg.retryText)}
+                          >
+                            <RotateCcw className="h-3 w-3" strokeWidth={2} />
+                            <span className="text-[11px] font-medium">Tekrar Dene</span>
+                          </button>
+                        ) : (
                           <button
                             className="mt-1.5 flex w-max items-center justify-center gap-1.5 rounded-md bg-luma-input px-2.5 py-1 text-white/55 transition-all duration-200 hover:-translate-y-px hover:bg-white/10 hover:text-white/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             onClick={() => openDialogModal(index)}
@@ -677,40 +710,40 @@ export default function Chat() {
                             <NotebookPen className="h-3 w-3" strokeWidth={2} />
                             <span className="text-[11px] font-medium">Diyalog Defterine Ekle</span>
                           </button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        {msg.fileName && (
-                          <div className="mb-1.5 inline-block w-max rounded-xl bg-luma-card px-5 py-2.5 text-xs font-medium text-white/70">
-                            {msg.fileName}
-                          </div>
                         )}
-                        {msg.text && (
-                          <div className="rounded-2xl rounded-tr-sm bg-gradient-to-br from-fuchsia-600/90 to-violet-600/90 px-5 py-2.5 font-sans text-[15px] font-normal leading-relaxed text-white">
-                            <ReactMarkdown>{msg.text}</ReactMarkdown>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  {/* Reklam ekleme */}
-                  {(index + 1) % chatAdFrequency === 0 && (
-                    <div className="flex justify-center py-2">
-                      <div className="flex h-[60px] w-full max-w-[468px] items-center justify-center rounded-lg border border-white/[0.06] bg-luma-card text-[11px] text-white/25">
-                        Reklam Alanı
                       </div>
-                    </div>
+                    </>
+                  ) : (
+                    <>
+                      {msg.fileName && (
+                        <div className="mb-1.5 inline-block w-max rounded-xl bg-luma-card px-5 py-2.5 text-xs font-medium text-white/70">
+                          {msg.fileName}
+                        </div>
+                      )}
+                      {msg.text && (
+                        <div className="rounded-2xl rounded-tr-sm bg-gradient-to-br from-fuchsia-600/90 to-violet-600/90 px-5 py-2.5 font-sans text-[15px] font-normal leading-relaxed text-white">
+                          <ReactMarkdown>{msg.text}</ReactMarkdown>
+                        </div>
+                      )}
+                    </>
                   )}
-                </React.Fragment>
-              ))}
+                </div>
 
-              {/* Scroll target */}
-              <div ref={messagesEndRef} />
-            </div>
-          )}
-        </div>
+                {/* Reklam ekleme */}
+                {(index + 1) % chatAdFrequency === 0 && (
+                  <div className="flex justify-center py-2">
+                    <div className="flex h-[60px] w-full max-w-[468px] items-center justify-center rounded-lg border border-white/[0.06] bg-luma-card text-[11px] text-white/25">
+                      Reklam Alanı
+                    </div>
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+
+            {/* Scroll target */}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
       </div>
 
       {/* Fixed input at bottom — günlük mesaj hakkı tükendiğinde, mesaj

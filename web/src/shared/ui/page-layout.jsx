@@ -28,12 +28,12 @@ function PageLayout({ children, className }) {
  * children: optional extra content rendered under the description but still
  *   inside the header's bottom margin (e.g. History's inline search field).
  */
-function PageHeader({ eyebrow, title, description, action, children, className }) {
+function PageHeader({ eyebrow, eyebrowClassName, title, description, action, children, className }) {
   return (
     <div className={cn("mb-8 flex flex-wrap items-end justify-between gap-4", className)}>
       <div className="min-w-0 flex-1">
         {eyebrow && (
-          <span className="mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70">
+          <span className={cn("mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70", eyebrowClassName)}>
             {eyebrow}
           </span>
         )}

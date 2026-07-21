@@ -12,9 +12,17 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/shared/ui/tooltip';
 
-const navItems = [
+// İki ayrı dünya: Stüdyo (kendi botunu yönet/üret) ve Keşfet (pazaryerini
+// tüket/takip et). Aynı tasarım dili içinde farklı bir vurgu rengiyle
+// (violet vs fuchsia) ayrıştırılıyor ki kullanıcı hangi modda olduğunu
+// sezgisel olarak anlasın — bkz. Chatbotlarım/Oluştur sayfalarındaki violet
+// eyebrow ve bu bileşendeki accentClass.
+const studioItems = [
+  { href: '/dashboard/chatbots', icon: Bot, label: 'Chatbotlarım' },
+];
+
+const exploreItems = [
   { href: '/dashboard',           icon: Home,         label: 'Anasayfa',        exact: true },
-  { href: '/dashboard/chatbots',  icon: Bot,          label: 'Chatbotlarım' },
   { href: '/dashboard/purchased', icon: ShoppingBag,  label: 'Satın Aldıklarım' },
   { href: '/dashboard/following', icon: Users,        label: 'Takip Edilenler' },
   { href: '/dashboard/list',      icon: ListChecks,   label: 'Liste' },
@@ -22,6 +30,58 @@ const navItems = [
   { href: '/dashboard/wallet',    icon: Wallet,       label: 'Bakiyem' },
   { href: '/dashboard/notes',     icon: NotebookText, label: 'Diyalog Defteri' },
 ];
+
+const ACCENTS = {
+  fuchsia: {
+    bar: 'bg-gradient-to-b from-fuchsia-400 to-violet-400 shadow-[0_0_6px_rgba(217,70,239,0.4)]',
+    icon: 'bg-fuchsia-500/[0.14] text-fuchsia-300 shadow-[0_0_0_1px_rgba(232,121,249,0.12)]',
+  },
+  violet: {
+    bar: 'bg-gradient-to-b from-violet-400 to-fuchsia-400 shadow-[0_0_6px_rgba(139,92,246,0.4)]',
+    icon: 'bg-violet-500/[0.16] text-violet-300 shadow-[0_0_0_1px_rgba(167,139,250,0.14)]',
+  },
+};
+
+function renderNavItem({ href, icon: Icon, label, exact }, isActive, collapsed, accent) {
+  const active = isActive(href, exact);
+  const { bar, icon } = ACCENTS[accent];
+  const link = (
+    <Link
+      href={href}
+      className={cn(
+        'relative flex items-center gap-3 w-full rounded-lg no-underline',
+        'text-[13.5px] font-sans leading-snug',
+        'transition-all duration-200',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
+        collapsed ? 'justify-center p-2' : 'pl-3 pr-2.5 py-2.5',
+        active
+          ? 'font-semibold bg-white/[0.045] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.06)]'
+          : 'text-white/50 hover:bg-white/[0.045] hover:text-white/90 hover:translate-x-0.5',
+      )}
+    >
+      {/* Active accent bar — the single clearest "you are here" signal */}
+      {active && <span className={cn('absolute left-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-full', bar)} />}
+      <span className={cn(
+        'flex items-center justify-center shrink-0 rounded-lg transition-all duration-200',
+        collapsed ? 'w-[30px] h-[30px]' : 'w-8 h-8',
+        active ? icon : 'bg-white/[0.03] text-white/45 group-hover:text-white/80',
+      )}>
+        <Icon className={collapsed ? 'w-[18px] h-[18px]' : 'w-[17px] h-[17px]'} strokeWidth={1.75} />
+      </span>
+      {!collapsed && <span className="truncate">{label}</span>}
+    </Link>
+  );
+  return (
+    <li key={href} className="w-full">
+      {collapsed ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{link}</TooltipTrigger>
+          <TooltipContent side="right">{label}</TooltipContent>
+        </Tooltip>
+      ) : link}
+    </li>
+  );
+}
 
 export default function Sidebar({ isMobileOpen = false }) {
   const pathname = usePathname();
@@ -60,8 +120,8 @@ export default function Sidebar({ isMobileOpen = false }) {
       <button
         onClick={handleCollapseToggle}
         className={cn(
-          'group absolute top-9 -right-3 z-10',
-          'w-6 h-6 flex items-center justify-center',
+          'group absolute top-9 -right-3.5 z-[60]',
+          'w-8 h-8 flex items-center justify-center',
           'rounded-full border border-white/10 bg-[#15152f] shadow-[0_2px_10px_rgba(0,0,0,0.5)]',
           'text-white/55',
           'hover:text-white hover:border-fuchsia-400/50 hover:bg-gradient-to-br hover:from-fuchsia-500/25 hover:to-violet-500/25 hover:shadow-[0_2px_14px_rgba(217,70,239,0.35)] hover:scale-110',
@@ -73,7 +133,7 @@ export default function Sidebar({ isMobileOpen = false }) {
         )}
         aria-label={collapsed ? 'Menüyü genişlet' : 'Menüyü küçült'}
       >
-        <ChevronLeft className="w-3.5 h-3.5 transition-transform duration-200 group-active:-translate-x-0.5" strokeWidth={2.5} />
+        <ChevronLeft className="w-4 h-4 transition-transform duration-200 group-active:-translate-x-0.5" strokeWidth={2.5} />
       </button>
 
       <div className="relative flex flex-col gap-1 overflow-hidden px-3 pt-7">
@@ -118,58 +178,24 @@ export default function Sidebar({ isMobileOpen = false }) {
           </span>
         </button>
 
-        {/* Section label */}
+        {/* Stüdyo — botlarını ürettiğin/yönettiğin taraf (violet vurgu) */}
         {!collapsed && (
           <span className="px-1.5 mb-1.5 text-[10.5px] font-medium uppercase tracking-[0.09em] text-white/30">
-            Menü
+            Stüdyo
           </span>
         )}
+        <ul className="flex flex-col gap-1 m-0 p-0 list-none mb-4">
+          {studioItems.map((item) => renderNavItem(item, isActive, collapsed, 'violet'))}
+        </ul>
 
-        {/* Nav items */}
+        {/* Keşfet — pazaryerini tükettiğin/takip ettiğin taraf (fuchsia vurgu) */}
+        {!collapsed && (
+          <span className="px-1.5 mb-1.5 text-[10.5px] font-medium uppercase tracking-[0.09em] text-white/30">
+            Keşfet
+          </span>
+        )}
         <ul className="flex flex-col gap-1 m-0 p-0 list-none">
-          {navItems.map(({ href, icon: Icon, label, exact }) => {
-            const active = isActive(href, exact);
-            const link = (
-              <Link
-                href={href}
-                className={cn(
-                  'relative flex items-center gap-3 w-full rounded-lg no-underline',
-                  'text-[13.5px] font-sans leading-snug',
-                  'transition-all duration-200',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
-                  collapsed ? 'justify-center p-2' : 'pl-3 pr-2.5 py-2.5',
-                  active
-                    ? 'font-semibold bg-white/[0.045] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.06)]'
-                    : 'text-white/50 hover:bg-white/[0.045] hover:text-white/90 hover:translate-x-0.5',
-                )}
-              >
-                {/* Active accent bar — the single clearest "you are here" signal */}
-                {active && (
-                  <span className="absolute left-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b from-fuchsia-400 to-violet-400 shadow-[0_0_6px_rgba(217,70,239,0.4)]" />
-                )}
-                <span className={cn(
-                  'flex items-center justify-center shrink-0 rounded-lg transition-all duration-200',
-                  collapsed ? 'w-[30px] h-[30px]' : 'w-8 h-8',
-                  active
-                    ? 'bg-fuchsia-500/[0.14] text-fuchsia-300 shadow-[0_0_0_1px_rgba(232,121,249,0.12)]'
-                    : 'bg-white/[0.03] text-white/45 group-hover:text-white/80',
-                )}>
-                  <Icon className={collapsed ? 'w-[18px] h-[18px]' : 'w-[17px] h-[17px]'} strokeWidth={1.75} />
-                </span>
-                {!collapsed && <span className="truncate">{label}</span>}
-              </Link>
-            );
-            return (
-              <li key={href} className="w-full">
-                {collapsed ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>{link}</TooltipTrigger>
-                    <TooltipContent side="right">{label}</TooltipContent>
-                  </Tooltip>
-                ) : link}
-              </li>
-            );
-          })}
+          {exploreItems.map((item) => renderNavItem(item, isActive, collapsed, 'fuchsia'))}
         </ul>
       </div>
 

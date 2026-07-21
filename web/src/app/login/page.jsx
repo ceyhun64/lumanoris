@@ -180,30 +180,65 @@ export default function AuthPage() {
   return (
     <GoogleOAuthProvider clientId="457680679934-poocs7d0n78r3eq8q53c6sedfdi1dh0c.apps.googleusercontent.com">
       <div className="min-h-screen bg-[#09090F] flex">
-        {/* ── Left branding panel (desktop only) ── */}
-        <div className="hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center overflow-hidden">
-          <div className="pointer-events-none absolute -top-32 left-[10%] h-[480px] w-[480px] rounded-full bg-fuchsia-600/[0.07] blur-[140px]" />
-          <div className="pointer-events-none absolute bottom-[-25%] right-[-10%] h-[420px] w-[420px] rounded-full bg-violet-600/[0.06] blur-[140px]" />
+        {/* ── Left branding panel (desktop only) — artık sadece logo değil,
+            ürünün ne olduğunu ilk saniyede gösteren bir tanıtım paneli:
+            başlık, gerçek bir sohbet önizlemesi ve kategori genişliği. ── */}
+        <div className="hidden lg:flex lg:w-[48%] relative flex-col justify-between overflow-hidden px-14 py-14">
+          <div className="pointer-events-none absolute -top-32 left-[10%] h-[480px] w-[480px] rounded-full bg-fuchsia-600/[0.08] blur-[140px]" />
+          <div className="pointer-events-none absolute bottom-[-25%] right-[-10%] h-[420px] w-[420px] rounded-full bg-violet-600/[0.07] blur-[140px]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.05)_1px,transparent_0)] bg-[length:28px_28px]" />
-          <div className="relative z-10 flex flex-col items-center text-center px-12 gap-6">
-            <img
-              src={ubeyazlogo.src}
-              alt="Lumanoris"
-              className="w-20 h-20 drop-shadow-[0_0_32px_rgba(217,70,239,0.5)]"
-            />
-            <h1 className="text-4xl font-bold text-white font-display tracking-tight">
-              LUMANORIS
-            </h1>
-            <p className="text-white/50 text-base max-w-xs font-sans leading-relaxed">
-              Yapay zeka sohbet modellerinizi oluşturun, paylaşın ve gelir elde edin.
-            </p>
-            <div className="flex gap-3 mt-2">
-              <div className="px-3 py-1.5 rounded-full border border-fuchsia-400/15 bg-fuchsia-500/[0.06] text-fuchsia-300/80 text-xs font-sans font-medium">
-                ✦ AI Destekli
+
+          <div className="relative z-10 flex items-center gap-2.5">
+            <img src={ubeyazlogo.src} alt="" className="h-8 w-8 drop-shadow-[0_0_16px_rgba(217,70,239,0.4)]" />
+            <span className="font-display text-lg font-bold tracking-tight text-white">LUMANORIS</span>
+          </div>
+
+          <div className="relative z-10 flex flex-col gap-8">
+            <div className="flex flex-col gap-4">
+              <h1 className="font-display text-[2.5rem] font-bold leading-[1.1] tracking-tight text-white text-balance">
+                Yapay zekâ botlarınla sohbet et, kendi botunu yarat.
+              </h1>
+              <p className="max-w-sm font-sans text-[15px] leading-relaxed text-white/50">
+                Yüzlerce kategoride bir chatbot seç ve hemen sohbete başla — ya da kendi botunu oluşturup pazaryerinde yayınlayarak gelir elde et.
+              </p>
+            </div>
+
+            {/* Gerçek bir sohbet önizlemesi — ürünün merkezi deneyimini
+                soyut bir illüstrasyon yerine bizzat kendi arayüzüyle
+                gösteriyor. */}
+            <div className="relative w-full max-w-sm rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)]">
+              <div className="flex items-center gap-2.5 border-b border-white/[0.06] pb-3">
+                <div className="h-8 w-8 shrink-0 rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-600" />
+                <div>
+                  <p className="font-display text-[13px] font-bold text-white">Fitness Koçu</p>
+                  <p className="text-[11px] text-white/40">Az önce yayımlandı</p>
+                </div>
               </div>
-              <div className="px-3 py-1.5 rounded-full border border-fuchsia-400/15 bg-fuchsia-500/[0.06] text-fuchsia-300/80 text-xs font-sans font-medium">
-                ✦ Güvenli
+              <div className="flex flex-col gap-2.5 pt-3">
+                <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-white/[0.06] px-3.5 py-2 font-sans text-[12.5px] leading-relaxed text-white/80">
+                  Selam! Hedefin nedir: kilo vermek, kas yapmak, yoksa genel fitness mi?
+                </div>
+                <div className="ml-auto max-w-[75%] rounded-2xl rounded-tr-sm bg-gradient-to-br from-fuchsia-600/90 to-violet-600/90 px-3.5 py-2 font-sans text-[12.5px] leading-relaxed text-white">
+                  Kilo vermek istiyorum, nereden başlamalıyım?
+                </div>
               </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {["Yaratıcı Yazarlık", "Kurumsal", "Eğitim", "Programlama"].map((c) => (
+                <span key={c} className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 font-sans text-[11.5px] font-medium text-white/55">
+                  {c}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative z-10 flex gap-3">
+            <div className="px-3 py-1.5 rounded-full border border-fuchsia-400/15 bg-fuchsia-500/[0.06] text-fuchsia-300/80 text-xs font-sans font-medium">
+              ✦ AI Destekli
+            </div>
+            <div className="px-3 py-1.5 rounded-full border border-fuchsia-400/15 bg-fuchsia-500/[0.06] text-fuchsia-300/80 text-xs font-sans font-medium">
+              ✦ Güvenli
             </div>
           </div>
         </div>

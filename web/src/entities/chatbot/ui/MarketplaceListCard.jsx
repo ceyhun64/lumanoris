@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ThumbsUp, MessageSquare, Bookmark, Check, ArrowUpRight } from 'lucide-react';
+import { ThumbsUp, Check, ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card } from '@/shared/ui/card';
 
@@ -17,7 +17,7 @@ export default function MarketplaceListCard({ bot, selectable = false, selected 
     const router = useRouter();
     const {
         id, image, avatar, title, description, dialogues, time,
-        followers = 0, likes = 0, comments = 0, saves = 0, weeklyPrice,
+        followers = 0, likes = 0, weeklyPrice,
     } = bot;
 
     const handleActivate = () => {
@@ -88,28 +88,17 @@ export default function MarketplaceListCard({ bot, selectable = false, selected 
                     <ArrowUpRight className="h-4 w-4 shrink-0 -translate-x-1 text-fuchsia-300 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" strokeWidth={2.25} />
                 </div>
 
-                <p className="line-clamp-2 min-h-[2.6em] text-[12.5px] leading-relaxed text-white/55">
+                <p className="line-clamp-1 text-[12.5px] leading-relaxed text-white/55">
                     {description}
                 </p>
 
-                <div className="mt-1 flex items-center justify-between gap-2">
+                <div className="mt-auto flex items-center justify-between gap-2 pt-2.5">
                     <span className="truncate text-label text-luma-muted">
                         {followers > 0 ? `${formatCompact(followers)} kullanıcı · ` : ''}{dialogues} diyalog
                     </span>
-                </div>
-
-                <div className="mt-auto flex items-center gap-2 pt-2.5">
-                    <span className="flex items-center gap-1.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px] text-white/50">
+                    <span className="flex shrink-0 items-center gap-1.5 text-[12px] font-medium text-white/50">
                         <ThumbsUp className="h-3.5 w-3.5" strokeWidth={1.8} />
                         {formatCompact(likes)}
-                    </span>
-                    <span className="flex items-center gap-1.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px] text-white/50">
-                        <MessageSquare className="h-3.5 w-3.5" strokeWidth={1.8} />
-                        {formatCompact(comments)}
-                    </span>
-                    <span className="flex items-center gap-1.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px] text-white/50">
-                        <Bookmark className="h-3.5 w-3.5" strokeWidth={1.8} />
-                        {formatCompact(saves)}
                     </span>
                 </div>
             </div>

@@ -151,7 +151,7 @@ export default function Header({ userId }) {
 
             <header className="sticky top-0 z-30 flex h-20 items-center justify-between gap-6 px-7 bg-gradient-to-b from-[rgba(11,11,30,0.82)] to-[#09090F] backdrop-blur-xl">
                 {/* Search */}
-                <div className="flex flex-1 items-center max-w-[380px]">
+                <div className="flex flex-1 items-center max-w-[560px]">
                     <div className="flex h-11 w-full items-center gap-2.5 rounded-full bg-white/[0.045] px-3.5 ring-1 ring-inset ring-white/[0.07] transition-all duration-150 focus-within:bg-gradient-to-r focus-within:from-fuchsia-500/[0.06] focus-within:to-violet-500/[0.04] focus-within:ring-fuchsia-400/40 focus-within:shadow-[0_0_0_3px_rgba(217,70,239,0.08)]">
                         <button
                             type="button"

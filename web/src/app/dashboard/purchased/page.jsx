@@ -7,14 +7,14 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { Card } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { cn } from "@/lib/utils";
+import { resolveCoverSrc, resolveAvatarSrc } from "@/shared/lib/image";
 import { PageLayout, PageHeader, CardGrid } from "@/shared/ui/page-layout";
 
-const IMG_FALLBACK = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-
-function resolveImg(path) {
-    if (!path) return IMG_FALLBACK;
-    if (path.startsWith("http") || path.startsWith("data:") || path.startsWith("/")) return path;
-    return "/" + path;
+function resolveImg(path, kind = "cover") {
+    if (path) {
+        return path.startsWith("http") || path.startsWith("data:") || path.startsWith("/") ? path : "/" + path;
+    }
+    return (kind === "avatar" ? resolveAvatarSrc(null) : resolveCoverSrc(null)).src;
 }
 
 function formatDate(value) {
@@ -147,7 +147,7 @@ export default function SatinAldiklarim() {
                                     {active ? "Aktif" : "Süresi Doldu"}
                                 </Badge>
                                 <div className="absolute -bottom-4 left-3.5 h-9 w-9 overflow-hidden rounded-full ring-2 ring-luma-card">
-                                    <img src={resolveImg(bot.profil_fotografi)} alt="" className="h-full w-full object-cover" />
+                                    <img src={resolveImg(bot.profil_fotografi, "avatar")} alt="" className="h-full w-full object-cover" />
                                 </div>
                             </div>
                             <div className="flex flex-col gap-1.5 p-3.5 pt-5">

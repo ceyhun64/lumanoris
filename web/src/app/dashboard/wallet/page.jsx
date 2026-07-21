@@ -182,14 +182,9 @@ export default function Wallet() {
                         return (
                             <div
                                 key={tx.key}
-                                className={cn(
-                                    'flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border transition-colors',
-                                    positive
-                                        ? 'bg-emerald-500/5 border-emerald-500/15'
-                                        : 'bg-rose-500/5 border-rose-500/15',
-                                )}
+                                className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5 transition-colors"
                             >
-                                <div className="flex flex-col gap-0.5 min-w-0">
+                                <div className="flex min-w-0 flex-col gap-0.5">
                                     <span className={cn(
                                         'text-[15px] font-display font-bold',
                                         positive ? 'text-emerald-400' : 'text-rose-400',
@@ -197,13 +192,9 @@ export default function Wallet() {
                                         {positive ? `+${tx.amount} ₺` : `${tx.amount} ₺`}
                                     </span>
                                     {tx.description && (
-                                        <p className="text-[12px] text-white/45 truncate">{tx.description}</p>
+                                        <p className="truncate text-[12px] text-white/45">{tx.description}</p>
                                     )}
                                 </div>
-                                <div className={cn(
-                                    'shrink-0 w-2 h-2 rounded-full',
-                                    positive ? 'bg-emerald-400' : 'bg-rose-400',
-                                )} />
                             </div>
                         );
                     })

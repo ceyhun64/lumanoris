@@ -1,7 +1,7 @@
 ﻿"use client";
 import Image from "next/image";
 import { React, useState, useEffect } from "react";
-import smartHelper from "@/images/smarthelper.png";
+import { resolveCoverSrc } from "@/shared/lib/image";
 import { useRouter } from "next/navigation";
 import { Users } from "lucide-react";
 import { EmptyState } from "@/shared/ui/empty-state";
@@ -50,7 +50,7 @@ export default function Following() {
     }, [userId, sessionChecked]);
 
     const formatImage = (img) => {
-        if (!img) return "";
+        if (!img) return resolveCoverSrc(null);
         return img.startsWith("data:") ? img : `data:image/jpeg;base64,${img}`;
     };
 
@@ -97,7 +97,7 @@ export default function Following() {
                         >
                             <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-luma-input">
                                 <Image
-                                    src={bot.profil_fotografi ? formatImage(bot.profil_fotografi) : smartHelper}
+                                    src={formatImage(bot.kapak_fotografi)}
                                     alt={bot.isim}
                                     fill
                                     className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"

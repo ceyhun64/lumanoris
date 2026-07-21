@@ -244,7 +244,7 @@ class SocialController {
         $userId = AuthMiddleware::requireAuth();
 
         $bots = Database::getInstance()->selectMulti(
-            "c.id, c.isim, c.aciklama, c.profil_fotografi, c.ucret_haftalik
+            "c.id, c.isim, c.aciklama, c.profil_fotografi, c.kapak_fotografi, c.ucret_haftalik
              FROM chatbot_follows cf
              JOIN chatbotlar c ON c.id = cf.chatbot_id
              WHERE cf.user_id = ?",

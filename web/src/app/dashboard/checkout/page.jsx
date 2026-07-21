@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { toast } from "@/shared/hooks/use-toast";
 import { PageLayout, PageHeader } from "@/shared/ui/page-layout";
+import { resolveCoverSrc } from "@/shared/lib/image";
 
 export default function Checkout() {
     const [cartItems, setCartItems] = useState([]);
@@ -50,7 +51,7 @@ export default function Checkout() {
                 const cart = data?.success && Array.isArray(data.cart) ? data.cart : [];
                 const formattedData = cart.map(item => ({
                     ...item,
-                    image: item.image?.startsWith('data:') ? item.image : `data:image/jpeg;base64,${item.image}`
+                    image: !item.image ? resolveCoverSrc(null) : item.image.startsWith('data:') ? item.image : `data:image/jpeg;base64,${item.image}`
                 }));
 
                 setCartItems(formattedData);

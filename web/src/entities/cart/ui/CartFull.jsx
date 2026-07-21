@@ -1,8 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
-import avatarBot from "@/images/avatar-bot.jpg";
-import botImage from "@/images/bot-image.png";
+import { resolveAvatarSrc, resolveCoverSrc } from "@/shared/lib/image";
 import DeleteConfirmModal from "@/shared/ui/DeleteConfirmModal";
 import BotCard from "@/entities/chatbot/ui/BotCard";
 import { Checkbox } from "@/shared/ui/checkbox";
@@ -44,8 +43,8 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                 author: bot.owner_name || "Bilinmiyor",
                 dialogues: bot.toplam_chats || 0,
                 time: "Yeni", // Veya ucret_haftalik üzerinden bir veri
-                avatar: bot.profil_fotografi || avatarBot,
-                image: bot.kapak_fotografi || botImage,
+                avatar: resolveAvatarSrc(bot.profil_fotografi),
+                image: resolveCoverSrc(bot.kapak_fotografi),
                 badge: { type: "produced", label: "Önerilen" }
             }));
 
@@ -256,7 +255,16 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
 
                             <div className="mb-4 h-px w-full bg-white/10" />
 
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {/* Grid width caps to the actual item count instead of
+                                always reserving 3 columns — a lone suggestion
+                                otherwise sits far from the cart items above it
+                                with a wide dead gutter to its right. */}
+                            <div className={cn(
+                                'grid gap-4',
+                                suggestedBots.length === 1 && 'max-w-[280px] grid-cols-1',
+                                suggestedBots.length === 2 && 'max-w-[600px] grid-cols-2',
+                                suggestedBots.length >= 3 && 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+                            )}>
                                 {suggestedBots.map((bot, i) => (
                                     <BotCard key={i} bot={bot} onRemove={() => handleRemoveSuggestedBot(i)} />
                                 ))}

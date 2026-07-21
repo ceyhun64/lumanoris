@@ -64,9 +64,9 @@ export default function ProfileImageEdit({ onChange, onRemove, userId }) {
     };
 
     return (
-        <div className="mb-8 flex items-center gap-2.5">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
             {/* Avatar */}
-            <div className="mr-2.5 flex h-[120px] w-[120px] items-center justify-center overflow-hidden rounded-full bg-luma-input">
+            <div className="flex h-[120px] w-[120px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-luma-input">
                 {image ? (
                     <img
                         src={image}

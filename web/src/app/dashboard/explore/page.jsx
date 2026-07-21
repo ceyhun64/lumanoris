@@ -5,10 +5,9 @@ import { SearchX } from "lucide-react";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
-import avatarBot from "@/images/avatar-bot.jpg";
+import { resolveCoverSrc } from "@/shared/lib/image";
 import BotList from "@/widgets/BotList";
-import CategoryFilter from "@/widgets/CategoryFilter";
-import MarketplaceSearchBar from "@/widgets/MarketplaceSearchBar";
+import MarketplaceToolbar from "@/widgets/MarketplaceToolbar";
 import { PageLayout, PageHeader, PageSection, CardGrid } from "@/shared/ui/page-layout";
 
 function formatTime(dateString) {
@@ -123,7 +122,7 @@ export default function Explore() {
         time: formatTime(bot.yayimlanma_tarih),
         publishedAt: bot.yayimlanma_tarih,
         avatar: bot.profil_fotografi,
-        image: bot.kapak_fotografi || avatarBot.src,
+        image: resolveCoverSrc(bot.kapak_fotografi),
         kategori_id: bot.kategori_id,
         followers: bot.toplam_follows,
         likes: bot.toplam_likes,
@@ -180,17 +179,14 @@ export default function Explore() {
             )}
 
             <PageSection>
-                <MarketplaceSearchBar
+                <MarketplaceToolbar
                     query={searchTerm}
                     onQueryChange={setSearchTerm}
                     sort={sortType}
                     onSortChange={setSortType}
-                />
-
-                <CategoryFilter
                     categories={categories}
                     selected={activeCategory}
-                    onSelect={setActiveCategory}
+                    onSelectCategory={setActiveCategory}
                 />
             </PageSection>
 

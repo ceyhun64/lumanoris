@@ -4,12 +4,11 @@ import { useRouter } from "next/navigation";
 import { PackageSearch, Bot, MessageSquare, Layers, Users } from "lucide-react";
 import { UserContext } from "./layout";
 import BotList from "@/widgets/BotList";
-import CategoryFilter from "@/widgets/CategoryFilter";
-import MarketplaceSearchBar from "@/widgets/MarketplaceSearchBar";
+import MarketplaceToolbar from "@/widgets/MarketplaceToolbar";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { EmptyState as SharedEmptyState } from "@/shared/ui/empty-state";
 import { StatCard } from "@/shared/ui/stat-card";
-import avatarBot from "@/images/avatar-bot.jpg";
+import { resolveCoverSrc } from "@/shared/lib/image";
 import { PageLayout, PageHeader, PageSection, CardGrid, StatGrid } from "@/shared/ui/page-layout";
 
 function formatCompactNumber(n) {
@@ -109,7 +108,7 @@ export default function Dashboard() {
                             time: formatTime(bot.yayimlanma_tarih),
                             publishedAt: bot.yayimlanma_tarih,
                             avatar: bot.profil_fotografi,
-                            image: bot.kapak_fotografi || avatarBot.src,
+                            image: resolveCoverSrc(bot.kapak_fotografi),
                             kategori_id: bot.kategori_id,
                             followers: bot.toplam_follows,
                             likes: bot.toplam_likes,
@@ -192,19 +191,14 @@ export default function Dashboard() {
             </PageSection>
 
             <PageSection>
-                {/* ── Search + sort ── */}
-                <MarketplaceSearchBar
+                <MarketplaceToolbar
                     query={searchQuery}
                     onQueryChange={setSearchQuery}
                     sort={sort}
                     onSortChange={setSort}
-                />
-
-                {/* ── Category bar ── */}
-                <CategoryFilter
                     categories={categories}
                     selected={selectedCategory}
-                    onSelect={(cat) => setSelectedCategory(cat)}
+                    onSelectCategory={(cat) => setSelectedCategory(cat)}
                 />
             </PageSection>
 

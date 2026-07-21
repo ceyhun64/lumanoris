@@ -11,7 +11,7 @@ import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Card } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
-import { Lock, Globe2, Sparkles, ArrowRight, Crown } from "lucide-react";
+import { Lock, Globe2, Sparkles, ArrowRight, Crown, FileText, Rocket } from "lucide-react";
 import { PageLayout, PageHeader } from "@/shared/ui/page-layout";
 
 export default function CreateChatbot() {
@@ -165,7 +165,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
         return (
             <PageLayout>
                 <PageHeader
-                    eyebrow="Oluştur"
+                    eyebrow="Stüdyo" eyebrowClassName="text-violet-300/80"
                     title="Yeni Bir Chatbot Yarat"
                     description="Yapay zeka botunu birkaç adımda hayata geçir; önce erişimini nasıl kısıtlayacağına karar ver, gerisini birlikte tamamlayalım."
                 />
@@ -272,6 +272,31 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                     </div>
                 )}
 
+                {/* İki seçim kartı tek başına ekranın geri kalanını boş
+                    bırakıyordu — sayfanın gerçek amacı sadece bir seçim
+                    değil, "üretim sürecinin başlangıcı" olduğu için burada
+                    sürecin tamamına dair bir önizleme veriyoruz. */}
+                <div className="mt-10 w-full max-w-3xl">
+                    <p className="mb-4 text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-white/35">
+                        Nasıl çalışır?
+                    </p>
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                        {[
+                            { icon: Sparkles, title: "Kişiliğini tanımla", desc: "Botunun ismini, tonunu ve amacını belirle." },
+                            { icon: FileText, title: "Bilgi kaynağını ekle", desc: "Botunun temel alacağı metni veya belgeleri yükle." },
+                            { icon: Rocket, title: "Yayınla", desc: "Bağımsız tut ya da pazaryerinde herkese aç." },
+                        ].map((step) => (
+                            <div key={step.title} className="flex flex-col gap-2.5">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.04] text-white/50">
+                                    <step.icon className="h-4 w-4" />
+                                </div>
+                                <p className="font-display text-[13.5px] font-semibold text-white">{step.title}</p>
+                                <p className="text-[12.5px] leading-relaxed text-white/45">{step.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
                 <BuyProducerAccountModal
                     isOpen={showBuyPlan}
                     onClose={() => setShowBuyPlan(false)}
@@ -315,7 +340,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
     return (
         <PageLayout>
             <PageHeader
-                eyebrow="Oluştur"
+                eyebrow="Stüdyo" eyebrowClassName="text-violet-300/80"
                 title={bot ? "Chatbotunu Düzenle" : "Yeni Chatbot Oluştur"}
                 description={bot ? "Görselleri, davranışını ve fiyatlandırmasını güncelle." : "Kimliğini, davranışını ve (varsa) fiyatlandırmasını belirleyerek yayına hazırla."}
             />

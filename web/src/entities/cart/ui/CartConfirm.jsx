@@ -556,15 +556,15 @@ export default function CartConfirm({ cartItems }) {
                         <h4 className="relative mb-6 font-display text-lg font-bold text-white">Sipariş Özeti</h4>
                         <div className="my-2 flex justify-between font-display text-base font-medium text-white">
                             <span>Ürün Tutarı</span>
-                            <span className="text-white/50">{subtotal}₺</span>
+                            <span className="text-white/50">{subtotal.toFixed(2)}₺</span>
                         </div>
                         <div className="my-2 flex justify-between font-display text-base font-medium text-white">
                             <span>Hizmet Bedeli</span>
-                            <span className="text-white/50">{serviceFee}₺</span>
+                            <span className="text-white/50">{serviceFee.toFixed(2)}₺</span>
                         </div>
                         <div className="my-2 flex justify-between border-y border-transparent py-3 font-display text-base font-medium text-white">
                             <strong>Toplam</strong>
-                            <strong className="text-white/50">{total}₺</strong>
+                            <strong className="text-white/50">{total.toFixed(2)}₺</strong>
                         </div>
                         <div className="mt-4 flex items-stretch rounded-xl border border-fuchsia-400/25 bg-white/[0.04] transition-colors duration-200 focus-within:border-fuchsia-400/45">
                             <div className="flex items-center p-3.5 text-fuchsia-400">
