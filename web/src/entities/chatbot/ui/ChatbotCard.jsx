@@ -99,25 +99,21 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
 
     useEffect(() => {
         if (!id) return;
-        // Both endpoints read $_GET (session provides identity) — previously
-        // sent as a POST body, so $_GET was always empty and the "did I
-        // already react" check never resolved.
-        const checkLike = async () => {
+        // getuserbotstatus.php reads $_GET (session provides identity) and
+        // bundles like+dislike+follow into one call — this card renders once
+        // per bot in a marketplace grid, so the old 2 separate fetches here
+        // multiplied into 2xN requests per page load.
+        const checkStatus = async () => {
             try {
-                const res = await fetch(`/api/social/diduserlike.php?chatbot_id=${id}`);
+                const res = await fetch(`/api/social/getuserbotstatus.php?chatbot_id=${id}`);
                 const result = await res.json();
-                if (result.success) setLiked(result.didLike);
-            } catch (err) { console.error("diduserlike API error:", err); }
+                if (result.success) {
+                    setLiked(result.didLike);
+                    setDisliked(result.didDisLike);
+                }
+            } catch (err) { console.error("getuserbotstatus API error:", err); }
         };
-        const checkDislike = async () => {
-            try {
-                const res = await fetch(`/api/social/diduserdislike.php?chatbot_id=${id}`);
-                const result = await res.json();
-                if (result.success) setDisliked(result.didDisLike);
-            } catch (err) { console.error("diduserdislike API error:", err); }
-        };
-        checkLike();
-        checkDislike();
+        checkStatus();
     }, [id]);
 
     useEffect(() => {

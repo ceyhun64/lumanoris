@@ -18,6 +18,11 @@ class RegisterUseCase {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new ValidationException('Geçerli bir e-posta adresi girin.');
         }
+        // No length/strength check previously existed server-side — a
+        // 1-character password was accepted and bcrypt-hashed as-is.
+        if (strlen($password) < 8) {
+            throw new ValidationException('Şifre en az 8 karakter olmalıdır.');
+        }
 
         if ($this->users->existsByUsernameOrEmail($username, $email)) {
             throw new DuplicateException('Bu kullanıcı adı veya e-posta zaten kayıtlı!');
@@ -28,7 +33,22 @@ class RegisterUseCase {
         $data['kullanici_adi'] = $username;
         $data['eposta']       = $email;
 
-        $userId = $this->users->create($data);
+        // The existsByUsernameOrEmail() check above and this insert are two
+        // separate round-trips — two concurrent registrations with the same
+        // email can both pass the check before either commits. The DB's
+        // real UNIQUE constraint on eposta/kullanici_adi (verified via
+        // information_schema) stops a duplicate row from ever being
+        // created, but without this catch the second insert's constraint
+        // violation surfaced as an uncaught PDOException (raw 500) instead
+        // of the same friendly 409 the pre-check above already gives.
+        try {
+            $userId = $this->users->create($data);
+        } catch (Exception $e) {
+            if (str_contains($e->getMessage(), 'Duplicate entry')) {
+                throw new DuplicateException('Bu kullanıcı adı veya e-posta zaten kayıtlı!');
+            }
+            throw $e;
+        }
         $this->users->addEmailRecord($userId, $email);
 
         // Auto-follow the platform assistant on new account creation

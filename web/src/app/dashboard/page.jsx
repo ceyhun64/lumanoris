@@ -54,6 +54,17 @@ export default function Dashboard() {
     const [sort, setSort] = useState("onerilen");
     const [loading, setLoading] = useState(true);
 
+    // Kullanıcıya özel istatistikler — daha önce bu kutular platform
+    // genelindeki (tüm pazaryerinin) sayılarını gösteriyordu, yepyeni bir
+    // hesap bile "9 Chatbot" gibi kendisine ait olmayan rakamlar görüyordu.
+    // Aynı sayfanın zaten kullandığı Promise.all deseniyle, diğer sayfaların
+    // (Satın Aldıklarım/Diyalog Defteri/Takip Edilenler) da kullandığı var
+    // olan uçlardan gerçek kişisel sayılar çekiliyor — yeni bir backend
+    // endpoint'i gerekmiyor.
+    const [myBotCount, setMyBotCount] = useState(0);
+    const [myDialogueCount, setMyDialogueCount] = useState(0);
+    const [myFollowingCount, setMyFollowingCount] = useState(0);
+
     useEffect(() => {
         fetch('/api/content/getcategories.php')
             .then(async res => {
@@ -70,17 +81,27 @@ export default function Dashboard() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const [botsRes, unRes, hideRes, listsRes] = await Promise.all([
+                const [botsRes, unRes, hideRes, listsRes, subsRes, historyRes, followedRes] = await Promise.all([
                     fetch(`/api/chatbot/getchatbots.php`),
                     userId ? fetch(`/api/social/getuninterest.php?id=${userId}`) : Promise.resolve(null),
                     userId ? fetch(`/api/social/gethide.php?user_id=${userId}`) : Promise.resolve(null),
                     userId ? fetch(`/api/social/getuserlists.php?id=${userId}`) : Promise.resolve(null),
+                    userId ? fetch(`/api/wallet/getmysubscriptions.php`) : Promise.resolve(null),
+                    userId ? fetch(`/api/chat/gethistory.php?user_id=${userId}`) : Promise.resolve(null),
+                    userId ? fetch(`/api/social/getfollowedbots.php`) : Promise.resolve(null),
                 ]);
 
                 const botsData = await botsRes.json();
                 const unData = unRes ? await unRes.json() : [];
                 const hideData = hideRes ? await hideRes.json() : [];
                 const listsData = listsRes ? await listsRes.json() : [];
+                const subsData = subsRes ? await subsRes.json() : null;
+                const historyData = historyRes ? await historyRes.json() : null;
+                const followedData = followedRes ? await followedRes.json() : null;
+
+                setMyBotCount(Array.isArray(subsData?.subscriptions) ? subsData.subscriptions.filter(s => s.is_active).length : 0);
+                setMyDialogueCount(Array.isArray(historyData?.results) ? historyData.results.length : 0);
+                setMyFollowingCount(Array.isArray(followedData?.bots) ? followedData.bots.length : 0);
 
                 // getuninterest.php / gethide.php both return
                 // {success, categories/hidden: [rawId, ...]} — a flat id
@@ -169,11 +190,6 @@ export default function Dashboard() {
         return sorted;
     })();
 
-    // Real, already-fetched numbers — no extra API calls. Reflects the
-    // whole marketplace (allBots), not just the currently filtered/searched
-    // subset, so the row doesn't jitter as the user types/filters.
-    const totalDialogues = allBots.reduce((sum, b) => sum + (Number(b.dialogues) || 0), 0);
-    const totalFollowers = allBots.reduce((sum, b) => sum + (Number(b.followers) || 0), 0);
     const categoryCount = Math.max(0, categories.length - 1); // exclude synthetic "Tümü"
 
     return (
@@ -183,9 +199,9 @@ export default function Dashboard() {
             {/* Overview widgets — real marketplace numbers, not filler */}
             <PageSection>
                 <StatGrid>
-                    <StatCard icon={Bot} label="Toplam Chatbot" value={loading ? "—" : formatCompactNumber(allBots.length)} />
-                    <StatCard icon={MessageSquare} label="Toplam Diyalog" value={loading ? "—" : formatCompactNumber(totalDialogues)} />
-                    <StatCard icon={Users} label="Toplam Takipçi" value={loading ? "—" : formatCompactNumber(totalFollowers)} />
+                    <StatCard icon={Bot} label="Sahip Olduğun Chatbot" value={loading ? "—" : formatCompactNumber(myBotCount)} />
+                    <StatCard icon={MessageSquare} label="Diyaloglarım" value={loading ? "—" : formatCompactNumber(myDialogueCount)} />
+                    <StatCard icon={Users} label="Takip Ettiklerin" value={loading ? "—" : formatCompactNumber(myFollowingCount)} />
                     <StatCard icon={Layers} label="Kategori" value={loading ? "—" : formatCompactNumber(categoryCount)} />
                 </StatGrid>
             </PageSection>

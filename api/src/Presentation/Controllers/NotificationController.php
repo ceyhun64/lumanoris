@@ -11,9 +11,36 @@ class NotificationController {
             JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
         }
 
-        $data['user_id'] = $userId;
-        $data['is_read'] = $data['is_read'] ?? false;
-        $id = Database::getInstance()->insert('notifications', $data);
+        $db = Database::getInstance();
+
+        // Root-cause fix: the real `notifications` table never had
+        // message_tr/message_en columns, but callers (e.g. the purchase-
+        // success flow in CartConfirm.jsx) always sent them, and
+        // NotificationPopup.jsx already reads notif.message_tr to render a
+        // notification's body — so every insert with a message crashed
+        // (500) and no notification could ever store real body text. Added
+        // additively (nullable, doesn't touch existing rows), same
+        // idempotent pattern already used for param_marketplace_details in
+        // MarketplaceController::createSubscription().
+        $conn = $db->getConnection();
+        $columnCheck = $db->selectSingle(
+            "COUNT(*) AS cnt FROM information_schema.columns
+             WHERE table_schema = DATABASE() AND table_name = 'notifications' AND column_name = 'message_tr'"
+        );
+        if ((int) ($columnCheck['cnt'] ?? 0) === 0) {
+            $conn->exec('ALTER TABLE notifications ADD COLUMN message_tr TEXT NULL AFTER title_en');
+            $conn->exec('ALTER TABLE notifications ADD COLUMN message_en TEXT NULL AFTER message_tr');
+        }
+
+        // Whitelist so an unrelated/misspelled future field can't crash this
+        // insert the same way — mirrors the pattern already used in
+        // WalletController::saveBankInfo().
+        $allowed  = ['type', 'title_tr', 'title_en', 'message_tr', 'message_en', 'is_read'];
+        $filtered = array_intersect_key($data, array_flip($allowed));
+        $filtered['user_id'] = $userId;
+        $filtered['is_read'] = $filtered['is_read'] ?? false;
+
+        $id = $db->insert('notifications', $filtered);
         JsonResponse::success(['message' => 'Bildirim oluşturuldu.', 'id' => $id]);
     }
 

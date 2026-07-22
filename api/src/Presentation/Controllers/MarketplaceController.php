@@ -99,6 +99,7 @@ class MarketplaceController {
     public static function createSubscription(): void {
         require_method('POST');
         require_once __DIR__ . '/../../../functions/coin_engine.php';
+        require_once __DIR__ . '/../../../functions/checkout_payments.php';
         $userId = AuthMiddleware::requireAuth();
         $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data || empty($data['items']) || !is_array($data['items'])) {
@@ -171,6 +172,19 @@ class MarketplaceController {
         if (empty($subscriptionIds)) {
             $conn->rollBack();
             JsonResponse::error('Geçerli ürün bulunamadı.', 400, AppConfig::ERR_VALIDATION);
+        }
+
+        // Root-cause fix: this used to never look at $data['card'] at all —
+        // any chatbot_id/duration_weeks pair succeeded with no card data
+        // whatsoever. Card is validated (and, in production, actually
+        // charged) only now that the real amount is known — a failure here
+        // rolls back every subscription/credit/cart-delete above, so no
+        // access is ever granted without a valid card.
+        $card         = is_array($data['card'] ?? null) ? $data['card'] : [];
+        $chargeResult = chargeCard($card, $totalAmount);
+        if (!$chargeResult['success']) {
+            $conn->rollBack();
+            JsonResponse::error($chargeResult['message'] ?? 'Ödeme başarısız.', 402, AppConfig::ERR_PAYMENT);
         }
 
         // Real param_marketplace_payments columns are user_id/amount, not

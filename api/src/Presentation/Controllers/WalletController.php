@@ -84,11 +84,28 @@ class WalletController {
         // could request (and, once approved, receive) a withdrawal far larger
         // than they've ever earned.
         $conn = $db->getConnection();
+
+        // computeBalanceAndTransactions() is a plain SELECT with no locking,
+        // so two concurrent withdraw() calls for the same user could both
+        // read the same "available" balance before either's insert commits,
+        // both pass the check above, and together withdraw more than the
+        // real balance. A MySQL named lock scoped to this user forces
+        // concurrent withdraw() calls for the same account to run one at a
+        // time, so the second call's balance read always sees the first
+        // call's already-inserted request.
+        $lockName = 'withdraw_user_' . $userId;
+        $lockStmt = $conn->prepare('SELECT GET_LOCK(?, 10) AS locked');
+        $lockStmt->execute([$lockName]);
+        if ((int) ($lockStmt->fetch()['locked'] ?? 0) !== 1) {
+            JsonResponse::error('İşlem şu anda gerçekleştirilemiyor, lütfen tekrar deneyin.', 409, AppConfig::ERR_VALIDATION);
+        }
+
         $conn->beginTransaction();
         try {
             $available = self::computeBalanceAndTransactions($db, $userId)['balance'];
             if ($amount > $available) {
                 $conn->rollBack();
+                $conn->prepare('SELECT RELEASE_LOCK(?)')->execute([$lockName]);
                 JsonResponse::error('Talep edilen tutar mevcut bakiyenizi aşıyor.', 400, AppConfig::ERR_VALIDATION);
             }
 
@@ -101,8 +118,10 @@ class WalletController {
             $conn->commit();
         } catch (Exception $e) {
             $conn->rollBack();
+            $conn->prepare('SELECT RELEASE_LOCK(?)')->execute([$lockName]);
             throw $e;
         }
+        $conn->prepare('SELECT RELEASE_LOCK(?)')->execute([$lockName]);
 
         JsonResponse::success(['message' => 'Para çekme talebi oluşturuldu.', 'id' => $id]);
     }

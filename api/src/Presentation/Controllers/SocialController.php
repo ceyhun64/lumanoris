@@ -53,6 +53,24 @@ class SocialController {
         JsonResponse::success(['didLike' => (bool) $row]);
     }
 
+    // Bundles didUserLike/didUserDislike/didUserFollow into one round-trip —
+    // ProfileCard.jsx and ChatbotCard.jsx each fired 2-3 separate GETs for
+    // the same chatbot_id on mount (worse on a marketplace grid, where every
+    // visible card repeats this). Same three underlying queries, same auth,
+    // just returned together instead of over three requests.
+    public static function getUserBotStatus(): void {
+        $userId    = AuthMiddleware::optionalAuth();
+        $chatbotId = InputSanitizer::positiveInt($_GET['chatbot_id'] ?? 0);
+        if (!$chatbotId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
+
+        $db = Database::getInstance();
+        $didLike    = (bool) $db->selectSingle('id FROM chatbot_likes WHERE user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
+        $didDisLike = (bool) $db->selectSingle('id FROM chatbot_dislikes WHERE user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
+        $didFollow  = (bool) $db->selectSingle('id FROM chatbot_follows WHERE user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
+
+        JsonResponse::success(['didLike' => $didLike, 'didDisLike' => $didDisLike, 'didFollow' => $didFollow]);
+    }
+
     public static function didUserDislike(): void {
         $userId    = AuthMiddleware::optionalAuth();
         $chatbotId = InputSanitizer::positiveInt($_GET['chatbot_id'] ?? 0);

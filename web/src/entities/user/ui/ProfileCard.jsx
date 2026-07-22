@@ -178,54 +178,34 @@ export default function ProfileCard({bot, comments}) {
     }, [userId]);
 
     useEffect(() => {
-        const checkUserLike = async () => {
-            try {
-                const res = await fetch(`/api/social/diduserlike.php?chatbot_id=${bot.id}`);
+        // Deps used to be [profile.id, userId] — neither is actually read
+        // inside this fetch (it uses bot.id directly, and the backend reads
+        // identity from the session cookie via optionalAuth(), not a request
+        // param), but both values change asynchronously right after mount
+        // (profile.id: null -> bot.id once the [bot,comments] effect above
+        // runs; userId: undefined -> real id once the session check
+        // resolves) — each transition re-ran this effect, firing the same
+        // request 3 times. bot.id is already stable by the time this
+        // component mounts (the parent only renders it once bot exists).
+        if (!bot.id) return;
 
-                const resultText = await res.text();
-                const result = JSON.parse(resultText);
+        const checkUserBotStatus = async () => {
+            try {
+                const res = await fetch(`/api/social/getuserbotstatus.php?chatbot_id=${bot.id}`);
+                const result = await res.json();
 
                 if (result.success) {
-                setLiked(result.didLike); // backend'den gelen boolean
+                    setLiked(result.didLike);
+                    setDisliked(result.didDisLike);
+                    setIsFollowing(result.didFollow);
                 }
             } catch (err) {
-                console.error("diduserlike API error:", err);
+                console.error("getuserbotstatus API error:", err);
             }
         };
 
-        const checkUserDisLike = async () => {
-            try {
-                const res = await fetch(`/api/social/diduserdislike.php?chatbot_id=${bot.id}`);
-
-                const resultText = await res.text();
-                const result = JSON.parse(resultText);
-
-                if (result.success) {
-                setDisliked(result.didDisLike); // backend'den gelen boolean
-                }
-            } catch (err) {
-                console.error("diduserdislike API error:", err);
-            }
-        };
-
-        const checkUserFollow = async () => {
-            try {
-            const res = await fetch(`/api/social/diduserfollow.php?chatbot_id=${bot.id}`);
-
-            const result = await res.json();
-
-            if (result.success) {
-                setIsFollowing(result.didFollow); // backend'den gelen boolean
-            }
-            } catch (err) {
-            console.error("diduserfollow API error:", err);
-            }
-        };
-
-        checkUserLike();
-        checkUserDisLike();
-        checkUserFollow();
-    }, [profile.id, userId]);
+        checkUserBotStatus();
+    }, [bot.id]);
 
     const handleAddToCart = async (e) => {
     e?.stopPropagation && e.stopPropagation();
