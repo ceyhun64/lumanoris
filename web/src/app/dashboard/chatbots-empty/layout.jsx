@@ -1,13 +1,11 @@
 export const metadata = {
-    title: "Chatbotları | Lumanoris",
+  title: "Chatbotları | Lumanoris",
 };
 
 export default function DashboardChatbotlarim({ children }) {
-    return (
-        <>
-            <div className="dashboard-inner-layout">
-                {children}
-            </div>
-        </>
-    );
+  return (
+    <>
+      <div className="dashboard-inner-layout">{children}</div>
+    </>
+  );
 }

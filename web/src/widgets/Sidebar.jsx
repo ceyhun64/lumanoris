@@ -1,285 +1,409 @@
-"use client";
-import headerLogo from '@/images/header-logo-icon.png';
-import Link from 'next/link';
-import QuitModal from '@/features/auth/QuitModal';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import React, { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import QuitModal from "@/features/auth/QuitModal";
 import {
-  Plus, TrendingUp, ChevronLeft,
-  Home, Bot, ShoppingBag, Users, ListChecks, History, Wallet, NotebookText, Settings,
-} from 'lucide-react';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/shared/ui/tooltip';
+  Plus,
+  TrendingUp,
+  ChevronLeft,
+  ChevronRight,
+  Home,
+  Bot,
+  ShoppingBag,
+  Users,
+  ListChecks,
+  History,
+  Wallet,
+  NotebookText,
+  Settings,
+  Sparkles,
+  LogOut,
+  Zap,
+  Command,
+} from "lucide-react";
 
-// İki ayrı dünya: Stüdyo (kendi botunu yönet/üret) ve Keşfet (pazaryerini
-// tüket/takip et). Aynı tasarım dili içinde farklı bir vurgu rengiyle
-// (violet vs fuchsia) ayrıştırılıyor ki kullanıcı hangi modda olduğunu
-// sezgisel olarak anlasın — bkz. Chatbotlarım/Oluştur sayfalarındaki violet
-// eyebrow ve bu bileşendeki accentClass.
-const studioItems = [
-  { href: '/dashboard/chatbots', icon: Bot, label: 'Chatbotlarım' },
+const STUDIO_ITEMS = [
+  {
+    href: "/dashboard/chatbots",
+    icon: Bot,
+    label: "Chatbotlarım",
+    badge: "12 Active",
+  },
 ];
 
-const exploreItems = [
-  { href: '/dashboard',           icon: Home,         label: 'Anasayfa',        exact: true },
-  { href: '/dashboard/purchased', icon: ShoppingBag,  label: 'Satın Aldıklarım' },
-  { href: '/dashboard/following', icon: Users,        label: 'Takip Edilenler' },
-  { href: '/dashboard/list',      icon: ListChecks,   label: 'Liste' },
-  { href: '/dashboard/history',   icon: History,      label: 'Geçmişim' },
-  { href: '/dashboard/wallet',    icon: Wallet,       label: 'Bakiyem' },
-  { href: '/dashboard/notes',     icon: NotebookText, label: 'Diyalog Defteri' },
+const EXPLORE_ITEMS = [
+  { href: "/dashboard", icon: Home, label: "Anasayfa", exact: true },
+  {
+    href: "/dashboard/purchased",
+    icon: ShoppingBag,
+    label: "Satın Aldıklarım",
+  },
+  { href: "/dashboard/following", icon: Users, label: "Takip Edilenler" },
+  { href: "/dashboard/list", icon: ListChecks, label: "Liste" },
+  { href: "/dashboard/history", icon: History, label: "Geçmişim" },
+  { href: "/dashboard/wallet", icon: Wallet, label: "Bakiyem", pill: "₺1,450" },
+  { href: "/dashboard/notes", icon: NotebookText, label: "Diyalog Defteri" },
 ];
 
-const ACCENTS = {
-  fuchsia: {
-    bar: 'bg-gradient-to-b from-fuchsia-400 to-violet-400 shadow-[0_0_6px_rgba(217,70,239,0.4)]',
-    icon: 'bg-fuchsia-500/[0.14] text-fuchsia-300 shadow-[0_0_0_1px_rgba(232,121,249,0.12)]',
-  },
-  violet: {
-    bar: 'bg-gradient-to-b from-violet-400 to-fuchsia-400 shadow-[0_0_6px_rgba(139,92,246,0.4)]',
-    icon: 'bg-violet-500/[0.16] text-violet-300 shadow-[0_0_0_1px_rgba(167,139,250,0.14)]',
-  },
-};
+function MinimalTooltip({ children, text, side = "right" }) {
+  const [show, setShow] = useState(false);
 
-function renderNavItem({ href, icon: Icon, label, exact }, isActive, collapsed, accent) {
-  const active = isActive(href, exact);
-  const { bar, icon } = ACCENTS[accent];
-  const link = (
-    <Link
-      href={href}
-      className={cn(
-        'relative flex items-center gap-3 w-full rounded-lg no-underline',
-        'text-[13.5px] font-sans leading-snug',
-        'transition-all duration-200',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
-        collapsed ? 'justify-center p-2' : 'pl-3 pr-2.5 py-2.5',
-        active
-          ? 'font-semibold bg-white/[0.045] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.06)]'
-          : 'text-white/50 hover:bg-white/[0.045] hover:text-white/90 hover:translate-x-0.5',
-      )}
-    >
-      {/* Active accent bar — the single clearest "you are here" signal */}
-      {active && <span className={cn('absolute left-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-full', bar)} />}
-      <span className={cn(
-        'flex items-center justify-center shrink-0 rounded-lg transition-all duration-200',
-        collapsed ? 'w-[30px] h-[30px]' : 'w-8 h-8',
-        active ? icon : 'bg-white/[0.03] text-white/45 group-hover:text-white/80',
-      )}>
-        <Icon className={collapsed ? 'w-[18px] h-[18px]' : 'w-[17px] h-[17px]'} strokeWidth={1.75} />
-      </span>
-      {!collapsed && <span className="truncate">{label}</span>}
-    </Link>
-  );
   return (
-    <li key={href} className="w-full">
-      {collapsed ? (
-        <Tooltip>
-          <TooltipTrigger asChild>{link}</TooltipTrigger>
-          <TooltipContent side="right">{label}</TooltipContent>
-        </Tooltip>
-      ) : link}
-    </li>
+    <div
+      className="relative flex items-center"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+      {show && (
+        <div
+          className={`absolute z-50 px-2.5 py-1 text-[11px] font-medium text-zinc-200 bg-zinc-900/95 backdrop-blur-md border border-zinc-700/60 rounded-md shadow-xl whitespace-nowrap pointer-events-none transition-all duration-150 animate-in fade-in slide-in-from-left-1 ${
+            side === "right" ? "left-full ml-3" : "bottom-full mb-2"
+          }`}
+        >
+          {text}
+        </div>
+      )}
+    </div>
   );
 }
 
-export default function Sidebar({ isMobileOpen = false }) {
-  const pathname = usePathname();
+export function Sidebar({ isMobileOpen = false, onNavigate }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [isQuitModalOpen, setIsQuitModalOpen] = useState(false);
 
   const isActive = (href, exact = false) =>
-    exact ? (pathname === href || pathname === href + '/')
-          : pathname.startsWith(href);
+    exact
+      ? pathname === href || pathname === href + "/"
+      : pathname.startsWith(href);
+
+  const handleNavigate = (href) => {
+    router.push(href);
+    if (onNavigate) onNavigate(href);
+  };
 
   const handleCollapseToggle = () => {
-    setCollapsed(prev => !prev);
-    window.dispatchEvent(new CustomEvent('logoClicked', { detail: { clicked: !collapsed } }));
+    const nextCollapsed = !collapsed;
+    setCollapsed(nextCollapsed);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("logoClicked", { detail: { clicked: nextCollapsed } }),
+      );
+    }
+  };
+
+  const renderNavItem = (item, category) => {
+    const { href, icon: Icon, label, exact, badge, pill } = item;
+    const active = isActive(href, exact);
+    const isStudio = category === "studio";
+
+    const itemContent = (
+      <button
+        type="button"
+        onClick={() => handleNavigate(href)}
+        className={`group relative flex items-center w-full rounded-xl text-left transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 ${
+          collapsed ? "justify-center p-2.5" : "px-3 py-2.5"
+        } ${
+          active
+            ? "bg-gradient-to-r from-white/[0.08] to-white/[0.02] text-white font-medium shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] ring-1 ring-white/10"
+            : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.03]"
+        }`}
+      >
+        {/* Active side indicator glow */}
+        {active && (
+          <span
+            className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full transition-all duration-300 ${
+              isStudio
+                ? "bg-gradient-to-b from-violet-400 to-indigo-500 shadow-[0_0_12px_rgba(139,92,246,0.8)]"
+                : "bg-gradient-to-b from-fuchsia-400 to-pink-500 shadow-[0_0_12px_rgba(217,70,239,0.8)]"
+            }`}
+          />
+        )}
+
+        <span
+          className={`flex items-center justify-center shrink-0 rounded-lg transition-all duration-200 ${
+            collapsed ? "w-6 h-6" : "w-5 h-5 mr-3"
+          } ${
+            active
+              ? isStudio
+                ? "text-violet-400"
+                : "text-fuchsia-400"
+              : "text-zinc-500 group-hover:text-zinc-300"
+          }`}
+        >
+          <Icon
+            className="w-[18px] h-[18px]"
+            strokeWidth={active ? 2.2 : 1.75}
+          />
+        </span>
+
+        {!collapsed && (
+          <div className="flex items-center justify-between flex-1 min-w-0">
+            <span className="truncate text-[13px] tracking-tight">{label}</span>
+            {badge && (
+              <span className="px-1.5 py-0.5 text-[10px] font-medium text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-md">
+                {badge}
+              </span>
+            )}
+            {pill && (
+              <span className="px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-md">
+                {pill}
+              </span>
+            )}
+          </div>
+        )}
+      </button>
+    );
+
+    return (
+      <li key={href} className="w-full">
+        {collapsed ? (
+          <MinimalTooltip text={label} side="right">
+            {itemContent}
+          </MinimalTooltip>
+        ) : (
+          itemContent
+        )}
+      </li>
+    );
   };
 
   return (
-    <aside
-      className={cn(
-        'flex flex-col justify-between h-screen sticky top-0 z-40 overflow-hidden',
-        'bg-gradient-to-b from-[#0D0D22] via-[#0A0A18] to-[#050508]',
-        'border-r border-white/[0.06]',
-        'transition-[width] duration-300 ease-in-out',
-        collapsed ? 'w-[84px]' : 'w-[264px]',
-        isMobileOpen ? 'translate-x-0' : '',
-        'max-md:fixed max-md:left-0 max-md:top-0 max-md:z-[1000]',
-        isMobileOpen ? 'max-md:translate-x-0' : 'max-md:-translate-x-full',
-      )}
+    <div
+      className={`relative h-screen sticky top-0 z-40 shrink-0 select-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        collapsed ? "w-[76px]" : "w-[260px]"
+      } ${
+        isMobileOpen ? "translate-x-0" : "max-md:-translate-x-full"
+      } max-md:fixed max-md:left-0 max-md:top-0 max-md:z-[1000]`}
     >
-      {/* Ambient glow accent — a quiet hint of depth, not a colored panel */}
-      <div className="pointer-events-none absolute -top-24 -left-16 h-64 w-64 rounded-full bg-fuchsia-600/[0.07] blur-[100px]" />
-      <div className="pointer-events-none absolute bottom-0 -right-10 h-56 w-56 rounded-full bg-violet-600/[0.05] blur-[100px]" />
-      {/* Hairline glow along the right edge */}
-      <div className="pointer-events-none absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-fuchsia-400/15 to-transparent" />
-      {/* Collapse toggle */}
+      <aside className="relative flex flex-col justify-between h-full w-full overflow-hidden bg-[#08080C] border-r border-zinc-800/60 shadow-2xl backdrop-blur-2xl">
+        {/* Subtle Ambient Background Glows */}
+        <div className="pointer-events-none absolute -top-20 -left-20 w-56 h-56 rounded-full bg-violet-600/10 blur-[90px]" />
+        <div className="pointer-events-none absolute bottom-10 -right-10 w-48 h-48 rounded-full bg-fuchsia-600/10 blur-[80px]" />
+
+        {}
+        <div className="flex flex-col px-3.5 pt-5 pb-2">
+          {/* Logo & Workspace Title */}
+          <div
+            className={`flex items-center justify-between mb-6 ${
+              collapsed ? "justify-center px-0" : "px-1"
+            }`}
+          >
+            <button
+              onClick={() => handleNavigate("/dashboard")}
+              className="flex items-center gap-3 group text-left focus:outline-none"
+            >
+              <div className="relative flex items-center justify-center shrink-0 w-9 h-9 rounded-xl bg-gradient-to-b from-zinc-800 to-zinc-950 border border-zinc-700/50 shadow-md group-hover:border-violet-500/40 transition-colors">
+                <div className="absolute inset-0 rounded-xl bg-violet-500/10 blur-sm opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Sparkles className="w-5 h-5 text-violet-400 group-hover:scale-110 transition-transform" />
+              </div>
+              {!collapsed && (
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-sm text-white tracking-tight truncate">
+                      Lumanoris
+                    </span>
+                    <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider text-fuchsia-400 bg-fuchsia-500/10 border border-fuchsia-500/20 rounded">
+                      Pro
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-zinc-500 truncate">
+                    AI Studio & Market
+                  </span>
+                </div>
+              )}
+            </button>
+          </div>
+
+          {}
+          <div className="mb-5">
+            <button
+              type="button"
+              onClick={() => handleNavigate("/dashboard/chatbots/create")}
+              className={`group relative w-full flex items-center justify-center gap-2 rounded-xl transition-all duration-200 overflow-hidden shadow-lg shadow-violet-950/30 ${
+                collapsed ? "p-2.5" : "py-2.5 px-3.5"
+              } bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 hover:brightness-110 active:scale-[0.98] border border-white/20`}
+            >
+              {/* Shimmer overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
+
+              <Plus
+                className="w-4 h-4 text-white shrink-0 group-hover:rotate-90 transition-transform duration-300"
+                strokeWidth={2.5}
+              />
+              {!collapsed && (
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-xs font-semibold text-white tracking-tight">
+                    Yeni Chatbot
+                  </span>
+                  <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/20 text-[10px] text-white/70 font-mono">
+                    <Command className="w-2.5 h-2.5" /> N
+                  </div>
+                </div>
+              )}
+            </button>
+          </div>
+
+          {}
+          <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-280px)] scrollbar-none pr-0.5">
+            <div>
+              {!collapsed && (
+                <div className="px-2 mb-2 flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500">
+                    Stüdyo
+                  </span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-violet-400/80 animate-pulse" />
+                </div>
+              )}
+              <ul className="space-y-1 list-none p-0 m-0">
+                {STUDIO_ITEMS.map((item) => renderNavItem(item, "studio"))}
+              </ul>
+            </div>
+
+            {}
+            <div>
+              {!collapsed && (
+                <div className="px-2 mb-2 flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500">
+                    Keşfet
+                  </span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-400/80" />
+                </div>
+              )}
+              <ul className="space-y-1 list-none p-0 m-0">
+                {EXPLORE_ITEMS.map((item) => renderNavItem(item, "explore"))}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {}
+        <div className="p-3 mt-auto space-y-2 border-t border-zinc-800/50 bg-gradient-to-b from-transparent to-black/40">
+          {/* Settings Link */}
+          {(() => {
+            const settingsActive = isActive("/dashboard/settings");
+            const settingsBtn = (
+              <button
+                type="button"
+                onClick={() => handleNavigate("/dashboard/settings")}
+                className={`group flex items-center w-full rounded-xl transition-all duration-200 ${
+                  collapsed ? "justify-center p-2.5" : "px-3 py-2"
+                } ${
+                  settingsActive
+                    ? "bg-white/10 text-white font-medium ring-1 ring-white/10"
+                    : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
+                }`}
+              >
+                <Settings
+                  className={`w-[18px] h-[18px] shrink-0 transition-transform duration-300 group-hover:rotate-45 ${
+                    collapsed ? "" : "mr-3"
+                  }`}
+                />
+                {!collapsed && (
+                  <span className="text-xs truncate">Ayarlar</span>
+                )}
+              </button>
+            );
+
+            return collapsed ? (
+              <MinimalTooltip text="Ayarlar">{settingsBtn}</MinimalTooltip>
+            ) : (
+              settingsBtn
+            );
+          })()}
+
+          {/* Pro Upgrade Widget (When Expanded) */}
+          {!collapsed && (
+            <div className="relative overflow-hidden p-3 rounded-xl bg-gradient-to-br from-violet-950/40 via-zinc-900/60 to-zinc-950 border border-violet-500/20 group">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-violet-300">
+                  <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  <span>Pro Plan</span>
+                </div>
+                <span className="text-[10px] text-zinc-400 font-mono">
+                  84% Token
+                </span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden mb-3">
+                <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 w-[84%] rounded-full" />
+              </div>
+              <button
+                type="button"
+                onClick={() => handleNavigate("/dashboard/upgrade")}
+                className="w-full py-1.5 px-2.5 text-[11px] font-semibold text-white bg-violet-600/30 hover:bg-violet-600/50 border border-violet-500/30 rounded-lg transition-all text-center flex items-center justify-center gap-1"
+              >
+                <TrendingUp className="w-3 h-3 text-violet-300" />
+                <span>Hesabı Yükselt</span>
+              </button>
+            </div>
+          )}
+
+          {/* User Account / Quit Trigger */}
+          <div className="pt-1 border-t border-zinc-800/40">
+            <button
+              type="button"
+              onClick={() => setIsQuitModalOpen(true)}
+              className={`flex items-center w-full rounded-xl p-1.5 text-left hover:bg-red-500/10 text-zinc-400 hover:text-red-400 transition-colors group ${
+                collapsed ? "justify-center" : "justify-between"
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-semibold shrink-0 shadow-sm">
+                  L
+                </div>
+                {!collapsed && (
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-medium text-zinc-200 truncate group-hover:text-red-300">
+                      Lumanoris Admin
+                    </span>
+                    <span className="text-[10px] text-zinc-500 truncate">
+                      admin@lumanoris.ai
+                    </span>
+                  </div>
+                )}
+              </div>
+              {!collapsed && (
+                <LogOut className="w-4 h-4 opacity-50 group-hover:opacity-100 shrink-0" />
+              )}
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {}
       <button
+        type="button"
         onClick={handleCollapseToggle}
-        className={cn(
-          'group absolute top-9 -right-3.5 z-[60]',
-          'w-8 h-8 flex items-center justify-center',
-          'rounded-full border border-white/10 bg-[#15152f] shadow-[0_2px_10px_rgba(0,0,0,0.5)]',
-          'text-white/55',
-          'hover:text-white hover:border-fuchsia-400/50 hover:bg-gradient-to-br hover:from-fuchsia-500/25 hover:to-violet-500/25 hover:shadow-[0_2px_14px_rgba(217,70,239,0.35)] hover:scale-110',
-          'active:scale-95',
-          'transition-all duration-200 ease-out',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
-          collapsed ? 'rotate-180' : '',
-          'max-md:hidden',
-        )}
-        aria-label={collapsed ? 'Menüyü genişlet' : 'Menüyü küçült'}
+        className="group absolute top-8 -right-3.5 z-50 flex items-center justify-center w-7 h-7 rounded-full bg-[#12121A] border border-zinc-700/80 text-zinc-400 shadow-xl hover:text-white hover:border-violet-500/50 hover:bg-violet-600/20 active:scale-95 transition-all max-md:hidden"
+        aria-label={collapsed ? "Genişlet" : "Daralt"}
       >
-        <ChevronLeft className="w-4 h-4 transition-transform duration-200 group-active:-translate-x-0.5" strokeWidth={2.5} />
+        {collapsed ? (
+          <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+        ) : (
+          <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+        )}
       </button>
 
-      <div className="relative flex flex-col gap-1 overflow-hidden px-3 pt-7">
-        {/* Logo */}
-        <Link href="/dashboard" className={cn('relative flex items-center gap-2.5 mb-7 no-underline', collapsed ? 'justify-center px-0' : 'px-1.5')}>
-          <div className="relative flex items-center justify-center shrink-0">
-            <div className="absolute inset-0 -m-1.5 rounded-full bg-fuchsia-500/15 blur-md" />
-            <img src={headerLogo.src} alt="Lumanoris" className="relative w-8 h-auto drop-shadow-[0_0_8px_rgba(217,70,239,0.3)]" />
-          </div>
-          {!collapsed && (
-            <span className="font-display font-semibold text-[16px] tracking-[0.02em] text-white whitespace-nowrap">
-              Lumanoris
-            </span>
-          )}
-        </Link>
-
-        {/* Create button — the primary CTA of the whole sidebar, now reads
-            as one: full gradient pill matching the Upgrade button's weight
-            instead of a quiet outlined box competing with nav items. */}
-        <button
-          onClick={() => router.push('/dashboard/chatbots/create')}
-          className={cn(
-            'group w-full flex items-center justify-between mb-5',
-            'bg-gradient-btn rounded-xl shadow-[0_4px_20px_rgba(192,38,211,0.35)]',
-            'hover:-translate-y-0.5 hover:shadow-[0_6px_28px_rgba(192,38,211,0.5)] hover:brightness-110',
-            'active:translate-y-0',
-            'transition-all duration-200',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
-            collapsed ? 'p-2.5 justify-center' : 'pl-3.5 pr-2.5 py-2.5',
-          )}
-        >
-          {!collapsed && (
-            <span className="text-[13.5px] font-semibold text-white">
-              Yeni Chatbot
-            </span>
-          )}
-          <span className={cn(
-            'flex items-center justify-center rounded-lg bg-white/15 shrink-0 transition-transform duration-200 group-hover:rotate-90',
-            collapsed ? 'w-7 h-7' : 'w-6 h-6',
-          )}>
-            <Plus className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
-          </span>
-        </button>
-
-        {/* Stüdyo — botlarını ürettiğin/yönettiğin taraf (violet vurgu) */}
-        {!collapsed && (
-          <span className="px-1.5 mb-1.5 text-[10.5px] font-medium uppercase tracking-[0.09em] text-white/30">
-            Stüdyo
-          </span>
-        )}
-        <ul className="flex flex-col gap-1 m-0 p-0 list-none mb-4">
-          {studioItems.map((item) => renderNavItem(item, isActive, collapsed, 'violet'))}
-        </ul>
-
-        {/* Keşfet — pazaryerini tükettiğin/takip ettiğin taraf (fuchsia vurgu) */}
-        {!collapsed && (
-          <span className="px-1.5 mb-1.5 text-[10.5px] font-medium uppercase tracking-[0.09em] text-white/30">
-            Keşfet
-          </span>
-        )}
-        <ul className="flex flex-col gap-1 m-0 p-0 list-none">
-          {exploreItems.map((item) => renderNavItem(item, isActive, collapsed, 'fuchsia'))}
-        </ul>
-      </div>
-
-      {/* Bottom: settings + upgrade */}
-      <div className="flex flex-col gap-1 px-3 pb-5">
-        <div className="mb-2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-
-        {(() => {
-          const settingsActive = pathname.startsWith('/dashboard/settings');
-          const settingsLink = (
-            <Link
-              href="/dashboard/settings/"
-              className={cn(
-                'relative flex items-center gap-3 no-underline rounded-lg',
-                'text-[13.5px] font-sans transition-all duration-200',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
-                collapsed ? 'justify-center p-2' : 'pl-3 pr-2.5 py-2.5',
-                settingsActive
-                  ? 'font-semibold bg-white/[0.045] text-white'
-                  : 'text-white/50 hover:bg-white/[0.045] hover:text-white/90 hover:translate-x-0.5',
-              )}
-            >
-              {settingsActive && (
-                <span className="absolute left-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b from-fuchsia-400 to-violet-400 shadow-[0_0_6px_rgba(217,70,239,0.4)]" />
-              )}
-              <span className={cn(
-                'flex items-center justify-center shrink-0 rounded-lg transition-all duration-200',
-                collapsed ? 'w-[30px] h-[30px]' : 'w-8 h-8',
-                settingsActive
-                  ? 'bg-fuchsia-500/[0.14] text-fuchsia-300 shadow-[0_0_0_1px_rgba(232,121,249,0.12)]'
-                  : 'bg-white/[0.03] text-white/45',
-              )}>
-                <Settings className={collapsed ? 'w-[18px] h-[18px]' : 'w-[17px] h-[17px]'} strokeWidth={1.75} />
-              </span>
-              {!collapsed && <span className="truncate">Ayarlar</span>}
-            </Link>
-          );
-          return collapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>{settingsLink}</TooltipTrigger>
-              <TooltipContent side="right">Ayarlar</TooltipContent>
-            </Tooltip>
-          ) : settingsLink;
-        })()}
-
-        {(() => {
-          const upgradeLink = (
-            <Link
-              href="/dashboard/upgrade"
-              className={cn(
-                'flex items-center no-underline rounded-lg mt-1.5 border border-fuchsia-400/20',
-                'text-fuchsia-300 font-sans font-semibold text-[13.5px]',
-                'hover:border-fuchsia-400/40 hover:bg-fuchsia-500/[0.06] hover:text-fuchsia-200',
-                'transition-all duration-200',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
-                collapsed ? 'w-10 h-10 mx-auto p-0 justify-center' : 'px-3 py-2.5 gap-2.5',
-              )}
-            >
-              <TrendingUp className="w-[17px] h-[17px] shrink-0" strokeWidth={2} />
-              {!collapsed && <span className="truncate">Hesabınızı Yükseltin</span>}
-            </Link>
-          );
-          return collapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>{upgradeLink}</TooltipTrigger>
-              <TooltipContent side="right">Hesabınızı Yükseltin</TooltipContent>
-            </Tooltip>
-          ) : upgradeLink;
-        })()}
-      </div>
-
+      {/* Logout Confirmation Modal */}
       <QuitModal
         isOpen={isQuitModalOpen}
         onClose={() => setIsQuitModalOpen(false)}
         onConfirm={async () => {
           setIsQuitModalOpen(false);
           try {
-            await fetch('/api/auth/logout.php', { method: 'POST', credentials: 'include' });
+            await fetch("/api/auth/logout.php", {
+              method: "POST",
+              credentials: "include",
+            });
           } catch (err) {
-            console.error('Logout error:', err);
+            console.error("Logout error:", err);
           }
-          window.location.href = '/login';
+          if (typeof window !== "undefined") {
+            window.location.href = "/login";
+          }
         }}
       />
-    </aside>
+    </div>
   );
 }

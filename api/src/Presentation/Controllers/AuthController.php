@@ -59,10 +59,27 @@ class AuthController {
     }
 
     public static function logout(): void {
+        $userId = $_SESSION['user_id'] ?? null;
+
         $_SESSION = [];
         session_unset();
         session_destroy();
         setcookie('PHPSESSID', '', time() - 3600, '/', '', true, true);
+
+        // Session cookie alone isn't enough — a live remember-me token would
+        // let sessionCheck() silently re-authenticate the user right after
+        // logout via AuthMiddleware::optionalAuth()'s remember-me fallback.
+        if ($userId) {
+            (new UserRepository())->clearRememberToken((int) $userId);
+        }
+        setcookie('remember_me', '', [
+            'expires'  => time() - 3600,
+            'path'     => '/',
+            'httponly' => true,
+            'secure'   => true,
+            'samesite' => 'Strict',
+        ]);
+
         JsonResponse::success(['message' => 'Çıkış yapıldı.']);
     }
 

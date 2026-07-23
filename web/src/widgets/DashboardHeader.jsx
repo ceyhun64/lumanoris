@@ -1,256 +1,488 @@
-﻿"use client";
-import Image from 'next/image';
-import { Search, Bell, ShoppingCart, User } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import NotificationPopup from '@/features/notifications/NotificationPopup';
-import ProfilePopup from '@/features/user-profile/ProfilePopup';
-import QuitModal from '@/features/auth/QuitModal';
-import { cn } from '@/lib/utils';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/shared/ui/tooltip';
-import { Button } from '@/shared/ui/button';
+﻿import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import QuitModal from "@/features/auth/QuitModal";
+import {
+  Search,
+  Bell,
+  ShoppingCart,
+  User,
+  LogOut,
+  X,
+  Sparkles,
+  CheckCircle2,
+  Command,
+  Settings,
+  ShieldCheck,
+  ChevronDown,
+  ExternalLink,
+  Wallet,
+  Sliders,
+  HelpCircle,
+  Trash2,
+  Plus,
+  MessageSquare,
+  Bot,
+  ShoppingBag,
+  ArrowRight,
+  TrendingUp,
+  Check,
+} from "lucide-react";
 
-const ICON_BTN_FOCUS = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base';
+const ICON_BTN_FOCUS =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050508]";
 
-export default function Header({ userId }) {
-    const router = useRouter();
-    const [showProfile, setShowProfile] = useState(false);
-    const [profileImage, setProfileImage] = useState(null);
-    const [user, setUser] = useState({
-        id: 0,
-        username: "",
-        fullname: "",
-        followerCount: 0,
-        chatbotCount: 0,
-        purchasedCount: 0,
-        sharedDialogueCount: 0,
-    });
+function Tooltip({ children, content }) {
+  const [show, setShow] = useState(false);
 
-    const fetchCartCount = async () => {
-        const targetId = userId || user.id;
-        if (!targetId) return;
-        try {
-            const res = await fetch(`/api/marketplace/getcartcount.php?user_id=${targetId}`);
-            const result = await res.json();
-            if (result.success) setCartCount(result.count);
-        } catch (err) {
-            console.error("Sepet sayısı çekilemedi:", err);
-        }
-    };
-
-    const [showNotification, setShowNotification] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [cartCount, setCartCount] = useState(0);
-    const [quitOpen, setQuitOpen] = useState(false);
-
-    useEffect(() => {
-        async function fetchUser() {
-            const res = await fetch(`/api/user/getuserheader.php?id=${userId}`);
-            const result = await res.json();
-            if (result.success) {
-                setUser({
-                    id: result.id,
-                    username: result.username,
-                    fullname: result.fullname,
-                    followerCount: 0,
-                    chatbotCount: result.chatbotCount,
-                    purchasedCount: result.purchasedCount || 0,
-                    sharedDialogueCount: result.sharedDialogueCount || 0,
-                });
-            }
-        }
-        if (userId) fetchUser();
-    }, [userId]);
-
-    useEffect(() => {
-        if (!user.id) return;
-        fetchCartCount();
-        const handleCartUpdate = () => fetchCartCount();
-        window.addEventListener('cartUpdated', handleCartUpdate);
-        const interval = setInterval(fetchCartCount, 30000);
-        return () => {
-            window.removeEventListener('cartUpdated', handleCartUpdate);
-            clearInterval(interval);
-        };
-    }, [user.id]);
-
-    const handleLogout = () => setQuitOpen(true);
-
-    const handleConfirmLogout = async () => {
-        setQuitOpen(false);
-        try {
-            await fetch("/api/auth/logout.php", { method: "POST", credentials: "include" });
-        } catch (err) {
-            console.error("Logout error:", err);
-        }
-        location.href = "/login";
-    };
-
-    // DB, gerçek kaynak: localStorage sadece hızlı-önizleme önbelleği olarak kullanılır.
-    useEffect(() => {
-        if (!userId) return;
-        async function fetchDbPhoto() {
-            try {
-                const res = await fetch(`/api/user/user_getphoto.php?id=${userId}`);
-                const result = await res.json();
-                const dbImage = result.success ? (result.avatar || null) : null;
-                setProfileImage(dbImage);
-                if (dbImage) localStorage.setItem('userProfileImage', dbImage);
-                else localStorage.removeItem('userProfileImage');
-            } catch (err) {
-                console.error("Profil fotoğrafı alınamadı:", err);
-            }
-        }
-        fetchDbPhoto();
-    }, [userId]);
-
-    useEffect(() => {
-        if (typeof window === "undefined") return;
-        const updateCartCount = () => {
-            try {
-                const cartString = localStorage.getItem('cart');
-                const cart = cartString ? JSON.parse(cartString) : [];
-                setCartCount(Array.isArray(cart) ? cart.length : 0);
-            } catch { setCartCount(0); }
-        };
-        const updateProfileImage = () => {
-            const savedImage = localStorage.getItem('userProfileImage');
-            setProfileImage(savedImage);
-        };
-        updateCartCount();
-        updateProfileImage();
-        const handleStorage = (e) => {
-            if (e.key === 'cart') updateCartCount();
-            if (e.key === 'userProfileImage') updateProfileImage();
-        };
-        window.addEventListener('storage', handleStorage);
-        const handleCartUpdated = () => updateCartCount();
-        const handleProfileImageUpdated = () => updateProfileImage();
-        window.addEventListener('cartUpdated', handleCartUpdated);
-        window.addEventListener('profileImageUpdated', handleProfileImageUpdated);
-        return () => {
-            window.removeEventListener('storage', handleStorage);
-            window.removeEventListener('cartUpdated', handleCartUpdated);
-            window.removeEventListener('profileImageUpdated', handleProfileImageUpdated);
-        };
-    }, []);
-
-    const goToExplore = () => {
-        router.push(`/dashboard/explore?search=${encodeURIComponent(searchQuery.trim())}`);
-    };
-
-    const handleSearchKey = (e) => {
-        if (e.key === 'Enter' && searchQuery.trim() !== '') goToExplore();
-    };
-
-    return (
-        <>
-            {showNotification && (
-                <NotificationPopup onClose={() => setShowNotification(false)} userId={user.id} />
-            )}
-
-            <header className="sticky top-0 z-30 flex h-20 items-center justify-between gap-6 px-7 bg-gradient-to-b from-[rgba(11,11,30,0.82)] to-[#09090F] backdrop-blur-xl">
-                {/* Search */}
-                <div className="flex flex-1 items-center max-w-[560px]">
-                    <div className="flex h-11 w-full items-center gap-2.5 rounded-full bg-white/[0.045] px-3.5 ring-1 ring-inset ring-white/[0.07] transition-all duration-150 focus-within:bg-gradient-to-r focus-within:from-fuchsia-500/[0.06] focus-within:to-violet-500/[0.04] focus-within:ring-fuchsia-400/40 focus-within:shadow-[0_0_0_3px_rgba(217,70,239,0.08)]">
-                        <button
-                            type="button"
-                            onClick={goToExplore}
-                            onTouchStart={goToExplore}
-                            aria-label="Keşfet"
-                            className={cn('flex shrink-0 items-center justify-center text-white/35 transition-colors duration-150 hover:text-white/70', ICON_BTN_FOCUS)}
-                        >
-                            <Search className="h-[15px] w-[15px]" strokeWidth={2} />
-                        </button>
-                        <input
-                            type="text"
-                            placeholder="Chatbot ara..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={handleSearchKey}
-                            className="min-w-0 flex-1 bg-transparent text-[13.5px] text-white/85 outline-none placeholder:text-white/30"
-                        />
-                    </div>
-                </div>
-
-                {/* Right toolbar */}
-                <div className="flex items-center gap-1">
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <button
-                                onClick={() => setShowNotification(true)}
-                                aria-label="Bildirimler"
-                                className={cn('relative flex h-11 w-11 items-center justify-center rounded-lg text-white/45 transition-all duration-150 hover:bg-gradient-to-br hover:from-fuchsia-500/20 hover:to-violet-500/12 hover:text-fuchsia-200', ICON_BTN_FOCUS)}
-                            >
-                                <Bell className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                            </button>
-                        </TooltipTrigger>
-                        <TooltipContent>Bildirimler</TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <button
-                                onClick={() => router.push('/dashboard/checkout')}
-                                aria-label="Sepetim"
-                                className={cn('relative flex h-11 w-11 items-center justify-center rounded-lg text-white/45 transition-all duration-150 hover:bg-gradient-to-br hover:from-fuchsia-500/20 hover:to-violet-500/12 hover:text-fuchsia-200', ICON_BTN_FOCUS)}
-                            >
-                                <ShoppingCart className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                                {cartCount > 0 && (
-                                    <span className="absolute top-0.5 right-0.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-gradient-btn px-1 text-[10px] font-semibold leading-none tabular-nums text-white shadow-[0_1px_6px_rgba(192,38,211,0.5)]">
-                                        {cartCount}
-                                    </span>
-                                )}
-                            </button>
-                        </TooltipTrigger>
-                        <TooltipContent>Sepetim</TooltipContent>
-                    </Tooltip>
-
-                    {/* Profile / Login */}
-                    {userId ? (
-                        <div
-                            className="relative ml-2"
-                            onMouseEnter={() => setShowProfile(true)}
-                            onMouseLeave={() => setShowProfile(false)}
-                        >
-                            <button
-                                aria-label="Profil menüsü"
-                                className={cn('flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500/15 to-violet-500/10 text-white/60 ring-1 ring-white/[0.12] transition-all duration-150 hover:ring-fuchsia-400/45', ICON_BTN_FOCUS)}
-                            >
-                                {profileImage ? (
-                                    <Image
-                                        src={profileImage}
-                                        alt=""
-                                        width={44}
-                                        height={44}
-                                        className="h-full w-full object-cover"
-                                    />
-                                ) : (
-                                    <User className="h-[19px] w-[19px]" strokeWidth={1.75} />
-                                )}
-                            </button>
-                            {showProfile && (
-                                <div className="absolute top-[54px] right-0 z-[100000]">
-                                    <ProfilePopup user={user} onLogout={handleLogout} />
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <Button
-                            onClick={() => router.push('/login')}
-                            className="ml-2 h-11 px-5 text-[13.5px]"
-                        >
-                            Giriş Yap
-                        </Button>
-                    )}
-                </div>
-            </header>
-
-            <QuitModal
-                isOpen={quitOpen}
-                onClose={() => setQuitOpen(false)}
-                onConfirm={handleConfirmLogout}
-            />
-        </>
-    );
+  return (
+    <div
+      className="relative inline-flex items-center"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+      {show && (
+        <div className="absolute top-full mt-2.5 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 text-[11px] font-medium text-zinc-200 bg-zinc-950/90 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none animate-in fade-in slide-in-from-top-1.5 duration-200 tracking-wide">
+          {content}
+        </div>
+      )}
+    </div>
+  );
 }
+
+function NotificationPopup({ onClose, userId }) {
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      title: "Diyalog Limiti Güncellendi",
+      message: "Aylık diyalog hakkınız 150,000 kelimeye yükseltildi.",
+      time: "10 dakika önce",
+      unread: true,
+      type: "system",
+    },
+    {
+      id: 2,
+      title: "Yeni Sipariş Onayı",
+      message: '"SalesAssist Pro AI" chatbot entegrasyonu tamamlandı.',
+      time: "2 saat önce",
+      unread: true,
+      type: "order",
+    },
+    {
+      id: 3,
+      title: "Bakiye Yükleme Başarılı",
+      message: "Hesabınıza ₺1,450.00 tutarında bakiye eklendi.",
+      time: "Dün",
+      unread: false,
+      type: "wallet",
+    },
+  ]);
+
+  const markAllRead = () => {
+    setNotifications(notifications.map((n) => ({ ...n, unread: false })));
+  };
+
+  return (
+    <div className="absolute right-0 top-full mt-3 z-50 w-80 sm:w-96 rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-300">
+      <div className="flex items-center justify-between pb-3.5 border-b border-white/5">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400">
+            <Bell className="w-3.5 h-3.5" />
+          </div>
+          <span className="text-xs font-semibold tracking-wide text-white">
+            Bildirimler
+          </span>
+          <span className="px-2 py-0.5 text-[10px] font-bold text-violet-300 bg-violet-500/15 border border-violet-500/30 rounded-full">
+            {notifications.filter((n) => n.unread).length} Yeni
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={markAllRead}
+            className="text-[11px] font-medium text-zinc-400 hover:text-violet-300 transition-colors"
+          >
+            Tümünü okundu işaretle
+          </button>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg text-zinc-400 hover:bg-white/10 hover:text-white transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-3.5 space-y-2 max-h-72 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-800">
+        {notifications.map((item) => (
+          <div
+            key={item.id}
+            className={`p-3 rounded-xl border transition-all duration-200 ${
+              item.unread
+                ? "bg-violet-950/20 border-violet-500/30 shadow-[0_0_15px_rgba(139,92,246,0.08)]"
+                : "bg-zinc-900/30 border-white/5 opacity-70 hover:opacity-100 hover:border-white/10"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-xs font-semibold text-white tracking-tight">
+                {item.title}
+              </span>
+              <span className="text-[10px] font-mono text-zinc-500 shrink-0">
+                {item.time}
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] text-zinc-400 leading-relaxed">
+              {item.message}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProfilePopup({ user, profileImage, onLogout, onClose }) {
+  return (
+    <div className="absolute right-0 top-full mt-3 z-50 w-76 rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-300">
+      <div className="flex items-center gap-3.5 pb-3.5 border-b border-white/5">
+        <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-gradient-to-tr from-violet-600 via-indigo-600 to-fuchsia-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg shadow-violet-950/50 ring-1 ring-white/20">
+          {profileImage ? (
+            <img
+              src={profileImage}
+              alt={user.fullname || user.username}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span>
+              {(user.fullname || user.username || "L").charAt(0).toUpperCase()}
+            </span>
+          )}
+          <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#09090E]" />
+        </div>
+        <div className="flex flex-col min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-white truncate tracking-tight">
+              {user.fullname || user.username || "Kullanıcı"}
+            </span>
+            <span className="px-1.5 py-0.2 text-[9px] font-extrabold uppercase tracking-widest text-fuchsia-300 bg-fuchsia-500/15 border border-fuchsia-500/30 rounded">
+              PRO
+            </span>
+          </div>
+          <span className="text-[11px] font-mono text-zinc-400 truncate mt-0.5">
+            @{user.username || "lumanoris_user"}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 my-3 p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+            Botlar
+          </div>
+          <div className="text-xs font-bold text-white mt-0.5">
+            {user.chatbotCount || 12}
+          </div>
+        </div>
+        <div className="border-x border-white/5">
+          <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+            Lisans
+          </div>
+          <div className="text-xs font-bold text-violet-400 mt-0.5">
+            {user.purchasedCount || 4}
+          </div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+            Diyalog
+          </div>
+          <div className="text-xs font-bold text-fuchsia-400 mt-0.5">
+            {user.sharedDialogueCount || 28}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <button className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-zinc-300 rounded-lg hover:bg-white/5 hover:text-white transition-all">
+          <User className="w-3.5 h-3.5 text-zinc-400" /> Profil Detayları
+        </button>
+        <button className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-zinc-300 rounded-lg hover:bg-white/5 hover:text-white transition-all">
+          <Wallet className="w-3.5 h-3.5 text-emerald-400" /> Bakiye & Ödemeler
+          <span className="ml-auto text-[10px] font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+            ₺1,450
+          </span>
+        </button>
+        <button className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-zinc-300 rounded-lg hover:bg-white/5 hover:text-white transition-all">
+          <Settings className="w-3.5 h-3.5 text-zinc-400" /> Sistem Ayarları
+        </button>
+      </div>
+
+      <div className="mt-3 pt-2.5 border-t border-white/5">
+        <button
+          onClick={onLogout}
+          className="flex items-center justify-between w-full px-3 py-2 text-xs font-medium text-red-400 rounded-lg hover:bg-red-500/10 hover:border hover:border-red-500/20 transition-all"
+        >
+          <span>Oturumu Kapat</span>
+          <LogOut className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+export default function Header({ userId = 1, onNavigate }) {
+  const router = useRouter();
+  const navigate = onNavigate || ((href) => router.push(href));
+  const [showProfile, setShowProfile] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [cartCount, setCartCount] = useState(2);
+  const [quitOpen, setQuitOpen] = useState(false);
+  const [user, setUser] = useState({
+    id: userId || 1,
+    username: "lumanoris_admin",
+    fullname: "Lumanoris Admin",
+    followerCount: 1420,
+    chatbotCount: 12,
+    purchasedCount: 4,
+    sharedDialogueCount: 28,
+  });
+
+  const searchInputRef = useRef(null);
+
+  const fetchCartCount = async () => {
+    const targetId = userId || user.id;
+    if (!targetId) return;
+    try {
+      const res = await fetch(
+        `/api/marketplace/getcartcount.php?user_id=${targetId}`,
+      );
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success) setCartCount(result.count);
+      }
+    } catch (err) {
+      // Graceful fallback for standalone canvas preview
+    }
+  };
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await fetch(`/api/user/getuserheader.php?id=${userId}`);
+        if (res.ok) {
+          const result = await res.json();
+          if (result.success) {
+            setUser({
+              id: result.id,
+              username: result.username,
+              fullname: result.fullname,
+              followerCount: 0,
+              chatbotCount: result.chatbotCount || 12,
+              purchasedCount: result.purchasedCount || 4,
+              sharedDialogueCount: result.sharedDialogueCount || 28,
+            });
+          }
+        }
+      } catch (err) {
+        // Fallback demo state
+      }
+    }
+    if (userId) fetchUser();
+  }, [userId]);
+
+  useEffect(() => {
+    if (!user.id) return;
+    fetchCartCount();
+    const handleCartUpdate = () => fetchCartCount();
+    window.addEventListener("cartUpdated", handleCartUpdate);
+    const interval = setInterval(fetchCartCount, 30000);
+    return () => {
+      window.removeEventListener("cartUpdated", handleCartUpdate);
+      clearInterval(interval);
+    };
+  }, [user.id]);
+
+  useEffect(() => {
+    if (!userId) return;
+    async function fetchDbPhoto() {
+      try {
+        const res = await fetch(`/api/user/user_getphoto.php?id=${userId}`);
+        if (res.ok) {
+          const result = await res.json();
+          const dbImage = result.success ? result.avatar || null : null;
+          setProfileImage(dbImage);
+          if (dbImage) localStorage.setItem("userProfileImage", dbImage);
+          else localStorage.removeItem("userProfileImage");
+        }
+      } catch (err) {
+        // Safe fallback
+      }
+    }
+    fetchDbPhoto();
+  }, [userId]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const goToExplore = () => {
+    navigate(
+      `/dashboard/explore?search=${encodeURIComponent(searchQuery.trim())}`,
+    );
+  };
+
+  const handleSearchKey = (e) => {
+    if (e.key === "Enter" && searchQuery.trim() !== "") goToExplore();
+  };
+
+  const handleLogout = () => setQuitOpen(true);
+
+  const handleConfirmLogout = async () => {
+    setQuitOpen(false);
+    try {
+      await fetch("/api/auth/logout.php", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
+  };
+
+  return (
+    <>
+      <header className="sticky top-0 z-40 flex h-20 shrink-0 items-center justify-between gap-6 px-4 md:px-8 bg-[#050508]/85 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+        {/* Brand Logo / Studio Indicator & Command Bar */}
+        <div className="flex flex-1 items-center max-w-[580px] gap-4">
+        
+          <div className="group relative flex h-11 w-full items-center gap-3 rounded-2xl bg-white/[0.03] px-4 ring-1 ring-inset ring-white/[0.08] transition-all duration-300 focus-within:bg-gradient-to-r focus-within:from-fuchsia-500/[0.05] focus-within:to-violet-500/[0.05] focus-within:ring-fuchsia-500/50 focus-within:shadow-[0_0_25px_rgba(217,70,239,0.15)]">
+            <button
+              type="button"
+              onClick={goToExplore}
+              onTouchStart={goToExplore}
+              aria-label="Keşfet"
+              className={`flex shrink-0 items-center justify-center text-zinc-400 transition-colors duration-200 hover:text-white ${ICON_BTN_FOCUS}`}
+            >
+              <Search className="h-4 w-4" strokeWidth={2} />
+            </button>
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Chatbot veya diyalog ara... (Cmd + K)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchKey}
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-white outline-none placeholder:text-zinc-500 font-medium"
+            />
+            <div className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/5 text-[10px] text-zinc-400 font-mono border border-white/10 shrink-0 shadow-inner">
+              <Command className="w-2.5 h-2.5" /> K
+            </div>
+          </div>
+        </div>
+
+        {/* Action Controls & Profile Menu */}
+        <div className="flex items-center gap-2.5 sm:gap-3.5">
+          {/* Notifications Trigger */}
+          <div className="relative">
+            <Tooltip content="Bildirimler">
+              <button
+                onClick={() => {
+                  setShowNotification(!showNotification);
+                  setShowProfile(false);
+                }}
+                aria-label="Bildirimler"
+                className={`relative flex h-10 w-10 items-center justify-center rounded-2xl bg-white/[0.03] border border-white/[0.08] text-zinc-300 transition-all duration-200 hover:bg-violet-500/10 hover:border-violet-500/30 hover:text-violet-300 hover:shadow-[0_0_15px_rgba(139,92,246,0.15)] ${ICON_BTN_FOCUS}`}
+              >
+                <Bell className="h-4 w-4" strokeWidth={1.75} />
+                <span className="absolute top-2.5 right-2.5 flex h-2 w-2 rounded-full bg-fuchsia-500 animate-ping" />
+                <span className="absolute top-2.5 right-2.5 flex h-2 w-2 rounded-full bg-fuchsia-500" />
+              </button>
+            </Tooltip>
+
+            {showNotification && (
+              <NotificationPopup
+                onClose={() => setShowNotification(false)}
+                userId={user.id}
+              />
+            )}
+          </div>
+
+          {/* Cart Trigger */}
+          <Tooltip content="Sepetim & Lisanslar">
+            <button
+              onClick={() => navigate("/dashboard/checkout")}
+              aria-label="Sepetim"
+              className={`relative flex h-10 w-10 items-center justify-center rounded-2xl bg-white/[0.03] border border-white/[0.08] text-zinc-300 transition-all duration-200 hover:bg-fuchsia-500/10 hover:border-fuchsia-500/30 hover:text-fuchsia-300 hover:shadow-[0_0_15px_rgba(217,70,239,0.15)] ${ICON_BTN_FOCUS}`}
+            >
+              <ShoppingCart className="h-4 w-4" strokeWidth={1.75} />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-600 to-pink-600 px-1 text-[10px] font-bold leading-none tabular-nums text-white shadow-lg shadow-fuchsia-950/80 border border-white/20">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          </Tooltip>
+
+          {/* User Profile Menu Trigger */}
+          <div
+            className="relative ml-1 sm:ml-2"
+            onMouseEnter={() => setShowProfile(true)}
+            onMouseLeave={() => setShowProfile(false)}
+          >
+            <button
+              aria-label="Profil menüsü"
+              onClick={() => setShowProfile(!showProfile)}
+              className={`flex items-center gap-2.5 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] transition-all duration-200 hover:border-violet-500/40 hover:bg-white/[0.06] hover:shadow-[0_0_20px_rgba(139,92,246,0.15)] ${ICON_BTN_FOCUS}`}
+            >
+              <div className="relative h-8 w-8 overflow-hidden rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0 ring-1 ring-white/20">
+                {profileImage ? (
+                  <img
+                    src={profileImage}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span>
+                    {(user.fullname || user.username || "L")
+                      .charAt(0)
+                      .toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-zinc-400 mr-1 hidden sm:block transition-transform duration-200" />
+            </button>
+
+            {showProfile && (
+              <ProfilePopup
+                user={user}
+                profileImage={profileImage}
+                onLogout={handleLogout}
+                onClose={() => setShowProfile(false)}
+              />
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Logout Confirmation Modal */}
+      <QuitModal
+        isOpen={quitOpen}
+        onClose={() => setQuitOpen(false)}
+        onConfirm={handleConfirmLogout}
+      />
+    </>
+  );
+}
+
+

@@ -258,6 +258,10 @@ body {
   align-items: stretch;
 }
 
+.dashboard-inner-layout > * {
+  width: 100%;
+}
+
 
 /* Animasyonlar */
 @keyframes fadeInUp {

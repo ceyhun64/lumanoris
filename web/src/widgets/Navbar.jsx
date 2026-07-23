@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Sidebar from '@/widgets/Sidebar';
+import { Sidebar } from '@/widgets/Sidebar';
 import logo from '@/images/header-logo-icon.png';
 import { useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
@@ -30,7 +30,7 @@ export default function NavbarMobile() {
                 </button>
             </div>
 
-            <Sidebar isMobileOpen={sidebarOpen} />
+            <Sidebar isMobileOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
         </>
     );
 }

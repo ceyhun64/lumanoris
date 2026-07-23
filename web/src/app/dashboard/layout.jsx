@@ -3,7 +3,7 @@ import { React, useEffect, useState, createContext } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Header from "@/widgets/DashboardHeader";
 import NavbarMobile from "@/widgets/Navbar";
-import Sidebar from "@/widgets/Sidebar";
+import { Sidebar } from "@/widgets/Sidebar";
 
 export const UserContext = createContext(null);
 

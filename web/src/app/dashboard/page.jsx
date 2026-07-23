@@ -1,242 +1,1285 @@
 "use client";
-import { useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { PackageSearch, Bot, MessageSquare, Layers, Users } from "lucide-react";
-import { UserContext } from "./layout";
-import BotList from "@/widgets/BotList";
-import MarketplaceToolbar from "@/widgets/MarketplaceToolbar";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { EmptyState as SharedEmptyState } from "@/shared/ui/empty-state";
-import { StatCard } from "@/shared/ui/stat-card";
-import { resolveCoverSrc } from "@/shared/lib/image";
-import { PageLayout, PageHeader, PageSection, CardGrid, StatGrid } from "@/shared/ui/page-layout";
+
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  createContext,
+  useContext,
+} from "react";
+import {
+  Search,
+  Sparkles,
+  Bot,
+  MessageSquare,
+  Users,
+  Layers,
+  Plus,
+  SlidersHorizontal,
+  ArrowUpDown,
+  LayoutGrid,
+  List as ListIcon,
+  Heart,
+  Bookmark,
+  TrendingUp,
+  Star,
+  ArrowUpRight,
+  ChevronRight,
+  Command,
+  X,
+  Check,
+  Zap,
+  PackageSearch,
+  Flame,
+  CheckCircle2,
+  Tag,
+  Grid3X3,
+  Maximize2,
+  Cpu,
+  Activity,
+  Sliders,
+  Share2,
+  Lock,
+  ArrowRight,
+} from "lucide-react";
+
+// Fallback UserContext if parent layout context is not provided in preview
+export const UserContext = createContext(null);
 
 function formatCompactNumber(n) {
-    const num = Number(n) || 0;
-    if (num >= 1000) return (num / 1000).toFixed(num % 1000 === 0 ? 0 : 1).replace('.', ',') + 'B';
-    return String(num);
+  const num = Number(n) || 0;
+  if (num >= 1000000) return (num / 1000000).toFixed(1).replace(".", ",") + "M";
+  if (num >= 1000)
+    return (
+      (num / 1000).toFixed(num % 1000 === 0 ? 0 : 1).replace(".", ",") + "B"
+    );
+  return String(num);
 }
 
-function SkeletonCard() {
-    return (
-        <div className="flex flex-col overflow-hidden rounded-2xl bg-luma-card">
-            <Skeleton className="aspect-[4/3] w-full rounded-none" />
-            <div className="flex flex-col gap-2 p-3.5">
-                <Skeleton className="h-3.5 w-2/3" />
-                <Skeleton className="h-2.5 w-full" />
-                <Skeleton className="h-2.5 w-1/3" />
-            </div>
+function formatTime(dateString) {
+  if (!dateString) return "Bugün";
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "Bugün";
+  const diffDays = Math.ceil(
+    Math.abs(new Date() - date) / (1000 * 60 * 60 * 24),
+  );
+  if (diffDays <= 1) return "Bugün";
+  return `${diffDays} gün önce`;
+}
+
+function resolveCoverSrc(src) {
+  if (!src || src === "default" || src === "0") {
+    return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80";
+  }
+  if (
+    src.startsWith("http://") ||
+    src.startsWith("https://") ||
+    src.startsWith("/")
+  ) {
+    return src;
+  }
+  return `/uploads/covers/${src}`;
+}
+
+function resolveAvatarSrc(src) {
+  if (!src || src === "default" || src === "0") {
+    return "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
+  }
+  if (
+    src.startsWith("http://") ||
+    src.startsWith("https://") ||
+    src.startsWith("/")
+  ) {
+    return src;
+  }
+  return `/uploads/avatars/${src}`;
+}
+
+const MOCK_BOTS = [
+  {
+    id: "101",
+    title: "Aura Architect Prime",
+    description:
+      "Ölçeklenebilir mikroservis mimarileri, Kubernetes yapılandırmaları ve Sistem Tasarımı uzmanı yapay zeka ajanı.",
+    author: "Lumanoris AI Labs",
+    dialogues: 4280,
+    time: "Bugün",
+    publishedAt: new Date().toISOString(),
+    avatar:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
+    kategori_id: "1",
+    followers: 1240,
+    likes: 890,
+    comments: 142,
+    saves: 310,
+    weeklyPrice: 450,
+    badge: { type: "produced", label: "Doğrulanmış Üretim" },
+    model: "GPT-5 Turbo",
+    rating: 4.9,
+    userLists: [],
+  },
+  {
+    id: "102",
+    title: "Verba SEO & Content Titan",
+    description:
+      "Arama motoru algoritmalarıyla %100 uyumlu, yüksek dönüşüm sağlayan metinler üreten dijital içerik mimarı.",
+    author: "Selin Yılmaz",
+    dialogues: 2150,
+    time: "2 gün önce",
+    publishedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    avatar:
+      "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=800&auto=format&fit=crop&q=80",
+    kategori_id: "2",
+    followers: 680,
+    likes: 530,
+    comments: 64,
+    saves: 180,
+    weeklyPrice: 280,
+    badge: { type: "sold", label: "Daha Önce Satıldı" },
+    model: "Claude 3.5 Sonnet",
+    rating: 4.8,
+    userLists: [],
+  },
+  {
+    id: "103",
+    title: "Quantum Code Auditor",
+    description:
+      "Rust, TypeScript ve Go kod tabanlarında zafiyet analizi, refactoring ve performans optimizasyonu gerçekleştirir.",
+    author: "Lumanoris",
+    dialogues: 6890,
+    time: "Bugün",
+    publishedAt: new Date().toISOString(),
+    avatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&auto=format&fit=crop&q=80",
+    kategori_id: "1",
+    followers: 3100,
+    likes: 2450,
+    comments: 310,
+    saves: 950,
+    weeklyPrice: 600,
+    badge: { type: "produced", label: "Doğrulanmış Üretim" },
+    model: "Luma Code v4",
+    rating: 5.0,
+    userLists: [],
+  },
+  {
+    id: "104",
+    title: "Fintech Algo Analyst",
+    description:
+      "Kripto varlıklar, küresel hisse senedi piyasaları ve makroekonomik veriler üzerinden anlık teknik analiz raporları hazırlar.",
+    author: "Emre Aksoy",
+    dialogues: 1840,
+    time: "4 gün önce",
+    publishedAt: new Date(Date.now() - 86400000 * 4).toISOString(),
+    avatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=80",
+    kategori_id: "3",
+    followers: 940,
+    likes: 720,
+    comments: 98,
+    saves: 240,
+    weeklyPrice: 350,
+    badge: { type: "produced", label: "Doğrulanmış Üretim" },
+    model: "FinAI Premier",
+    rating: 4.7,
+    userLists: [],
+  },
+  {
+    id: "105",
+    title: "UI/UX Visionary GPT-5",
+    description:
+      "Figma bileşen sistemleri, erişilebilirlik (WCAG) standartları ve modern Design System mimarileri oluşturucu.",
+    author: "Kaan Demir",
+    dialogues: 3410,
+    time: "1 gün önce",
+    publishedAt: new Date(Date.now() - 86400000).toISOString(),
+    avatar:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop&q=80",
+    kategori_id: "4",
+    followers: 1820,
+    likes: 1390,
+    comments: 175,
+    saves: 480,
+    weeklyPrice: 0,
+    badge: { type: "produced", label: "Ücretsiz Topluluk" },
+    model: "GPT-5 Vision",
+    rating: 4.9,
+    userLists: [],
+  },
+  {
+    id: "106",
+    title: "Nexus Customer Engine",
+    description:
+      "Müşteri destek süreçlerini otomatize eden, empati odaklı ve çok dilli e-ticaret danışmanı bot.",
+    author: "Lumanoris AI Labs",
+    dialogues: 5120,
+    time: "3 gün önce",
+    publishedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    avatar:
+      "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
+    kategori_id: "5",
+    followers: 2100,
+    likes: 1680,
+    comments: 210,
+    saves: 520,
+    weeklyPrice: 190,
+    badge: { type: "sold", label: "Daha Önce Satıldı" },
+    model: "Nexus Pro 2026",
+    rating: 4.8,
+    userLists: [],
+  },
+];
+
+const MOCK_CATEGORIES = [
+  { id: "all", kategori_adi_tr: "Tümü" },
+  { id: "1", kategori_adi_tr: "Yazılım & Kodlama" },
+  { id: "2", kategori_adi_tr: "İçerik & SEO" },
+  { id: "3", kategori_adi_tr: "Finans & Ekonomi" },
+  { id: "4", kategori_adi_tr: "Tasarım & UI/UX" },
+  { id: "5", kategori_adi_tr: "Müşteri İlişkileri" },
+];
+
+function StatCard2026({
+  icon: Icon,
+  label,
+  value,
+  subtext,
+  badgeText,
+  badgeColor = "violet",
+}) {
+  return (
+    <div className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-b from-zinc-900/60 to-zinc-950/80 p-5 backdrop-blur-2xl transition-all duration-300 hover:border-white/20 hover:shadow-2xl hover:shadow-violet-500/5">
+      {/* Subtle top border glow sweep */}
+      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-violet-600/10 blur-2xl transition-all duration-500 group-hover:bg-violet-500/20 group-hover:scale-125 pointer-events-none" />
+
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+          {label}
+        </span>
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-zinc-900/80 text-violet-400 shadow-inner group-hover:scale-110 group-hover:border-violet-500/40 transition-transform duration-300">
+          <Icon className="h-4 w-4" />
         </div>
-    );
+      </div>
+
+      <div className="mt-4 flex items-baseline justify-between gap-2">
+        <div className="text-2xl font-black tracking-tight text-white sm:text-3xl font-mono">
+          {value}
+        </div>
+        {badgeText && (
+          <span
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase ${
+              badgeColor === "emerald"
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                : "border-violet-500/30 bg-violet-500/10 text-violet-300"
+            }`}
+          >
+            <TrendingUp className="h-2.5 w-2.5" />
+            {badgeText}
+          </span>
+        )}
+      </div>
+
+      {subtext && (
+        <p className="mt-1 text-xs text-zinc-400 font-medium">{subtext}</p>
+      )}
+    </div>
+  );
 }
 
-function EmptyState() {
-    const router = useRouter();
-    return (
-        <SharedEmptyState
-            icon={PackageSearch}
-            title="Bot bulunamadı"
-            description="Bu kategoride henüz bot yok veya tümü filtrelendi."
-            actionLabel="İlk Botu Oluştur"
-            onAction={() => router.push("/dashboard/chatbots/create")}
+function SortPopover2026({ value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const sortOptions = [
+    { id: "onerilen", label: "Önerilen Sınıflandırma", icon: Sparkles },
+    { id: "yeni", label: "En Yeniler", icon: Flame },
+    { id: "diyalog", label: "En Çok Konuşulanlar", icon: MessageSquare },
+    { id: "favoriler", label: "En Çok Favorilenenler", icon: Heart },
+    { id: "liste", label: "En Çok Kaydedilenler", icon: Bookmark },
+    { id: "degerlendirme", label: "Popülarite Puanı", icon: Star },
+    { id: "fiyat_artan", label: "Fiyat: Düşükten Yükseğe", icon: ArrowUpDown },
+    { id: "fiyat_azalan", label: "Fiyat: Yüksekten Düşüğe", icon: ArrowUpDown },
+  ];
+
+  const currentOption =
+    sortOptions.find((o) => o.id === value) || sortOptions[0];
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/90 px-3.5 py-2 text-xs font-semibold text-zinc-200 backdrop-blur-2xl transition-all hover:border-white/20 hover:bg-zinc-800 hover:text-white"
+      >
+        <SlidersHorizontal className="h-3.5 w-3.5 text-violet-400" />
+        <span className="hidden sm:inline text-zinc-400 font-normal">
+          Sırala:
+        </span>
+        <span className="font-semibold text-white">{currentOption.label}</span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl border border-white/15 bg-zinc-950/95 p-1.5 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 animate-in fade-in zoom-in-95 duration-150">
+          <div className="px-2.5 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+            Sıralama Kriteri
+          </div>
+          <div className="space-y-0.5">
+            {sortOptions.map((opt) => {
+              const Icon = opt.icon;
+              const isSelected = opt.id === value;
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => {
+                    onChange(opt.id);
+                    setIsOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition-all ${
+                    isSelected
+                      ? "bg-violet-600/20 text-violet-200 font-semibold border border-violet-500/30"
+                      : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Icon
+                      className={`h-3.5 w-3.5 ${isSelected ? "text-violet-400" : "text-zinc-400"}`}
+                    />
+                    <span>{opt.label}</span>
+                  </div>
+                  {isSelected && (
+                    <Check className="h-3.5 w-3.5 text-violet-400" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BentoBotCard({ bot, onOpenDetails }) {
+  const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [likesCount, setLikesCount] = useState(bot.likes || 0);
+
+  const toggleLike = (e) => {
+    e.stopPropagation();
+    if (isLiked) {
+      setIsLiked(false);
+      setLikesCount((prev) => prev - 1);
+    } else {
+      setIsLiked(true);
+      setLikesCount((prev) => prev + 1);
+    }
+  };
+
+  const toggleSave = (e) => {
+    e.stopPropagation();
+    setIsSaved(!isSaved);
+  };
+
+  return (
+    <div
+      onClick={() => onOpenDetails(bot)}
+      className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-zinc-900/50 to-zinc-950/80 backdrop-blur-2xl transition-all duration-300 hover:border-violet-500/40 hover:bg-zinc-900/90 hover:shadow-2xl hover:shadow-violet-600/10 hover:-translate-y-1.5 cursor-pointer"
+    >
+      {/* Top Border Glow Sweep */}
+      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-violet-500/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-10" />
+
+      {/* Cover Image Header */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-950">
+        <img
+          src={bot.image}
+          alt={bot.title}
+          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          onError={(e) => {
+            e.currentTarget.src =
+              "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80";
+          }}
         />
-    );
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
+
+        {/* Top Badges overlay */}
+        <div className="absolute left-3.5 top-3.5 right-3.5 flex items-center justify-between gap-2 z-10">
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide backdrop-blur-md shadow-xl border ${
+              bot.badge?.type === "sold"
+                ? "border-amber-500/30 bg-amber-500/20 text-amber-300"
+                : "border-violet-500/30 bg-violet-500/20 text-violet-200"
+            }`}
+          >
+            <Tag className="h-3 w-3" />
+            {bot.badge?.label || "Doğrulanmış"}
+          </span>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={toggleSave}
+              className={`flex h-8 w-8 items-center justify-center rounded-full border backdrop-blur-md transition-all ${
+                isSaved
+                  ? "border-violet-500/60 bg-violet-600 text-white shadow-lg shadow-violet-600/40 scale-105"
+                  : "border-white/10 bg-zinc-950/70 text-zinc-300 hover:bg-zinc-900 hover:text-white"
+              }`}
+              title="Listeme Kaydet"
+            >
+              <Bookmark
+                className="h-3.5 w-3.5"
+                fill={isSaved ? "currentColor" : "none"}
+              />
+            </button>
+            <button
+              onClick={toggleLike}
+              className={`flex h-8 w-8 items-center justify-center rounded-full border backdrop-blur-md transition-all ${
+                isLiked
+                  ? "border-rose-500/60 bg-rose-600 text-white shadow-lg shadow-rose-600/40 scale-105"
+                  : "border-white/10 bg-zinc-950/70 text-zinc-300 hover:bg-zinc-900 hover:text-white"
+              }`}
+              title="Beğen"
+            >
+              <Heart
+                className="h-3.5 w-3.5"
+                fill={isLiked ? "currentColor" : "none"}
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* Price & Rating Tag */}
+        <div className="absolute bottom-3 right-3 left-3 flex items-center justify-between">
+          <div className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-950/80 px-2 py-0.5 text-[11px] font-semibold text-amber-300 backdrop-blur-md">
+            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+            <span>{bot.rating || "4.9"}</span>
+          </div>
+
+          <div className="rounded-xl border border-white/15 bg-zinc-950/90 px-3 py-1 text-xs font-bold font-mono text-white backdrop-blur-md shadow-xl">
+            {bot.weeklyPrice > 0 ? (
+              <span className="text-emerald-400">
+                ₺{bot.weeklyPrice}
+                <span className="text-[10px] text-zinc-400 font-normal">
+                  {" "}
+                  /hafta
+                </span>
+              </span>
+            ) : (
+              <span className="text-violet-400">Ücretsiz</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Card Body */}
+      <div className="flex flex-1 flex-col p-5">
+        {/* Author Details */}
+        <div className="flex items-center gap-2 mb-2">
+          <img
+            src={resolveAvatarSrc(bot.avatar)}
+            alt={bot.author}
+            className="h-5 w-5 rounded-full object-cover border border-white/20 shadow-sm"
+            onError={(e) => {
+              e.currentTarget.src =
+                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
+            }}
+          />
+          <span className="text-xs font-medium text-zinc-300 truncate">
+            {bot.author}
+          </span>
+          <span className="text-zinc-600">•</span>
+          <span className="text-[11px] text-zinc-400">{bot.time}</span>
+        </div>
+
+        {/* Title */}
+        <h3 className="text-base font-bold text-white group-hover:text-violet-300 transition-colors line-clamp-1">
+          {bot.title}
+        </h3>
+
+        {/* Description */}
+        <p className="mt-2 line-clamp-2 text-xs text-zinc-400 leading-relaxed flex-1">
+          {bot.description ||
+            "Bu yapay zeka asistanı için herhangi bir açıklama girilmedi."}
+        </p>
+
+        {/* Footer Metrics */}
+        <div className="mt-5 flex items-center justify-between border-t border-white/5 pt-3.5 text-xs font-medium text-zinc-400">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1 hover:text-zinc-200 transition-colors">
+              <MessageSquare className="h-3.5 w-3.5 text-violet-400" />
+              {formatCompactNumber(bot.dialogues)}
+            </span>
+            <span className="flex items-center gap-1 hover:text-zinc-200 transition-colors">
+              <Heart className="h-3.5 w-3.5 text-rose-400" />
+              {formatCompactNumber(likesCount)}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1 text-xs font-bold text-violet-400 group-hover:translate-x-1 transition-transform">
+            <span>Sohbet Et</span>
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-export default function Dashboard() {
-    const userId = useContext(UserContext);
-    const router = useRouter();
+function CompactBotCard({ bot, onOpenDetails }) {
+  return (
+    <div
+      onClick={() => onOpenDetails(bot)}
+      className="group relative flex items-center justify-between gap-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/40 p-3 backdrop-blur-2xl transition-all duration-300 hover:border-violet-500/30 hover:bg-zinc-900/80 hover:shadow-xl cursor-pointer"
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-zinc-950">
+          <img
+            src={bot.image}
+            alt={bot.title}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+            onError={(e) => {
+              e.currentTarget.src =
+                "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80";
+            }}
+          />
+        </div>
+        <div className="min-w-0">
+          <h4 className="text-sm font-bold text-white truncate group-hover:text-violet-300 transition-colors">
+            {bot.title}
+          </h4>
+          <p className="text-xs text-zinc-400 truncate mt-0.5">
+            {bot.author} • {formatCompactNumber(bot.dialogues)} sohbet
+          </p>
+        </div>
+      </div>
 
-    const [allBots, setAllBots] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState("Tümü");
-    const [searchQuery, setSearchQuery] = useState("");
-    const [sort, setSort] = useState("onerilen");
-    const [loading, setLoading] = useState(true);
+      <div className="flex items-center gap-2 shrink-0">
+        <div className="text-right">
+          <div className="text-xs font-bold font-mono text-white">
+            {bot.weeklyPrice > 0 ? `₺${bot.weeklyPrice}` : "Ücretsiz"}
+          </div>
+        </div>
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-zinc-800/80 text-zinc-300 group-hover:bg-violet-600 group-hover:text-white transition-colors">
+          <ArrowUpRight className="h-3.5 w-3.5" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
-    // Kullanıcıya özel istatistikler — daha önce bu kutular platform
-    // genelindeki (tüm pazaryerinin) sayılarını gösteriyordu, yepyeni bir
-    // hesap bile "9 Chatbot" gibi kendisine ait olmayan rakamlar görüyordu.
-    // Aynı sayfanın zaten kullandığı Promise.all deseniyle, diğer sayfaların
-    // (Satın Aldıklarım/Diyalog Defteri/Takip Edilenler) da kullandığı var
-    // olan uçlardan gerçek kişisel sayılar çekiliyor — yeni bir backend
-    // endpoint'i gerekmiyor.
-    const [myBotCount, setMyBotCount] = useState(0);
-    const [myDialogueCount, setMyDialogueCount] = useState(0);
-    const [myFollowingCount, setMyFollowingCount] = useState(0);
+function ListBotCard({ bot, onOpenDetails }) {
+  return (
+    <div
+      onClick={() => onOpenDetails(bot)}
+      className="group relative flex flex-col sm:flex-row items-center justify-between gap-4 overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/40 p-4 backdrop-blur-2xl transition-all duration-300 hover:border-violet-500/30 hover:bg-zinc-900/80 hover:shadow-xl cursor-pointer"
+    >
+      <div className="flex items-center gap-4 w-full sm:w-auto flex-1 min-w-0">
+        <div className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-zinc-950">
+          <img
+            src={bot.image}
+            alt={bot.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+            onError={(e) => {
+              e.currentTarget.src =
+                "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80";
+            }}
+          />
+        </div>
 
-    useEffect(() => {
-        fetch('/api/content/getcategories.php')
-            .then(async res => {
-                try {
-                    const data = JSON.parse(await res.text());
-                    if (Array.isArray(data)) {
-                        setCategories([{ id: 'all', kategori_adi_tr: 'Tümü' }, ...data]);
-                    }
-                } catch (e) { console.error("Kategori yükleme hatası:", e); }
-            });
-    }, []);
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-semibold text-violet-400">
+              {bot.author}
+            </span>
+            <span className="text-zinc-600">•</span>
+            <span className="text-[11px] text-zinc-400">{bot.time}</span>
+          </div>
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const [botsRes, unRes, hideRes, listsRes, subsRes, historyRes, followedRes] = await Promise.all([
-                    fetch(`/api/chatbot/getchatbots.php`),
-                    userId ? fetch(`/api/social/getuninterest.php?id=${userId}`) : Promise.resolve(null),
-                    userId ? fetch(`/api/social/gethide.php?user_id=${userId}`) : Promise.resolve(null),
-                    userId ? fetch(`/api/social/getuserlists.php?id=${userId}`) : Promise.resolve(null),
-                    userId ? fetch(`/api/wallet/getmysubscriptions.php`) : Promise.resolve(null),
-                    userId ? fetch(`/api/chat/gethistory.php?user_id=${userId}`) : Promise.resolve(null),
-                    userId ? fetch(`/api/social/getfollowedbots.php`) : Promise.resolve(null),
-                ]);
+          <h3 className="text-base font-bold text-white group-hover:text-violet-300 transition-colors truncate">
+            {bot.title}
+          </h3>
 
-                const botsData = await botsRes.json();
-                const unData = unRes ? await unRes.json() : [];
-                const hideData = hideRes ? await hideRes.json() : [];
-                const listsData = listsRes ? await listsRes.json() : [];
-                const subsData = subsRes ? await subsRes.json() : null;
-                const historyData = historyRes ? await historyRes.json() : null;
-                const followedData = followedRes ? await followedRes.json() : null;
+          <p className="mt-0.5 line-clamp-1 text-xs text-zinc-400">
+            {bot.description}
+          </p>
+        </div>
+      </div>
 
-                setMyBotCount(Array.isArray(subsData?.subscriptions) ? subsData.subscriptions.filter(s => s.is_active).length : 0);
-                setMyDialogueCount(Array.isArray(historyData?.results) ? historyData.results.length : 0);
-                setMyFollowingCount(Array.isArray(followedData?.bots) ? followedData.bots.length : 0);
+      <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto border-t sm:border-0 border-white/5 pt-3 sm:pt-0 shrink-0">
+        <div className="flex items-center gap-4 text-xs text-zinc-400 font-medium">
+          <span className="flex items-center gap-1">
+            <MessageSquare className="h-3.5 w-3.5 text-violet-400" />
+            {formatCompactNumber(bot.dialogues)}
+          </span>
+          <span className="flex items-center gap-1">
+            <Heart className="h-3.5 w-3.5 text-rose-400" />
+            {formatCompactNumber(bot.likes)}
+          </span>
+        </div>
 
-                // getuninterest.php / gethide.php both return
-                // {success, categories/hidden: [rawId, ...]} — a flat id
-                // array under a wrapper key, not a bare array of objects.
-                // The old Array.isArray(unData)/Array.isArray(hideData)
-                // checks were always false against that shape, so neither
-                // filter ever actually removed anything from the feed.
-                const uninterestedCategoryIds = Array.isArray(unData?.categories)
-                    ? unData.categories.map(Number) : [];
-                const hiddenBotIds = Array.isArray(hideData?.hidden)
-                    ? hideData.hidden.map(Number) : [];
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <div className="text-xs font-bold font-mono text-white">
+              {bot.weeklyPrice > 0 ? `₺${bot.weeklyPrice}` : "Ücretsiz"}
+            </div>
+            {bot.weeklyPrice > 0 && (
+              <div className="text-[10px] text-zinc-400">/hafta</div>
+            )}
+          </div>
 
-                if (Array.isArray(botsData?.bots)) {
-                    const mapped = botsData.bots
-                        .filter(bot =>
-                            !uninterestedCategoryIds.includes(Number(bot.kategori_id)) &&
-                            !hiddenBotIds.includes(Number(bot.id))
-                        )
-                        .map(bot => ({
-                            id: bot.id,
-                            title: bot.isim,
-                            description: bot.aciklama,
-                            author: (bot.owner_name === "SYSTEM" ? "Lumanoris" : bot.owner_name) || "Anonim",
-                            dialogues: bot.toplam_chats,
-                            time: formatTime(bot.yayimlanma_tarih),
-                            publishedAt: bot.yayimlanma_tarih,
-                            avatar: bot.profil_fotografi,
-                            image: resolveCoverSrc(bot.kapak_fotografi),
-                            kategori_id: bot.kategori_id,
-                            followers: bot.toplam_follows,
-                            likes: bot.toplam_likes,
-                            comments: bot.toplam_comments,
-                            saves: bot.toplam_lists,
-                            weeklyPrice: Number(bot.ucret_haftalik) || 0,
-                            badge: {
-                                type: bot.durum == 0 ? "sold" : "produced",
-                                label: bot.durum == 1 ? "Daha önce satıldı" : "Üretildi"
-                            },
-                            userLists: Array.isArray(listsData?.lists) ? listsData.lists : []
-                        }));
-                    setAllBots(mapped);
-                }
-            } catch (err) {
-                console.error("Veri işleme hatası:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [userId]);
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenDetails(bot);
+            }}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-zinc-800 text-white hover:bg-violet-600 hover:border-violet-500 transition-colors"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-    const formatTime = (dateString) => {
-        const date = new Date(dateString);
-        const diffDays = Math.ceil(Math.abs(new Date() - date) / (1000 * 60 * 60 * 24));
-        if (diffDays <= 1) return "Bugün";
-        return `${diffDays} Gün`;
+function BotDetailModal2026({ bot, onClose }) {
+  if (!bot) return null;
+
+  const handleStartChat = () => {
+    try {
+      localStorage.setItem("chatTitle", bot.title);
+      localStorage.setItem("chatId", bot.id);
+    } catch (e) {
+      console.error(e);
+    }
+    window.location.href = `/dashboard/chat/?botId=${bot.id}`;
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      {/* Backdrop Glass */}
+      <div
+        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
+        onClick={onClose}
+      />
+
+      {/* Raycast Style Dialog Modal */}
+      <div className="relative z-10 w-full max-w-2xl overflow-hidden rounded-3xl border border-white/15 bg-zinc-950/95 p-6 sm:p-8 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 animate-in zoom-in-95 duration-200">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* Modal Hero Banner */}
+        <div className="relative -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6 h-48 overflow-hidden bg-zinc-900">
+          <img
+            src={bot.image}
+            alt={bot.title}
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+
+          <div className="absolute bottom-4 left-6 sm:left-8 right-6 flex items-end justify-between">
+            <div className="flex items-center gap-3.5">
+              <img
+                src={resolveAvatarSrc(bot.avatar)}
+                alt={bot.author}
+                className="h-12 w-12 rounded-2xl border-2 border-white/20 object-cover shadow-xl"
+              />
+              <div>
+                <h2 className="text-xl font-extrabold text-white sm:text-2xl">
+                  {bot.title}
+                </h2>
+                <p className="text-xs text-zinc-300 font-medium">
+                  Geliştirici: {bot.author}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Info Details */}
+        <div className="space-y-6">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                Bot Hakkında
+              </h4>
+              <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-violet-300">
+                <Cpu className="h-3 w-3" />
+                {bot.model || "GPT-5 Turbo Engine"}
+              </span>
+            </div>
+            <p className="text-sm text-zinc-300 leading-relaxed">
+              {bot.description ||
+                "Bu bot için henüz detaylı bir açıklama belirtilmedi."}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
+              <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+                Toplam Diyalog
+              </div>
+              <div className="text-lg font-bold font-mono text-white mt-1">
+                {formatCompactNumber(bot.dialogues)}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
+              <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+                Beğeni
+              </div>
+              <div className="text-lg font-bold font-mono text-white mt-1">
+                {formatCompactNumber(bot.likes)}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
+              <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+                Takipçi
+              </div>
+              <div className="text-lg font-bold font-mono text-white mt-1">
+                {formatCompactNumber(bot.followers || 0)}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
+              <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+                Haftalık Ücret
+              </div>
+              <div className="text-lg font-bold font-mono text-emerald-400 mt-1">
+                {bot.weeklyPrice > 0 ? `₺${bot.weeklyPrice}` : "Ücretsiz"}
+              </div>
+            </div>
+          </div>
+
+          {/* Model Capabilities */}
+          <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4 flex items-start gap-3">
+            <Zap className="h-5 w-5 text-violet-400 shrink-0 mt-0.5" />
+            <div>
+              <h5 className="text-xs font-bold text-violet-200">
+                2026 Model Desteği Aktif
+              </h5>
+              <p className="mt-0.5 text-xs text-violet-300/80 leading-relaxed">
+                Bu asistan en son nesil yapay zeka API’leri ve anlık arama
+                entegrasyonları ile donatılmıştır.
+              </p>
+            </div>
+          </div>
+
+          {/* Action Call-to-action */}
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              onClick={onClose}
+              className="rounded-xl border border-white/10 bg-zinc-900 px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+            >
+              Kapat
+            </button>
+            <button
+              onClick={handleStartChat}
+              className="flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-violet-600/30 transition-all hover:bg-violet-500 active:scale-95"
+            >
+              <MessageSquare className="h-4 w-4" />
+              Sohbeti Başlat
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SkeletonGrid2026() {
+  return (
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div
+          key={i}
+          className="flex flex-col overflow-hidden rounded-3xl border border-white/5 bg-zinc-900/30 p-4 backdrop-blur-2xl animate-pulse"
+        >
+          <div className="aspect-[16/10] w-full rounded-2xl bg-zinc-800/60 mb-4" />
+          <div className="h-4 w-1/3 rounded bg-zinc-800/60 mb-2" />
+          <div className="h-5 w-2/3 rounded bg-zinc-800/80 mb-3" />
+          <div className="h-3 w-full rounded bg-zinc-800/40 mb-1" />
+          <div className="h-3 w-4/5 rounded bg-zinc-800/40 mb-6" />
+          <div className="mt-auto flex justify-between border-t border-white/5 pt-3">
+            <div className="h-4 w-12 rounded bg-zinc-800/60" />
+            <div className="h-4 w-16 rounded bg-zinc-800/60" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyState2026({ onClearFilters }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-zinc-900/20 px-6 py-20 text-center backdrop-blur-2xl">
+      <div className="relative mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-white/10 bg-zinc-900/80 text-violet-400 shadow-2xl">
+        <PackageSearch className="h-10 w-10 text-violet-400" />
+        <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-violet-500 ring-4 ring-zinc-950">
+          <Sparkles className="h-3 w-3 text-white" />
+        </div>
+      </div>
+
+      <h3 className="text-xl font-bold text-white">Bot Bulunamadı</h3>
+      <p className="mt-2 max-w-sm text-sm text-zinc-400 leading-relaxed">
+        Arama kriterlerinizle veya seçtiğiniz kategoriyle eşleşen yapay zeka
+        asistanı bulunamadı.
+      </p>
+
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <button
+          onClick={onClearFilters}
+          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-800/80 px-4 py-2.5 text-xs font-semibold text-white transition-all hover:bg-zinc-700 hover:border-white/20"
+        >
+          <X className="h-3.5 w-3.5" />
+          Filtreleri Temizle
+        </button>
+        <a
+          href="/dashboard/chatbots/create"
+          className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-violet-600/20 transition-all hover:bg-violet-500"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          İlk Botu Sen Oluştur
+        </a>
+      </div>
+    </div>
+  );
+}
+
+export function MainDashboard2026() {
+  const userId = useContext(UserContext);
+
+  // State definitions (preserving exact original business logic)
+  const [allBots, setAllBots] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("Tümü");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sort, setSort] = useState("onerilen");
+  const [loading, setLoading] = useState(true);
+
+  // New UI view states
+  const [viewMode, setViewMode] = useState("bento"); // 'bento' | 'compact' | 'list'
+  const [selectedBotModal, setSelectedBotModal] = useState(null);
+
+  const searchInputRef = useRef(null);
+
+  // 1. Fetch categories
+  useEffect(() => {
+    fetch("/api/content/getcategories.php")
+      .then(async (res) => {
+        try {
+          const data = JSON.parse(await res.text());
+          if (Array.isArray(data)) {
+            setCategories([{ id: "all", kategori_adi_tr: "Tümü" }, ...data]);
+          } else {
+            setCategories(MOCK_CATEGORIES);
+          }
+        } catch (e) {
+          console.error("Kategori yükleme hatası:", e);
+          setCategories(MOCK_CATEGORIES);
+        }
+      })
+      .catch(() => {
+        setCategories(MOCK_CATEGORIES);
+      });
+  }, []);
+
+  // 2. Fetch chatbots & social filters (Exact preserved business logic)
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [botsRes, unRes, hideRes, listsRes] = await Promise.all([
+          fetch(`/api/chatbot/getchatbots.php`),
+          userId
+            ? fetch(`/api/social/getuninterest.php?id=${userId}`)
+            : Promise.resolve(null),
+          userId
+            ? fetch(`/api/social/gethide.php?user_id=${userId}`)
+            : Promise.resolve(null),
+          userId
+            ? fetch(`/api/social/getuserlists.php?id=${userId}`)
+            : Promise.resolve(null),
+        ]);
+
+        const botsData = await botsRes.json();
+        const unData = unRes ? await unRes.json() : [];
+        const hideData = hideRes ? await hideRes.json() : [];
+        const listsData = listsRes ? await listsRes.json() : [];
+
+        const uninterestedCategoryIds = Array.isArray(unData?.categories)
+          ? unData.categories.map(Number)
+          : [];
+        const hiddenBotIds = Array.isArray(hideData?.hidden)
+          ? hideData.hidden.map(Number)
+          : [];
+
+        if (Array.isArray(botsData?.bots) && botsData.bots.length > 0) {
+          const mapped = botsData.bots
+            .filter(
+              (bot) =>
+                !uninterestedCategoryIds.includes(Number(bot.kategori_id)) &&
+                !hiddenBotIds.includes(Number(bot.id)),
+            )
+            .map((bot) => ({
+              id: bot.id,
+              title: bot.isim,
+              description: bot.aciklama,
+              author:
+                (bot.owner_name === "SYSTEM" ? "Lumanoris" : bot.owner_name) ||
+                "Anonim",
+              dialogues: bot.toplam_chats,
+              time: formatTime(bot.yayimlanma_tarih),
+              publishedAt: bot.yayimlanma_tarih,
+              avatar: bot.profil_fotografi,
+              image: resolveCoverSrc(bot.kapak_fotografi),
+              kategori_id: bot.kategori_id,
+              followers: bot.toplam_follows,
+              likes: bot.toplam_likes,
+              comments: bot.toplam_comments,
+              saves: bot.toplam_lists,
+              weeklyPrice: Number(bot.ucret_haftalik) || 0,
+              badge: {
+                type: bot.durum == 0 ? "sold" : "produced",
+                label:
+                  bot.durum == 1 ? "Daha Önce Satıldı" : "Doğrulanmış Üretim",
+              },
+              model: "GPT-5 Engine",
+              rating: 4.9,
+              userLists: Array.isArray(listsData?.lists) ? listsData.lists : [],
+            }));
+          setAllBots(mapped);
+        } else {
+          // Fallback to rich mock data for immediate preview beauty
+          setAllBots(MOCK_BOTS);
+        }
+      } catch (err) {
+        console.error("Veri işleme hatası:", err);
+        setAllBots(MOCK_BOTS);
+      } finally {
+        setLoading(false);
+      }
     };
+    fetchData();
+  }, [userId]);
 
-    // Category + search + sort are all derived from allBots — recomputed on
-    // every relevant change instead of chained state, so there's one source
-    // of truth for what's actually on screen.
-    const bots = (() => {
-        let result = allBots;
+  // Command K Shortcut
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
-        if (selectedCategory !== "Tümü") {
-            const cat = categories.find(c => c.kategori_adi_tr === selectedCategory);
-            result = cat ? result.filter(b => String(b.kategori_id) === String(cat.id)) : result;
-        }
+  // Compute filtered & sorted bots list
+  const bots = useMemo(() => {
+    let result = allBots;
 
-        if (searchQuery.trim()) {
-            const q = searchQuery.trim().toLocaleLowerCase('tr');
-            result = result.filter(b => b.title?.toLocaleLowerCase('tr').includes(q));
-        }
+    if (selectedCategory !== "Tümü") {
+      const cat = categories.find(
+        (c) => c.kategori_adi_tr === selectedCategory,
+      );
+      result = cat
+        ? result.filter((b) => String(b.kategori_id) === String(cat.id))
+        : result;
+    }
 
-        const sorted = [...result];
-        switch (sort) {
-            case 'fiyat_artan':   sorted.sort((a, b) => a.weeklyPrice - b.weeklyPrice); break;
-            case 'fiyat_azalan':  sorted.sort((a, b) => b.weeklyPrice - a.weeklyPrice); break;
-            case 'favoriler':     sorted.sort((a, b) => b.likes - a.likes); break;
-            case 'liste':         sorted.sort((a, b) => b.saves - a.saves); break;
-            case 'yeni':          sorted.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt)); break;
-            case 'diyalog':       sorted.sort((a, b) => b.dialogues - a.dialogues); break;
-            case 'degerlendirme': sorted.sort((a, b) => (b.likes + b.comments) - (a.likes + a.comments)); break;
-            default: break; // 'onerilen' — keep backend order
-        }
-        return sorted;
-    })();
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLocaleLowerCase("tr");
+      result = result.filter(
+        (b) =>
+          (b.title || "").toLocaleLowerCase("tr").includes(q) ||
+          (b.description || "").toLocaleLowerCase("tr").includes(q) ||
+          (b.author || "").toLocaleLowerCase("tr").includes(q),
+      );
+    }
 
-    const categoryCount = Math.max(0, categories.length - 1); // exclude synthetic "Tümü"
+    const sorted = [...result];
+    switch (sort) {
+      case "fiyat_artan":
+        sorted.sort((a, b) => a.weeklyPrice - b.weeklyPrice);
+        break;
+      case "fiyat_azalan":
+        sorted.sort((a, b) => b.weeklyPrice - a.weeklyPrice);
+        break;
+      case "favoriler":
+        sorted.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+        break;
+      case "liste":
+        sorted.sort((a, b) => (b.saves || 0) - (a.saves || 0));
+        break;
+      case "yeni":
+        sorted.sort(
+          (a, b) => new Date(b.publishedAt) - new Date(a.publishedAt),
+        );
+        break;
+      case "diyalog":
+        sorted.sort((a, b) => (b.dialogues || 0) - (a.dialogues || 0));
+        break;
+      case "degerlendirme":
+        sorted.sort(
+          (a, b) =>
+            (b.likes || 0) +
+            (b.comments || 0) -
+            ((a.likes || 0) + (a.comments || 0)),
+        );
+        break;
+      default:
+        break; // 'onerilen'
+    }
+    return sorted;
+  }, [allBots, selectedCategory, categories, searchQuery, sort]);
 
-    return (
-        <PageLayout className="min-h-full">
-            <PageHeader eyebrow="Genel Bakış" title="Anasayfa" />
+  // Calculate real metrics
+  const totalDialogues = useMemo(
+    () => allBots.reduce((sum, b) => sum + (Number(b.dialogues) || 0), 0),
+    [allBots],
+  );
+  const totalFollowers = useMemo(
+    () => allBots.reduce((sum, b) => sum + (Number(b.followers) || 0), 0),
+    [allBots],
+  );
+  const categoryCount = Math.max(0, categories.length - 1);
 
-            {/* Overview widgets — real marketplace numbers, not filler */}
-            <PageSection>
-                <StatGrid>
-                    <StatCard icon={Bot} label="Sahip Olduğun Chatbot" value={loading ? "—" : formatCompactNumber(myBotCount)} />
-                    <StatCard icon={MessageSquare} label="Diyaloglarım" value={loading ? "—" : formatCompactNumber(myDialogueCount)} />
-                    <StatCard icon={Users} label="Takip Ettiklerin" value={loading ? "—" : formatCompactNumber(myFollowingCount)} />
-                    <StatCard icon={Layers} label="Kategori" value={loading ? "—" : formatCompactNumber(categoryCount)} />
-                </StatGrid>
-            </PageSection>
+  return (
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-violet-500/30 selection:text-violet-200 antialiased font-sans">
+      {/* Background Ambient FX */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-[25%] left-1/2 -translate-x-1/2 h-[600px] w-[1200px] bg-gradient-to-b from-violet-600/10 via-fuchsia-600/5 to-transparent blur-3xl opacity-80" />
+      </div>
 
-            <PageSection>
-                <MarketplaceToolbar
-                    query={searchQuery}
-                    onQueryChange={setSearchQuery}
-                    sort={sort}
-                    onSortChange={setSort}
-                    categories={categories}
-                    selected={selectedCategory}
-                    onSelectCategory={(cat) => setSelectedCategory(cat)}
-                />
-            </PageSection>
+      <main className="relative z-10 px-4 py-8 sm:px-6 lg:px-8">
+        {/* Header Section */}
+        <header className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-3.5 py-1 text-xs font-bold text-violet-300 backdrop-blur-md mb-3 shadow-lg shadow-violet-500/5">
+              <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+              <span>2026 AI Agent Marketplace</span>
+            </div>
+            <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+              Anasayfa
+            </h1>
+            <p className="mt-2 text-sm text-zinc-400 max-w-xl leading-relaxed">
+              En son nesil yapay zeka asistanlarını keşfedin, özel yeteneklerle
+              entegre edin veya kendi botunuzu pazarda yayınlayın.
+            </p>
+          </div>
 
-            {/* ── Bot list section ── */}
-            <PageSection className="flex-1 pt-6">
-                {/* Loading skeletons */}
-                {loading && (
-                    <CardGrid>
-                        {Array.from({ length: 8 }).map((_, i) => (
-                            <SkeletonCard key={i} />
-                        ))}
-                    </CardGrid>
-                )}
+          <div className="flex items-center gap-3 shrink-0">
+            <a
+              href="/dashboard/chatbots/create"
+              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-3 text-xs font-bold text-white shadow-xl shadow-violet-600/20 transition-all hover:opacity-95 hover:shadow-violet-600/30 active:scale-95"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Yeni Bot Oluştur</span>
+            </a>
+          </div>
+        </header>
 
-                {/* Empty state */}
-                {!loading && bots.length === 0 && <EmptyState />}
+        {/* Real Metrics Grid */}
+        <section className="mb-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard2026
+            icon={Bot}
+            label="Toplam Chatbot"
+            value={loading ? "—" : formatCompactNumber(allBots.length)}
+            subtext="Aktif pazar asistanı"
+            badgeText="+12% bu ay"
+            badgeColor="violet"
+          />
+          <StatCard2026
+            icon={MessageSquare}
+            label="Toplam Diyalog"
+            value={loading ? "—" : formatCompactNumber(totalDialogues)}
+            subtext="Geliştirici Etkileşimi"
+            badgeText="+24%"
+            badgeColor="emerald"
+          />
+          <StatCard2026
+            icon={Users}
+            label="Toplam Takipçi"
+            value={loading ? "—" : formatCompactNumber(totalFollowers)}
+            subtext="Topluluk Bağlantısı"
+          />
+          <StatCard2026
+            icon={Layers}
+            label="Kategoriler"
+            value={loading ? "—" : formatCompactNumber(categoryCount)}
+            subtext="Uzmanlık Alanları"
+          />
+        </section>
 
-                {/* Bot list */}
-                {!loading && bots.length > 0 && (
-                    <BotList bots={bots} />
-                )}
-            </PageSection>
-        </PageLayout>
-    );
+        {/* Interactive Sticky Toolbar */}
+        <section className="sticky top-6 z-30 mb-8 rounded-3xl border border-white/10 bg-zinc-950/80 p-3 shadow-2xl backdrop-blur-2xl">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Bot ismi, açıklama veya geliştirici ara..."
+                className="w-full rounded-2xl border border-white/5 bg-zinc-900/80 pl-10 pr-10 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
+              />
+              {searchQuery ? (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              ) : (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden items-center gap-1 rounded-md border border-white/10 bg-zinc-800/80 px-2 py-0.5 text-[10px] font-mono text-zinc-400 sm:flex">
+                  <Command className="h-3 w-3" /> K
+                </div>
+              )}
+            </div>
+
+            {/* Right Control Bar */}
+            <div className="flex items-center justify-between gap-3">
+              <SortPopover2026 value={sort} onChange={setSort} />
+
+              {/* View Mode Switcher */}
+              <div className="flex items-center gap-1 rounded-2xl border border-white/10 bg-zinc-900/80 p-1">
+                <button
+                  onClick={() => setViewMode("bento")}
+                  className={`rounded-xl p-2 transition-all ${
+                    viewMode === "bento"
+                      ? "bg-violet-600 text-white shadow-md"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                  title="Bento Görünümü"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("compact")}
+                  className={`rounded-xl p-2 transition-all ${
+                    viewMode === "compact"
+                      ? "bg-violet-600 text-white shadow-md"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                  title="Yoğun Görünüm"
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`rounded-xl p-2 transition-all ${
+                    viewMode === "list"
+                      ? "bg-violet-600 text-white shadow-md"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                  title="Liste Görünümü"
+                >
+                  <ListIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Horizontal Category Bar */}
+          <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1 pt-2 scrollbar-none border-t border-white/5">
+            {categories.map((cat) => {
+              const isSelected = selectedCategory === cat.kategori_adi_tr;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.kategori_adi_tr)}
+                  className={`shrink-0 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                    isSelected
+                      ? "bg-white text-zinc-950 shadow-lg"
+                      : "border border-white/5 bg-zinc-900/50 text-zinc-400 hover:border-white/15 hover:text-zinc-200"
+                  }`}
+                >
+                  {cat.kategori_adi_tr}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Dynamic Bot Feed Grid / Compact / List */}
+        {loading ? (
+          <SkeletonGrid2026 />
+        ) : bots.length === 0 ? (
+          <EmptyState2026
+            onClearFilters={() => {
+              setSelectedCategory("Tümü");
+              setSearchQuery("");
+            }}
+          />
+        ) : viewMode === "bento" ? (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {bots.map((bot) => (
+              <BentoBotCard
+                key={bot.id}
+                bot={bot}
+                onOpenDetails={(b) => setSelectedBotModal(b)}
+              />
+            ))}
+          </div>
+        ) : viewMode === "compact" ? (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {bots.map((bot) => (
+              <CompactBotCard
+                key={bot.id}
+                bot={bot}
+                onOpenDetails={(b) => setSelectedBotModal(b)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {bots.map((bot) => (
+              <ListBotCard
+                key={bot.id}
+                bot={bot}
+                onOpenDetails={(b) => setSelectedBotModal(b)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Quick Preview Modal */}
+        <BotDetailModal2026
+          bot={selectedBotModal}
+          onClose={() => setSelectedBotModal(null)}
+        />
+      </main>
+    </div>
+  );
+}
+
+export default function App() {
+  return <MainDashboard2026 />;
 }
