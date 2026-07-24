@@ -168,7 +168,7 @@ export default function Explore() {
                 title="Keşfet"
                 description="Topluluğun oluşturduğu chatbotları keşfet, sohbet et ve favorilerini kaydet."
                 action={!loading && (
-                    <span className="rounded-full border border-fuchsia-400/20 bg-fuchsia-500/[0.08] px-3.5 py-1.5 text-[12.5px] font-semibold text-fuchsia-300">
+                    <span className="rounded-full border border-fuchsia-400/20 bg-fuchsia-500/[0.08] px-3.5 py-1.5 text-label font-semibold text-fuchsia-300">
                         {sortedBots.length} chatbot bulundu
                     </span>
                 )}

@@ -44,8 +44,8 @@ export default function SuggestedCard({ bot }) {
                             className="h-[22px] w-[22px] shrink-0 rounded-full object-cover"
                         />
                         <div className="flex min-w-0 flex-col">
-                            <span className="truncate text-[13px] font-medium text-white/90">{title}</span>
-                            <span className="truncate text-[11px] text-white/40">{author}</span>
+                            <span className="truncate text-body-sm font-medium text-white/90">{title}</span>
+                            <span className="truncate text-caption text-white/40">{author}</span>
                         </div>
                     </div>
 
@@ -79,7 +79,7 @@ export default function SuggestedCard({ bot }) {
                     </DropdownMenu>
                 </div>
 
-                <div className="mt-auto flex items-center gap-1.5 text-[11px] text-white/40">
+                <div className="mt-auto flex items-center gap-1.5 text-caption text-white/40">
                     <MessageSquare className="h-3.5 w-3.5" strokeWidth={1.75} />
                     {dialogues} Diyalog
                 </div>

@@ -507,7 +507,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
                     <p className="text-xs font-semibold text-white group-hover:text-violet-300">
                       {preset.role}
                     </p>
-                    <p className="text-[11px] text-zinc-500 truncate mt-0.5">
+                    <p className="text-caption text-zinc-500 truncate mt-0.5">
                       {preset.prompt}
                     </p>
                   </button>
@@ -525,7 +525,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
                 <label className="text-xs font-mono text-zinc-300">
                   Sistem Talimatı (System Prompt)
                 </label>
-                <span className="text-[10px] font-mono text-violet-400">
+                <span className="text-caption font-mono text-violet-400">
                   GPT-4o Omnimodal Active
                 </span>
               </div>
@@ -559,7 +559,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
                 <p className="text-xs font-semibold text-white">
                   Doküman veya PDF Yükleyin
                 </p>
-                <p className="text-[11px] text-zinc-500 mt-0.5">
+                <p className="text-caption text-zinc-500 mt-0.5">
                   Sıkça sorulan sorular, kataloglar veya şirket içi kılavuzlar
                   (Max 50MB)
                 </p>
@@ -573,7 +573,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
                   <p className="text-xs font-semibold text-white">
                     Web Sitesi URL Tarama
                   </p>
-                  <p className="text-[10px] text-zinc-500">
+                  <p className="text-caption text-zinc-500">
                     Domain altındaki tüm sayfalar otomatik indekslenir
                   </p>
                 </div>
@@ -644,13 +644,13 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
                 <h4 className="text-xs font-bold text-white leading-tight">
                   {botName || "Önizleme Asistanı"}
                 </h4>
-                <p className="text-[10px] text-emerald-400 flex items-center gap-1">
+                <p className="text-caption text-emerald-400 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />{" "}
                   Canlı Test Modu
                 </p>
               </div>
             </div>
-            <span className="text-[10px] font-mono text-zinc-500 bg-zinc-900 px-2 py-1 rounded border border-white/5">
+            <span className="text-caption font-mono text-zinc-500 bg-zinc-900 px-2 py-1 rounded border border-white/5">
               Sandbox v2.4
             </span>
           </div>
@@ -923,7 +923,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
               >
                 <st.icon className="w-5 h-5 text-violet-400" />
                 <h5 className="text-xs font-bold text-white">{st.title}</h5>
-                <p className="text-[11px] text-zinc-500 leading-relaxed">
+                <p className="text-caption text-zinc-500 leading-relaxed">
                   {st.desc}
                 </p>
               </div>

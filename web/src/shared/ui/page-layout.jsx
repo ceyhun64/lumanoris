@@ -33,7 +33,7 @@ function PageHeader({ eyebrow, eyebrowClassName, title, description, action, chi
     <div className={cn("mb-8 flex flex-wrap items-end justify-between gap-4", className)}>
       <div className="min-w-0 flex-1">
         {eyebrow && (
-          <span className={cn("mb-1.5 block text-[11px] font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70", eyebrowClassName)}>
+          <span className={cn("mb-1.5 block text-caption font-display font-semibold uppercase tracking-[0.14em] text-fuchsia-400/70", eyebrowClassName)}>
             {eyebrow}
           </span>
         )}
@@ -41,7 +41,7 @@ function PageHeader({ eyebrow, eyebrowClassName, title, description, action, chi
           {title}
         </h1>
         {description && (
-          <p className="mt-1.5 max-w-md text-[13.5px] text-white/45">{description}</p>
+          <p className="mt-1.5 max-w-md text-body-sm text-white/45">{description}</p>
         )}
         {children}
       </div>

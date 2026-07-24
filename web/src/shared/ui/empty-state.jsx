@@ -20,7 +20,7 @@ function EmptyState({ icon: Icon, title, description, actionLabel, onAction, cla
         </div>
       )}
       {title && (
-        <h3 className="text-[15px] font-display font-semibold text-white/85">{title}</h3>
+        <h3 className="text-body-lg font-display font-semibold text-white/85">{title}</h3>
       )}
       {description && (
         <p className="text-body-sm text-luma-muted max-w-[320px] leading-relaxed">{description}</p>

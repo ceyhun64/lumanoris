@@ -750,7 +750,7 @@ export default function CartConfirm({ cartItems }) {
                         <DialogTitle className="mb-2.5 text-xl font-semibold text-white">
                             Ödeme başlatılamadı
                         </DialogTitle>
-                        <DialogDescription className="mb-8 text-[15px] leading-relaxed text-white/70">
+                        <DialogDescription className="mb-8 text-body-lg leading-relaxed text-white/70">
                             {sellerIssueMessage}
                             <br /><br />
                             Sepetinizi gözden geçirmek için yönlendirilmek ister misiniz?

@@ -682,8 +682,8 @@ const handleRetryReply = (retryText) => {
                         />
                       </div>
                       <div className="flex flex-col">
-                        <p className="font-display text-[13px] font-semibold capitalize text-white/55">{bot?.isim}</p>
-                        <div className={cn("font-sans text-[15px] font-normal leading-relaxed", msg.error ? "text-rose-300" : "text-white")}>
+                        <p className="font-display text-body-sm font-semibold capitalize text-white/55">{bot?.isim}</p>
+                        <div className={cn("font-sans text-body-lg font-normal leading-relaxed", msg.error ? "text-rose-300" : "text-white")}>
                           {msg.text ? (
                             <ReactMarkdown>{msg.text}</ReactMarkdown>
                           ) : (
@@ -700,7 +700,7 @@ const handleRetryReply = (retryText) => {
                             onClick={() => handleRetryReply(msg.retryText)}
                           >
                             <RotateCcw className="h-3 w-3" strokeWidth={2} />
-                            <span className="text-[11px] font-medium">Tekrar Dene</span>
+                            <span className="text-caption font-medium">Tekrar Dene</span>
                           </button>
                         ) : (
                           <button
@@ -708,7 +708,7 @@ const handleRetryReply = (retryText) => {
                             onClick={() => openDialogModal(index)}
                           >
                             <NotebookPen className="h-3 w-3" strokeWidth={2} />
-                            <span className="text-[11px] font-medium">Diyalog Defterine Ekle</span>
+                            <span className="text-caption font-medium">Diyalog Defterine Ekle</span>
                           </button>
                         )}
                       </div>
@@ -721,7 +721,7 @@ const handleRetryReply = (retryText) => {
                         </div>
                       )}
                       {msg.text && (
-                        <div className="rounded-2xl rounded-tr-sm bg-gradient-to-br from-fuchsia-600/90 to-violet-600/90 px-5 py-2.5 font-sans text-[15px] font-normal leading-relaxed text-white">
+                        <div className="rounded-2xl rounded-tr-sm bg-gradient-to-br from-fuchsia-600/90 to-violet-600/90 px-5 py-2.5 font-sans text-body-lg font-normal leading-relaxed text-white">
                           <ReactMarkdown>{msg.text}</ReactMarkdown>
                         </div>
                       )}
@@ -732,7 +732,7 @@ const handleRetryReply = (retryText) => {
                 {/* Reklam ekleme */}
                 {(index + 1) % chatAdFrequency === 0 && (
                   <div className="flex justify-center py-2">
-                    <div className="flex h-[60px] w-full max-w-[468px] items-center justify-center rounded-lg border border-white/[0.06] bg-luma-card text-[11px] text-white/25">
+                    <div className="flex h-[60px] w-full max-w-[468px] items-center justify-center rounded-lg border border-white/[0.06] bg-luma-card text-caption text-white/25">
                       Reklam Alanı
                     </div>
                   </div>
@@ -761,7 +761,7 @@ const handleRetryReply = (retryText) => {
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500/25 to-violet-500/15">
                 <Lock className="h-4 w-4 text-fuchsia-300" />
               </div>
-              <p className="text-[13px] leading-snug text-white/80">
+              <p className="text-body-sm leading-snug text-white/80">
                 Günlük mesajlaşma limitine ulaştınız.
                 <br className="hidden sm:block" />
                 Chatbotu satın alarak daha fazla mesaj limitine erişebilirsiniz.
@@ -769,7 +769,7 @@ const handleRetryReply = (retryText) => {
             </div>
             <Button
               onClick={() => setShowLimitBuyModal(true)}
-              className="h-auto shrink-0 px-5 py-2.5 text-[13px]"
+              className="h-auto shrink-0 px-5 py-2.5 text-body-sm"
             >
               Satın Al
             </Button>

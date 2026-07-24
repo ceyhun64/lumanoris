@@ -11,7 +11,7 @@ export default function Home() {
   }, [router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-luma-base text-white/60 text-[14px]">
+    <div className="flex items-center justify-center min-h-screen bg-luma-base text-white/60 text-body">
       <span className="animate-pulse">Yükleniyor...</span>
     </div>
   );

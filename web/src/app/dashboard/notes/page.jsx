@@ -66,7 +66,7 @@ function DialogueModal({ isOpen, onClose, selectedHistory }) {
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           <div className="space-y-2">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-fuchsia-400">
+            <span className="text-caption font-medium uppercase tracking-wider text-fuchsia-400">
               Kullanıcı İsteği
             </span>
             <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-4 text-sm text-white/90 leading-relaxed">
@@ -75,7 +75,7 @@ function DialogueModal({ isOpen, onClose, selectedHistory }) {
           </div>
 
           <div className="space-y-2">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-purple-400">
+            <span className="text-caption font-medium uppercase tracking-wider text-purple-400">
               Asistan Yanıtı
             </span>
             <div className="rounded-2xl bg-fuchsia-950/20 border border-fuchsia-500/15 p-4 text-sm text-white/90 leading-relaxed">
@@ -259,7 +259,7 @@ function CategoryFilter({ categories, onSelect, selected }) {
             key={cat.id || catName}
             onClick={() => onSelect(catName)}
             className={cn(
-              "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-medium transition-all shrink-0",
+              "flex items-center gap-2 rounded-xl px-2 py-2 text-[13px] font-medium transition-all shrink-0",
               isSelected
                 ? "bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-900/40 border border-fuchsia-400/30"
                 : "bg-white/[0.04] text-white/60 hover:bg-white/[0.08] hover:text-white border border-white/5",
@@ -438,7 +438,7 @@ export default function DialoguePage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/10 pb-6">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 text-[11px] font-semibold text-fuchsia-300 tracking-wider uppercase">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 text-caption font-semibold text-fuchsia-300 tracking-wider uppercase">
                 <Sparkles className="h-3 w-3" /> Arşiv
               </span>
             </div>
@@ -542,7 +542,7 @@ export default function DialoguePage() {
                       <p className="truncate text-xs font-semibold text-white/90">
                         {card.name}
                       </p>
-                      <p className="truncate text-[10px] text-white/40">
+                      <p className="truncate text-caption text-white/40">
                         {card.chatbot_isim} • {card.owner_kullanici_adi}
                       </p>
                     </div>

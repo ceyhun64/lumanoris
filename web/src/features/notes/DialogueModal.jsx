@@ -138,7 +138,7 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
         <>
             <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
                 <DialogContent className="max-w-[520px] bg-luma-card border-transparent p-6">
-                    <DialogTitle className="mb-4 text-center text-[16px]">Deftere Kaydedilmiş Diyalog</DialogTitle>
+                    <DialogTitle className="mb-4 text-center text-title-sm">Deftere Kaydedilmiş Diyalog</DialogTitle>
 
                     <div className="flex flex-col gap-4">
                         <div className="rounded-xl bg-luma-input p-4">
@@ -152,7 +152,7 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
                                     {copyIcon}
                                 </button>
                             </div>
-                            <div ref={inputRef} className="text-[14px] leading-relaxed text-white">
+                            <div ref={inputRef} className="text-body leading-relaxed text-white">
                                 <p>{selectedHistory.input_message}</p>
                             </div>
                         </div>
@@ -168,7 +168,7 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
                                     {copyIcon}
                                 </button>
                             </div>
-                            <div ref={outputRef} className="text-[14px] leading-relaxed text-white">
+                            <div ref={outputRef} className="text-body leading-relaxed text-white">
                                 <p>{selectedHistory.output_message}</p>
                             </div>
                         </div>
@@ -319,7 +319,7 @@ export default function DialogueModal({ isOpen, onClose, selectedHistory }) {
                                 <Image src={resolveAvatarSrc(selectedHistory.chatbot_profil_fotografi)} alt="avatar" width={48} height={48} className="h-full w-full object-cover" />
                             </div>
                             <div>
-                                <p className="font-display text-[14px] font-semibold text-white">{selectedHistory.chatbot_isim}</p>
+                                <p className="font-display text-body font-semibold text-white">{selectedHistory.chatbot_isim}</p>
                                 <p className="text-xs text-white/50">{selectedHistory.owner_kullanici_adi}</p>
                             </div>
                         </div>

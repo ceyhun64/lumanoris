@@ -407,11 +407,11 @@ export default function ProfileCard({bot, comments}) {
                         <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
                     </div>
                     <div className="min-w-0">
-                        <p className="flex items-center gap-1 truncate font-display text-[14.5px] font-bold text-white">
+                        <p className="flex items-center gap-1 truncate font-display text-body font-bold text-white">
                             {profile.title}
                             <ChevronRight className="h-3.5 w-3.5 shrink-0 text-white/30 transition-transform group-hover:translate-x-0.5" />
                         </p>
-                        <p className="truncate text-[12px] text-white/45">
+                        <p className="truncate text-label text-white/45">
                             {formatCompact(profile.follows)} takipçi · {formatCompact(bot.toplam_chats)} diyalog
                         </p>
                     </div>
@@ -420,7 +420,7 @@ export default function ProfileCard({bot, comments}) {
                 <div className="flex shrink-0 items-center gap-2">
                     {isPaidAndUnowned && (
                         <button
-                            className="hidden h-9 shrink-0 items-center justify-center rounded-full bg-gradient-btn px-4 font-display text-[12.5px] font-semibold text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex"
+                            className="hidden h-9 shrink-0 items-center justify-center rounded-full bg-gradient-btn px-4 font-display text-label font-semibold text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex"
                             onClick={handleBuy}
                         >
                             Satın Al · {bot.ucret_haftalik}₺
@@ -430,7 +430,7 @@ export default function ProfileCard({bot, comments}) {
                     <button
                         onClick={followToggle}
                         className={cn(
-                            "flex h-9 shrink-0 items-center justify-center rounded-lg border-[1.5px] border-transparent px-3.5 font-display text-[12px] font-bold text-white transition-all duration-200 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            "flex h-9 shrink-0 items-center justify-center rounded-lg border-[1.5px] border-transparent px-3.5 font-display text-label font-bold text-white transition-all duration-200 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                             isFollowing
                                 ? "bg-origin-border [background-clip:padding-box,border-box] [background-image:linear-gradient(#18171F,#18171F),linear-gradient(150deg,#D946EF,#E879F9)]"
                                 : "bg-white/[0.04] hover:bg-white/[0.08]",
@@ -505,7 +505,7 @@ export default function ProfileCard({bot, comments}) {
                             </div>
                             <div className="min-w-0">
                                 <DialogTitle className="truncate">{profile.title}</DialogTitle>
-                                <p className="text-[13px] text-white/55">
+                                <p className="text-body-sm text-white/55">
                                     {formatCompact(profile.follows)} takipçi · {formatCompact(bot.toplam_chats)} diyalog
                                 </p>
                             </div>
@@ -518,7 +518,7 @@ export default function ProfileCard({bot, comments}) {
 
                     {pastConversations.length > 0 && (
                         <div className="flex w-full flex-col gap-2">
-                            <p className="text-[11px] font-display font-semibold uppercase tracking-[0.1em] text-white/40">Geçmiş Sohbetler</p>
+                            <p className="text-caption font-display font-semibold uppercase tracking-[0.1em] text-white/40">Geçmiş Sohbetler</p>
                             {pastConversations.map((item) => (
                                 <button
                                     key={item.id}
@@ -528,7 +528,7 @@ export default function ProfileCard({bot, comments}) {
                                     }}
                                     className="flex w-full items-center justify-between rounded-lg bg-white/[0.04] px-4 py-2.5 text-left transition-colors duration-200 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 >
-                                    <span className="truncate text-[13px] text-white/70">{item.conversation_name}</span>
+                                    <span className="truncate text-body-sm text-white/70">{item.conversation_name}</span>
                                     <ArrowRight className="h-4 w-4 shrink-0 text-white/40" />
                                 </button>
                             ))}
@@ -537,7 +537,7 @@ export default function ProfileCard({bot, comments}) {
 
                     {isPaidAndUnowned && (
                         <button
-                            className="flex h-11 w-full items-center justify-center rounded-xl bg-gradient-btn font-display text-[13px] font-semibold text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="flex h-11 w-full items-center justify-center rounded-xl bg-gradient-btn font-display text-body-sm font-semibold text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             onClick={() => { setInfoOpen(false); handleBuy(); }}
                         >
                             Satın Al · {bot.ucret_haftalik}₺
@@ -605,7 +605,7 @@ export default function ProfileCard({bot, comments}) {
                 confirmLabel="Onayla"
             />
             {cartAdded && (
-                <div className="fixed bottom-6 right-6 bg-fuchsia-400 text-white px-3 py-1.5 rounded-lg text-[13px] font-medium animate-[fadeInOut_2s_ease_forwards] pointer-events-none z-[999999]">
+                <div className="fixed bottom-6 right-6 bg-fuchsia-400 text-white px-3 py-1.5 rounded-lg text-body-sm font-medium animate-[fadeInOut_2s_ease_forwards] pointer-events-none z-[999999]">
                     Sepete eklendi!
                 </div>
             )}

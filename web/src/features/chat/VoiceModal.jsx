@@ -39,7 +39,7 @@ export default function VoiceModal({ isOpen, onClose, onConfirm }) {
                     <DialogTitle className="mb-2.5 text-xl font-semibold text-fuchsia-400">
                         Bu sohbete bir sesli mesaj göndermek üzeresiniz.
                     </DialogTitle>
-                    <DialogDescription className="mb-8 font-display text-[15px] font-semibold leading-relaxed text-white">
+                    <DialogDescription className="mb-8 font-display text-body-lg font-semibold leading-relaxed text-white">
                         Devam etmek istiyor musunuz?
                     </DialogDescription>
 

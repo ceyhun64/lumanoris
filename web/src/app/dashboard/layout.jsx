@@ -34,7 +34,7 @@ export default function DashboardLayout({ children }) {
 
     if (!authReady) {
         return (
-            <div className="flex items-center justify-center min-h-screen text-white/60 text-[14px]">
+            <div className="flex items-center justify-center min-h-screen text-white/60 text-body">
                 <span className="animate-pulse">Oturum kontrol ediliyor...</span>
             </div>
         );

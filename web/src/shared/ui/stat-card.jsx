@@ -20,13 +20,13 @@ function StatCard({ icon: Icon, label, value, trend, className }) {
         </div>
       )}
       <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="text-[12px] text-white/45 font-sans">{label}</span>
+        <span className="text-label text-white/45 font-sans">{label}</span>
         <div className="flex items-center gap-2">
-          <span className="text-[22px] font-display font-bold text-white leading-tight">{value}</span>
+          <span className="text-title font-display font-bold text-white leading-tight">{value}</span>
           {typeof trend === "number" && (
             <span
               className={cn(
-                "text-[11px] font-semibold font-sans px-1.5 py-0.5 rounded-md",
+                "text-caption font-semibold font-sans px-1.5 py-0.5 rounded-md",
                 trendPositive ? "text-success bg-success/10" : "text-destructive bg-destructive/10"
               )}
             >

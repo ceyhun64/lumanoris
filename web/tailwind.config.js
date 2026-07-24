@@ -85,18 +85,37 @@ module.exports = {
         sans:      ["Public Sans", "sans-serif"],
         display:   ["Space Grotesk", "sans-serif"],
       },
-      /* Named scale for new/touched components — replaces ad-hoc text-[Npx]
-         arbitrary values (260+ distinct uses in the codebase) with a single
-         source of truth. Sized to the values already dominant in the UI. */
+      /* App-wide typography scale — the single source of truth for every
+         text size in the product. Two things route through it:
+         1. Tailwind's own named sizes (text-xs…text-5xl) are overridden
+            below (not just extended) so every existing usage of the
+            default scale inherits the same larger sizes + tuned
+            line-height/letter-spacing with zero JSX changes.
+         2. This semantic scale (text-caption…text-title-lg) replaces the
+            270+ ad-hoc text-[Npx] arbitrary values that used to bypass any
+            scale entirely (as low as 7px) — every one was swept to the
+            nearest step here. */
       fontSize: {
-        'caption':  ['11px', { lineHeight: '1.4' }],
-        'label':    ['12px', { lineHeight: '1.4', letterSpacing: '.02em' }],
-        'body-sm':  ['13px', { lineHeight: '1.55' }],
-        'body':     ['14px', { lineHeight: '1.6' }],
-        'body-lg':  ['15px', { lineHeight: '1.6' }],
-        'title-sm': ['16px', { lineHeight: '1.4', fontWeight: '600' }],
-        'title':    ['20px', { lineHeight: '1.3', fontWeight: '700' }],
-        'title-lg': ['28px', { lineHeight: '1.2', fontWeight: '700' }],
+        'caption':  ['13px', { lineHeight: '1.45' }],
+        'label':    ['13.5px', { lineHeight: '1.45', letterSpacing: '.01em' }],
+        'body-sm':  ['14.5px', { lineHeight: '1.55' }],
+        'body':     ['16px', { lineHeight: '1.65' }],
+        'body-lg':  ['17px', { lineHeight: '1.6' }],
+        'title-sm': ['18px', { lineHeight: '1.4', fontWeight: '600' }],
+        'title':    ['22px', { lineHeight: '1.3', fontWeight: '700' }],
+        'title-lg': ['30px', { lineHeight: '1.2', fontWeight: '700', letterSpacing: '-.01em' }],
+
+        /* Tailwind default scale — overridden (not extended) so text-xs…
+           text-5xl, used across 200+ files, pick up the same system. */
+        'xs':   ['13px',   { lineHeight: '1.45' }],
+        'sm':   ['14.5px', { lineHeight: '1.55' }],
+        'base': ['16px',   { lineHeight: '1.65' }],
+        'lg':   ['18px',   { lineHeight: '1.5' }],
+        'xl':   ['20px',   { lineHeight: '1.4', letterSpacing: '-.005em' }],
+        '2xl':  ['24px',   { lineHeight: '1.3', letterSpacing: '-.01em' }],
+        '3xl':  ['30px',   { lineHeight: '1.25', letterSpacing: '-.015em' }],
+        '4xl':  ['36px',   { lineHeight: '1.15', letterSpacing: '-.02em' }],
+        '5xl':  ['48px',   { lineHeight: '1.1', letterSpacing: '-.02em' }],
       },
       backgroundImage: {
         /* Lumanoris Elite palette — Fuchsia + Violet (rebranded from indigo/cyan) */

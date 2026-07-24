@@ -255,7 +255,7 @@ export default function Checkout() {
             <Info className="w-4 h-4 text-indigo-400 shrink-0" />
             <div>
               <p className="text-xs font-semibold">{toastMessage.title}</p>
-              <p className="text-[11px] text-zinc-400">
+              <p className="text-caption text-zinc-400">
                 {toastMessage.description}
               </p>
             </div>
@@ -274,7 +274,7 @@ export default function Checkout() {
           <span>{step === 2 ? "Return to Cart" : "Back to Marketplace"}</span>
         </button>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-800/80 text-[11px] text-zinc-400 backdrop-blur-md">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-800/80 text-caption text-zinc-400 backdrop-blur-md">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span>Secure 256-bit TLS Session</span>
         </div>
@@ -303,7 +303,7 @@ export default function Checkout() {
             className={`flex items-center gap-2 text-xs font-semibold ${step >= 1 ? "text-indigo-400" : "text-zinc-500"}`}
           >
             <span
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] border ${step >= 1 ? "border-indigo-500/50 bg-indigo-500/10 text-indigo-300" : "border-zinc-800 bg-zinc-900 text-zinc-500"}`}
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-caption border ${step >= 1 ? "border-indigo-500/50 bg-indigo-500/10 text-indigo-300" : "border-zinc-800 bg-zinc-900 text-zinc-500"}`}
             >
               1
             </span>
@@ -314,7 +314,7 @@ export default function Checkout() {
             className={`flex items-center gap-2 text-xs font-semibold ${step >= 2 ? "text-indigo-400" : "text-zinc-500"}`}
           >
             <span
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] border ${step >= 2 ? "border-indigo-500/50 bg-indigo-500/10 text-indigo-300" : "border-zinc-800 bg-zinc-900 text-zinc-500"}`}
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-caption border ${step >= 2 ? "border-indigo-500/50 bg-indigo-500/10 text-indigo-300" : "border-zinc-800 bg-zinc-900 text-zinc-500"}`}
             >
               2
             </span>
@@ -363,7 +363,7 @@ export default function Checkout() {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800/80 text-[10px] font-medium text-zinc-300 border border-zinc-700/40">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800/80 text-caption font-medium text-zinc-300 border border-zinc-700/40">
                           <Clock className="w-3 h-3 text-indigo-400" />
                           {item.duration_weeks} Weeks Access
                         </span>
@@ -382,7 +382,7 @@ export default function Checkout() {
                           {CURRENCY_SYMBOL}
                           {(item.price * (item.duration_weeks || 1)).toFixed(2)}
                         </span>
-                        <p className="text-[10px] text-zinc-500">
+                        <p className="text-caption text-zinc-500">
                           {CURRENCY_SYMBOL}
                           {item.price.toFixed(2)} / wk
                         </p>
@@ -446,7 +446,7 @@ export default function Checkout() {
                       {CURRENCY_SYMBOL}
                       {total.toFixed(2)}
                     </span>
-                    <p className="text-[10px] text-zinc-500">
+                    <p className="text-caption text-zinc-500">
                       Billed securely in USD
                     </p>
                   </div>
@@ -495,7 +495,7 @@ export default function Checkout() {
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </button>
 
-                <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
+                <div className="mt-4 flex items-center justify-center gap-2 text-caption text-zinc-500">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   <span>30-Day Money-Back Guarantee</span>
                 </div>
@@ -528,7 +528,7 @@ export default function Checkout() {
                           <p className="text-xs font-semibold text-white">
                             {item.title}
                           </p>
-                          <p className="text-[10px] text-zinc-400">
+                          <p className="text-caption text-zinc-400">
                             {item.duration_weeks} weeks allocation
                           </p>
                         </div>
@@ -562,7 +562,7 @@ export default function Checkout() {
                         <p className="text-xs font-semibold text-white">
                           Credit / Debit Card (Stripe Enterprise)
                         </p>
-                        <p className="text-[10px] text-zinc-400">
+                        <p className="text-caption text-zinc-400">
                           Instant tokenization & automated renewal
                         </p>
                       </div>
@@ -582,7 +582,7 @@ export default function Checkout() {
                         <p className="text-xs font-semibold text-zinc-300">
                           Corporate Invoice / Wire Transfer
                         </p>
-                        <p className="text-[10px] text-zinc-500">
+                        <p className="text-caption text-zinc-500">
                           Coming soon for verified orgs
                         </p>
                       </div>
@@ -717,7 +717,7 @@ export default function Checkout() {
                   </span>
                 </div>
 
-                <div className="mt-6 p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/60 text-[11px] text-zinc-400 space-y-2">
+                <div className="mt-6 p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/60 text-caption text-zinc-400 space-y-2">
                   <div className="flex items-center gap-2 text-zinc-300 font-medium">
                     <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
                     <span>Instant Cloud Provisioning</span>

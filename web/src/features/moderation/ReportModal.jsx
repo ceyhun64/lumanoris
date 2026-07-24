@@ -119,7 +119,7 @@ export default function ReportModal({ isOpen, repId, onClose }) {
                             <DialogTitle className="mb-3 text-lg font-semibold text-fuchsia-400">
                                 İçeriği tüm topluluk kurallarına göre kontrol edeceğiz.
                             </DialogTitle>
-                            <DialogDescription className="mb-3.5 font-display text-[15px] font-semibold text-white">
+                            <DialogDescription className="mb-3.5 font-display text-body-lg font-semibold text-white">
                                 En doğru seçimi yapmanız gerekmiyor.
                             </DialogDescription>
                             <div className="mb-5 flex w-full flex-col">
@@ -150,7 +150,7 @@ export default function ReportModal({ isOpen, repId, onClose }) {
                             <DialogTitle className="mb-3 text-lg font-semibold text-fuchsia-400">
                                 Ayrıntılı bilgi vermek ister misiniz?
                             </DialogTitle>
-                            <DialogDescription className="mb-3.5 font-display text-[15px] font-semibold text-white">
+                            <DialogDescription className="mb-3.5 font-display text-body-lg font-semibold text-white">
                                 Bu kısım isteğe bağlıdır.
                             </DialogDescription>
                             <Textarea

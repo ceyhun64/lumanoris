@@ -116,11 +116,11 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-[440px] bg-luma-card border-transparent p-6 text-center">
                 <DialogTitle className="mb-1 text-xl font-semibold">Satın Al</DialogTitle>
-                <p className="mb-3 font-display text-[15px] font-medium text-fuchsia-300">{botData.isim || "Bu chatbot"}</p>
-                <DialogDescription className="mb-1 font-sans text-[14px] text-white">
+                <p className="mb-3 font-display text-body-lg font-medium text-fuchsia-300">{botData.isim || "Bu chatbot"}</p>
+                <DialogDescription className="mb-1 font-sans text-body text-white">
                     Chatbotunu satın al, sınırsız kullanımın kilidini aç!
                 </DialogDescription>
-                <p className="mb-4 text-[13px] text-white/50">
+                <p className="mb-4 text-body-sm text-white/50">
                     Haftalık veya aylık seçeneklerden dilediğini seçerek kullanım süreni bütçene göre belirleyebilirsin.
                 </p>
 
@@ -132,7 +132,7 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
                                 key={d.key}
                                 onClick={() => setSelectedDuration(d.key)}
                                 className={cn(
-                                    "w-full rounded-xl py-3.5 text-[13px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                    "w-full rounded-xl py-3.5 text-body-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                     isActive
                                         ? "bg-gradient-btn font-semibold text-white shadow-glow"
                                         : "bg-white/[0.06] font-normal text-white hover:bg-white/10",
@@ -149,7 +149,7 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fuchsia-500/15 text-fuchsia-300">
                             <Percent className="h-4 w-4" />
                         </span>
-                        <p className="text-[13px] leading-snug text-white/80">
+                        <p className="text-body-sm leading-snug text-white/80">
                             Aylık planı tercih et, haftalık toplam fiyata kıyasla
                             {' '}<b className="text-fuchsia-300">%{Math.round((1 - (botData.ucret_aylik / (botData.ucret_haftalik * 4))) * 100)} kâr</b> sağla.
                         </p>
@@ -157,9 +157,9 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
                 )}
 
                 <div className="my-3 flex items-center justify-between gap-3 rounded-xl border border-fuchsia-400/20 bg-white/5 px-4 py-3.5 text-left">
-                    <span className="text-[12px] text-white/60">
+                    <span className="text-label text-white/60">
                         {selectedDuration === '1_month' ? 'Bir aylık satış fiyatı: ' : 'Seçilen süreye göre satış fiyatı: '}
-                        <b className="text-[13px] text-white">{price}{priceType === 'TL' ? '₺' : priceType}</b>
+                        <b className="text-body-sm text-white">{price}{priceType === 'TL' ? '₺' : priceType}</b>
                     </span>
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fuchsia-500/15 text-fuchsia-300">
                         <Coins className="h-4 w-4" />
@@ -167,7 +167,7 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
                 </div>
 
                 {messageAllowance > 0 && (
-                    <div className="mt-1.5 flex items-start gap-2 text-[13px] text-white/85">
+                    <div className="mt-1.5 flex items-start gap-2 text-body-sm text-white/85">
                         <Gift className="mt-0.5 h-4 w-4 shrink-0 text-fuchsia-300" strokeWidth={1.75} />
                         <span>Bu chatbotu satın alırsan <b>{messageAllowance} mesaj hakkı</b> kazanırsın (sadece bu chatbotta geçerli).</span>
                     </div>

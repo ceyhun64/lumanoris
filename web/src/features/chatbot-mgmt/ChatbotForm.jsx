@@ -20,11 +20,11 @@ import {
 import { RefreshCw, Upload, ChevronDown, FileText, Tag, AlertCircle } from "lucide-react";
 
 const inputClass = (hasError) => cn(
-    "mb-6 w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3.5 font-sans text-[14px] text-white placeholder:text-white/35 outline-none ring-1 ring-inset ring-transparent transition-all duration-200 focus:border-fuchsia-400/30 focus:ring-fuchsia-400/20 max-md:mb-3",
+    "mb-6 w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3.5 font-sans text-body text-white placeholder:text-white/35 outline-none ring-1 ring-inset ring-transparent transition-all duration-200 focus:border-fuchsia-400/30 focus:ring-fuchsia-400/20 max-md:mb-3",
     hasError && "border-rose-400/50 bg-rose-400/[0.06]",
 );
 const textareaClass = (hasError) => cn(
-    "mb-6 min-h-[160px] w-full resize-y rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3.5 font-sans text-[14px] leading-relaxed text-white placeholder:text-white/35 outline-none ring-1 ring-inset ring-transparent transition-all duration-200 focus:border-fuchsia-400/30 focus:ring-fuchsia-400/20 max-md:mb-3",
+    "mb-6 min-h-[160px] w-full resize-y rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3.5 font-sans text-body leading-relaxed text-white placeholder:text-white/35 outline-none ring-1 ring-inset ring-transparent transition-all duration-200 focus:border-fuchsia-400/30 focus:ring-fuchsia-400/20 max-md:mb-3",
     hasError && "border-rose-400/50 bg-rose-400/[0.06]",
 );
 
@@ -518,17 +518,17 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                     </svg>
                 )}
             </div>
-            <p className="text-center font-display text-[12px] font-semibold leading-relaxed text-fuchsia-300/90">Chatbot Kapak <br /> Görseli Ekle</p>
+            <p className="text-center font-display text-label font-semibold leading-relaxed text-fuchsia-300/90">Chatbot Kapak <br /> Görseli Ekle</p>
         </div>
         <div className="flex flex-1 flex-col justify-between">
             <h4 className="mb-3 font-display text-sm font-semibold text-white">Kapak Görseli — Temel Tavsiyeler</h4>
             <ul className="mb-5 flex flex-col gap-1.5">
-                <li className="relative pl-3 text-[11px] leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Görsel kare formatta olmalıdır (ör. 1080x1080 px).</li>
-                <li className="relative pl-3 text-[11px] leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Kapak görseli içeriğin genel temasını yansıtmalı ve ana odak ortada kalmalıdır.</li>
-                <li className="relative pl-3 text-[11px] leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Görseldeki yazılar ve önemli detaylar kenarlara çok yakın olmamalıdır.</li>
-                <li className="relative pl-3 text-[11px] leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Yüksek çözünürlüklü ve bulanık olmayan görseller kullanılmalıdır.</li>
+                <li className="relative pl-3 text-caption leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Görsel kare formatta olmalıdır (ör. 1080x1080 px).</li>
+                <li className="relative pl-3 text-caption leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Kapak görseli içeriğin genel temasını yansıtmalı ve ana odak ortada kalmalıdır.</li>
+                <li className="relative pl-3 text-caption leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Görseldeki yazılar ve önemli detaylar kenarlara çok yakın olmamalıdır.</li>
+                <li className="relative pl-3 text-caption leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Yüksek çözünürlüklü ve bulanık olmayan görseller kullanılmalıdır.</li>
             </ul>
-            <label htmlFor="cover-upload" className="flex w-fit cursor-pointer items-center justify-center gap-2 rounded-lg border border-fuchsia-400/25 bg-fuchsia-400/[0.06] px-4 py-2.5 font-display text-[12px] font-semibold text-fuchsia-300 transition-all duration-200 hover:border-fuchsia-400/45 hover:bg-fuchsia-400/[0.1]">
+            <label htmlFor="cover-upload" className="flex w-fit cursor-pointer items-center justify-center gap-2 rounded-lg border border-fuchsia-400/25 bg-fuchsia-400/[0.06] px-4 py-2.5 font-display text-label font-semibold text-fuchsia-300 transition-all duration-200 hover:border-fuchsia-400/45 hover:bg-fuchsia-400/[0.1]">
                 <RefreshCw className="h-4 w-4" />
                 Kapak Görselini Değiştir
             </label>
@@ -553,17 +553,17 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                     </svg>
                 )}
             </div>
-            <p className="text-center font-display text-[12px] font-semibold leading-relaxed text-fuchsia-300/90">Profil Görseli <br /> Ekle</p>
+            <p className="text-center font-display text-label font-semibold leading-relaxed text-fuchsia-300/90">Profil Görseli <br /> Ekle</p>
         </div>
         <div className="flex flex-1 flex-col justify-between">
             <h4 className="mb-3 font-display text-sm font-semibold text-white">Profil Görseli — Temel Tavsiyeler</h4>
             <ul className="mb-5 flex flex-col gap-1.5">
-                <li className="relative pl-3 text-[11px] leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Görsel kare formatta olmalıdır (ör. 1080x1080 px).</li>
-                <li className="relative pl-3 text-[11px] leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Profil görseli kare yüklenir ancak sistemde daire şeklinde kırpılabilir.</li>
-                <li className="relative pl-3 text-[11px] leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Bu nedenle logo, yüz veya simge tam ortada ve net şekilde görünmelidir.</li>
-                <li className="relative pl-3 text-[11px] leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Kenarlara yerleştirilen öğeler kırpma sırasında kaybolabilir.</li>
+                <li className="relative pl-3 text-caption leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Görsel kare formatta olmalıdır (ör. 1080x1080 px).</li>
+                <li className="relative pl-3 text-caption leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Profil görseli kare yüklenir ancak sistemde daire şeklinde kırpılabilir.</li>
+                <li className="relative pl-3 text-caption leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Bu nedenle logo, yüz veya simge tam ortada ve net şekilde görünmelidir.</li>
+                <li className="relative pl-3 text-caption leading-relaxed text-white/60 before:absolute before:left-0 before:text-fuchsia-400 before:content-['•']">Kenarlara yerleştirilen öğeler kırpma sırasında kaybolabilir.</li>
             </ul>
-            <label htmlFor="profile-upload" className="flex w-fit cursor-pointer items-center justify-center gap-2 rounded-lg border border-fuchsia-400/25 bg-fuchsia-400/[0.06] px-4 py-2.5 font-display text-[12px] font-semibold text-fuchsia-300 transition-all duration-200 hover:border-fuchsia-400/45 hover:bg-fuchsia-400/[0.1]">
+            <label htmlFor="profile-upload" className="flex w-fit cursor-pointer items-center justify-center gap-2 rounded-lg border border-fuchsia-400/25 bg-fuchsia-400/[0.06] px-4 py-2.5 font-display text-label font-semibold text-fuchsia-300 transition-all duration-200 hover:border-fuchsia-400/45 hover:bg-fuchsia-400/[0.1]">
                 <RefreshCw className="h-4 w-4" />
                 Profil Görselini Değiştir
             </label>
@@ -591,7 +591,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                     maxLength="300"
                 ></textarea>
 
-                <h4 className="mb-5 flex items-center gap-2 font-display text-[11px] font-semibold uppercase tracking-[0.12em] text-fuchsia-400/70 max-md:mb-3">Davranış Ayarları</h4>
+                <h4 className="mb-5 flex items-center gap-2 font-display text-caption font-semibold uppercase tracking-[0.12em] text-fuchsia-400/70 max-md:mb-3">Davranış Ayarları</h4>
 
                 <div className="relative mb-6 w-full text-white transition-all duration-200 max-md:mb-3">
                     <div
@@ -601,7 +601,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                             showErrors && errors.category && "border-rose-400/50 bg-rose-400/[0.06]",
                         )}
                     >
-                        <span className="flex items-center gap-2 font-sans text-[14px] text-white/90">
+                        <span className="flex items-center gap-2 font-sans text-body text-white/90">
                             <Tag className="h-4 w-4 text-fuchsia-400/70" />
                             {selectedCategory ? selectedCategory.kategori_adi_tr : 'Kategori Seç'}
                         </span>
@@ -649,10 +649,10 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                                 <FileText className="h-[18px] w-[18px] text-fuchsia-300" />
                             </div>
                             <div>
-                                <p className="text-[12px] font-semibold text-fuchsia-300">
+                                <p className="text-label font-semibold text-fuchsia-300">
                                     Eğitim Verisi Birleştirildi
                                 </p>
-                                <p className="text-[11px] text-white/60">
+                                <p className="text-caption text-white/60">
                                     Toplam: <strong className="text-white/80">{formData.trainingPrompt.length.toLocaleString()}</strong> karakter
                                 </p>
                             </div>
@@ -661,7 +661,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                         <button
                             type="button"
                             onClick={() => setClearTrainingConfirmOpen(true)}
-                            className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-[12px] font-medium text-rose-400 transition-colors hover:bg-rose-500/20"
+                            className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-label font-medium text-rose-400 transition-colors hover:bg-rose-500/20"
                         >
                             Sıfırla
                         </button>
@@ -699,8 +699,8 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-fuchsia-500/10">
                         <Upload className="h-5 w-5 text-fuchsia-400" />
                     </div>
-                    <p className="font-display text-[13px] font-medium text-white/80">Dosyalarını buraya sürükle ve bırak</p>
-                    <p className="text-[11.5px] text-white/35">PDF veya görsel — otomatik olarak eğitim verisine eklenir</p>
+                    <p className="font-display text-body-sm font-medium text-white/80">Dosyalarını buraya sürükle ve bırak</p>
+                    <p className="text-caption text-white/35">PDF veya görsel — otomatik olarak eğitim verisine eklenir</p>
                 </div>
 
                 {/* Yüklenen Belge Kutusu (Konumu burası, inputun hemen üstü) */}
@@ -723,7 +723,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                         <button
                             type="button"
                             onClick={() => setUploadedFiles([])}
-                            className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 text-[13px] font-medium text-rose-400 transition-colors hover:bg-rose-500/20"
+                            className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 text-body-sm font-medium text-rose-400 transition-colors hover:bg-rose-500/20"
                         >
                             Dosyaları Temizle
                         </button>
@@ -741,8 +741,8 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
 
                 {!independentMode && (
                     <div className="my-5 w-full font-display text-white">
-                        <h3 className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-fuchsia-400/70">Fiyatlandırma</h3>
-                        <p className="mb-6 max-w-2xl text-[13.5px] leading-relaxed text-white/55">
+                        <h3 className="mb-1.5 text-caption font-semibold uppercase tracking-[0.12em] text-fuchsia-400/70">Fiyatlandırma</h3>
+                        <p className="mb-6 max-w-2xl text-body-sm leading-relaxed text-white/55">
                             Yapay zekânızın haftalık ve aylık satış fiyatını belirleyiniz. Belirlediğiniz ücretler, kullanıcıların yapay zekânıza erişim bedeli olarak uygulanır
                             ve kazanç hesabında esas alınır. Aylık fiyat için haftalık fiyatın 4 katının %10 indirimlisi önerilir, ancak dilediğiniz gibi düzenleyebilirsiniz.
                         </p>
@@ -753,7 +753,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                                     "flex flex-col rounded-2xl border border-white/[0.06] bg-white/[0.03] px-5 py-4 transition-all duration-200 focus-within:border-fuchsia-400/30",
                                     showErrors && errors.weeklyPrice && "border-rose-400/50 bg-rose-400/[0.06]",
                                 )}>
-                                    <label htmlFor="weeklyPrice" className="mb-1 text-[13px] text-white/60">Belirlediğin satış fiyatı (Bir Haftalık)</label>
+                                    <label htmlFor="weeklyPrice" className="mb-1 text-body-sm text-white/60">Belirlediğin satış fiyatı (Bir Haftalık)</label>
                                     <div className="flex items-center justify-between">
                                         <input
                                             id="weeklyPrice"
@@ -767,7 +767,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                                         <span className="ml-2.5 text-xl font-bold text-fuchsia-400">₺</span>
                                     </div>
                                 </div>
-                                <p className="text-[11px] text-white/40">
+                                <p className="text-caption text-white/40">
                                     İzin verilen aralık: {MIN_WEEKLY_PRICE}₺ – {MAX_WEEKLY_PRICE.toLocaleString('tr-TR')}₺
                                 </p>
 
@@ -775,7 +775,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                                     "flex flex-col rounded-2xl border border-white/[0.06] bg-white/[0.03] px-5 py-4 transition-all duration-200 focus-within:border-fuchsia-400/30",
                                     showErrors && errors.monthlyPrice && "border-rose-400/50 bg-rose-400/[0.06]",
                                 )}>
-                                    <label htmlFor="monthlyPrice" className="mb-1 text-[13px] text-white/60">Belirlediğin satış fiyatı (Bir Aylık)</label>
+                                    <label htmlFor="monthlyPrice" className="mb-1 text-body-sm text-white/60">Belirlediğin satış fiyatı (Bir Aylık)</label>
                                     <div className="flex items-center justify-between">
                                         <input
                                             id="monthlyPrice"
@@ -789,23 +789,23 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                                         <span className="ml-2.5 text-xl font-bold text-fuchsia-400">₺</span>
                                     </div>
                                 </div>
-                                <p className="text-[11px] text-white/40">
+                                <p className="text-caption text-white/40">
                                     İzin verilen aralık: {MIN_WEEKLY_PRICE}₺ – {(MAX_WEEKLY_PRICE * 4).toLocaleString('tr-TR')}₺
                                 </p>
                             </div>
 
                             <div className="relative w-full flex-1 overflow-hidden rounded-2xl border border-fuchsia-400/15 bg-gradient-to-br from-[#1a1030] via-[#150d28] to-[#0d0a1c] p-5">
                                 <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-fuchsia-600/[0.08] blur-[70px]" />
-                                <p className="relative flex items-center justify-between text-[13.5px] text-white/60">
+                                <p className="relative flex items-center justify-between text-body-sm text-white/60">
                                     Haftalık satıştan kazancın
                                     <span className="font-display text-lg font-bold text-white">{(formData.weeklyPrice * SELLER_COMMISSION_WEEKLY).toFixed(2)} ₺</span>
                                 </p>
-                                <p className="relative mt-3 flex items-center justify-between text-[13.5px] text-white/60">
+                                <p className="relative mt-3 flex items-center justify-between text-body-sm text-white/60">
                                     Aylık satıştan kazancın
                                     <span className="font-display text-lg font-bold text-white">{(formData.monthlyPrice * SELLER_COMMISSION_MONTHLY).toFixed(2)} ₺</span>
                                 </p>
                                 {formData.weeklyPrice > 0 && (
-                                    <p className="relative mt-4 border-t border-white/[0.06] pt-4 text-[13px] leading-relaxed text-white/70">
+                                    <p className="relative mt-4 border-t border-white/[0.06] pt-4 text-body-sm leading-relaxed text-white/70">
                                         Alıcıların bu fiyatla, 1 haftalık satın almada <b className="text-fuchsia-300">{calculateMessageAllowance(Number(formData.weeklyPrice))} mesaj hakkı</b>
                                         {formData.monthlyPrice > 0 && (
                                             <>, 1 aylık satın almada <b className="text-fuchsia-300">{calculateMessageAllowance(Number(formData.monthlyPrice) * 0.95)} mesaj hakkı</b></>
@@ -821,17 +821,17 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                     <div className="mb-4 flex w-full items-start gap-3 rounded-2xl border border-rose-400/25 bg-rose-400/[0.06] p-4">
                         <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
                         <div>
-                            <h4 className="mb-2 font-display text-[13px] font-semibold text-rose-400">Lütfen aşağıdaki hataları düzeltin</h4>
+                            <h4 className="mb-2 font-display text-body-sm font-semibold text-rose-400">Lütfen aşağıdaki hataları düzeltin</h4>
                             <ul className="flex flex-col gap-1">
-                                {errors.botName && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.botName}</li>}
-                                {errors.description && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.description}</li>}
-                                {errors.category && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.category}</li>}
-                                {errors.stylePrompt && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.stylePrompt}</li>}
-                                {errors.message && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.message}</li>}
-                                {errors.coverImage && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.coverImage}</li>}
-                                {errors.profileImage && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.profileImage}</li>}
-                                {errors.weeklyPrice && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.weeklyPrice}</li>}
-                                {errors.monthlyPrice && <li className="text-[13px] leading-relaxed text-rose-300/90">• {errors.monthlyPrice}</li>}
+                                {errors.botName && <li className="text-body-sm leading-relaxed text-rose-300/90">• {errors.botName}</li>}
+                                {errors.description && <li className="text-body-sm leading-relaxed text-rose-300/90">• {errors.description}</li>}
+                                {errors.category && <li className="text-body-sm leading-relaxed text-rose-300/90">• {errors.category}</li>}
+                                {errors.stylePrompt && <li className="text-body-sm leading-relaxed text-rose-300/90">• {errors.stylePrompt}</li>}
+                                {errors.message && <li className="text-body-sm leading-relaxed text-rose-300/90">• {errors.message}</li>}
+                                {errors.coverImage && <li className="text-body-sm leading-relaxed text-rose-300/90">• {errors.coverImage}</li>}
+                                {errors.profileImage && <li className="text-body-sm leading-relaxed text-rose-300/90">• {errors.profileImage}</li>}
+                                {errors.weeklyPrice && <li className="text-body-sm leading-relaxed text-rose-300/90">• {errors.weeklyPrice}</li>}
+                                {errors.monthlyPrice && <li className="text-body-sm leading-relaxed text-rose-300/90">• {errors.monthlyPrice}</li>}
                             </ul>
                         </div>
                     </div>

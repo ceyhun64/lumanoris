@@ -351,7 +351,7 @@ export default function BankInfo({ userId }) {
                 tamamen bağımsız olarak dolduruluyor ve kaydediliyor. */}
             <div className="flex flex-col rounded-xl border border-transparent p-4">
                 <h3 className="mb-1.5 font-display text-base font-semibold text-white">Teslimat / Fatura Adresi</h3>
-                <p className="mb-5 text-[13px] text-white/45">Satın alma işlemlerinde kullanılır. Kimlik veya banka bilgisi gerektirmez.</p>
+                <p className="mb-5 text-body-sm text-white/45">Satın alma işlemlerinde kullanılır. Kimlik veya banka bilgisi gerektirmez.</p>
 
                 <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                     <div className="flex flex-col">
@@ -375,7 +375,7 @@ export default function BankInfo({ userId }) {
                                 })}
                             </SelectContent>
                         </Select>
-                        {addressErrors.il && <span className="mt-0.5 text-[11px] text-rose-400">{addressErrors.il}</span>}
+                        {addressErrors.il && <span className="mt-0.5 text-caption text-rose-400">{addressErrors.il}</span>}
                     </div>
 
                     <div className="flex flex-col">
@@ -399,21 +399,21 @@ export default function BankInfo({ userId }) {
                                 })}
                             </SelectContent>
                         </Select>
-                        {addressErrors.ilce && <span className="mt-0.5 text-[11px] text-rose-400">{addressErrors.ilce}</span>}
+                        {addressErrors.ilce && <span className="mt-0.5 text-caption text-rose-400">{addressErrors.ilce}</span>}
                     </div>
                 </div>
 
                 <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
                     <div className="flex flex-col">
                         <Input type="text" className={cn(addressErrors.mahalle && "border-rose-400/60")} name="mahalle" placeholder="Mahalle" value={formData.mahalle || ""} onChange={handleChange} disabled={!addressEditing} />
-                        {addressErrors.mahalle && <span className="mt-0.5 text-[11px] text-rose-400">{addressErrors.mahalle}</span>}
+                        {addressErrors.mahalle && <span className="mt-0.5 text-caption text-rose-400">{addressErrors.mahalle}</span>}
                     </div>
                     <div className="flex flex-col">
                         <Input type="text" name="cadde" placeholder="Cadde" value={formData.cadde || ""} onChange={handleChange} disabled={!addressEditing} />
                     </div>
                     <div className="flex flex-col">
                         <Input type="text" className={cn(addressErrors.sokak && "border-rose-400/60")} name="sokak" placeholder="Sokak" value={formData.sokak || ""} onChange={handleChange} disabled={!addressEditing} />
-                        {addressErrors.sokak && <span className="mt-0.5 text-[11px] text-rose-400">{addressErrors.sokak}</span>}
+                        {addressErrors.sokak && <span className="mt-0.5 text-caption text-rose-400">{addressErrors.sokak}</span>}
                     </div>
                     <div className="flex flex-col">
                         <Input type="text" name="bina_no" placeholder="Bina No" value={formData.bina_no || ""} onChange={handleChange} disabled={!addressEditing} />
@@ -427,10 +427,10 @@ export default function BankInfo({ userId }) {
                 </div>
 
                 <Textarea name="address" className={cn("mt-2.5 min-h-[100px]", addressErrors.address && "border-rose-400/60")} placeholder="Adres Bilgileri" value={formData.address || ""} onChange={handleChange} disabled={!addressEditing}></Textarea>
-                {addressErrors.address && <span className="mt-0.5 text-[11px] text-rose-400">{addressErrors.address}</span>}
+                {addressErrors.address && <span className="mt-0.5 text-caption text-rose-400">{addressErrors.address}</span>}
 
                 <div className="mt-4 flex flex-col items-start gap-2.5">
-                    {addressFormError && <div className="text-[13px] text-rose-400">{addressFormError}</div>}
+                    {addressFormError && <div className="text-body-sm text-rose-400">{addressFormError}</div>}
                     <Button onClick={handleSaveAddress} className="h-auto border border-transparent px-5 py-2.5">
                         {addressEditing ? "Adresi Kaydet" : "Düzenle"}
                     </Button>
@@ -439,10 +439,10 @@ export default function BankInfo({ userId }) {
 
             <div className="flex flex-col rounded-xl border border-transparent p-4">
             <h3 className="mb-1.5 font-display text-base font-semibold text-white">Banka Bilgileri</h3>
-            <p className="mb-5 text-[13px] text-white/45">Yalnızca pazaryerinde chatbot satıp gelir elde etmek istiyorsan gerekli.</p>
+            <p className="mb-5 text-body-sm text-white/45">Yalnızca pazaryerinde chatbot satıp gelir elde etmek istiyorsan gerekli.</p>
 
             {!sellerStatus.loading && (
-                <div className={cn("mb-4 flex flex-wrap items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-[13px]", SELLER_BANNER_STYLES[sellerStatus.status])}>
+                <div className={cn("mb-4 flex flex-wrap items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-body-sm", SELLER_BANNER_STYLES[sellerStatus.status])}>
                     {sellerStatus.status === "active" && (
                         <span>Pazaryeri Satıcısı ✓ <small className="opacity-70">GUID: {sellerStatus.guid}</small></span>
                     )}
@@ -539,7 +539,7 @@ export default function BankInfo({ userId }) {
             />
 
             <div className="mt-4 flex flex-col items-start gap-2.5">
-                {formError && <div className="text-[13px] text-rose-400">{formError}</div>}
+                {formError && <div className="text-body-sm text-rose-400">{formError}</div>}
                 <Button onClick={handleSubmit} className="h-auto border border-transparent px-5 py-2.5">
                     {isEditing ? "Kaydet" : "Düzenle"}
                 </Button>

@@ -191,7 +191,7 @@ function EditableField({ fields, onSubmit }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {fields.map((field) => (
           <div key={field.name} className="space-y-1.5">
-            <label className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
+            <label className="text-caption font-semibold uppercase tracking-wider text-white/50">
               {field.placeholder}
             </label>
             <input
@@ -478,7 +478,7 @@ function ContactForm() {
       </h4>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
+          <label className="text-caption font-semibold uppercase tracking-wider text-white/50">
             Ad Soyad
           </label>
           <input
@@ -491,7 +491,7 @@ function ContactForm() {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
+          <label className="text-caption font-semibold uppercase tracking-wider text-white/50">
             E-posta
           </label>
           <input
@@ -505,7 +505,7 @@ function ContactForm() {
         </div>
       </div>
       <div className="space-y-1.5">
-        <label className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
+        <label className="text-caption font-semibold uppercase tracking-wider text-white/50">
           Konu
         </label>
         <input
@@ -518,7 +518,7 @@ function ContactForm() {
         />
       </div>
       <div className="space-y-1.5">
-        <label className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
+        <label className="text-caption font-semibold uppercase tracking-wider text-white/50">
           Mesajınız
         </label>
         <textarea
@@ -646,7 +646,7 @@ export default function App() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/[0.08] pb-6">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 text-[11px] font-semibold text-fuchsia-300 tracking-wider uppercase">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 text-caption font-semibold text-fuchsia-300 tracking-wider uppercase">
                 <Sparkles className="h-3 w-3" /> Kontrol Paneli
               </span>
             </div>
@@ -680,10 +680,10 @@ export default function App() {
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-fuchsia-400">
+                <span className="text-caption font-bold uppercase tracking-widest text-fuchsia-400">
                   Mevcut Plan
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-medium text-white/80">
+                <span className="px-2 py-0.5 rounded-full bg-white/10 text-caption font-medium text-white/80">
                   Aktif
                 </span>
               </div>
@@ -717,7 +717,7 @@ export default function App() {
           >
             {/* Sidebar Navigation */}
             <div className="lg:col-span-3 space-y-1 bg-white/[0.02] border border-white/[0.08] p-3 rounded-3xl backdrop-blur-xl">
-              <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white/40">
+              <div className="px-3 py-2 text-caption font-bold uppercase tracking-wider text-white/40">
                 Navigasyon
               </div>
               <TabsList className="flex flex-col w-full h-auto bg-transparent p-0 space-y-1">

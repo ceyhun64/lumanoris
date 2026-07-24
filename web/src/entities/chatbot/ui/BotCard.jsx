@@ -105,8 +105,8 @@ export default function BotCard({ bot, userId, onRemove }) {
                             <Image src={avatar} alt="Avatar" width={32} height={32} className="w-full h-full object-cover" />
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[15px] font-semibold text-white/90 leading-snug truncate">{title}</p>
-                            <p className="text-[13px] text-white/45 truncate">{author}</p>
+                            <p className="text-body-lg font-semibold text-white/90 leading-snug truncate">{title}</p>
+                            <p className="text-body-sm text-white/45 truncate">{author}</p>
                         </div>
                     </div>
 
@@ -142,7 +142,7 @@ export default function BotCard({ bot, userId, onRemove }) {
                     </DropdownMenu>
                 </div>
 
-                <p className="text-[12.5px] text-white/38 leading-none">
+                <p className="text-label text-white/38 leading-none">
                     {dialogues} Diyalog · {time} önce yayımlandı
                 </p>
             </div>

@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   Filter,
 } from "lucide-react";
+import { FilterPopover2026 } from "@/shared/ui/filter-popover";
 
 // Safe navigation hook for interactive preview environments
 function useRouter() {
@@ -127,6 +128,7 @@ export default function SatinAldiklarim() {
   const [userId, setUserId] = useState(null);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -143,15 +145,10 @@ export default function SatinAldiklarim() {
           credentials: "include",
         });
         const result = JSON.parse(await res.text());
-        if (result.authenticated) {
-          setUserId(result.user_id);
-        } else {
-          // Demo fallback for presentation mode
-          setUserId("demo_user_123");
-        }
+        setUserId(result.authenticated ? result.user_id : null);
       } catch (err) {
         console.error("Session check error:", err);
-        setUserId("demo_user_123");
+        setUserId(null);
       } finally {
         setSessionChecked(true);
       }
@@ -176,51 +173,20 @@ export default function SatinAldiklarim() {
           if (data?.success && Array.isArray(data.subscriptions)) {
             setBots(data.subscriptions);
           } else {
-            // Mock preview fallback if backend endpoint returns empty array
-            setBots([
-              {
-                id: 101,
-                chatbot_id: "bot_101",
-                isim: "E-Ticaret Müşteri Asistanı Pro",
-                kapak_fotografi:
-                  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
-                profil_fotografi:
-                  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-                kategori_id: "1",
-                is_active: 1,
-                expiry_date: "2026-11-20 23:59:59",
-              },
-              {
-                id: 102,
-                chatbot_id: "bot_102",
-                isim: "Hukuk & Mevzuat Danışmanı AI",
-                kapak_fotografi:
-                  "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=800&auto=format&fit=crop&q=80",
-                profil_fotografi:
-                  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-                kategori_id: "2",
-                is_active: 1,
-                expiry_date: "2026-08-15 12:00:00",
-              },
-              {
-                id: 103,
-                chatbot_id: "bot_103",
-                isim: "SaaS Kod Inceleme & Reviewer",
-                kapak_fotografi:
-                  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
-                profil_fotografi:
-                  "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
-                kategori_id: "3",
-                is_active: 0,
-                expiry_date: "2026-01-10 00:00:00",
-              },
-            ]);
+            setBots([]);
+            setFetchError(data?.message || "Satın alınanlar yüklenemedi.");
           }
         } catch (e) {
           console.error("Subscription parse error:", e);
+          setBots([]);
+          setFetchError("Beklenmeyen sunucu yanıtı.");
         }
       })
-      .catch((err) => console.error("Satın alınanlar yüklenemedi:", err));
+      .catch((err) => {
+        console.error("Satın alınanlar yüklenemedi:", err);
+        setBots([]);
+        setFetchError("Sunucuya bağlanılamadı.");
+      });
 
     const fetchCategories = fetch("/api/content/getcategories.php")
       .then((res) => res.text())
@@ -229,11 +195,7 @@ export default function SatinAldiklarim() {
           const data = JSON.parse(text);
           if (Array.isArray(data)) setCategories(data);
         } catch (e) {
-          setCategories([
-            { id: "1", kategori_adi_tr: "Müşteri Desteği" },
-            { id: "2", kategori_adi_tr: "Hukuk & Finans" },
-            { id: "3", kategori_adi_tr: "Yazılım & Teknik" },
-          ]);
+          console.error("Kategori parse hatası:", e);
         }
       })
       .catch((err) => console.error("Kategori fetch hatası:", err));
@@ -318,7 +280,7 @@ export default function SatinAldiklarim() {
         {}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-white/[0.08] bg-zinc-900/60 backdrop-blur-xl p-4 space-y-1">
-            <p className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">
+            <p className="text-caption font-mono text-zinc-500 uppercase tracking-wider">
               Toplam Bot
             </p>
             <p className="text-2xl font-bold text-white tracking-tight">
@@ -327,7 +289,7 @@ export default function SatinAldiklarim() {
           </div>
 
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.03] backdrop-blur-xl p-4 space-y-1">
-            <p className="text-[11px] font-mono text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+            <p className="text-caption font-mono text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5" /> Aktif Lisanslar
             </p>
             <p className="text-2xl font-bold text-emerald-300 tracking-tight">
@@ -336,7 +298,7 @@ export default function SatinAldiklarim() {
           </div>
 
           <div className="rounded-2xl border border-rose-500/20 bg-rose-500/[0.03] backdrop-blur-xl p-4 space-y-1">
-            <p className="text-[11px] font-mono text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+            <p className="text-caption font-mono text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
               <XCircle className="w-3.5 h-3.5" /> Süresi Dolan
             </p>
             <p className="text-2xl font-bold text-rose-300 tracking-tight">
@@ -345,7 +307,7 @@ export default function SatinAldiklarim() {
           </div>
 
           <div className="rounded-2xl border border-white/[0.08] bg-zinc-900/60 backdrop-blur-xl p-4 space-y-1">
-            <p className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+            <p className="text-caption font-mono text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-violet-400" /> Koruma
               Tipi
             </p>
@@ -356,7 +318,7 @@ export default function SatinAldiklarim() {
         </div>
 
         {}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-2 rounded-2xl border border-white/[0.08] bg-zinc-900/80 backdrop-blur-xl">
+        <div className="relative z-20 flex flex-col md:flex-row items-center justify-between gap-4 p-2 rounded-2xl border border-white/[0.08] bg-zinc-900/80 backdrop-blur-xl">
           {/* Search Input */}
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
@@ -380,18 +342,20 @@ export default function SatinAldiklarim() {
           {/* Filter Options */}
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
             {/* Category Dropdown */}
-            <select
+            <FilterPopover2026
+              icon={SlidersHorizontal}
+              prefixLabel="Kategori:"
+              menuLabel="Kategori Seç"
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-black/40 border border-white/[0.08] text-xs text-zinc-300 rounded-xl px-3 py-2.5 focus:outline-none focus:border-fuchsia-500/50 cursor-pointer"
-            >
-              <option value="all">Tüm Kategoriler</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.kategori_adi_tr}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedCategory}
+              options={[
+                { id: "all", label: "Tüm Kategoriler" },
+                ...categories.map((c) => ({
+                  id: c.id,
+                  label: c.kategori_adi_tr,
+                })),
+              ]}
+            />
 
             {/* Status Segment Control */}
             <div className="flex items-center bg-black/50 p-1 rounded-xl border border-white/[0.08] text-xs font-medium">
@@ -441,7 +405,7 @@ export default function SatinAldiklarim() {
                     : "text-zinc-500 hover:text-zinc-300",
                 )}
               >
-                <LayoutGrid className="w-4 h-4" />
+                <LayoutGrid className="w-7 h-7" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
@@ -452,13 +416,19 @@ export default function SatinAldiklarim() {
                     : "text-zinc-500 hover:text-zinc-300",
                 )}
               >
-                <List className="w-4 h-4" />
+                <List className="w-7 h-7" />
               </button>
             </div>
           </div>
         </div>
 
         {}
+        {fetchError && (
+          <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-300">
+            {fetchError}
+          </div>
+        )}
+
         {filteredBots.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-white/10 bg-zinc-900/30 p-12 text-center space-y-4 animate-in fade-in duration-200">
             <div className="w-16 h-16 rounded-2xl bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20 mx-auto flex items-center justify-center">
@@ -536,7 +506,7 @@ export default function SatinAldiklarim() {
                       <div className="absolute right-3 top-3">
                         <span
                           className={cn(
-                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border backdrop-blur-md shadow-md",
+                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption font-semibold border backdrop-blur-md shadow-md",
                             active
                               ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
                               : "bg-rose-500/20 text-rose-300 border-rose-500/30",
@@ -566,7 +536,7 @@ export default function SatinAldiklarim() {
 
                     {/* Card Content Body */}
                     <div className="p-4 pt-6 space-y-2">
-                      <div className="flex items-center gap-1.5 text-[11px] font-mono text-fuchsia-400">
+                      <div className="flex items-center gap-1.5 text-caption font-mono text-fuchsia-400">
                         <Zap className="w-3 h-3" />
                         <span>#{categoryLabel}</span>
                       </div>
@@ -575,7 +545,7 @@ export default function SatinAldiklarim() {
                         {bot.isim}
                       </h3>
 
-                      <p className="text-[11px] text-zinc-400 flex items-center gap-1 font-mono">
+                      <p className="text-caption text-zinc-400 flex items-center gap-1 font-mono">
                         <Clock className="w-3 h-3 text-zinc-500" />
                         <span>
                           {active ? "Bitiş" : "Sona Erdi"}:{" "}
@@ -588,11 +558,11 @@ export default function SatinAldiklarim() {
                   {/* Card Bottom Action */}
                   <div className="p-4 pt-2 border-t border-white/[0.06] mt-2 flex items-center justify-between">
                     {active && daysLeft !== null && daysLeft > 0 ? (
-                      <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                      <span className="text-caption font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                         {daysLeft} gün kaldı
                       </span>
                     ) : (
-                      <span className="text-[10px] font-mono text-zinc-500">
+                      <span className="text-caption font-mono text-zinc-500">
                         ID: {bot.chatbot_id}
                       </span>
                     )}
@@ -634,7 +604,7 @@ export default function SatinAldiklarim() {
                         <h4 className="text-sm font-bold text-white group-hover:text-fuchsia-300 transition-colors">
                           {bot.isim}
                         </h4>
-                        <span className="text-[10px] font-mono text-fuchsia-400 bg-fuchsia-500/10 px-2 py-0.5 rounded border border-fuchsia-500/20">
+                        <span className="text-caption font-mono text-fuchsia-400 bg-fuchsia-500/10 px-2 py-0.5 rounded border border-fuchsia-500/20">
                           {categoryLabel}
                         </span>
                       </div>
@@ -649,7 +619,7 @@ export default function SatinAldiklarim() {
                   <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 border-white/5 pt-3 sm:pt-0">
                     <span
                       className={cn(
-                        "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border",
+                        "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-caption font-semibold border",
                         active
                           ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                           : "bg-rose-500/10 text-rose-400 border-rose-500/20",

@@ -94,7 +94,7 @@ export default function PublishModal({
                         <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> Chatbot Yayınlandı
                     </div>
                 )}
-                <DialogTitle className="mb-1 text-[16px] font-semibold text-white">Herkese Açık Yayınla</DialogTitle>
+                <DialogTitle className="mb-1 text-title-sm font-semibold text-white">Herkese Açık Yayınla</DialogTitle>
 
                 {seller.loading ? (
                     <div className="flex flex-col gap-2.5 py-3">
@@ -103,7 +103,7 @@ export default function PublishModal({
                     </div>
                 ) : seller.status !== 'active' ? (
                     <>
-                        <DialogDescription className="mb-4 font-sans text-[14px] font-normal leading-6 text-white/60">
+                        <DialogDescription className="mb-4 font-sans text-body font-normal leading-6 text-white/60">
                             Chatbotunuzu herkese açık yayınlamak için önce pazaryeri satıcı kaydınızı tamamlamalısınız.
                         </DialogDescription>
                         <SellerOnboardingWizard
@@ -114,53 +114,53 @@ export default function PublishModal({
                     </>
                 ) : (
                     <>
-                        <DialogDescription className="mb-5 font-sans text-[14px] font-normal leading-6 text-white/60">
+                        <DialogDescription className="mb-5 font-sans text-body font-normal leading-6 text-white/60">
                             Chatbotunuzu herkese açık yayınlamak için satış fiyatını belirleyin.
                         </DialogDescription>
 
                         <div className="mb-1.5 flex items-center justify-between gap-2 rounded-xl bg-luma-input px-5 py-4">
                             <div className="flex flex-col gap-0.5">
-                                <span className="text-[13px] text-white/85">Bir Haftalık Satış Fiyatı</span>
+                                <span className="text-body-sm text-white/85">Bir Haftalık Satış Fiyatı</span>
                                 <input
                                     type="number"
                                     value={wPrice}
                                     onChange={(e) => handleWeeklyChange(e.target.value)}
                                     placeholder="0.00"
-                                    className="w-full bg-transparent font-display text-[17px] font-medium text-white placeholder:text-white/30 focus:outline-none"
+                                    className="w-full bg-transparent font-display text-title-sm font-medium text-white placeholder:text-white/30 focus:outline-none"
                                 />
                             </div>
                             <span className="shrink-0 text-lg font-bold text-fuchsia-400">₺</span>
                         </div>
-                        <p className="mb-4 text-[11px] text-white/40">
+                        <p className="mb-4 text-caption text-white/40">
                             İzin verilen aralık: {MIN_WEEKLY_PRICE}₺ – {MAX_WEEKLY_PRICE.toLocaleString('tr-TR')}₺
                         </p>
 
                         <div className="mb-1.5 flex items-center justify-between gap-2 rounded-xl bg-luma-input px-5 py-4">
                             <div className="flex flex-col gap-0.5">
-                                <span className="text-[13px] text-white/85">Bir Aylık Satış Fiyatı</span>
+                                <span className="text-body-sm text-white/85">Bir Aylık Satış Fiyatı</span>
                                 <input
                                     type="number"
                                     value={mPrice}
                                     onChange={(e) => { setMonthlyTouched(true); setMPrice(e.target.value); }}
                                     placeholder="0.00"
-                                    className="w-full bg-transparent font-display text-[17px] font-medium text-white placeholder:text-white/30 focus:outline-none"
+                                    className="w-full bg-transparent font-display text-title-sm font-medium text-white placeholder:text-white/30 focus:outline-none"
                                 />
                             </div>
                             <span className="shrink-0 text-lg font-bold text-fuchsia-400">₺</span>
                         </div>
-                        <p className="mb-4 text-[11px] text-white/40">
+                        <p className="mb-4 text-caption text-white/40">
                             İzin verilen aralık: {MIN_WEEKLY_PRICE}₺ – {(MAX_WEEKLY_PRICE * 4).toLocaleString('tr-TR')}₺
                             {' · '}Önerilen: haftalık fiyatın 4 katının %10 indirimlisi
                         </p>
 
                         {errorMsg && (
-                            <div className="mb-4 text-[13px] text-rose-400">{errorMsg}</div>
+                            <div className="mb-4 text-body-sm text-rose-400">{errorMsg}</div>
                         )}
 
                         {weekly > 0 && (
                             <div className="mb-6 flex flex-col gap-1">
-                                <p className="text-[13px] text-fuchsia-400">Haftalık Satıştan Kazancın: <span className="font-medium text-white">{weeklyEarning}₺</span></p>
-                                <p className="text-[13px] text-fuchsia-400">Aylık Satıştan Kazancın: <span className="font-medium text-white">{monthlyEarning}₺</span></p>
+                                <p className="text-body-sm text-fuchsia-400">Haftalık Satıştan Kazancın: <span className="font-medium text-white">{weeklyEarning}₺</span></p>
+                                <p className="text-body-sm text-fuchsia-400">Aylık Satıştan Kazancın: <span className="font-medium text-white">{monthlyEarning}₺</span></p>
                             </div>
                         )}
 

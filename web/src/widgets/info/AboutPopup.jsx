@@ -15,7 +15,7 @@ export default function AboutPopup({ onClose }) {
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-[560px] bg-luma-card border-transparent p-6">
-        <DialogTitle className="mb-4 text-[16px]">
+        <DialogTitle className="mb-4 text-title-sm">
           {aboutContent.title}
         </DialogTitle>
 

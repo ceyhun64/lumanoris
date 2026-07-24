@@ -69,13 +69,13 @@ export default function BuyProducerAccountModal({ isOpen, onClose, userId, onPur
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-[400px] bg-luma-card border-transparent p-6">
-                <DialogTitle className="mb-1 text-[17px]">Lumanoris Üretici Hesabı</DialogTitle>
-                <p className="mb-4 text-[13px] text-white/70">
+                <DialogTitle className="mb-1 text-title-sm">Lumanoris Üretici Hesabı</DialogTitle>
+                <p className="mb-4 text-body-sm text-white/70">
                     750₺/ay — 5 herkese açık + 2 bağımsız chatbot oluşturma hakkı.
                 </p>
 
                 {successMsg ? (
-                    <div className="text-[14px] text-emerald-400">{successMsg}</div>
+                    <div className="text-body text-emerald-400">{successMsg}</div>
                 ) : (
                     <>
                         <Input
@@ -106,21 +106,21 @@ export default function BuyProducerAccountModal({ isOpen, onClose, userId, onPur
                             className="mb-4"
                         />
 
-                        {errorMsg && <div className="mb-3 text-[13px] text-rose-400">{errorMsg}</div>}
+                        {errorMsg && <div className="mb-3 text-body-sm text-rose-400">{errorMsg}</div>}
 
                         <div className="flex gap-2.5">
                             <Button
                                 onClick={onClose}
                                 disabled={submitting}
                                 variant="ghost"
-                                className="h-auto flex-1 bg-white/[0.06] py-2.5 text-[14px] hover:bg-white/10"
+                                className="h-auto flex-1 bg-white/[0.06] py-2.5 text-body hover:bg-white/10"
                             >
                                 İptal
                             </Button>
                             <Button
                                 onClick={handleSubmit}
                                 disabled={submitting}
-                                className="h-auto flex-[2] py-2.5 text-[14px]"
+                                className="h-auto flex-[2] py-2.5 text-body"
                             >
                                 {submitting ? 'İşleniyor...' : '750₺ Öde'}
                             </Button>

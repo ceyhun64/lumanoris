@@ -28,6 +28,7 @@ import {
   Bot,
   UserCheck,
 } from "lucide-react";
+import { FilterPopover2026 } from "@/shared/ui/filter-popover";
 
 // Safe router hook for interactive preview environments
 function useRouter() {
@@ -138,7 +139,7 @@ function UnfollowModal({ bot, isOpen, onClose, onConfirm }) {
           />
           <div>
             <p className="text-xs font-bold text-white">{bot.isim}</p>
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-caption text-zinc-500">
               Geliştirici: {bot.gelistirici_adi || "Bilinmiyor"}
             </p>
           </div>
@@ -185,7 +186,7 @@ function BotQuickDetailModal({ bot, isOpen, onClose, router }) {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-bold text-white">{bot.isim}</h3>
-                <span className="text-[10px] font-mono text-fuchsia-400 bg-fuchsia-500/10 px-2 py-0.5 rounded border border-fuchsia-500/20">
+                <span className="text-caption font-mono text-fuchsia-400 bg-fuchsia-500/10 px-2 py-0.5 rounded border border-fuchsia-500/20">
                   {bot.kategori_adi || "Genel AI"}
                 </span>
               </div>
@@ -230,7 +231,7 @@ function BotQuickDetailModal({ bot, isOpen, onClose, router }) {
         {/* Technical Specs */}
         <div className="grid grid-cols-3 gap-3">
           <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-center">
-            <p className="text-[10px] text-zinc-500 uppercase font-mono">
+            <p className="text-caption text-zinc-500 uppercase font-mono">
               Puan
             </p>
             <p className="text-sm font-bold text-amber-400 flex items-center justify-center gap-1 mt-0.5">
@@ -239,7 +240,7 @@ function BotQuickDetailModal({ bot, isOpen, onClose, router }) {
             </p>
           </div>
           <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-center">
-            <p className="text-[10px] text-zinc-500 uppercase font-mono">
+            <p className="text-caption text-zinc-500 uppercase font-mono">
               Takipçi
             </p>
             <p className="text-sm font-bold text-white mt-0.5">
@@ -247,7 +248,7 @@ function BotQuickDetailModal({ bot, isOpen, onClose, router }) {
             </p>
           </div>
           <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-center">
-            <p className="text-[10px] text-zinc-500 uppercase font-mono">
+            <p className="text-caption text-zinc-500 uppercase font-mono">
               Model
             </p>
             <p className="text-xs font-bold text-violet-300 mt-0.5">
@@ -279,6 +280,7 @@ export default function Following() {
   const [userId, setUserId] = useState(null);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   // Search, Filter & View States
   const [searchQuery, setSearchQuery] = useState("");
@@ -305,15 +307,10 @@ export default function Following() {
           credentials: "include",
         });
         const result = JSON.parse(await res.text());
-        if (result.authenticated) {
-          setUserId(result.user_id);
-        } else {
-          // Fallback demo user ID for preview environment
-          setUserId("demo_user_123");
-        }
+        setUserId(result.authenticated ? result.user_id : null);
       } catch (err) {
         console.error("Session check error:", err);
-        setUserId("demo_user_123");
+        setUserId(null);
       } finally {
         setSessionChecked(true);
       }
@@ -339,87 +336,20 @@ export default function Following() {
           if (data?.success && Array.isArray(data.bots)) {
             setFollowedBots(data.bots);
           } else {
-            // High-quality Fallback Mock Data for interactive preview
-            setFollowedBots([
-              {
-                id: 201,
-                chatbot_id: "bot_finans_01",
-                isim: "Finans & Borsa Analisti Pro",
-                aciklama:
-                  "Anlık borsa hareketleri, bilanço analizleri ve kripto trendleri üzerine uzmanlaşmış AI finans danışmanı.",
-                kapak_fotografi:
-                  "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop&q=80",
-                profil_fotografi:
-                  "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-                kategori_id: "2",
-                kategori_adi: "Finans & Borsa",
-                gelistirici_adi: "Nexus Financial AI",
-                puan: "4.9",
-                takipci_sayisi: "2,840",
-                is_following: true,
-                created_at: "2026-06-10",
-              },
-              {
-                id: 202,
-                chatbot_id: "bot_seo_02",
-                isim: "SEO & İçerik Mimarı GPT",
-                aciklama:
-                  "Arama motoru algoritmalarına tam uyumlu blog yazıları, semantik anahtar kelime kümelemeleri üretir.",
-                kapak_fotografi:
-                  "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80",
-                profil_fotografi:
-                  "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80",
-                kategori_id: "1",
-                kategori_adi: "Pazarlama & SEO",
-                gelistirici_adi: "GrowthHack Labs",
-                puan: "4.8",
-                takipci_sayisi: "1,920",
-                is_following: true,
-                created_at: "2026-05-18",
-              },
-              {
-                id: 203,
-                chatbot_id: "bot_ui_03",
-                isim: "UI/UX & React Kod Asistanı",
-                aciklama:
-                  "Tailwind CSS ve modern React bileşenleri mimarisi üreten kıdemli ön yüz geliştirici botu.",
-                kapak_fotografi:
-                  "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80",
-                profil_fotografi:
-                  "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
-                kategori_id: "3",
-                kategori_adi: "Yazılım & Kodlama",
-                gelistirici_adi: "DevCraft AI",
-                puan: "5.0",
-                takipci_sayisi: "4,150",
-                is_following: true,
-                created_at: "2026-07-01",
-              },
-              {
-                id: 204,
-                chatbot_id: "bot_hukuk_04",
-                isim: "Hukuk & Sözleşme İnceleme AI",
-                aciklama:
-                  "Gizlilik sözleşmeleri (NDA) ve iş akitlerindeki riskli maddeleri anında tespit eder.",
-                kapak_fotografi:
-                  "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=800&auto=format&fit=crop&q=80",
-                profil_fotografi:
-                  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-                kategori_id: "2",
-                kategori_adi: "Hukuk & Mevzuat",
-                gelistirici_adi: "LexAI Global",
-                puan: "4.7",
-                takipci_sayisi: "1,100",
-                is_following: true,
-                created_at: "2026-04-12",
-              },
-            ]);
+            setFollowedBots([]);
+            setFetchError(data?.message || "Takip edilen botlar yüklenemedi.");
           }
         } catch (e) {
           console.error("Followed bots parse error:", e);
+          setFollowedBots([]);
+          setFetchError("Beklenmeyen sunucu yanıtı.");
         }
       })
-      .catch((err) => console.error("Takip edilen botlar yüklenemedi:", err));
+      .catch((err) => {
+        console.error("Takip edilen botlar yüklenemedi:", err);
+        setFollowedBots([]);
+        setFetchError("Sunucuya bağlanılamadı.");
+      });
 
     // Fetch Categories
     const fetchCats = fetch("/api/content/getcategories.php")
@@ -429,11 +359,7 @@ export default function Following() {
           const data = JSON.parse(text);
           if (Array.isArray(data)) setCategories(data);
         } catch (e) {
-          setCategories([
-            { id: "1", kategori_adi_tr: "Pazarlama & SEO" },
-            { id: "2", kategori_adi_tr: "Finans & Borsa" },
-            { id: "3", kategori_adi_tr: "Yazılım & Kodlama" },
-          ]);
+          console.error("Kategori parse hatası:", e);
         }
       })
       .catch((err) => console.error("Kategoriler fetch hatası:", err));
@@ -537,7 +463,7 @@ export default function Following() {
         {/* Quick Stats Summary Bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-white/[0.08] bg-zinc-900/60 backdrop-blur-xl p-4 space-y-1">
-            <p className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">
+            <p className="text-caption font-mono text-zinc-500 uppercase tracking-wider">
               Takip Edilen
             </p>
             <p className="text-2xl font-bold text-white tracking-tight">
@@ -546,7 +472,7 @@ export default function Following() {
           </div>
 
           <div className="rounded-2xl border border-violet-500/20 bg-violet-500/[0.03] backdrop-blur-xl p-4 space-y-1">
-            <p className="text-[11px] font-mono text-violet-400 uppercase tracking-wider flex items-center gap-1.5">
+            <p className="text-caption font-mono text-violet-400 uppercase tracking-wider flex items-center gap-1.5">
               <Building2 className="w-3.5 h-3.5" /> Üreticiler
             </p>
             <p className="text-2xl font-bold text-violet-300 tracking-tight">
@@ -555,7 +481,7 @@ export default function Following() {
           </div>
 
           <div className="rounded-2xl border border-fuchsia-500/20 bg-fuchsia-500/[0.03] backdrop-blur-xl p-4 space-y-1">
-            <p className="text-[11px] font-mono text-fuchsia-400 uppercase tracking-wider flex items-center gap-1.5">
+            <p className="text-caption font-mono text-fuchsia-400 uppercase tracking-wider flex items-center gap-1.5">
               <Star className="w-3.5 h-3.5" /> Ort. Derecelendirme
             </p>
             <p className="text-2xl font-bold text-fuchsia-300 tracking-tight">
@@ -564,7 +490,7 @@ export default function Following() {
           </div>
 
           <div className="rounded-2xl border border-white/[0.08] bg-zinc-900/60 backdrop-blur-xl p-4 space-y-1">
-            <p className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+            <p className="text-caption font-mono text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />{" "}
               Güncelleme
             </p>
@@ -575,7 +501,7 @@ export default function Following() {
         </div>
 
         {/* Filter & Control Bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-2 rounded-2xl border border-white/[0.08] bg-zinc-900/80 backdrop-blur-xl">
+        <div className="relative z-20 flex flex-col md:flex-row items-center justify-between gap-4 p-2 rounded-2xl border border-white/[0.08] bg-zinc-900/80 backdrop-blur-xl">
           {/* Search Box */}
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
@@ -599,29 +525,34 @@ export default function Following() {
           {/* Category & Sort controls */}
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
             {/* Category Dropdown */}
-            <select
+            <FilterPopover2026
+              icon={SlidersHorizontal}
+              prefixLabel="Kategori:"
+              menuLabel="Kategori Seç"
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-black/40 border border-white/[0.08] text-xs text-zinc-300 rounded-xl px-3 py-2.5 focus:outline-none focus:border-violet-500/50 cursor-pointer"
-            >
-              <option value="all">Tüm Kategoriler</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.kategori_adi_tr}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedCategory}
+              options={[
+                { id: "all", label: "Tüm Kategoriler" },
+                ...categories.map((c) => ({
+                  id: c.id,
+                  label: c.kategori_adi_tr,
+                })),
+              ]}
+            />
 
             {/* Sort Dropdown */}
-            <select
+            <FilterPopover2026
+              icon={Filter}
+              prefixLabel="Sırala:"
+              menuLabel="Sıralama Kriteri"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bg-black/40 border border-white/[0.08] text-xs text-zinc-300 rounded-xl px-3 py-2.5 focus:outline-none focus:border-violet-500/50 cursor-pointer"
-            >
-              <option value="newest">En Yeni Eklenenler</option>
-              <option value="popular">En Popüler (Takipçi)</option>
-              <option value="rating">En Yüksek Puanlı</option>
-            </select>
+              onChange={setSortBy}
+              options={[
+                { id: "newest", label: "En Yeni Eklenenler" },
+                { id: "popular", label: "En Popüler (Takipçi)" },
+                { id: "rating", label: "En Yüksek Puanlı" },
+              ]}
+            />
 
             {/* View Mode Switcher */}
             <div className="hidden sm:flex items-center bg-black/50 p-1 rounded-xl border border-white/[0.08]">
@@ -634,7 +565,7 @@ export default function Following() {
                     : "text-zinc-500 hover:text-zinc-300",
                 )}
               >
-                <LayoutGrid className="w-4 h-4" />
+                <LayoutGrid className="w-7 h-7" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
@@ -645,11 +576,17 @@ export default function Following() {
                     : "text-zinc-500 hover:text-zinc-300",
                 )}
               >
-                <List className="w-4 h-4" />
+                <List className="w-7 h-7" />
               </button>
             </div>
           </div>
         </div>
+
+        {fetchError && (
+          <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-300">
+            {fetchError}
+          </div>
+        )}
 
         {filteredBots.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-white/10 bg-zinc-900/30 p-12 text-center space-y-4 animate-in fade-in duration-200">
@@ -727,7 +664,7 @@ export default function Following() {
 
                   {/* Content Body */}
                   <div className="p-4 pt-6 space-y-2">
-                    <div className="flex items-center justify-between text-[11px] font-mono text-violet-400">
+                    <div className="flex items-center justify-between text-caption font-mono text-violet-400">
                       <span className="flex items-center gap-1">
                         <Zap className="w-3 h-3" />#
                         {bot.kategori_adi || "AI Bot"}
@@ -745,7 +682,7 @@ export default function Following() {
                       {bot.isim}
                     </h3>
 
-                    <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
+                    <p className="text-caption text-zinc-400 line-clamp-2 leading-relaxed">
                       {bot.aciklama}
                     </p>
                   </div>
@@ -753,7 +690,7 @@ export default function Following() {
 
                 {/* Footer Controls */}
                 <div className="p-4 pt-2 border-t border-white/[0.06] mt-2 flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-zinc-500 flex items-center gap-1">
+                  <span className="text-caption font-mono text-zinc-500 flex items-center gap-1">
                     <Users className="w-3 h-3 text-zinc-600" />
                     {bot.takipci_sayisi || "1.2k"} Takipçi
                   </span>
@@ -793,7 +730,7 @@ export default function Following() {
                       >
                         {bot.isim}
                       </h4>
-                      <span className="text-[10px] font-mono text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded border border-violet-500/20">
+                      <span className="text-caption font-mono text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded border border-violet-500/20">
                         {bot.kategori_adi || "Genel"}
                       </span>
                     </div>

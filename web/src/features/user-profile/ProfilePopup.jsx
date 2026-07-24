@@ -46,23 +46,23 @@ export default function ProfilePopup({ user, onLogout }) {
                     ) : null}
                 </div>
                 <div className="min-w-0">
-                    <div className="truncate font-display text-[14px] font-semibold text-white">{user.username}</div>
-                    <div className="truncate text-[11px] text-white/45">{user.fullname}</div>
+                    <div className="truncate font-display text-body font-semibold text-white">{user.username}</div>
+                    <div className="truncate text-caption text-white/45">{user.fullname}</div>
                 </div>
             </div>
 
             <div className="grid grid-cols-3 rounded-xl border border-white/[0.06] bg-white/[0.03] py-2.5">
                 <div className="flex flex-col items-center gap-0.5 px-1 text-center">
-                    <span className="font-display text-[16px] font-bold leading-none text-white">{user.chatbotCount}</span>
-                    <span className="text-[10px] leading-tight text-white/45">Chatbot</span>
+                    <span className="font-display text-title-sm font-bold leading-none text-white">{user.chatbotCount}</span>
+                    <span className="text-caption leading-tight text-white/45">Chatbot</span>
                 </div>
                 <div className="flex flex-col items-center gap-0.5 border-x border-white/[0.06] px-1 text-center">
-                    <span className="font-display text-[16px] font-bold leading-none text-white">{user.purchasedCount || 0}</span>
-                    <span className="text-[10px] leading-tight text-white/45">Satın Alınan</span>
+                    <span className="font-display text-title-sm font-bold leading-none text-white">{user.purchasedCount || 0}</span>
+                    <span className="text-caption leading-tight text-white/45">Satın Alınan</span>
                 </div>
                 <div className="flex flex-col items-center gap-0.5 px-1 text-center">
-                    <span className="font-display text-[16px] font-bold leading-none text-white">{user.sharedDialogueCount || 0}</span>
-                    <span className="text-[10px] leading-tight text-white/45">Diyalog</span>
+                    <span className="font-display text-title-sm font-bold leading-none text-white">{user.sharedDialogueCount || 0}</span>
+                    <span className="text-caption leading-tight text-white/45">Diyalog</span>
                 </div>
             </div>
             <button

@@ -17,6 +17,7 @@ import {
   Heart,
   MessageSquare,
 } from "lucide-react";
+import { FilterPopover2026 } from "@/shared/ui/filter-popover";
 
 function Skeleton({ className = "" }) {
   return (
@@ -76,10 +77,10 @@ function ChatbotCard({
             <Bot className="h-12 w-12 opacity-50" />
           </div>
         )}
-        <div className="absolute top-3 left-3 rounded-full bg-black/60 px-3 py-1 text-[11px] font-medium text-white/90 backdrop-blur-md border border-white/10">
+        <div className="absolute top-3 left-3 rounded-full bg-black/60 px-3 py-1 text-caption font-medium text-white/90 backdrop-blur-md border border-white/10">
           {category}
         </div>
-        <div className="absolute top-3 right-3 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur-md">
+        <div className="absolute top-3 right-3 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 text-caption font-semibold backdrop-blur-md">
           {status}
         </div>
       </div>
@@ -153,83 +154,103 @@ function ChatbotCard({
 }
 
 export default function App() {
-  const [chatbots, setChatbots] = useState([
-    {
-      id: 1,
-      isim: "E-Ticaret Asistanı AI",
-      kategori_id: "1",
-      kapak_fotografi: "",
-      profil_fotografi: "",
-      author_user_id: "101",
-      owner_user_id: "101",
-      is_independent: 0,
-      seller_status: "active",
-      likes: 42,
-      dislikes: 1,
-      comments: 8,
-      dialogs: 310,
-      ucret_haftalik: 150,
-      ucret_aylik: 450,
-    },
-    {
-      id: 2,
-      isim: "Müşteri Destek Botu v2",
-      kategori_id: "2",
-      kapak_fotografi: "",
-      profil_fotografi: "",
-      author_user_id: "101",
-      owner_user_id: "101",
-      is_independent: 1,
-      seller_status: "active",
-      likes: 89,
-      dislikes: 2,
-      comments: 14,
-      dialogs: 1250,
-      ucret_haftalik: 0,
-      ucret_aylik: 0,
-    },
-    {
-      id: 3,
-      isim: "Kodlama Mentorü GPT",
-      kategori_id: "3",
-      kapak_fotografi: "",
-      profil_fotografi: "",
-      author_user_id: "101",
-      owner_user_id: "101",
-      is_independent: 0,
-      seller_status: "inactive",
-      likes: 15,
-      dislikes: 0,
-      comments: 3,
-      dialogs: 94,
-      ucret_haftalik: 200,
-      ucret_aylik: 600,
-    },
-  ]);
-  const [categories, setCategories] = useState([
-    { id: "1", kategori_adi_tr: "E-Ticaret & Satış" },
-    { id: "2", kategori_adi_tr: "Müşteri Hizmetleri" },
-    { id: "3", kategori_adi_tr: "Yazılım & Kodlama" },
-  ]);
-  const [userId, setUserId] = useState("101");
-  const [sessionChecked, setSessionChecked] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [chatbots, setChatbots] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [userId, setUserId] = useState(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
 
-  const handleDelete = (id) => {
-    setChatbots((prev) => prev.filter((bot) => bot.id !== id));
-    toast({
-      title: "Başarılı",
-      description: "Chatbot başarıyla silindi.",
-      variant: "default",
-    });
-  };
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        const res = await fetch("/api/auth/sessioncheck.php", {
+          credentials: "include",
+        });
+        const result = await res.json();
+        setUserId(result.authenticated ? result.user_id : null);
+      } catch (err) {
+        setUserId(null);
+      } finally {
+        setSessionChecked(true);
+      }
+    }
+    checkSession();
+
+    fetch("/api/content/getcategories.php")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setCategories(data);
+      })
+      .catch((err) => console.error("Categories fetch error:", err));
+  }, []);
 
   const fetchChatbots = () => {
-    // Demo refresh trigger
+    if (!userId) return;
+    setLoading(true);
+    setError(null);
+    fetch("/api/chatbot/getchatbotsmenu.php", { credentials: "include" })
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.success && Array.isArray(result.bots)) {
+          setChatbots(result.bots);
+        } else {
+          setError(result.message || "Chatbotlar yüklenemedi.");
+        }
+      })
+      .catch((err) => {
+        console.error("Chatbots fetch error:", err);
+        setError("Sunucuya bağlanılamadı.");
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    if (!sessionChecked) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    fetchChatbots();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionChecked, userId]);
+
+  const handleDelete = async (id) => {
+    try {
+      const formData = new FormData();
+      formData.append("data", JSON.stringify({ id }));
+      const res = await fetch("/api/chatbot/deletechatbot.php", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      const result = await res.json();
+      if (!result.success) {
+        toast({
+          title: "Hata",
+          description: result.message || "Chatbot silinemedi.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setChatbots((prev) => prev.filter((bot) => bot.id !== id));
+      toast({
+        title: "Başarılı",
+        description: "Chatbot başarıyla silindi.",
+        variant: "default",
+      });
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast({
+        title: "Hata",
+        description: "Sunucuya bağlanılamadı.",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredChatbots = useMemo(() => {
@@ -259,7 +280,7 @@ export default function App() {
       (b) => b.seller_status === "active" || b.is_independent,
     ).length;
     const totalDialogs = chatbots.reduce(
-      (acc, b) => acc + Number(b.dialogs || 0),
+      (acc, b) => acc + Number(b.toplam_chats || 0),
       0,
     );
     const totalLikes = chatbots.reduce(
@@ -390,48 +411,41 @@ export default function App() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="appearance-none rounded-2xl border border-white/[0.08] bg-[#0c0c10] px-4 py-3 pr-10 text-sm text-white/80 backdrop-blur-xl transition-all duration-200 focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/20 cursor-pointer"
-            >
-              <option value="all" className="bg-[#0c0c10] text-white">
-                Tüm Kategoriler
-              </option>
-              {categories.map((cat) => (
-                <option
-                  key={cat.id}
-                  value={cat.id}
-                  className="bg-[#0c0c10] text-white"
-                >
-                  {cat.kategori_adi_tr}
-                </option>
-              ))}
-            </select>
-            <SlidersHorizontal className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 pointer-events-none" />
-          </div>
+          <FilterPopover2026
+            icon={SlidersHorizontal}
+            prefixLabel="Kategori:"
+            menuLabel="Kategori Seç"
+            value={selectedCategory}
+            onChange={setSelectedCategory}
+            options={[
+              { id: "all", label: "Tüm Kategoriler" },
+              ...categories.map((cat) => ({
+                id: cat.id,
+                label: cat.kategori_adi_tr,
+              })),
+            ]}
+          />
 
-          <div className="relative">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="appearance-none rounded-2xl border border-white/[0.08] bg-[#0c0c10] px-4 py-3 pr-10 text-sm text-white/80 backdrop-blur-xl transition-all duration-200 focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/20 cursor-pointer"
-            >
-              <option value="newest" className="bg-[#0c0c10] text-white">
-                En Yeniler
-              </option>
-              <option value="name" className="bg-[#0c0c10] text-white">
-                İsme Göre (A-Z)
-              </option>
-              <option value="likes" className="bg-[#0c0c10] text-white">
-                En Çok Beğenilen
-              </option>
-            </select>
-            <ListFilter className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 pointer-events-none" />
-          </div>
+          <FilterPopover2026
+            icon={ListFilter}
+            prefixLabel="Sırala:"
+            menuLabel="Sıralama Kriteri"
+            value={sortBy}
+            onChange={setSortBy}
+            options={[
+              { id: "newest", label: "En Yeniler" },
+              { id: "name", label: "İsme Göre (A-Z)" },
+              { id: "likes", label: "En Çok Beğenilen" },
+            ]}
+          />
         </div>
       </div>
+
+      {error && (
+        <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-300">
+          {error}
+        </div>
+      )}
 
       {/* Grid */}
       <CardGrid>
@@ -445,10 +459,10 @@ export default function App() {
             </span>
           </div>
           <div className="flex flex-col gap-1 p-5 text-center">
-            <p className="font-display text-[15px] font-bold text-violet-200 tracking-tight">
+            <p className="font-display text-body-lg font-bold text-violet-200 tracking-tight">
               Yeni Chatbot Oluştur
             </p>
-            <p className="text-[13px] text-white/40">
+            <p className="text-body-sm text-white/40">
               Fikrini birkaç dakikada akıllı bir ajana dönüştür
             </p>
           </div>
@@ -483,7 +497,7 @@ export default function App() {
               category={categoryLabel}
               status={statusLabel}
               likes={bot.likes}
-              dialogs={bot.dialogs}
+              dialogs={bot.toplam_chats}
               weeklyPrice={bot.ucret_haftalik}
               monthlyPrice={bot.ucret_aylik}
               onDelete={() => handleDelete(bot.id)}
@@ -492,6 +506,26 @@ export default function App() {
           );
         })}
       </CardGrid>
+
+      {!loading && !error && chatbots.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.02] text-white/40 mb-4">
+            <Bot className="h-8 w-8" />
+          </div>
+          <h3 className="font-display text-lg font-bold text-white mb-1">
+            Henüz Chatbot Oluşturmadınız
+          </h3>
+          <p className="text-sm text-white/50 max-w-sm mb-6">
+            İlk yapay zeka asistanınızı oluşturarak başlayın.
+          </p>
+          <a
+            href="/dashboard/chatbots/create"
+            className="rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-fuchsia-600 px-5 py-2.5 text-xs font-semibold text-white transition-all hover:brightness-110"
+          >
+            Yeni Chatbot Oluştur
+          </a>
+        </div>
+      )}
 
       {filteredChatbots.length === 0 && chatbots.length > 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">

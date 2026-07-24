@@ -15,7 +15,7 @@ export default function BlockModal({ isOpen, onClose, onConfirm }) {
                     <DialogTitle className="mb-2.5 text-xl font-semibold text-rose-500">
                         Engellemeyi Onaylıyor musunuz?
                     </DialogTitle>
-                    <DialogDescription className="mb-8 font-display text-[15px] font-semibold leading-relaxed text-white">
+                    <DialogDescription className="mb-8 font-display text-body-lg font-semibold leading-relaxed text-white">
                         Bu kullanıcıyı engellediğinizde artık size mesaj gönderemeyecek. Devam etmek istiyor musunuz?
                     </DialogDescription>
                     <div className="grid w-full grid-cols-2 gap-3">

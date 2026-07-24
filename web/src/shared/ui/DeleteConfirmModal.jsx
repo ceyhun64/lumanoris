@@ -25,7 +25,7 @@ export default function DeleteConfirmModal({
                     <DialogTitle className="mb-2.5 text-xl font-semibold text-rose-500">
                         {title}
                     </DialogTitle>
-                    <DialogDescription className="mb-8 font-display text-[15px] font-semibold leading-relaxed text-white">
+                    <DialogDescription className="mb-8 font-display text-body-lg font-semibold leading-relaxed text-white">
                         {description}
                     </DialogDescription>
                     <div className="grid w-full grid-cols-2 gap-3">

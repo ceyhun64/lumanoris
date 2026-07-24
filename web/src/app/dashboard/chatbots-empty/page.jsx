@@ -18,10 +18,10 @@ export default function Chatbotlarim() {
             </h2>
 
             <div className="flex max-w-md flex-col gap-2">
-                <p className="text-[15px] leading-relaxed text-white/55">
+                <p className="text-body-lg leading-relaxed text-white/55">
                     Hayalinizdeki sohbet botunu sadece <span className="font-semibold text-fuchsia-300">birkaç basit adımda</span> hayata geçirin.
                 </p>
-                <p className="text-[15px] leading-relaxed text-white/55">
+                <p className="text-body-lg leading-relaxed text-white/55">
                     Bilgi paylaşın, eğlendirin ya da iş süreçlerini kolaylaştırın —
                     <span className="font-semibold text-fuchsia-300"> hepsi sizin elinizde!</span>
                 </p>
@@ -29,7 +29,7 @@ export default function Chatbotlarim() {
 
             <Link
                 href="/dashboard/chatbots/create"
-                className="flex items-center gap-2 rounded-xl bg-gradient-btn px-6 py-3.5 font-display text-[14px] font-semibold text-white shadow-glow transition-all duration-200 hover:-translate-y-0.5 hover:brightness-110"
+                className="flex items-center gap-2 rounded-xl bg-gradient-btn px-6 py-3.5 font-display text-body font-semibold text-white shadow-glow transition-all duration-200 hover:-translate-y-0.5 hover:brightness-110"
             >
                 <Plus className="h-5 w-5" />
                 İlk Sohbet Botunuzu Oluşturun

@@ -493,7 +493,7 @@ export function History() {
                 <X className="h-4 w-4" />
               </button>
             ) : (
-              <div className="mr-3 hidden items-center gap-1 rounded-md border border-white/10 bg-zinc-800/60 px-2 py-0.5 text-[10px] font-mono font-medium text-zinc-400 sm:flex">
+              <div className="mr-3 hidden items-center gap-1 rounded-md border border-white/10 bg-zinc-800/60 px-2 py-0.5 text-caption font-mono font-medium text-zinc-400 sm:flex">
                 <Command className="h-3 w-3" /> K
               </div>
             )}
@@ -519,7 +519,7 @@ export function History() {
                     {timeLabel}
                   </span>
                   <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 via-white/5 to-transparent" />
-                  <span className="text-[11px] font-medium text-zinc-500">
+                  <span className="text-caption font-medium text-zinc-500">
                     {items.length} sohbet
                   </span>
                 </div>
@@ -539,8 +539,8 @@ export function History() {
                         }}
                         className={`group relative flex flex-col gap-4 rounded-2xl border bg-zinc-900/40 p-4 transition-all duration-300 sm:flex-row sm:items-center sm:justify-between cursor-pointer backdrop-blur-xl ${
                           isMenuOpen
-                            ? "border-violet-500/40 bg-zinc-900/80 shadow-2xl ring-1 ring-violet-500/20"
-                            : "border-white/[0.08] hover:border-white/20 hover:bg-zinc-900/80 hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5"
+                            ? "z-30 border-violet-500/40 bg-zinc-900/80 shadow-2xl ring-1 ring-violet-500/20"
+                            : "z-0 border-white/[0.08] hover:border-white/20 hover:bg-zinc-900/80 hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5"
                         }`}
                       >
                         {/* Hover Subtle Gradient Glow */}
@@ -645,7 +645,7 @@ export function History() {
                               className="hidden rounded-lg p-1.5 text-zinc-400 opacity-0 transition-all hover:bg-white/10 hover:text-white group-hover:opacity-100 sm:block"
                               title="Sohbete Git"
                             >
-                              <ArrowUpRight className="h-4 w-4" />
+                              <ArrowUpRight className="h-7 w-7" />
                             </button>
 
                             {/* Dropdown Menu Trigger Button */}
@@ -660,7 +660,7 @@ export function History() {
                               }`}
                               aria-label="Sohbet seçenekleri"
                             >
-                              <MoreHorizontal className="h-4 w-4" />
+                              <MoreHorizontal className="h-7 w-7" />
                             </button>
 
                             {/* Custom Dropdown Content */}

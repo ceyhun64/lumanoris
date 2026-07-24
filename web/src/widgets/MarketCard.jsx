@@ -171,7 +171,7 @@ export default function MarketCard({ bot, onRemove }) {
         {badge && (
           <span
             className={cn(
-              "absolute top-[7px] right-[5px] font-display text-[8.34px] font-medium px-1 rounded z-[2]",
+              "absolute top-[7px] right-[5px] font-display text-caption font-medium px-1 rounded z-[2]",
               BADGE_CLASSES[badge.type] ?? "bg-white/10 text-white",
             )}
           >
@@ -200,10 +200,10 @@ export default function MarketCard({ bot, onRemove }) {
               className="rounded-full border border-[rgba(255,230,242,0.12)] w-[25px] h-[25px] object-cover shrink-0"
             />
             <div className="flex flex-col items-start min-w-0">
-              <span className="text-white font-display text-[11.51px] truncate">
+              <span className="text-white font-display text-caption truncate">
                 {title}
               </span>
-              <div className="text-[#8C8C8C] font-display text-[8.34px] truncate">
+              <div className="text-[#8C8C8C] font-display text-caption truncate">
                 {author}
               </div>
             </div>
@@ -403,7 +403,7 @@ export default function MarketCard({ bot, onRemove }) {
                 d="M1.99239 6.9204C2.12123 6.91477 2.24726 6.95913 2.34416 7.04423C2.44106 7.12933 2.50134 7.24858 2.51239 7.37707L3.15906 14.8677C3.17001 14.9793 3.15811 15.0919 3.12409 15.1987C3.09006 15.3055 3.03462 15.4042 2.96115 15.4889C2.88769 15.5735 2.79773 15.6423 2.69679 15.691C2.59585 15.7397 2.48604 15.7674 2.37406 15.7722C2.26208 15.7771 2.15029 15.7591 2.04551 15.7193C1.94073 15.6795 1.84516 15.6187 1.76464 15.5407C1.68413 15.4628 1.62035 15.3692 1.57721 15.2658C1.53407 15.1623 1.51246 15.0511 1.51372 14.9391V7.41973C1.51378 7.29086 1.56359 7.16697 1.65278 7.07394C1.74196 6.9809 1.86363 6.9259 1.99239 6.9204Z"
               />
             </svg>
-            <span className="text-[8px] font-display font-medium">
+            <span className="text-caption font-display font-medium">
               {likeCount}
             </span>
           </button>
@@ -423,7 +423,7 @@ export default function MarketCard({ bot, onRemove }) {
               />
               <path d="M13.5137 3.59766H2.51369C2.24847 3.59766 1.99412 3.70301 1.80658 3.89055C1.61905 4.07809 1.51369 4.33244 1.51369 4.59766V14.5977C1.51254 14.7883 1.56648 14.9753 1.66904 15.1361C1.7716 15.2968 1.91841 15.4246 2.09181 15.5039C2.22396 15.5654 2.36792 15.5974 2.51369 15.5977C2.74843 15.597 2.97538 15.5133 3.15431 15.3614L3.15994 15.357L5.20119 13.5977H13.5137C13.7789 13.5977 14.0333 13.4923 14.2208 13.3048C14.4083 13.1172 14.5137 12.8629 14.5137 12.5977V4.59766C14.5137 4.33244 14.4083 4.07809 14.2208 3.89055C14.0333 3.70301 13.7789 3.59766 13.5137 3.59766ZM13.5137 12.5977H5.01369C4.89363 12.5977 4.77761 12.641 4.68681 12.7195L2.51369 14.5977V4.59766H13.5137V12.5977Z" />
             </svg>
-            <span className="text-[8px] font-display font-medium">
+            <span className="text-caption font-display font-medium">
               {comments}
             </span>
           </button>
@@ -452,7 +452,7 @@ export default function MarketCard({ bot, onRemove }) {
 
           {/* Buy button */}
           <button
-            className="flex px-3 py-0.5 cursor-pointer justify-center items-center rounded-xl text-white text-center font-display text-[7px] font-medium min-w-[50px] transition-all bg-gradient-to-br from-[#3730A3] to-[#8B5CF6]/20 hover:from-[#D946EF] hover:to-[#8B5CF6] border-none outline-none"
+            className="flex px-3 py-1 cursor-pointer justify-center items-center rounded-xl text-white text-center font-display text-caption font-medium min-w-[56px] transition-all bg-gradient-to-br from-[#3730A3] to-[#8B5CF6]/20 hover:from-[#D946EF] hover:to-[#8B5CF6] border-none outline-none"
             onClick={async (e) => {
               e.stopPropagation();
               try {
@@ -473,12 +473,12 @@ export default function MarketCard({ bot, onRemove }) {
         </div>
 
         {/* Meta row */}
-        <div className="flex items-center justify-between gap-2 mt-3 text-[8px] font-medium w-full text-[#62647C]">
+        <div className="flex items-center justify-between gap-2 mt-3 text-caption font-medium w-full text-[#62647C]">
           <div className="flex items-center gap-1.5 after:content-['•'] after:inline-block after:text-[#62647C]">
             {dialogues} Diyalog
           </div>
           <div className="flex items-center gap-1.5">{time}</div>
-          <div className="ml-auto text-white rounded-xl font-display text-[7px] font-medium py-[1px] px-3 flex items-center justify-center shadow-[0_4px_14px_0_rgba(217,70,239,0.2)] border border-transparent min-w-[50px]">
+          <div className="ml-auto text-white rounded-xl font-display text-caption font-medium py-1 px-3 flex items-center justify-center shadow-[0_4px_14px_0_rgba(217,70,239,0.2)] border border-transparent min-w-[50px]">
             {priceType === "USD" ? "$" : ""}
             {price}
           </div>
@@ -529,12 +529,12 @@ export default function MarketCard({ bot, onRemove }) {
       />
 
       {cartAdded && (
-        <div className="fixed bottom-6 right-6 bg-fuchsia-400 text-white px-3 py-1.5 rounded-lg text-[13px] font-medium animate-[fadeInOut_2s_ease_forwards] pointer-events-none z-[999999]">
+        <div className="fixed bottom-6 right-6 bg-fuchsia-400 text-white px-3 py-1.5 rounded-lg text-body-sm font-medium animate-[fadeInOut_2s_ease_forwards] pointer-events-none z-[999999]">
           Sepete eklendi!
         </div>
       )}
       {showFeedbackBadge && (
-        <div className="fixed bottom-6 right-6 bg-fuchsia-400 text-white px-3 py-1.5 rounded-lg text-[13px] font-medium animate-[fadeInOut_2s_ease_forwards] pointer-events-none z-[999999]">
+        <div className="fixed bottom-6 right-6 bg-fuchsia-400 text-white px-3 py-1.5 rounded-lg text-body-sm font-medium animate-[fadeInOut_2s_ease_forwards] pointer-events-none z-[999999]">
           Uyarınız alındı
         </div>
       )}

@@ -64,7 +64,7 @@ export default function CommentModal({ isOpen, onClose, comments = [], onSend })
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-[440px] bg-luma-card border-transparent p-6">
-                <DialogTitle className="mb-4 text-center text-[16px]">Yorumlar</DialogTitle>
+                <DialogTitle className="mb-4 text-center text-title-sm">Yorumlar</DialogTitle>
 
                 <div className="mb-4 flex max-h-[360px] flex-col gap-1 overflow-y-auto text-left">
                     {localComments && localComments.map((comment, index) => {
@@ -80,7 +80,7 @@ export default function CommentModal({ isOpen, onClose, comments = [], onSend })
                             <div key={index} className="flex items-start gap-3 rounded-xl p-2.5 transition-colors duration-150 hover:bg-white/5">
                                 <div className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-fuchsia-400 to-violet-400" />
                                 <div className="min-w-0 flex-1">
-                                    <p className={cn("text-[14px] leading-relaxed text-white", !isExpanded && "line-clamp-3")}>
+                                    <p className={cn("text-body leading-relaxed text-white", !isExpanded && "line-clamp-3")}>
                                         {isExpanded ? commentBody : text}
                                     </p>
                                     {isTruncated && (
@@ -108,7 +108,7 @@ export default function CommentModal({ isOpen, onClose, comments = [], onSend })
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                        className="flex-1 bg-transparent font-sans text-[14px] text-white placeholder:text-white/40 focus:outline-none"
+                        className="flex-1 bg-transparent font-sans text-body text-white placeholder:text-white/40 focus:outline-none"
                     />
                     <Button onClick={handleSend} variant="link" className="h-auto shrink-0 p-0 text-sm font-semibold">
                         Gönder

@@ -537,7 +537,7 @@ export default function Wallet() {
                           <Clock className="h-3 w-3 text-zinc-500" />
                           <span>Güvenli Onaylandı</span>
                           {tx.refunded && (
-                            <span className="inline-flex items-center rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400">
+                            <span className="inline-flex items-center rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-caption font-semibold text-amber-400">
                               İade Edildi
                             </span>
                           )}
@@ -555,7 +555,7 @@ export default function Wallet() {
                           ? `+${formatCurrency(tx.amount)}`
                           : formatCurrency(tx.amount)}
                       </div>
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500">
+                      <span className="text-caption uppercase font-bold tracking-wider text-zinc-500">
                         {isIncome ? "Gelir" : "Ödeme"}
                       </span>
                     </div>

@@ -96,161 +96,6 @@ function resolveAvatarSrc(src) {
   return `/uploads/avatars/${src}`;
 }
 
-const MOCK_BOTS = [
-  {
-    id: "101",
-    title: "Aura Architect Prime",
-    description:
-      "Ölçeklenebilir mikroservis mimarileri, Kubernetes yapılandırmaları ve Sistem Tasarımı uzmanı yapay zeka ajanı.",
-    author: "Lumanoris AI Labs",
-    dialogues: 4280,
-    time: "Bugün",
-    publishedAt: new Date().toISOString(),
-    avatar:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-    image:
-      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
-    kategori_id: "1",
-    followers: 1240,
-    likes: 890,
-    comments: 142,
-    saves: 310,
-    weeklyPrice: 450,
-    badge: { type: "produced", label: "Doğrulanmış Üretim" },
-    model: "GPT-5 Turbo",
-    rating: 4.9,
-    userLists: [],
-  },
-  {
-    id: "102",
-    title: "Verba SEO & Content Titan",
-    description:
-      "Arama motoru algoritmalarıyla %100 uyumlu, yüksek dönüşüm sağlayan metinler üreten dijital içerik mimarı.",
-    author: "Selin Yılmaz",
-    dialogues: 2150,
-    time: "2 gün önce",
-    publishedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    avatar:
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
-    image:
-      "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=800&auto=format&fit=crop&q=80",
-    kategori_id: "2",
-    followers: 680,
-    likes: 530,
-    comments: 64,
-    saves: 180,
-    weeklyPrice: 280,
-    badge: { type: "sold", label: "Daha Önce Satıldı" },
-    model: "Claude 3.5 Sonnet",
-    rating: 4.8,
-    userLists: [],
-  },
-  {
-    id: "103",
-    title: "Quantum Code Auditor",
-    description:
-      "Rust, TypeScript ve Go kod tabanlarında zafiyet analizi, refactoring ve performans optimizasyonu gerçekleştirir.",
-    author: "Lumanoris",
-    dialogues: 6890,
-    time: "Bugün",
-    publishedAt: new Date().toISOString(),
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-    image:
-      "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&auto=format&fit=crop&q=80",
-    kategori_id: "1",
-    followers: 3100,
-    likes: 2450,
-    comments: 310,
-    saves: 950,
-    weeklyPrice: 600,
-    badge: { type: "produced", label: "Doğrulanmış Üretim" },
-    model: "Luma Code v4",
-    rating: 5.0,
-    userLists: [],
-  },
-  {
-    id: "104",
-    title: "Fintech Algo Analyst",
-    description:
-      "Kripto varlıklar, küresel hisse senedi piyasaları ve makroekonomik veriler üzerinden anlık teknik analiz raporları hazırlar.",
-    author: "Emre Aksoy",
-    dialogues: 1840,
-    time: "4 gün önce",
-    publishedAt: new Date(Date.now() - 86400000 * 4).toISOString(),
-    avatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-    image:
-      "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=80",
-    kategori_id: "3",
-    followers: 940,
-    likes: 720,
-    comments: 98,
-    saves: 240,
-    weeklyPrice: 350,
-    badge: { type: "produced", label: "Doğrulanmış Üretim" },
-    model: "FinAI Premier",
-    rating: 4.7,
-    userLists: [],
-  },
-  {
-    id: "105",
-    title: "UI/UX Visionary GPT-5",
-    description:
-      "Figma bileşen sistemleri, erişilebilirlik (WCAG) standartları ve modern Design System mimarileri oluşturucu.",
-    author: "Kaan Demir",
-    dialogues: 3410,
-    time: "1 gün önce",
-    publishedAt: new Date(Date.now() - 86400000).toISOString(),
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
-    image:
-      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop&q=80",
-    kategori_id: "4",
-    followers: 1820,
-    likes: 1390,
-    comments: 175,
-    saves: 480,
-    weeklyPrice: 0,
-    badge: { type: "produced", label: "Ücretsiz Topluluk" },
-    model: "GPT-5 Vision",
-    rating: 4.9,
-    userLists: [],
-  },
-  {
-    id: "106",
-    title: "Nexus Customer Engine",
-    description:
-      "Müşteri destek süreçlerini otomatize eden, empati odaklı ve çok dilli e-ticaret danışmanı bot.",
-    author: "Lumanoris AI Labs",
-    dialogues: 5120,
-    time: "3 gün önce",
-    publishedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-    avatar:
-      "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80",
-    image:
-      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
-    kategori_id: "5",
-    followers: 2100,
-    likes: 1680,
-    comments: 210,
-    saves: 520,
-    weeklyPrice: 190,
-    badge: { type: "sold", label: "Daha Önce Satıldı" },
-    model: "Nexus Pro 2026",
-    rating: 4.8,
-    userLists: [],
-  },
-];
-
-const MOCK_CATEGORIES = [
-  { id: "all", kategori_adi_tr: "Tümü" },
-  { id: "1", kategori_adi_tr: "Yazılım & Kodlama" },
-  { id: "2", kategori_adi_tr: "İçerik & SEO" },
-  { id: "3", kategori_adi_tr: "Finans & Ekonomi" },
-  { id: "4", kategori_adi_tr: "Tasarım & UI/UX" },
-  { id: "5", kategori_adi_tr: "Müşteri İlişkileri" },
-];
 
 function StatCard2026({
   icon: Icon,
@@ -267,7 +112,7 @@ function StatCard2026({
       <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-violet-600/10 blur-2xl transition-all duration-500 group-hover:bg-violet-500/20 group-hover:scale-125 pointer-events-none" />
 
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+        <span className="text-caption font-bold uppercase tracking-wider text-zinc-400">
           {label}
         </span>
         <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-zinc-900/80 text-violet-400 shadow-inner group-hover:scale-110 group-hover:border-violet-500/40 transition-transform duration-300">
@@ -281,7 +126,7 @@ function StatCard2026({
         </div>
         {badgeText && (
           <span
-            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase ${
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-caption font-bold tracking-wide uppercase ${
               badgeColor === "emerald"
                 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
                 : "border-violet-500/30 bg-violet-500/10 text-violet-300"
@@ -342,8 +187,8 @@ function SortPopover2026({ value, onChange }) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl border border-white/15 bg-zinc-950/95 p-1.5 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 animate-in fade-in zoom-in-95 duration-150">
-          <div className="px-2.5 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+        <div className="absolute right-0 top-full z-50 mt-2  rounded-2xl border border-white/15 bg-zinc-950/95 p-1.5 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 animate-in fade-in zoom-in-95 duration-150">
+          <div className="px-2.5 py-2 text-caption font-bold uppercase tracking-wider text-zinc-400">
             Sıralama Kriteri
           </div>
           <div className="space-y-0.5">
@@ -357,7 +202,7 @@ function SortPopover2026({ value, onChange }) {
                     onChange(opt.id);
                     setIsOpen(false);
                   }}
-                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition-all ${
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-[13px] font-medium transition-all ${
                     isSelected
                       ? "bg-violet-600/20 text-violet-200 font-semibold border border-violet-500/30"
                       : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
@@ -370,7 +215,7 @@ function SortPopover2026({ value, onChange }) {
                     <span>{opt.label}</span>
                   </div>
                   {isSelected && (
-                    <Check className="h-3.5 w-3.5 text-violet-400" />
+                    <Check className="ms-3 h-3.5 w-3.5 text-violet-400" />
                   )}
                 </button>
               );
@@ -427,7 +272,7 @@ function BentoBotCard({ bot, onOpenDetails }) {
         {/* Top Badges overlay */}
         <div className="absolute left-3.5 top-3.5 right-3.5 flex items-center justify-between gap-2 z-10">
           <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide backdrop-blur-md shadow-xl border ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-caption font-bold tracking-wide backdrop-blur-md shadow-xl border ${
               bot.badge?.type === "sold"
                 ? "border-amber-500/30 bg-amber-500/20 text-amber-300"
                 : "border-violet-500/30 bg-violet-500/20 text-violet-200"
@@ -471,7 +316,7 @@ function BentoBotCard({ bot, onOpenDetails }) {
 
         {/* Price & Rating Tag */}
         <div className="absolute bottom-3 right-3 left-3 flex items-center justify-between">
-          <div className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-950/80 px-2 py-0.5 text-[11px] font-semibold text-amber-300 backdrop-blur-md">
+          <div className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-950/80 px-2 py-0.5 text-caption font-semibold text-amber-300 backdrop-blur-md">
             <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
             <span>{bot.rating || "4.9"}</span>
           </div>
@@ -480,7 +325,7 @@ function BentoBotCard({ bot, onOpenDetails }) {
             {bot.weeklyPrice > 0 ? (
               <span className="text-emerald-400">
                 ₺{bot.weeklyPrice}
-                <span className="text-[10px] text-zinc-400 font-normal">
+                <span className="text-caption text-zinc-400 font-normal">
                   {" "}
                   /hafta
                 </span>
@@ -509,7 +354,7 @@ function BentoBotCard({ bot, onOpenDetails }) {
             {bot.author}
           </span>
           <span className="text-zinc-600">•</span>
-          <span className="text-[11px] text-zinc-400">{bot.time}</span>
+          <span className="text-caption text-zinc-400">{bot.time}</span>
         </div>
 
         {/* Title */}
@@ -613,7 +458,7 @@ function ListBotCard({ bot, onOpenDetails }) {
               {bot.author}
             </span>
             <span className="text-zinc-600">•</span>
-            <span className="text-[11px] text-zinc-400">{bot.time}</span>
+            <span className="text-caption text-zinc-400">{bot.time}</span>
           </div>
 
           <h3 className="text-base font-bold text-white group-hover:text-violet-300 transition-colors truncate">
@@ -644,7 +489,7 @@ function ListBotCard({ bot, onOpenDetails }) {
               {bot.weeklyPrice > 0 ? `₺${bot.weeklyPrice}` : "Ücretsiz"}
             </div>
             {bot.weeklyPrice > 0 && (
-              <div className="text-[10px] text-zinc-400">/hafta</div>
+              <div className="text-caption text-zinc-400">/hafta</div>
             )}
           </div>
 
@@ -729,7 +574,7 @@ function BotDetailModal2026({ bot, onClose }) {
               <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
                 Bot Hakkında
               </h4>
-              <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-violet-300">
+              <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-caption font-semibold text-violet-300">
                 <Cpu className="h-3 w-3" />
                 {bot.model || "GPT-5 Turbo Engine"}
               </span>
@@ -742,7 +587,7 @@ function BotDetailModal2026({ bot, onClose }) {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
-              <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+              <div className="text-caption text-zinc-400 font-bold uppercase tracking-wider">
                 Toplam Diyalog
               </div>
               <div className="text-lg font-bold font-mono text-white mt-1">
@@ -750,7 +595,7 @@ function BotDetailModal2026({ bot, onClose }) {
               </div>
             </div>
             <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
-              <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+              <div className="text-caption text-zinc-400 font-bold uppercase tracking-wider">
                 Beğeni
               </div>
               <div className="text-lg font-bold font-mono text-white mt-1">
@@ -758,7 +603,7 @@ function BotDetailModal2026({ bot, onClose }) {
               </div>
             </div>
             <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
-              <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+              <div className="text-caption text-zinc-400 font-bold uppercase tracking-wider">
                 Takipçi
               </div>
               <div className="text-lg font-bold font-mono text-white mt-1">
@@ -766,7 +611,7 @@ function BotDetailModal2026({ bot, onClose }) {
               </div>
             </div>
             <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
-              <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+              <div className="text-caption text-zinc-400 font-bold uppercase tracking-wider">
                 Haftalık Ücret
               </div>
               <div className="text-lg font-bold font-mono text-emerald-400 mt-1">
@@ -880,6 +725,7 @@ export function MainDashboard2026() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState("onerilen");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // New UI view states
   const [viewMode, setViewMode] = useState("bento"); // 'bento' | 'compact' | 'list'
@@ -896,15 +742,15 @@ export function MainDashboard2026() {
           if (Array.isArray(data)) {
             setCategories([{ id: "all", kategori_adi_tr: "Tümü" }, ...data]);
           } else {
-            setCategories(MOCK_CATEGORIES);
+            setCategories([{ id: "all", kategori_adi_tr: "Tümü" }]);
           }
         } catch (e) {
           console.error("Kategori yükleme hatası:", e);
-          setCategories(MOCK_CATEGORIES);
+          setCategories([{ id: "all", kategori_adi_tr: "Tümü" }]);
         }
       })
       .catch(() => {
-        setCategories(MOCK_CATEGORIES);
+        setCategories([{ id: "all", kategori_adi_tr: "Tümü" }]);
       });
   }, []);
 
@@ -912,6 +758,7 @@ export function MainDashboard2026() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError(null);
       try {
         const [botsRes, unRes, hideRes, listsRes] = await Promise.all([
           fetch(`/api/chatbot/getchatbots.php`),
@@ -938,7 +785,7 @@ export function MainDashboard2026() {
           ? hideData.hidden.map(Number)
           : [];
 
-        if (Array.isArray(botsData?.bots) && botsData.bots.length > 0) {
+        if (Array.isArray(botsData?.bots)) {
           const mapped = botsData.bots
             .filter(
               (bot) =>
@@ -974,12 +821,13 @@ export function MainDashboard2026() {
             }));
           setAllBots(mapped);
         } else {
-          // Fallback to rich mock data for immediate preview beauty
-          setAllBots(MOCK_BOTS);
+          setAllBots([]);
+          setError(botsData?.message || "Chatbotlar yüklenemedi.");
         }
       } catch (err) {
         console.error("Veri işleme hatası:", err);
-        setAllBots(MOCK_BOTS);
+        setAllBots([]);
+        setError("Sunucuya bağlanılamadı.");
       } finally {
         setLoading(false);
       }
@@ -1147,7 +995,7 @@ export function MainDashboard2026() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Bot ismi, açıklama veya geliştirici ara..."
+                placeholder="Bot, açıklama veya geliştirici ara..."
                 className="w-full rounded-2xl border border-white/5 bg-zinc-900/80 pl-10 pr-10 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
               />
               {searchQuery ? (
@@ -1158,7 +1006,7 @@ export function MainDashboard2026() {
                   <X className="h-4 w-4" />
                 </button>
               ) : (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden items-center gap-1 rounded-md border border-white/10 bg-zinc-800/80 px-2 py-0.5 text-[10px] font-mono text-zinc-400 sm:flex">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden items-center gap-1 rounded-md border border-white/10 bg-zinc-800/80 px-2 py-0.5 text-caption font-mono text-zinc-400 sm:flex">
                   <Command className="h-3 w-3" /> K
                 </div>
               )}
@@ -1179,7 +1027,7 @@ export function MainDashboard2026() {
                   }`}
                   title="Bento Görünümü"
                 >
-                  <LayoutGrid className="h-4 w-4" />
+                  <LayoutGrid className="h-7 w-7" />
                 </button>
                 <button
                   onClick={() => setViewMode("compact")}
@@ -1190,7 +1038,7 @@ export function MainDashboard2026() {
                   }`}
                   title="Yoğun Görünüm"
                 >
-                  <Grid3X3 className="h-4 w-4" />
+                  <Grid3X3 className="h-7 w-7" />
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
@@ -1201,7 +1049,7 @@ export function MainDashboard2026() {
                   }`}
                   title="Liste Görünümü"
                 >
-                  <ListIcon className="h-4 w-4" />
+                  <ListIcon className="h-7 w-7" />
                 </button>
               </div>
             </div>
@@ -1215,7 +1063,7 @@ export function MainDashboard2026() {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.kategori_adi_tr)}
-                  className={`shrink-0 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                  className={`shrink-0 rounded-xl px-2 py-1.5 text-[12px] font-semibold transition-all ${
                     isSelected
                       ? "bg-white text-zinc-950 shadow-lg"
                       : "border border-white/5 bg-zinc-900/50 text-zinc-400 hover:border-white/15 hover:text-zinc-200"
@@ -1227,6 +1075,12 @@ export function MainDashboard2026() {
             })}
           </div>
         </section>
+
+        {error && (
+          <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-300">
+            {error}
+          </div>
+        )}
 
         {/* Dynamic Bot Feed Grid / Compact / List */}
         {loading ? (

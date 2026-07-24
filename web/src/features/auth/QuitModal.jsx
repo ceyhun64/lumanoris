@@ -16,7 +16,7 @@ export default function QuitModal({ isOpen, onClose, onConfirm }) {
                     <DialogTitle className="mb-2.5 text-xl font-semibold text-rose-500">
                         Çıkış yapmayı onaylıyor musunuz?
                     </DialogTitle>
-                    <DialogDescription className="mb-8 font-display text-[15px] font-semibold leading-relaxed text-white">
+                    <DialogDescription className="mb-8 font-display text-body-lg font-semibold leading-relaxed text-white">
                         Oturumunuz kapatılacak ve giriş ekranına yönlendirileceksiniz.
                     </DialogDescription>
                     <div className="grid w-full grid-cols-2 gap-3">

@@ -45,7 +45,7 @@ export default function MarketplaceToolbar({
     <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-2">
       <div className="flex items-center gap-3 px-1.5 py-1">
         {query?.trim() ? (
-          <div className="flex flex-1 items-center gap-2 rounded-xl border border-fuchsia-400/20 bg-fuchsia-500/[0.06] py-2.5 pl-4 pr-2.5 text-[14px] text-white/85">
+          <div className="flex flex-1 items-center gap-2 rounded-xl border border-fuchsia-400/20 bg-fuchsia-500/[0.06] py-2.5 pl-4 pr-2.5 text-body text-white/85">
             <Search className="h-3.5 w-3.5 shrink-0 text-fuchsia-300" />
             <span className="min-w-0 flex-1 truncate">
               &quot;{query}&quot; için sonuçlar
@@ -67,7 +67,7 @@ export default function MarketplaceToolbar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex shrink-0 items-center gap-2 rounded-xl border border-fuchsia-400/25 bg-fuchsia-500/10 px-4 py-2.5 text-[13px] font-medium text-fuchsia-200 transition-colors hover:bg-fuchsia-500/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex shrink-0 items-center gap-2 rounded-xl border border-fuchsia-400/25 bg-fuchsia-500/10 px-4 py-2.5 text-body-sm font-medium text-fuchsia-200 transition-colors hover:bg-fuchsia-500/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ListFilter className="h-4 w-4" />
               {activeLabel}

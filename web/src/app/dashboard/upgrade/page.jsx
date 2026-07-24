@@ -291,7 +291,7 @@ export default function PricingPlans() {
             )}
           >
             <span>Yıllık Faturalandırma</span>
-            <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
+            <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-caption font-bold border border-emerald-500/30">
               %20 İndirim
             </span>
           </button>

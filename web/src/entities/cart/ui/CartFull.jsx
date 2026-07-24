@@ -218,7 +218,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
                                     key={d.id}
                                     onClick={() => handleDurationChange(item.id, d.id)}
                                     className={cn(
-                                        "rounded-xl py-3 text-[13px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                        "rounded-xl py-3 text-body-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                         isActive
                                             ? "bg-gradient-btn font-semibold text-white shadow-glow"
                                             : "bg-luma-input font-normal text-white hover:bg-white/10",
@@ -249,7 +249,7 @@ export default function CartFull({ userId, cartItems, onRemove, onConfirm }) {
 
                     {suggestedBots.length > 0 && (
                         <div className="mt-10">
-                            <h5 className="mb-3 font-display text-[15px] font-semibold text-white">
+                            <h5 className="mb-3 font-display text-body-lg font-semibold text-white">
                                 Önerilen Chatbotlar
                             </h5>
 

@@ -42,7 +42,7 @@ function Tooltip({ children, content }) {
     >
       {children}
       {show && (
-        <div className="absolute top-full mt-2.5 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 text-[11px] font-medium text-zinc-200 bg-zinc-950/90 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none animate-in fade-in slide-in-from-top-1.5 duration-200 tracking-wide">
+        <div className="absolute top-full mt-2.5 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 text-caption font-medium text-zinc-200 bg-zinc-950/90 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none animate-in fade-in slide-in-from-top-1.5 duration-200 tracking-wide">
           {content}
         </div>
       )}
@@ -51,39 +51,50 @@ function Tooltip({ children, content }) {
 }
 
 function NotificationPopup({ onClose, userId }) {
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "Diyalog Limiti Güncellendi",
-      message: "Aylık diyalog hakkınız 150,000 kelimeye yükseltildi.",
-      time: "10 dakika önce",
-      unread: true,
-      type: "system",
-    },
-    {
-      id: 2,
-      title: "Yeni Sipariş Onayı",
-      message: '"SalesAssist Pro AI" chatbot entegrasyonu tamamlandı.',
-      time: "2 saat önce",
-      unread: true,
-      type: "order",
-    },
-    {
-      id: 3,
-      title: "Bakiye Yükleme Başarılı",
-      message: "Hesabınıza ₺1,450.00 tutarında bakiye eklendi.",
-      time: "Dün",
-      unread: false,
-      type: "wallet",
-    },
-  ]);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch("/api/notification/getnotification.php", { credentials: "include" })
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.success && Array.isArray(result.notifications)) {
+          setNotifications(result.notifications);
+        }
+      })
+      .catch((err) => console.error("Bildirimler yüklenemedi:", err))
+      .finally(() => setLoading(false));
+  }, [userId]);
+
+  const formatTime = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(String(dateString).replace(" ", "T"));
+    if (isNaN(date.getTime())) return "";
+    const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (diffInSeconds < 60) return "Şimdi";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} dk önce`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} saat önce`;
+    return date.toLocaleDateString("tr-TR");
+  };
 
   const markAllRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, unread: false })));
+    const unread = notifications.filter((n) => !n.is_read);
+    if (unread.length === 0) return;
+    setNotifications(notifications.map((n) => ({ ...n, is_read: true })));
+    unread.forEach((n) => {
+      const formData = new FormData();
+      formData.append("data", JSON.stringify({ id: n.id }));
+      fetch("/api/notification/readnotification.php", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      }).catch((err) => console.error("Bildirim okundu işaretlenemedi:", err));
+    });
   };
 
   return (
-    <div className="absolute right-0 top-full mt-3 z-50 w-80 sm:w-96 rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-300">
+    <div className="absolute right-0 top-full mt-3 z-49 w-80 sm:w-96 rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-300">
       <div className="flex items-center justify-between pb-3.5 border-b border-white/5">
         <div className="flex items-center gap-2.5">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400">
@@ -92,14 +103,14 @@ function NotificationPopup({ onClose, userId }) {
           <span className="text-xs font-semibold tracking-wide text-white">
             Bildirimler
           </span>
-          <span className="px-2 py-0.5 text-[10px] font-bold text-violet-300 bg-violet-500/15 border border-violet-500/30 rounded-full">
-            {notifications.filter((n) => n.unread).length} Yeni
+          <span className="px-2 py-0.5 text-caption font-bold text-violet-300 bg-violet-500/15 border border-violet-500/30 rounded-full">
+            {notifications.filter((n) => !n.is_read).length} Yeni
           </span>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={markAllRead}
-            className="text-[11px] font-medium text-zinc-400 hover:text-violet-300 transition-colors"
+            className="text-caption font-medium text-zinc-400 hover:text-violet-300 transition-colors"
           >
             Tümünü okundu işaretle
           </button>
@@ -113,28 +124,43 @@ function NotificationPopup({ onClose, userId }) {
       </div>
 
       <div className="mt-3.5 space-y-2 max-h-72 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-800">
-        {notifications.map((item) => (
-          <div
-            key={item.id}
-            className={`p-3 rounded-xl border transition-all duration-200 ${
-              item.unread
-                ? "bg-violet-950/20 border-violet-500/30 shadow-[0_0_15px_rgba(139,92,246,0.08)]"
-                : "bg-zinc-900/30 border-white/5 opacity-70 hover:opacity-100 hover:border-white/10"
-            }`}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <span className="text-xs font-semibold text-white tracking-tight">
-                {item.title}
-              </span>
-              <span className="text-[10px] font-mono text-zinc-500 shrink-0">
-                {item.time}
-              </span>
-            </div>
-            <p className="mt-1 text-[11px] text-zinc-400 leading-relaxed">
-              {item.message}
-            </p>
+        {loading ? (
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-14 animate-pulse rounded-xl bg-white/[0.04]"
+              />
+            ))}
           </div>
-        ))}
+        ) : notifications.length === 0 ? (
+          <p className="py-6 text-center text-caption text-zinc-500">
+            Henüz bildiriminiz yok.
+          </p>
+        ) : (
+          notifications.map((item) => (
+            <div
+              key={item.id}
+              className={`p-3 rounded-xl border transition-all duration-200 ${
+                !item.is_read
+                  ? "bg-violet-950/20 border-violet-500/30 shadow-[0_0_15px_rgba(139,92,246,0.08)]"
+                  : "bg-zinc-900/30 border-white/5 opacity-70 hover:opacity-100 hover:border-white/10"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-xs font-semibold text-white tracking-tight">
+                  {item.title_tr}
+                </span>
+                <span className="text-caption font-mono text-zinc-500 shrink-0">
+                  {formatTime(item.created_at)}
+                </span>
+              </div>
+              <p className="mt-1 text-caption text-zinc-400 leading-relaxed">
+                {item.message_tr}
+              </p>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
@@ -163,11 +189,11 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
             <span className="text-xs font-semibold text-white truncate tracking-tight">
               {user.fullname || user.username || "Kullanıcı"}
             </span>
-            <span className="px-1.5 py-0.2 text-[9px] font-extrabold uppercase tracking-widest text-fuchsia-300 bg-fuchsia-500/15 border border-fuchsia-500/30 rounded">
+            <span className="px-1.5 py-0.2 text-caption font-extrabold uppercase tracking-widest text-fuchsia-300 bg-fuchsia-500/15 border border-fuchsia-500/30 rounded">
               PRO
             </span>
           </div>
-          <span className="text-[11px] font-mono text-zinc-400 truncate mt-0.5">
+          <span className="text-caption font-mono text-zinc-400 truncate mt-0.5">
             @{user.username || "lumanoris_user"}
           </span>
         </div>
@@ -175,7 +201,7 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
 
       <div className="grid grid-cols-3 gap-2 my-3 p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-center">
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+          <div className="text-caption uppercase tracking-wider text-zinc-500 font-medium">
             Botlar
           </div>
           <div className="text-xs font-bold text-white mt-0.5">
@@ -183,7 +209,7 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
           </div>
         </div>
         <div className="border-x border-white/5">
-          <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+          <div className="text-caption uppercase tracking-wider text-zinc-500 font-medium">
             Lisans
           </div>
           <div className="text-xs font-bold text-violet-400 mt-0.5">
@@ -191,7 +217,7 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
           </div>
         </div>
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+          <div className="text-caption uppercase tracking-wider text-zinc-500 font-medium">
             Diyalog
           </div>
           <div className="text-xs font-bold text-fuchsia-400 mt-0.5">
@@ -206,7 +232,7 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
         </button>
         <button className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-zinc-300 rounded-lg hover:bg-white/5 hover:text-white transition-all">
           <Wallet className="w-3.5 h-3.5 text-emerald-400" /> Bakiye & Ödemeler
-          <span className="ml-auto text-[10px] font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+          <span className="ml-auto text-caption font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
             ₺1,450
           </span>
         </button>
@@ -383,9 +409,9 @@ export default function Header({ userId = 1, onNavigate }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearchKey}
-              className="min-w-0 flex-1 bg-transparent text-[13px] text-white outline-none placeholder:text-zinc-500 font-medium"
+              className="min-w-0 flex-1 bg-transparent text-body-sm text-white outline-none placeholder:text-zinc-500 font-medium"
             />
-            <div className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/5 text-[10px] text-zinc-400 font-mono border border-white/10 shrink-0 shadow-inner">
+            <div className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/5 text-caption text-zinc-400 font-mono border border-white/10 shrink-0 shadow-inner">
               <Command className="w-2.5 h-2.5" /> K
             </div>
           </div>
@@ -427,7 +453,7 @@ export default function Header({ userId = 1, onNavigate }) {
             >
               <ShoppingCart className="h-4 w-4" strokeWidth={1.75} />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-600 to-pink-600 px-1 text-[10px] font-bold leading-none tabular-nums text-white shadow-lg shadow-fuchsia-950/80 border border-white/20">
+                <span className="absolute -top-1 -right-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-600 to-pink-600 px-1 text-caption font-bold leading-none tabular-nums text-white shadow-lg shadow-fuchsia-950/80 border border-white/20">
                   {cartCount}
                 </span>
               )}

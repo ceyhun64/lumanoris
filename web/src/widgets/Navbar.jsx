@@ -18,7 +18,7 @@ export default function NavbarMobile() {
                     onClick={() => router.push('/dashboard')}
                 >
                     {logo?.src && <img src={logo.src} alt="Lumanoris" className="w-7 h-7 object-contain" />}
-                    <span className="text-white font-semibold text-[14px] tracking-[0.02em] font-display">Lumanoris</span>
+                    <span className="text-white font-semibold text-body tracking-[0.02em] font-display">Lumanoris</span>
                 </div>
 
                 <button

@@ -137,7 +137,7 @@ export default function MessageInput({ onSend, onResetChat }) {
                 <div className="mb-2.5 flex justify-start px-5">
                     <div className="flex items-center gap-2 rounded-lg border border-fuchsia-400/30 bg-luma-elevated px-3.5 py-2">
                         <FileText className="h-4 w-4 shrink-0 text-fuchsia-400" />
-                        <span className="max-w-[220px] truncate text-[13px] font-medium text-white/85">
+                        <span className="max-w-[220px] truncate text-body-sm font-medium text-white/85">
                             {selectedFileName}
                         </span>
                         <button
@@ -201,7 +201,7 @@ export default function MessageInput({ onSend, onResetChat }) {
                         }}
                         disabled={isRecording}
                         className={cn(
-                            "h-[68px] max-h-[180px] flex-1 resize-none border-none bg-transparent py-[25px] pl-0 pr-2.5 font-sans text-[15px] font-normal text-white placeholder:text-white/45 focus:outline-none disabled:opacity-60",
+                            "h-[68px] max-h-[180px] flex-1 resize-none border-none bg-transparent py-[25px] pl-0 pr-2.5 font-sans text-body-lg font-normal text-white placeholder:text-white/45 focus:outline-none disabled:opacity-60",
                             message.length < 150 ? "overflow-hidden" : "overflow-y-auto",
                         )}
                     />

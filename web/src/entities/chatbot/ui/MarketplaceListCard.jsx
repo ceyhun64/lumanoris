@@ -58,7 +58,7 @@ export default function MarketplaceListCard({ bot, selectable = false, selected 
                 <div className="absolute inset-0 bg-gradient-to-t from-fuchsia-600/25 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
                 {weeklyPrice > 0 && (
-                    <span className="absolute right-2.5 top-2.5 rounded-full bg-gradient-btn px-2.5 py-1 text-[11px] font-bold text-white shadow-[0_2px_10px_rgba(192,38,211,0.5)]">
+                    <span className="absolute right-2.5 top-2.5 rounded-full bg-gradient-btn px-2.5 py-1 text-caption font-bold text-white shadow-[0_2px_10px_rgba(192,38,211,0.5)]">
                         {weeklyPrice}₺<span className="font-medium opacity-80">/hf</span>
                     </span>
                 )}
@@ -84,11 +84,11 @@ export default function MarketplaceListCard({ bot, selectable = false, selected 
 
             <div className="flex min-w-0 flex-1 flex-col gap-1.5 p-3.5 pt-5">
                 <div className="flex min-w-0 items-center justify-between gap-2">
-                    <p className="truncate font-display text-[15px] font-bold text-white">{title}</p>
+                    <p className="truncate font-display text-body-lg font-bold text-white">{title}</p>
                     <ArrowUpRight className="h-4 w-4 shrink-0 -translate-x-1 text-fuchsia-300 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" strokeWidth={2.25} />
                 </div>
 
-                <p className="line-clamp-1 text-[12.5px] leading-relaxed text-white/55">
+                <p className="line-clamp-1 text-label leading-relaxed text-white/55">
                     {description}
                 </p>
 
@@ -96,7 +96,7 @@ export default function MarketplaceListCard({ bot, selectable = false, selected 
                     <span className="truncate text-label text-luma-muted">
                         {followers > 0 ? `${formatCompact(followers)} kullanıcı · ` : ''}{dialogues} diyalog
                     </span>
-                    <span className="flex shrink-0 items-center gap-1.5 text-[12px] font-medium text-white/50">
+                    <span className="flex shrink-0 items-center gap-1.5 text-label font-medium text-white/50">
                         <ThumbsUp className="h-3.5 w-3.5" strokeWidth={1.8} />
                         {formatCompact(likes)}
                     </span>

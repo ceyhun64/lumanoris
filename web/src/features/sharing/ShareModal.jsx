@@ -57,12 +57,12 @@ export default function ShareModal({ isOpen, urlId, onClose, }) {
                     <DialogTitle className="mb-3 text-xl font-semibold text-fuchsia-400">
                         Bu modeli arkadaşlarınızla paylaşın!
                     </DialogTitle>
-                    <DialogDescription className="mb-3.5 font-display text-[15px] font-semibold text-white">
+                    <DialogDescription className="mb-3.5 font-display text-body-lg font-semibold text-white">
                         Paylaşmak için bir seçenek seçin
                     </DialogDescription>
 
                     <div className="relative mb-7 flex w-full items-center justify-between gap-3 rounded-xl bg-luma-input p-4">
-                        <span className="truncate text-[15px] text-white">
+                        <span className="truncate text-body-lg text-white">
                             {shareUrl.length > 30 ? shareUrl.slice(0, 30) + "..." : shareUrl}
                         </span>
                         <Button

@@ -61,7 +61,7 @@ function ToastNotification({ toast, onClose }) {
       </div>
       <div>
         <h5 className="text-xs font-semibold text-white">{toast.title}</h5>
-        <p className="text-[11px] text-zinc-400">{toast.description}</p>
+        <p className="text-caption text-zinc-400">{toast.description}</p>
       </div>
       <button
         onClick={onClose}
@@ -95,7 +95,7 @@ function DeleteConfirmModal({
         </div>
 
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 mb-4">
-          <Trash2 className="w-5 h-5" />
+          <Trash2 className="w-7 h-7" />
         </div>
 
         <h3 className="text-base font-semibold text-white tracking-tight">
@@ -164,7 +164,7 @@ function AddToListModalEmpty({ isOpen, onClose, onCreate, loading }) {
               <h3 className="text-base font-bold text-white tracking-tight">
                 Yeni Liste Oluştur
               </h3>
-              <p className="text-[11px] text-zinc-400">
+              <p className="text-caption text-zinc-400">
                 Chatbotlarınızı gruplamak için özel liste adı girin
               </p>
             </div>
@@ -299,7 +299,7 @@ function ListDetailModal({ isOpen, onClose, list, onRemoveBot }) {
                     <h5 className="text-xs font-bold text-white truncate">
                       {bot.isim || bot.title || `Chatbot #${bot.id || idx + 1}`}
                     </h5>
-                    <p className="text-[11px] text-zinc-400 truncate">
+                    <p className="text-caption text-zinc-400 truncate">
                       {bot.aciklama ||
                         bot.description ||
                         "Lumanoris AI Asistanı"}
@@ -308,7 +308,7 @@ function ListDetailModal({ isOpen, onClose, list, onRemoveBot }) {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[10px] text-violet-400 font-mono bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-md hidden sm:inline-block">
+                  <span className="text-caption text-violet-400 font-mono bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-md hidden sm:inline-block">
                     {bot.toplam_chats || bot.dialogues || 0} diyalog
                   </span>
                   <button
@@ -316,7 +316,7 @@ function ListDetailModal({ isOpen, onClose, list, onRemoveBot }) {
                     className="p-1.5 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                     title="Listeden Çıkar"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-6 h-6" />
                   </button>
                 </div>
               </div>
@@ -353,7 +353,7 @@ function ListCardItem({ list, onDelete, onViewDetail }) {
               <h4 className="text-sm font-bold text-white tracking-tight group-hover:text-violet-300 transition-colors">
                 {list.title}
               </h4>
-              <span className="text-[11px] text-zinc-400 block font-mono">
+              <span className="text-caption text-zinc-400 block font-mono">
                 {list.summary}
               </span>
             </div>
@@ -364,13 +364,13 @@ function ListCardItem({ list, onDelete, onViewDetail }) {
             className="p-2 rounded-xl text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all opacity-80 group-hover:opacity-100"
             title="Listeyi Sil"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-7 h-7" />
           </button>
         </div>
 
         {/* Bot Avatars Preview Row */}
         <div className="pt-2">
-          <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 block mb-2">
+          <span className="text-caption uppercase tracking-wider font-semibold text-zinc-500 block mb-2">
             Ekleme Yapılan Botlar
           </span>
 
@@ -397,7 +397,7 @@ function ListCardItem({ list, onDelete, onViewDetail }) {
             )}
 
             {bots.length > 6 && (
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-800 border border-zinc-700 text-[10px] font-bold text-violet-300 shrink-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-800 border border-zinc-700 text-caption font-bold text-violet-300 shrink-0">
                 +{bots.length - 6}
               </div>
             )}
@@ -438,6 +438,7 @@ export default function List() {
   const [searchQuery, setSearchQuery] = useState("");
   const [userId, setUserId] = useState(null);
   const [toastInfo, setToastInfo] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
 
   const triggerToast = (title, description, type = "success") => {
     setToastInfo({ title, description, type });
@@ -482,12 +483,13 @@ export default function List() {
 
         setListData(formatted);
       } else {
-        // Fallback initial data if user has no lists yet
-        loadDemoLists();
+        setListData([]);
+        setFetchError(data?.message || "Listeler yüklenemedi.");
       }
     } catch (error) {
       console.error("Listeler yüklenirken hata oluştu:", error);
-      loadDemoLists();
+      setListData([]);
+      setFetchError("Sunucuya bağlanılamadı.");
     }
   };
 
@@ -561,13 +563,14 @@ export default function List() {
           setUserId(result.user_id);
           fetchUserLists(result.user_id);
         } else {
-          setUserId(1);
-          loadDemoLists();
+          setUserId(null);
+          setListData([]);
         }
       } catch (err) {
         console.error("Session check error:", err);
-        setUserId(1);
-        loadDemoLists();
+        setUserId(null);
+        setListData([]);
+        setFetchError("Sunucuya bağlanılamadı.");
       }
     }
     checkSession();
@@ -595,16 +598,18 @@ export default function List() {
       });
 
       const resultText = await response.text();
-      let result = {};
+      let result;
       try {
         result = JSON.parse(resultText);
       } catch (e) {
-        result = { success: true, listId: Date.now() };
+        console.error("Beklenmeyen sunucu yanıtı:", resultText);
+        triggerToast("Hata Oluştu", "Beklenmeyen sunucu yanıtı.", "error");
+        return;
       }
 
       if (result.success) {
         const formattedList = {
-          id: result.listId || Date.now(),
+          id: result.listId,
           title: listName,
           summary: "0 Bot İçeriyor",
           dialog: `0 Diyalog`,
@@ -627,22 +632,8 @@ export default function List() {
         );
       }
     } catch (err) {
-      // Local fallback on backend connection failure
-      const formattedList = {
-        id: Date.now(),
-        title: listName,
-        summary: "0 Bot İçeriyor",
-        dialog: `0 Diyalog`,
-        bots: [],
-        createdAt: new Date().toISOString(),
-      };
-      setListData((prev) => [formattedList, ...prev]);
-      setModalVisible(false);
-      setModalVisible2(false);
-      triggerToast(
-        "Koleksiyon Eklendi",
-        `"${listName}" listeniz yerel olarak güncellendi.`,
-      );
+      console.error("Liste oluşturma hatası:", err);
+      triggerToast("Hata Oluştu", "Sunucuya bağlanılamadı.", "error");
     } finally {
       setCreateLoading(false);
     }
@@ -653,23 +644,29 @@ export default function List() {
     setDeleteLoading(true);
 
     try {
-      const res = await fetch(
-        `/api/social/deleteuserlist.php?id=${deleteTarget.id}`,
-        {
-          method: "DELETE",
-        },
-      );
-      const data = await res.json().catch(() => ({ success: true }));
+      const formData = new FormData();
+      formData.append("data", JSON.stringify({ id: deleteTarget.id }));
+      const res = await fetch("/api/social/deleteuserlist.php", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
 
-      if (data.success || true) {
+      if (data.success) {
         setListData((prev) =>
           prev.filter((item) => item.id !== deleteTarget.id),
         );
         triggerToast("Silindi", `"${deleteTarget.title}" koleksiyonu silindi.`);
+      } else {
+        triggerToast(
+          "Hata Oluştu",
+          data.message || "Liste silinemedi.",
+          "error",
+        );
       }
     } catch (err) {
-      setListData((prev) => prev.filter((item) => item.id !== deleteTarget.id));
-      triggerToast("Silindi", `"${deleteTarget.title}" koleksiyonu silindi.`);
+      console.error("Liste silme hatası:", err);
+      triggerToast("Hata Oluştu", "Sunucuya bağlanılamadı.", "error");
     } finally {
       setDeleteLoading(false);
       setDeleteModalVisible(false);
@@ -703,11 +700,11 @@ export default function List() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-zinc-800/60">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-violet-300 bg-violet-500/10 border border-violet-500/20">
+              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-caption font-semibold text-violet-300 bg-violet-500/10 border border-violet-500/20">
                 <Sparkles className="w-3 h-3 text-fuchsia-400" />
                 Lumanoris Koleksiyon Modülü
               </span>
-              <span className="flex items-center gap-1 text-[11px] text-emerald-400 font-mono">
+              <span className="flex items-center gap-1 text-caption text-emerald-400 font-mono">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Sekronize
               </span>
@@ -744,7 +741,7 @@ export default function List() {
               placeholder="Listelerim arasında ara..."
               className="w-full bg-transparent pl-10 pr-12 py-2 text-xs text-white placeholder-zinc-500 outline-none focus:ring-0"
             />
-            <div className="hidden md:flex items-center gap-1 absolute right-3 px-1.5 py-0.5 rounded bg-zinc-800/80 text-[10px] text-zinc-400 font-mono border border-zinc-700/50">
+            <div className="hidden md:flex items-center gap-1 absolute right-3 px-1.5 py-0.5 rounded bg-zinc-800/80 text-caption text-zinc-400 font-mono border border-zinc-700/50">
               <Command className="w-2.5 h-2.5" /> K
             </div>
           </div>

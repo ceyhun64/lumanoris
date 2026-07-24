@@ -63,10 +63,11 @@ export default function Register() {
       }
     } catch (err) {
       console.error("Google login error:", err);
-      showToast("Google kimlik doğrulama simüle edildi.", "success");
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 1500);
+      showToast(
+        "Google girişi başarısız.",
+        "destructive",
+        "Sunucuya bağlanılamadı. Lütfen tekrar deneyin.",
+      );
     } finally {
       setLoading(false);
     }
@@ -130,13 +131,10 @@ export default function Register() {
     } catch (err) {
       console.error("Kayıt hatası:", err);
       showToast(
-        "Kayıt simülasyonu başarılı!",
-        "success",
-        "Yönlendiriliyorsunuz...",
+        "Hata",
+        "destructive",
+        "Sunucuya bağlanılamadı. Lütfen tekrar deneyin.",
       );
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 1500);
     } finally {
       setLoading(false);
     }
@@ -171,7 +169,7 @@ export default function Register() {
   };
 
   const inputCls =
-    "w-full bg-[#0A0B10]/80 border border-white/[0.08] rounded-xl pl-11 pr-4 py-3.5 text-[14px] text-white placeholder-white/35 outline-none transition-all duration-300 focus:border-fuchsia-500/50 focus:bg-[#0E0F16] focus:ring-4 focus:ring-fuchsia-500/10 hover:border-white/20 font-sans";
+    "w-full bg-[#0A0B10]/80 border border-white/[0.08] rounded-xl pl-11 pr-4 py-3.5 text-body text-white placeholder-white/35 outline-none transition-all duration-300 focus:border-fuchsia-500/50 focus:bg-[#0E0F16] focus:ring-4 focus:ring-fuchsia-500/10 hover:border-white/20 font-sans";
 
   return (
     <div className="min-h-screen bg-[#09090F] text-white flex selection:bg-fuchsia-500/30 selection:text-fuchsia-200 overflow-x-hidden font-sans relative">
@@ -192,7 +190,7 @@ export default function Register() {
           <div>
             <div className="font-bold">{toastMessage.title}</div>
             {toastMessage.description && (
-              <div className="text-white/70 text-[11px] mt-0.5">
+              <div className="text-white/70 text-caption mt-0.5">
                 {toastMessage.description}
               </div>
             )}
@@ -221,7 +219,7 @@ export default function Register() {
               <span className="font-extrabold text-lg tracking-wider bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
                 LUMANORIS
               </span>
-              <span className="block text-[10px] tracking-widest text-fuchsia-400 font-semibold uppercase">
+              <span className="block text-caption tracking-widest text-fuchsia-400 font-semibold uppercase">
                 AI Architecture
               </span>
             </div>
@@ -263,11 +261,11 @@ export default function Register() {
                 <div>
                   <div className="text-sm font-bold text-white flex items-center gap-1.5">
                     Lumanoris Core Engine
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-fuchsia-500/20 text-fuchsia-300 font-mono">
+                    <span className="text-caption px-1.5 py-0.5 rounded bg-fuchsia-500/20 text-fuchsia-300 font-mono">
                       SECURE
                     </span>
                   </div>
-                  <div className="text-[11px] text-white/40">
+                  <div className="text-caption text-white/40">
                     Encrypted user registration pipeline
                   </div>
                 </div>
@@ -277,7 +275,7 @@ export default function Register() {
 
             <div className="space-y-3 font-sans text-xs">
               <div className="flex items-start gap-2.5">
-                <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5 text-white/60 text-[10px]">
+                <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5 text-white/60 text-caption">
                   AI
                 </div>
                 <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] text-white/80 leading-relaxed">
@@ -337,7 +335,7 @@ export default function Register() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="mb-6">
-              <span className="text-[11px] font-bold uppercase tracking-widest text-fuchsia-400 block mb-1">
+              <span className="text-caption font-bold uppercase tracking-widest text-fuchsia-400 block mb-1">
                 Yeni Hesap Başlatın
               </span>
               <h2 className="text-2xl font-bold tracking-tight text-white">
@@ -437,7 +435,7 @@ export default function Register() {
 
               <div className="relative flex items-center gap-4 my-5">
                 <div className="flex-1 h-px bg-white/10" />
-                <span className="text-[11px] uppercase tracking-wider text-white/30 font-medium">
+                <span className="text-caption uppercase tracking-wider text-white/30 font-medium">
                   veya devam et
                 </span>
                 <div className="flex-1 h-px bg-white/10" />
@@ -489,7 +487,7 @@ export default function Register() {
             </form>
           </div>
 
-          <p className="text-center mt-6 text-[11px] text-white/40 leading-relaxed px-4">
+          <p className="text-center mt-6 text-caption text-white/40 leading-relaxed px-4">
             Devam ederek Lumanoris'in{" "}
             <button
               type="button"

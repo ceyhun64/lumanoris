@@ -122,8 +122,8 @@ export default function AddToListModal({ userId, botId, isOpen, onClose, header 
                         Değişiklikler kaydedildi ✅
                     </div>
                 )}
-                <DialogTitle className="mb-1 text-[16px]">{header}</DialogTitle>
-                <DialogDescription className="mb-5 text-left font-sans text-[14px] font-normal leading-6 text-white">
+                <DialogTitle className="mb-1 text-title-sm">{header}</DialogTitle>
+                <DialogDescription className="mb-5 text-left font-sans text-body font-normal leading-6 text-white">
                     Bu botu bir veya daha fazla listeye ekleyebilir veya listelerden çıkarabilirsiniz.
                 </DialogDescription>
 
@@ -133,7 +133,7 @@ export default function AddToListModal({ userId, botId, isOpen, onClose, header 
                         placeholder="Yeni Liste Adı"
                         value={newListName}
                         onChange={(e) => setNewListName(e.target.value)}
-                        className="flex-1 bg-transparent font-display text-[15px] text-white placeholder:text-white/40 focus:outline-none"
+                        className="flex-1 bg-transparent font-display text-body-lg text-white placeholder:text-white/40 focus:outline-none"
                     />
                     <button
                         onClick={handleAddNewList}
@@ -163,14 +163,14 @@ export default function AddToListModal({ userId, botId, isOpen, onClose, header 
                     <Button
                         onClick={onClose}
                         variant="secondary"
-                        className="h-auto min-w-[120px] flex-1 border border-transparent bg-white/[0.06] py-3 text-[16px] hover:bg-white/[0.1]"
+                        className="h-auto min-w-[120px] flex-1 border border-transparent bg-white/[0.06] py-3 text-title-sm hover:bg-white/[0.1]"
                     >
                         İptal
                     </Button>
                     <Button
                         onClick={handleSave}
                         disabled={loading}
-                        className="h-auto min-w-[120px] flex-1 py-3 text-[16px]"
+                        className="h-auto min-w-[120px] flex-1 py-3 text-title-sm"
                     >
                         {loading ? "Kaydediliyor..." : "Kaydet"}
                     </Button>

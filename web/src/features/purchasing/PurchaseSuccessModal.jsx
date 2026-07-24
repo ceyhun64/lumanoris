@@ -48,27 +48,27 @@ export default function PurchaseSuccessModal({ isOpen, onClose, chatbotName = "T
                     <p className="mb-2.5 font-display text-xl font-bold text-emerald-400">
                         Satın Alma Başarılı
                     </p>
-                    <DialogDescription className="mb-1 font-display text-[15px] font-semibold text-white">
+                    <DialogDescription className="mb-1 font-display text-body-lg font-semibold text-white">
                         {chatbotName} sohbetin aktif hale getirildi.
                     </DialogDescription>
-                    <p className="mb-6 text-[14px] text-white/55">
+                    <p className="mb-6 text-body text-white/55">
                         Sahip olduğun chatbotlar arasında görüntüleyebilirsin.
                     </p>
                     {orderId && (
-                        <p className="mb-6 -mt-4 font-mono text-[13px] text-white/60">
+                        <p className="mb-6 -mt-4 font-mono text-body-sm text-white/60">
                             Sipariş No: <span className="text-white/85">{orderId}</span>
                         </p>
                     )}
                     <div className="grid w-full grid-cols-2 gap-3">
                         <button
                             onClick={handleCancel}
-                            className="rounded-xl border border-transparent bg-white/10 px-3 py-3 font-display text-[15px] font-medium text-white transition-all duration-200 hover:border-transparent hover:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="rounded-xl border border-transparent bg-white/10 px-3 py-3 font-display text-body-lg font-medium text-white transition-all duration-200 hover:border-transparent hover:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             İptal
                         </button>
                         <button
                             onClick={handleView}
-                            className="rounded-xl border border-transparent bg-emerald-500 px-3 py-3 font-display text-[15px] font-semibold text-white transition-all duration-200 hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="rounded-xl border border-transparent bg-emerald-500 px-3 py-3 font-display text-body-lg font-semibold text-white transition-all duration-200 hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             Görüntüle
                         </button>

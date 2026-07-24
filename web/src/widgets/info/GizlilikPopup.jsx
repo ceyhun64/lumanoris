@@ -218,7 +218,7 @@ export default function PrivacyPopup({ onClose }) {
     return (
         <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="flex max-h-[80vh] max-w-[900px] flex-col overflow-hidden bg-luma-elevated border-transparent p-0">
-                <DialogTitle className="shrink-0 px-6 pb-3 pt-6 text-[16px]">{privacyContent[0].text}</DialogTitle>
+                <DialogTitle className="shrink-0 px-6 pb-3 pt-6 text-title-sm">{privacyContent[0].text}</DialogTitle>
 
                 {/* İçerik alanı: Liste yapısından çıkarılıp, render fonksiyonu kullanıldı */}
                 <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">

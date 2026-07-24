@@ -58,15 +58,15 @@ export default function DialogNotebookModal({ userId, botId, inputMessage, outpu
         <>
             {/* Feedback Badge */}
             {showFeedback && (
-                <div className="fixed bottom-6 right-6 px-3 py-1.5 rounded-lg bg-fuchsia-400 text-white text-[13px] font-medium pointer-events-none z-[999999] animate-[fadeInOut_2s_ease_forwards]">
+                <div className="fixed bottom-6 right-6 px-3 py-1.5 rounded-lg bg-fuchsia-400 text-white text-body-sm font-medium pointer-events-none z-[999999] animate-[fadeInOut_2s_ease_forwards]">
                     Başarıyla yayınlandı ✅
                 </div>
             )}
 
             <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
                 <DialogContent className="max-w-[450px] bg-luma-card border-transparent p-6 text-center">
-                    <DialogTitle className="mb-1 text-[16px]">Diyalog Defterine Ekle</DialogTitle>
-                    <DialogDescription className="mb-5 text-left font-sans text-[14px] font-normal leading-6 text-white">
+                    <DialogTitle className="mb-1 text-title-sm">Diyalog Defterine Ekle</DialogTitle>
+                    <DialogDescription className="mb-5 text-left font-sans text-body font-normal leading-6 text-white">
                         Diyaloğunuza uygun bir başlık belirleyin ve Diyalog Defteri sayfasında bu içeriği diğer insanlarla paylaşın.
                     </DialogDescription>
                     <div className="mb-6 flex w-full items-center justify-center rounded-xl bg-luma-input px-5 py-4">
@@ -75,18 +75,18 @@ export default function DialogNotebookModal({ userId, botId, inputMessage, outpu
                             placeholder="Diyalog başlığı"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="w-full bg-transparent font-display text-[15px] text-white placeholder:text-white/40 focus:outline-none"
+                            className="w-full bg-transparent font-display text-body-lg text-white placeholder:text-white/40 focus:outline-none"
                         />
                     </div>
                     <div className="flex justify-between gap-6">
                         <Button
                             onClick={onClose}
                             variant="secondary"
-                            className="h-auto min-w-[120px] flex-1 border border-transparent bg-white/[0.06] py-3 text-[16px] hover:bg-white/[0.1]"
+                            className="h-auto min-w-[120px] flex-1 border border-transparent bg-white/[0.06] py-3 text-title-sm hover:bg-white/[0.1]"
                         >
                             İptal
                         </Button>
-                        <Button onClick={handlePublish} className="h-auto min-w-[120px] flex-1 py-3 text-[16px]">
+                        <Button onClick={handlePublish} className="h-auto min-w-[120px] flex-1 py-3 text-title-sm">
                             Yayınla
                         </Button>
                     </div>

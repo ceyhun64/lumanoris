@@ -183,7 +183,7 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
                             onClick={(e) => { e.stopPropagation(); router.push('/dashboard/chatbots/create'); }}
                             className="absolute inset-x-0 top-0 z-10 flex items-center justify-center gap-2 bg-amber-500/25 py-1.5 text-center transition-colors hover:bg-amber-500/35"
                         >
-                            <span className="text-[11px] font-semibold text-amber-200">Yayında Değil — Pazaryeri kaydını tamamla</span>
+                            <span className="text-caption font-semibold text-amber-200">Yayında Değil — Pazaryeri kaydını tamamla</span>
                         </button>
                     )}
 
@@ -194,7 +194,7 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
 
                 <div className="flex flex-col gap-2 p-3.5 pt-5">
                     <div className="flex items-center justify-between gap-2">
-                        <p className="truncate font-display text-[15px] font-bold text-white">{title}</p>
+                        <p className="truncate font-display text-body-lg font-bold text-white">{title}</p>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
@@ -301,7 +301,7 @@ function StatBtn({ active, activeClass, onClick, children }) {
     return (
         <button
             className={cn(
-                'flex items-center gap-1.5 text-[12px] transition-colors px-0 rounded-md',
+                'flex items-center gap-1.5 text-label transition-colors px-0 rounded-md',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base',
                 active ? (activeClass ?? 'text-fuchsia-300') : 'text-white/45 hover:text-white/75',
             )}
@@ -315,7 +315,7 @@ function StatBtn({ active, activeClass, onClick, children }) {
 function ActionBtn({ onClick, children }) {
     return (
         <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-fuchsia-500/8 border border-fuchsia-400/18 text-fuchsia-300 text-[11.5px] font-semibold hover:bg-fuchsia-500/15 hover:border-fuchsia-400/35 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-fuchsia-500/8 border border-fuchsia-400/18 text-fuchsia-300 text-caption font-semibold hover:bg-fuchsia-500/15 hover:border-fuchsia-400/35 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base"
             onClick={onClick}
         >
             {children}

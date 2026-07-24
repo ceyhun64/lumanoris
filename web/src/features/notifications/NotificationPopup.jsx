@@ -100,7 +100,7 @@ export default function NotificationPopup({ onClose, userId }) {
     return (
         <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-[500px] bg-luma-card border-transparent p-6">
-                <DialogTitle className="mb-4 text-[16px]">Bildirimler</DialogTitle>
+                <DialogTitle className="mb-4 text-title-sm">Bildirimler</DialogTitle>
 
                 {loading ? (
                     <div className="flex flex-col gap-3">
@@ -128,7 +128,7 @@ export default function NotificationPopup({ onClose, userId }) {
                                     {ICONS[notif.type] || ICONS.default}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <h4 className="mb-1 font-display text-[15px] font-semibold text-white">{notif.title_tr}</h4>
+                                    <h4 className="mb-1 font-display text-body-lg font-semibold text-white">{notif.title_tr}</h4>
                                     <p className="text-sm text-white/70">{notif.message_tr}</p>
                                 </div>
                                 <span className="shrink-0 self-start text-caption text-luma-muted">{formatTime(notif.created_at)}</span>
