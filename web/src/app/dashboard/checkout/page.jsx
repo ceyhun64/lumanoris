@@ -41,18 +41,18 @@ function validateCard(card) {
   const cvv = (card.cvv || "").replace(/\D/g, "");
   const holderName = (card.holderName || "").trim();
 
-  if (!holderName) return "Cardholder name is required.";
+  if (!holderName) return "Kart sahibinin adı gereklidir.";
   if (number.length < 13 || number.length > 19 || !luhnCheck(number)) {
-    return "Card number is invalid.";
+    return "Kart numarası geçersiz.";
   }
-  if (!month || !year || month < 1 || month > 12) return "Expiry date is invalid.";
+  if (!month || !year || month < 1 || month > 12) return "Son kullanma tarihi geçersiz.";
   const now = new Date();
   const currentYear = now.getFullYear() % 100;
   const currentMonth = now.getMonth() + 1;
   if (year < currentYear || (year === currentYear && month < currentMonth)) {
-    return "This card has expired.";
+    return "Bu kartın süresi dolmuş.";
   }
-  if (!/^\d{3,4}$/.test(cvv)) return "CVV is invalid.";
+  if (!/^\d{3,4}$/.test(cvv)) return "CVV geçersiz.";
   return null;
 }
 
@@ -109,7 +109,7 @@ export default function Checkout() {
               id: row.id,
               chatbot_id: row.chatbot_id,
               title: row.title,
-              description: row.category ? `Category: ${row.category}` : "",
+              description: row.category ? `Kategori: ${row.category}` : "",
               image: resolveCoverSrc(row.image),
               price: weeklyPrice,
               monthlyPrice: Number(row.monthlyPrice) || weeklyPrice * 4,
@@ -119,7 +119,7 @@ export default function Checkout() {
         );
       } catch (err) {
         console.error("Cart fetch error:", err);
-        showToast("Error", "Could not load your cart.", "destructive");
+        showToast("Hata", "Sepetiniz yüklenemedi.", "destructive");
       } finally {
         setLoading(false);
       }
@@ -138,18 +138,18 @@ export default function Checkout() {
       });
       const result = await res.json();
       if (!result.success) {
-        showToast("Error", result.message || "Could not remove item from cart.", "destructive");
+        showToast("Hata", result.message || "Ürün sepetten kaldırılamadı.", "destructive");
         return;
       }
       setCartItems((prev) => prev.filter((item) => item.id !== cartId));
       showToast(
-        "Item Removed",
-        "Successfully removed model license from your cart.",
+        "Ürün Kaldırıldı",
+        "Model lisansı sepetinizden başarıyla kaldırıldı.",
         "default",
       );
     } catch (error) {
       console.error("Removal error:", error);
-      showToast("Error", "Could not remove item from cart.", "destructive");
+      showToast("Hata", "Ürün sepetten kaldırılamadı.", "destructive");
     }
   };
 
@@ -192,8 +192,8 @@ export default function Checkout() {
       const result = await res.json();
       if (result.success) {
         showToast(
-          "Order Successful!",
-          "Your AI models have been provisioned instantly.",
+          "Sipariş Başarılı!",
+          "Yapay zeka modelleriniz anında hazır hale getirildi.",
           "default",
         );
         setCartItems([]);
@@ -202,11 +202,11 @@ export default function Checkout() {
         setStep(1);
         setTimeout(() => router.push("/dashboard"), 1500);
       } else {
-        showToast("Payment Failed", result.message || "Could not process payment.", "destructive");
+        showToast("Ödeme Başarısız", result.message || "Ödeme işlenemedi.", "destructive");
       }
     } catch (error) {
       console.error("Payment error:", error);
-      showToast("Error", "Could not reach the payment server.", "destructive");
+      showToast("Hata", "Ödeme sunucusuna ulaşılamadı.", "destructive");
     } finally {
       setPaying(false);
     }
@@ -271,12 +271,12 @@ export default function Checkout() {
           className="group flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-white transition-all bg-zinc-900/50 hover:bg-zinc-800/80 px-3.5 py-2 rounded-xl border border-zinc-800/80 backdrop-blur-md shadow-sm"
         >
           <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-          <span>{step === 2 ? "Return to Cart" : "Back to Marketplace"}</span>
+          <span>{step === 2 ? "Sepete Dön" : "Pazaryerine Dön"}</span>
         </button>
 
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-800/80 text-caption text-zinc-400 backdrop-blur-md">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Secure 256-bit TLS Session</span>
+          <span>Güvenli 256-bit TLS Oturumu</span>
         </div>
       </header>
 
@@ -285,15 +285,15 @@ export default function Checkout() {
         <div className="mb-10">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium mb-3">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>2026 Enterprise Provisioning</span>
+            <span>2026 Kurumsal Sağlama</span>
           </div>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
-            {step === 1 ? "Review Your Cart" : "Confirm Subscription & Payment"}
+            {step === 1 ? "Sepetinizi Gözden Geçirin" : "Abonelik ve Ödemeyi Onaylayın"}
           </h1>
           <p className="text-sm text-zinc-400 mt-1">
             {step === 1
-              ? "Manage your selected AI models and licenses prior to deployment."
-              : `Finalizing provision for ${confirmedItems.length} active model instance${confirmedItems.length > 1 ? "s" : ""}.`}
+              ? "Devreye almadan önce seçtiğiniz yapay zeka modellerini ve lisanslarını yönetin."
+              : `${confirmedItems.length} aktif model örneği için sağlama tamamlanıyor.`}
           </p>
         </div>
 
@@ -307,7 +307,7 @@ export default function Checkout() {
             >
               1
             </span>
-            <span>Cart Summary</span>
+            <span>Sepet Özeti</span>
           </div>
           <ChevronRight className="w-4 h-4 text-zinc-700" />
           <div
@@ -318,7 +318,7 @@ export default function Checkout() {
             >
               2
             </span>
-            <span>Secure Checkout</span>
+            <span>Güvenli Ödeme</span>
           </div>
         </div>
 
@@ -329,17 +329,17 @@ export default function Checkout() {
               <ShoppingBag className="w-8 h-8" />
             </div>
             <h3 className="text-xl font-semibold text-white mb-2">
-              Your cart is currently empty
+              Sepetiniz şu anda boş
             </h3>
             <p className="text-sm text-zinc-400 mb-8 max-w-sm mx-auto">
-              Explore our marketplace to discover high-performance cognitive
-              models and developer suites.
+              Yüksek performanslı yapay zeka modellerini ve geliştirici
+              paketlerini keşfetmek için pazaryerimize göz atın.
             </p>
             <button
               onClick={() => router.push("/dashboard")}
               className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-lg shadow-indigo-600/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
             >
-              Browse Marketplace
+              Pazaryerine Göz At
             </button>
           </div>
         ) : step === 1 ? (
@@ -365,7 +365,7 @@ export default function Checkout() {
                       <div className="flex items-center gap-2 mb-1">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800/80 text-caption font-medium text-zinc-300 border border-zinc-700/40">
                           <Clock className="w-3 h-3 text-indigo-400" />
-                          {item.duration_weeks} Weeks Access
+                          {item.duration_weeks} Hafta Erişim
                         </span>
                       </div>
                       <h3 className="text-base font-semibold text-white tracking-tight truncate">
@@ -384,14 +384,14 @@ export default function Checkout() {
                         </span>
                         <p className="text-caption text-zinc-500">
                           {CURRENCY_SYMBOL}
-                          {item.price.toFixed(2)} / wk
+                          {item.price.toFixed(2)} / hafta
                         </p>
                       </div>
 
                       <button
                         onClick={() => handleRemove(item.id)}
                         className="p-2 rounded-lg bg-zinc-800/50 hover:bg-red-500/10 text-zinc-400 hover:text-red-400 transition-colors border border-transparent hover:border-red-500/20"
-                        title="Remove item"
+                        title="Ürünü kaldır"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -408,19 +408,19 @@ export default function Checkout() {
 
                 <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                   <Zap className="w-4 h-4 text-indigo-400" />
-                  Order Summary
+                  Sipariş Özeti
                 </h3>
 
                 <div className="space-y-3 pb-4 border-b border-zinc-800/80 text-xs">
                   <div className="flex justify-between text-zinc-400">
-                    <span>Subtotal ({cartItems.length} items)</span>
+                    <span>Ara Toplam ({cartItems.length} ürün)</span>
                     <span className="text-zinc-200 font-medium">
                       {CURRENCY_SYMBOL}
                       {subtotal.toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between text-zinc-400">
-                    <span>Estimated Tax (8%)</span>
+                    <span>Tahmini Vergi (%8)</span>
                     <span className="text-zinc-200 font-medium">
                       {CURRENCY_SYMBOL}
                       {tax.toFixed(2)}
@@ -428,7 +428,7 @@ export default function Checkout() {
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-emerald-400 font-medium">
-                      <span>Discount Applied</span>
+                      <span>Uygulanan İndirim</span>
                       <span>
                         -{CURRENCY_SYMBOL}
                         {discount.toFixed(2)}
@@ -439,7 +439,7 @@ export default function Checkout() {
 
                 <div className="pt-4 pb-6 flex items-center justify-between">
                   <span className="text-sm font-semibold text-white">
-                    Total Due
+                    Ödenecek Tutar
                   </span>
                   <div className="text-right">
                     <span className="text-2xl font-bold tracking-tight text-white">
@@ -447,7 +447,7 @@ export default function Checkout() {
                       {total.toFixed(2)}
                     </span>
                     <p className="text-caption text-zinc-500">
-                      Billed securely in USD
+                      Güvenli şekilde faturalandırılır
                     </p>
                   </div>
                 </div>
@@ -458,7 +458,7 @@ export default function Checkout() {
                     <BadgePercent className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                     <input
                       type="text"
-                      placeholder="Promo code (e.g. ENTERPRISE2026)"
+                      placeholder="Promosyon kodu (örn. ENTERPRISE2026)"
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value)}
                       className="w-full bg-zinc-950/60 border border-zinc-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60 transition-colors"
@@ -469,21 +469,21 @@ export default function Checkout() {
                       if (promoCode.toUpperCase() === "ENTERPRISE2026") {
                         setDiscount(subtotal * 0.15);
                         showToast(
-                          "Promo Applied",
-                          "15% enterprise discount activated successfully.",
+                          "Promosyon Uygulandı",
+                          "%15 kurumsal indirim başarıyla etkinleştirildi.",
                           "default",
                         );
                       } else {
                         showToast(
-                          "Invalid Code",
-                          "Please enter a valid promotion code.",
+                          "Geçersiz Kod",
+                          "Lütfen geçerli bir promosyon kodu girin.",
                           "destructive",
                         );
                       }
                     }}
                     className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-medium transition-colors border border-zinc-700/50"
                   >
-                    Apply
+                    Uygula
                   </button>
                 </div>
 
@@ -491,13 +491,13 @@ export default function Checkout() {
                   onClick={handleConfirm}
                   className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-xs shadow-xl shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 group cursor-pointer"
                 >
-                  <span>Proceed to Payment</span>
+                  <span>Ödemeye Geç</span>
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </button>
 
                 <div className="mt-4 flex items-center justify-center gap-2 text-caption text-zinc-500">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>30-Day Money-Back Guarantee</span>
+                  <span>30 Gün Para İade Garantisi</span>
                 </div>
               </div>
             </div>
@@ -509,7 +509,7 @@ export default function Checkout() {
               <div className="rounded-3xl border border-zinc-800/80 bg-zinc-900/60 p-6 backdrop-blur-xl shadow-2xl">
                 <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  Verified Provision Items ({confirmedItems.length})
+                  Doğrulanmış Sağlama Kalemleri ({confirmedItems.length})
                 </h3>
 
                 <div className="space-y-3">
@@ -529,7 +529,7 @@ export default function Checkout() {
                             {item.title}
                           </p>
                           <p className="text-caption text-zinc-400">
-                            {item.duration_weeks} weeks allocation
+                            {item.duration_weeks} hafta tahsisi
                           </p>
                         </div>
                       </div>
@@ -546,7 +546,7 @@ export default function Checkout() {
               <div className="rounded-3xl border border-zinc-800/80 bg-zinc-900/60 p-6 backdrop-blur-xl shadow-2xl">
                 <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-indigo-400" />
-                  Payment Method
+                  Ödeme Yöntemi
                 </h3>
 
                 <div className="space-y-3">
@@ -560,10 +560,10 @@ export default function Checkout() {
                       />
                       <div>
                         <p className="text-xs font-semibold text-white">
-                          Credit / Debit Card (Stripe Enterprise)
+                          Kredi / Banka Kartı (Stripe Enterprise)
                         </p>
                         <p className="text-caption text-zinc-400">
-                          Instant tokenization & automated renewal
+                          Anında tokenizasyon ve otomatik yenileme
                         </p>
                       </div>
                     </div>
@@ -580,10 +580,10 @@ export default function Checkout() {
                       />
                       <div>
                         <p className="text-xs font-semibold text-zinc-300">
-                          Corporate Invoice / Wire Transfer
+                          Kurumsal Fatura / Havale
                         </p>
                         <p className="text-caption text-zinc-500">
-                          Coming soon for verified orgs
+                          Doğrulanmış kurumlar için yakında
                         </p>
                       </div>
                     </div>
@@ -594,7 +594,7 @@ export default function Checkout() {
                 <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     type="text"
-                    placeholder="Cardholder Name"
+                    placeholder="Kart Sahibinin Adı"
                     value={cardInfo.holderName}
                     autoComplete="cc-name"
                     onChange={(e) =>
@@ -604,7 +604,7 @@ export default function Checkout() {
                   />
                   <input
                     type="text"
-                    placeholder="Card Number"
+                    placeholder="Kart Numarası"
                     inputMode="numeric"
                     autoComplete="cc-number"
                     value={cardInfo.number}
@@ -621,7 +621,7 @@ export default function Checkout() {
                   />
                   <input
                     type="text"
-                    placeholder="MM/YY"
+                    placeholder="AA/YY"
                     maxLength={5}
                     autoComplete="cc-exp"
                     value={cardInfo.expiry}
@@ -662,8 +662,8 @@ export default function Checkout() {
                     <ShieldCheck className="w-4 h-4" />
                     <span>
                       {paying
-                        ? "Processing..."
-                        : `Authorize & Complete Checkout (${CURRENCY_SYMBOL}${total.toFixed(2)})`}
+                        ? "İşleniyor..."
+                        : `Ödemeyi Onayla ve Tamamla (${CURRENCY_SYMBOL}${total.toFixed(2)})`}
                     </span>
                   </button>
                 </div>
@@ -674,23 +674,23 @@ export default function Checkout() {
             <div className="lg:col-span-5 sticky top-6">
               <div className="rounded-3xl border border-zinc-800/80 bg-zinc-900/60 p-6 backdrop-blur-xl shadow-2xl">
                 <h3 className="text-sm font-semibold text-white mb-4">
-                  Payment Breakdown
+                  Ödeme Dökümü
                 </h3>
 
                 <div className="space-y-3 pb-4 border-b border-zinc-800/80 text-xs">
                   <div className="flex justify-between text-zinc-400">
-                    <span>Account ID</span>
+                    <span>Hesap No</span>
                     <span className="text-zinc-200 font-mono">{userId}</span>
                   </div>
                   <div className="flex justify-between text-zinc-400">
-                    <span>Subtotal</span>
+                    <span>Ara Toplam</span>
                     <span className="text-zinc-200 font-medium">
                       {CURRENCY_SYMBOL}
                       {subtotal.toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between text-zinc-400">
-                    <span>Tax & Regulatory Compliance</span>
+                    <span>Vergi ve Yasal Uyumluluk</span>
                     <span className="text-zinc-200 font-medium">
                       {CURRENCY_SYMBOL}
                       {tax.toFixed(2)}
@@ -698,7 +698,7 @@ export default function Checkout() {
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-emerald-400 font-medium">
-                      <span>Enterprise Discount</span>
+                      <span>Kurumsal İndirim</span>
                       <span>
                         -{CURRENCY_SYMBOL}
                         {discount.toFixed(2)}
@@ -709,7 +709,7 @@ export default function Checkout() {
 
                 <div className="pt-4 flex items-center justify-between">
                   <span className="text-sm font-bold text-white">
-                    Total Charge
+                    Toplam Tutar
                   </span>
                   <span className="text-2xl font-bold tracking-tight text-white">
                     {CURRENCY_SYMBOL}
@@ -720,11 +720,11 @@ export default function Checkout() {
                 <div className="mt-6 p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/60 text-caption text-zinc-400 space-y-2">
                   <div className="flex items-center gap-2 text-zinc-300 font-medium">
                     <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>Instant Cloud Provisioning</span>
+                    <span>Anında Bulut Sağlama</span>
                   </div>
                   <p className="text-zinc-500 leading-relaxed">
-                    Upon payment completion, your API keys and cluster endpoints
-                    will be initialized immediately in your dashboard.
+                    Ödeme tamamlandığında API anahtarlarınız ve küme uç
+                    noktalarınız panelinizde hemen oluşturulacaktır.
                   </p>
                 </div>
               </div>

@@ -22,11 +22,14 @@ export default function DashboardLayout({ children }) {
             try {
                 const res = await fetch("/api/auth/sessioncheck.php", { credentials: "include" });
                 const result = await res.json();
-                setUserId(result.authenticated ? result.user_id : null);
+                if (result.authenticated) {
+                    setUserId(result.user_id);
+                    setAuthReady(true);
+                } else {
+                    router.replace("/login");
+                }
             } catch (err) {
-                setUserId(null);
-            } finally {
-                setAuthReady(true);
+                router.replace("/login");
             }
         }
         checkSession();
@@ -66,7 +69,7 @@ export default function DashboardLayout({ children }) {
                     {/* Sidebar — hidden on mobile, shown md+ (and hidden entirely during checkout) */}
                     {!hideNav && (
                         <div className="hidden md:flex shrink-0">
-                            <Sidebar />
+                            <Sidebar userId={userId} />
                         </div>
                     )}
 
@@ -75,7 +78,7 @@ export default function DashboardLayout({ children }) {
                         {/* Mobile navbar */}
                         {!hideNav && (
                             <div className="md:hidden">
-                                <NavbarMobile />
+                                <NavbarMobile userId={userId} />
                             </div>
                         )}
 

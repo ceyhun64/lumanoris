@@ -21,6 +21,7 @@ import {
   Layers,
   Filter,
 } from "lucide-react";
+import ReportModal from "@/features/moderation/ReportModal";
 
 const resolveAvatarSrc = (seed) => {
   return {
@@ -143,57 +144,6 @@ function ShareModal({ isOpen, urlId, onClose }) {
   );
 }
 
-function ReportModal({ isOpen, onClose }) {
-  const [reason, setReason] = useState("");
-  if (!isOpen) return null;
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-[fadeIn_0.2s_ease-out]">
-      <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-[#0c0c14]/95 p-6 shadow-2xl">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2.5 text-white font-semibold">
-            <Flag className="h-5 w-5 text-rose-400" />
-            <span>İçeriği Bildir</span>
-          </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <textarea
-            rows={4}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Lütfen bildirim nedeninizi açıklayın..."
-            className="w-full rounded-2xl bg-white/5 border border-white/10 p-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-rose-500/50"
-            required
-          />
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl bg-white/5 px-4 py-2 text-xs font-medium text-white/70 hover:bg-white/10"
-            >
-              İptal
-            </button>
-            <button
-              type="submit"
-              className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-medium text-white hover:bg-rose-500"
-            >
-              Gönder
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 function DeleteConfirmModal({
   isOpen,
   onClose,
@@ -286,6 +236,7 @@ export default function DialoguePage() {
 
   const [shareOpen, setShareOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [reportTargetId, setReportTargetId] = useState(null);
   const [showFeedbackBadge, setShowFeedbackBadge] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteTargetIndex, setDeleteTargetIndex] = useState(null);
@@ -613,6 +564,7 @@ export default function DialoguePage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
+                              setReportTargetId(card.conversation_chatbot_id);
                               setReportOpen(true);
                             }}
                             className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
@@ -645,7 +597,11 @@ export default function DialoguePage() {
           }}
         />
 
-        <ReportModal isOpen={reportOpen} onClose={() => setReportOpen(false)} />
+        <ReportModal
+          isOpen={reportOpen}
+          repId={reportTargetId}
+          onClose={() => setReportOpen(false)}
+        />
 
         <DeleteConfirmModal
           isOpen={deleteModalVisible}

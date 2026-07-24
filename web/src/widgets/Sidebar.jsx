@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import QuitModal from "@/features/auth/QuitModal";
 import {
@@ -21,12 +21,19 @@ import {
   Command,
 } from "lucide-react";
 
+function formatCurrency(amount) {
+  const num = Number(amount) || 0;
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency: "TRY",
+  }).format(num);
+}
+
 const STUDIO_ITEMS = [
   {
     href: "/dashboard/chatbots",
     icon: Bot,
     label: "Chatbotlarım",
-    badge: "12 Active",
   },
 ];
 
@@ -40,7 +47,7 @@ const EXPLORE_ITEMS = [
   { href: "/dashboard/following", icon: Users, label: "Takip Edilenler" },
   { href: "/dashboard/list", icon: ListChecks, label: "Liste" },
   { href: "/dashboard/history", icon: History, label: "Geçmişim" },
-  { href: "/dashboard/wallet", icon: Wallet, label: "Bakiyem", pill: "₺1,450" },
+  { href: "/dashboard/wallet", icon: Wallet, label: "Bakiyem" },
   { href: "/dashboard/notes", icon: NotebookText, label: "Diyalog Defteri" },
 ];
 
@@ -67,11 +74,59 @@ function MinimalTooltip({ children, text, side = "right" }) {
   );
 }
 
-export function Sidebar({ isMobileOpen = false, onNavigate }) {
+export function Sidebar({ isMobileOpen = false, onNavigate, userId = null }) {
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [isQuitModalOpen, setIsQuitModalOpen] = useState(false);
+  const [account, setAccount] = useState({
+    fullname: "",
+    username: "",
+    chatbotCount: 0,
+    balance: 0,
+  });
+
+  useEffect(() => {
+    if (!userId) return;
+    async function fetchAccount() {
+      try {
+        const res = await fetch(`/api/user/getuserheader.php?id=${userId}`);
+        if (res.ok) {
+          const result = await res.json();
+          if (result.success) {
+            setAccount((prev) => ({
+              ...prev,
+              fullname: result.fullname,
+              username: result.username,
+              chatbotCount: result.chatbotCount ?? 0,
+            }));
+          }
+        }
+      } catch (err) {
+        // Keep defaults on failure
+      }
+    }
+    async function fetchBalance() {
+      try {
+        const res = await fetch(`/api/wallet/getmybalance.php?user_id=${userId}`);
+        if (res.ok) {
+          const result = await res.json();
+          if (result.success) {
+            setAccount((prev) => ({ ...prev, balance: result.balance ?? 0 }));
+          }
+        }
+      } catch (err) {
+        // Keep defaults on failure
+      }
+    }
+    fetchAccount();
+    fetchBalance();
+  }, [userId]);
+
+  const displayName = account.fullname || account.username || "Kullanıcı";
+  const avatarLetter = (account.fullname || account.username || "?")
+    .charAt(0)
+    .toUpperCase();
 
   const isActive = (href, exact = false) =>
     exact
@@ -257,7 +312,15 @@ export function Sidebar({ isMobileOpen = false, onNavigate }) {
                 </div>
               )}
               <ul className="space-y-1 list-none p-0 m-0">
-                {STUDIO_ITEMS.map((item) => renderNavItem(item, "studio"))}
+                {STUDIO_ITEMS.map((item) =>
+                  renderNavItem(
+                    {
+                      ...item,
+                      badge: `${account.chatbotCount} Bot`,
+                    },
+                    "studio",
+                  ),
+                )}
               </ul>
             </div>
 
@@ -272,7 +335,14 @@ export function Sidebar({ isMobileOpen = false, onNavigate }) {
                 </div>
               )}
               <ul className="space-y-1 list-none p-0 m-0">
-                {EXPLORE_ITEMS.map((item) => renderNavItem(item, "explore"))}
+                {EXPLORE_ITEMS.map((item) =>
+                  renderNavItem(
+                    item.href === "/dashboard/wallet"
+                      ? { ...item, pill: formatCurrency(account.balance) }
+                      : item,
+                    "explore",
+                  ),
+                )}
               </ul>
             </div>
           </div>
@@ -350,15 +420,15 @@ export function Sidebar({ isMobileOpen = false, onNavigate }) {
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-semibold shrink-0 shadow-sm">
-                  L
+                  {avatarLetter}
                 </div>
                 {!collapsed && (
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs font-medium text-zinc-200 truncate group-hover:text-red-300">
-                      Lumanoris Admin
+                      {displayName}
                     </span>
                     <span className="text-caption text-zinc-500 truncate">
-                      admin@lumanoris.ai
+                      {account.username ? `@${account.username}` : ""}
                     </span>
                   </div>
                 )}

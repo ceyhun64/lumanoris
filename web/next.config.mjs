@@ -17,6 +17,26 @@ const nextConfig = {
   },
 
   reactStrictMode: false,
+
+  // server.js (Express) proxy'si sadece kendi çalıştırdığımız Node
+  // sürecinde (local dev, klasik VPS) devrede — Vercel custom server
+  // çalıştırmaz, server.js orada hiç yürütülmez. Vercel (ve `next start`
+  // ile çalışan her ortam) için aynı /api, /admin, /assets yönlendirmesini
+  // Next'in kendi rewrites() mekanizmasıyla tekrarlıyoruz, PHP_TARGET env
+  // değişkeni gerçek backend URL'ini gösterecek şekilde ayarlanmalı.
+  // Statik export'ta (output: 'export') rewrites desteklenmediği için o
+  // modda atlanıyor.
+  ...(!isStaticExport && {
+    async rewrites() {
+      const phpTarget = process.env.PHP_TARGET;
+      if (!phpTarget) return [];
+      return [
+        { source: '/api/:path*', destination: `${phpTarget}/api/:path*` },
+        { source: '/admin/:path*', destination: `${phpTarget}/admin/:path*` },
+        { source: '/assets/:path*', destination: `${phpTarget}/assets/:path*` },
+      ];
+    },
+  }),
 };
 
 export default nextConfig;

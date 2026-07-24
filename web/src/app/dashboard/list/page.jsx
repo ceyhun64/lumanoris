@@ -493,63 +493,6 @@ export default function List() {
     }
   };
 
-  const loadDemoLists = () => {
-    setListData([
-      {
-        id: 1,
-        title: "Favori Kod Asistanlarım",
-        summary: "3 Bot İçeriyor",
-        dialog: "1,240 Diyalog",
-        bots: [
-          {
-            id: 101,
-            isim: "CodeArchitect Pro v4",
-            profil_fotografi:
-              "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=200&auto=format&fit=crop",
-            toplam_chats: 840,
-          },
-          {
-            id: 102,
-            isim: "React Refactor Bot",
-            profil_fotografi:
-              "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=200&auto=format&fit=crop",
-            toplam_chats: 400,
-          },
-        ],
-      },
-      {
-        id: 2,
-        title: "Pazarlama ve Metin Yazarları",
-        summary: "2 Bot İçeriyor",
-        dialog: "890 Diyalog",
-        bots: [
-          {
-            id: 103,
-            isim: "CopyWriter Nexus 2026",
-            profil_fotografi:
-              "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=200&auto=format&fit=crop",
-            toplam_chats: 890,
-          },
-        ],
-      },
-      {
-        id: 3,
-        title: "Günlük İş & Mentörlük",
-        summary: "1 Bot İçeriyor",
-        dialog: "310 Diyalog",
-        bots: [
-          {
-            id: 104,
-            isim: "Executive Mentor AI",
-            profil_fotografi:
-              "https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?q=80&w=200&auto=format&fit=crop",
-            toplam_chats: 310,
-          },
-        ],
-      },
-    ]);
-  };
-
   useEffect(() => {
     async function checkSession() {
       try {
@@ -753,6 +696,12 @@ export default function List() {
             </div>
           </div>
         </div>
+
+        {fetchError && (
+          <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-300">
+            {fetchError}
+          </div>
+        )}
 
         {}
         {filteredLists.length === 0 ? (

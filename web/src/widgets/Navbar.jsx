@@ -6,7 +6,7 @@ import logo from '@/images/header-logo-icon.png';
 import { useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 
-export default function NavbarMobile() {
+export default function NavbarMobile({ userId = null }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const router = useRouter();
 
@@ -30,7 +30,7 @@ export default function NavbarMobile() {
                 </button>
             </div>
 
-            <Sidebar isMobileOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
+            <Sidebar isMobileOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} userId={userId} />
         </>
     );
 }

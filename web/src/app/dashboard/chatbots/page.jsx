@@ -16,8 +16,11 @@ import {
   ExternalLink,
   Heart,
   MessageSquare,
+  Rocket,
 } from "lucide-react";
 import { FilterPopover2026 } from "@/shared/ui/filter-popover";
+import PublishModal from "@/features/chatbot-mgmt/PublishModal";
+import AddToSaleListModal from "@/features/chatbot-mgmt/AddToSaleListModal";
 
 function Skeleton({ className = "" }) {
   return (
@@ -49,6 +52,7 @@ function CardGrid({ children }) {
 
 function ChatbotCard({
   id,
+  userId,
   title,
   image,
   profileImage,
@@ -58,10 +62,14 @@ function ChatbotCard({
   dialogs,
   weeklyPrice,
   monthlyPrice,
+  isIndependent,
+  isOwn,
   onDelete,
   onChanged,
 }) {
   const [deleting, setDeleting] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [priceOpen, setPriceOpen] = useState(false);
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0c0c10]/90 backdrop-blur-2xl transition-all duration-300 hover:border-violet-500/40 hover:shadow-[0_10px_40px_rgba(0,0,0,0.5)] hover:-translate-y-1">
@@ -139,6 +147,24 @@ function ChatbotCard({
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
+            {isOwn && isIndependent ? (
+              <button
+                onClick={() => setPublishOpen(true)}
+                className="flex h-8 items-center gap-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 text-xs font-semibold text-emerald-300 transition-all hover:bg-emerald-500/20 hover:border-emerald-500/50"
+                title="Herkese açık yayınla"
+              >
+                <span>Yayınla</span>
+                <Rocket className="h-3 w-3" />
+              </button>
+            ) : isOwn ? (
+              <button
+                onClick={() => setPriceOpen(true)}
+                className="flex h-8 items-center gap-1 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 text-xs font-semibold text-amber-300 transition-all hover:bg-amber-500/20 hover:border-amber-500/50"
+                title="Satış fiyatını düzenle"
+              >
+                <span>Fiyat Düzenle</span>
+              </button>
+            ) : null}
             <a
               href={`/dashboard/chatbots/edit?id=${id}`}
               className="flex h-8 items-center gap-1 rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 text-xs font-semibold text-violet-300 transition-all hover:bg-violet-500/20 hover:border-violet-500/50"
@@ -149,6 +175,22 @@ function ChatbotCard({
           </div>
         </div>
       </div>
+
+      <PublishModal
+        isOpen={publishOpen}
+        onClose={() => setPublishOpen(false)}
+        onPublished={onChanged}
+        botId={id}
+        userId={userId}
+        weeklyPrice={weeklyPrice}
+      />
+      <AddToSaleListModal
+        isOpen={priceOpen}
+        onClose={() => setPriceOpen(false)}
+        botId={id}
+        weeklyPrice={weeklyPrice}
+        monthlyPrice={monthlyPrice}
+      />
     </div>
   );
 }
@@ -500,6 +542,8 @@ export default function App() {
               dialogs={bot.toplam_chats}
               weeklyPrice={bot.ucret_haftalik}
               monthlyPrice={bot.ucret_aylik}
+              isIndependent={!!bot.is_independent}
+              isOwn={isOwn}
               onDelete={() => handleDelete(bot.id)}
               onChanged={fetchChatbots}
             />

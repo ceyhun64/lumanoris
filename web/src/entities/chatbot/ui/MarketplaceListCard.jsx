@@ -13,7 +13,7 @@ function formatCompact(n) {
 // selectable/selected/onToggleSelect: used by the "add bots to a list" picker
 // flow (dashboard/explore?from=list) — clicking toggles selection instead of
 // navigating to the chat page.
-export default function MarketplaceListCard({ bot, selectable = false, selected = false, onToggleSelect }) {
+export default function MarketplaceListCard({ bot, selectable = false, selected = false, onToggleSelect, priority = false }) {
     const router = useRouter();
     const {
         id, image, avatar, title, description, dialogues, time,
@@ -48,6 +48,7 @@ export default function MarketplaceListCard({ bot, selectable = false, selected 
                     src={image}
                     alt={title}
                     fill
+                    priority={priority}
                     className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />

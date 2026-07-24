@@ -169,6 +169,8 @@ export default function PricingPlans() {
   const [upgrading, setUpgrading] = useState(null);
   const [upgradedPlan, setUpgradedPlan] = useState(null);
   const [billingCycle, setBillingCycle] = useState("monthly");
+  const [salesContactSending, setSalesContactSending] = useState(false);
+  const [salesContactSent, setSalesContactSent] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/sessioncheck.php", { credentials: "include" })
@@ -240,6 +242,40 @@ export default function PricingPlans() {
       });
     } finally {
       setUpgrading(null);
+    }
+  };
+
+  const handleContactSales = async () => {
+    setSalesContactSending(true);
+    try {
+      const formData = new FormData();
+      formData.append("fullName", "Kurumsal Satış Talebi");
+      formData.append("email", "");
+      formData.append("subject", "Kurumsal Satış Görüşmesi Talebi");
+      formData.append(
+        "message",
+        userId
+          ? `Kullanıcı (ID: ${userId}) kurumsal satış ekibiyle görüşme talep etti.`
+          : "Bir kullanıcı kurumsal satış ekibiyle görüşme talep etti.",
+      );
+      const res = await fetch("/api/contact/contact.php", {
+        method: "POST",
+        body: formData,
+      });
+      const result = await res.json();
+      if (result.success) {
+        setSalesContactSent(true);
+        setTimeout(() => setSalesContactSent(false), 4000);
+      } else {
+        toast({
+          variant: "destructive",
+          title: result.message || "Talep gönderilemedi.",
+        });
+      }
+    } catch (err) {
+      toast({ variant: "destructive", title: "Sunucuyla bağlantı kurulamadı." });
+    } finally {
+      setSalesContactSending(false);
     }
   };
 
@@ -438,14 +474,15 @@ export default function PricingPlans() {
             </div>
           </div>
           <button
-            onClick={() =>
-              toast({
-                title: "Destek ekibimizle en kısa sürede yönlendirileceksiniz.",
-              })
-            }
-            className="px-6 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold transition-all border border-zinc-700/60 shrink-0"
+            onClick={handleContactSales}
+            disabled={salesContactSending || salesContactSent}
+            className="px-6 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold transition-all border border-zinc-700/60 shrink-0 disabled:opacity-70"
           >
-            Kurumsal Satışla Görüş
+            {salesContactSent
+              ? "Talebiniz Alındı ✓"
+              : salesContactSending
+                ? "Gönderiliyor..."
+                : "Kurumsal Satışla Görüş"}
           </button>
         </div>
       </div>

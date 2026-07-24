@@ -31,6 +31,14 @@ import {
 const ICON_BTN_FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050508]";
 
+function formatCurrency(amount) {
+  const num = Number(amount) || 0;
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency: "TRY",
+  }).format(num);
+}
+
 function Tooltip({ children, content }) {
   const [show, setShow] = useState(false);
 
@@ -179,7 +187,7 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
             />
           ) : (
             <span>
-              {(user.fullname || user.username || "L").charAt(0).toUpperCase()}
+              {(user.fullname || user.username || "?").charAt(0).toUpperCase()}
             </span>
           )}
           <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#09090E]" />
@@ -205,7 +213,7 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
             Botlar
           </div>
           <div className="text-xs font-bold text-white mt-0.5">
-            {user.chatbotCount || 12}
+            {user.chatbotCount ?? 0}
           </div>
         </div>
         <div className="border-x border-white/5">
@@ -213,7 +221,7 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
             Lisans
           </div>
           <div className="text-xs font-bold text-violet-400 mt-0.5">
-            {user.purchasedCount || 4}
+            {user.purchasedCount ?? 0}
           </div>
         </div>
         <div>
@@ -221,7 +229,7 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
             Diyalog
           </div>
           <div className="text-xs font-bold text-fuchsia-400 mt-0.5">
-            {user.sharedDialogueCount || 28}
+            {user.sharedDialogueCount ?? 0}
           </div>
         </div>
       </div>
@@ -233,7 +241,7 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
         <button className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-zinc-300 rounded-lg hover:bg-white/5 hover:text-white transition-all">
           <Wallet className="w-3.5 h-3.5 text-emerald-400" /> Bakiye & Ödemeler
           <span className="ml-auto text-caption font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-            ₺1,450
+            {formatCurrency(user.balance ?? 0)}
           </span>
         </button>
         <button className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-zinc-300 rounded-lg hover:bg-white/5 hover:text-white transition-all">
@@ -255,23 +263,25 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
 }
 
 
-export default function Header({ userId = 1, onNavigate }) {
+export default function Header({ userId = null, onNavigate }) {
   const router = useRouter();
   const navigate = onNavigate || ((href) => router.push(href));
   const [showProfile, setShowProfile] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [cartCount, setCartCount] = useState(2);
+  const [cartCount, setCartCount] = useState(0);
   const [quitOpen, setQuitOpen] = useState(false);
+  const profileMenuRef = useRef(null);
   const [user, setUser] = useState({
-    id: userId || 1,
-    username: "lumanoris_admin",
-    fullname: "Lumanoris Admin",
-    followerCount: 1420,
-    chatbotCount: 12,
-    purchasedCount: 4,
-    sharedDialogueCount: 28,
+    id: userId || null,
+    username: "",
+    fullname: "",
+    followerCount: 0,
+    chatbotCount: 0,
+    purchasedCount: 0,
+    sharedDialogueCount: 0,
+    balance: 0,
   });
 
   const searchInputRef = useRef(null);
@@ -299,15 +309,16 @@ export default function Header({ userId = 1, onNavigate }) {
         if (res.ok) {
           const result = await res.json();
           if (result.success) {
-            setUser({
+            setUser((prev) => ({
+              ...prev,
               id: result.id,
               username: result.username,
               fullname: result.fullname,
               followerCount: 0,
-              chatbotCount: result.chatbotCount || 12,
-              purchasedCount: result.purchasedCount || 4,
-              sharedDialogueCount: result.sharedDialogueCount || 28,
-            });
+              chatbotCount: result.chatbotCount ?? 0,
+              purchasedCount: result.purchasedCount ?? 0,
+              sharedDialogueCount: result.sharedDialogueCount ?? 0,
+            }));
           }
         }
       } catch (err) {
@@ -315,6 +326,23 @@ export default function Header({ userId = 1, onNavigate }) {
       }
     }
     if (userId) fetchUser();
+  }, [userId]);
+
+  useEffect(() => {
+    async function fetchBalance() {
+      try {
+        const res = await fetch(`/api/wallet/getmybalance.php?user_id=${userId}`);
+        if (res.ok) {
+          const result = await res.json();
+          if (result.success) {
+            setUser((prev) => ({ ...prev, balance: result.balance ?? 0 }));
+          }
+        }
+      } catch (err) {
+        // Graceful fallback for standalone canvas preview
+      }
+    }
+    if (userId) fetchBalance();
   }, [userId]);
 
   useEffect(() => {
@@ -358,6 +386,17 @@ export default function Header({ userId = 1, onNavigate }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (!showProfile) return;
+    function handleClickOutside(e) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
+        setShowProfile(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showProfile]);
 
   const goToExplore = () => {
     navigate(
@@ -461,14 +500,10 @@ export default function Header({ userId = 1, onNavigate }) {
           </Tooltip>
 
           {/* User Profile Menu Trigger */}
-          <div
-            className="relative ml-1 sm:ml-2"
-            onMouseEnter={() => setShowProfile(true)}
-            onMouseLeave={() => setShowProfile(false)}
-          >
+          <div className="relative ml-1 sm:ml-2" ref={profileMenuRef}>
             <button
               aria-label="Profil menüsü"
-              onClick={() => setShowProfile(!showProfile)}
+              onClick={() => setShowProfile((prev) => !prev)}
               className={`flex items-center gap-2.5 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] transition-all duration-200 hover:border-violet-500/40 hover:bg-white/[0.06] hover:shadow-[0_0_20px_rgba(139,92,246,0.15)] ${ICON_BTN_FOCUS}`}
             >
               <div className="relative h-8 w-8 overflow-hidden rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0 ring-1 ring-white/20">
@@ -480,7 +515,7 @@ export default function Header({ userId = 1, onNavigate }) {
                   />
                 ) : (
                   <span>
-                    {(user.fullname || user.username || "L")
+                    {(user.fullname || user.username || "?")
                       .charAt(0)
                       .toUpperCase()}
                   </span>
