@@ -15,8 +15,6 @@ import {
   ArrowUpRight,
   ShieldCheck,
   X,
-  AlertTriangle,
-  CheckCircle2,
   Bookmark,
   Layers,
   Command,
@@ -25,6 +23,7 @@ import {
   SlidersHorizontal,
   Folder,
 } from "lucide-react";
+import { toast } from "@/shared/hooks/use-toast";
 
 // Fallback context if user context is required
 export const UserContext = createContext(null);
@@ -44,33 +43,6 @@ function resolveAvatarSrc(src) {
     return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=200&auto=format&fit=crop";
   if (src.startsWith("http://") || src.startsWith("https://")) return src;
   return src.startsWith("/") ? src : `/${src}`;
-}
-
-function ToastNotification({ toast, onClose }) {
-  if (!toast) return null;
-  return (
-    <div className="fixed bottom-6 right-6 z-[1100] flex items-center gap-3 rounded-2xl border border-zinc-700/80 bg-[#0C0C14]/95 px-4 py-3 shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom-5 duration-200">
-      <div
-        className={`flex h-8 w-8 items-center justify-center rounded-xl ${toast.type === "error" ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"}`}
-      >
-        {toast.type === "error" ? (
-          <AlertTriangle className="w-4 h-4" />
-        ) : (
-          <CheckCircle2 className="w-4 h-4" />
-        )}
-      </div>
-      <div>
-        <h5 className="text-xs font-semibold text-white">{toast.title}</h5>
-        <p className="text-caption text-zinc-400">{toast.description}</p>
-      </div>
-      <button
-        onClick={onClose}
-        className="ml-2 text-zinc-500 hover:text-white p-1"
-      >
-        <X className="w-3.5 h-3.5" />
-      </button>
-    </div>
-  );
 }
 
 function DeleteConfirmModal({
@@ -437,13 +409,7 @@ export default function List() {
   const [inspectList, setInspectList] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [userId, setUserId] = useState(null);
-  const [toastInfo, setToastInfo] = useState(null);
   const [fetchError, setFetchError] = useState(null);
-
-  const triggerToast = (title, description, type = "success") => {
-    setToastInfo({ title, description, type });
-    setTimeout(() => setToastInfo(null), 4000);
-  };
 
   const fetchUserLists = async (uid) => {
     try {
@@ -546,7 +512,7 @@ export default function List() {
         result = JSON.parse(resultText);
       } catch (e) {
         console.error("Beklenmeyen sunucu yanıtı:", resultText);
-        triggerToast("Hata Oluştu", "Beklenmeyen sunucu yanıtı.", "error");
+        toast.error("Sunucudan beklenmeyen bir yanıt alındı.");
         return;
       }
 
@@ -563,20 +529,13 @@ export default function List() {
         setListData((prev) => [formattedList, ...prev]);
         setModalVisible(false);
         setModalVisible2(false);
-        triggerToast(
-          "Liste Oluşturuldu",
-          `"${listName}" koleksiyonunuz başarıyla eklendi.`,
-        );
+        toast.success(`"${listName}" koleksiyonu oluşturuldu.`);
       } else {
-        triggerToast(
-          "Hata Oluştu",
-          result.message || "Liste veritabanına eklenemedi.",
-          "error",
-        );
+        toast.error(result.message || "Liste oluşturulamadı.");
       }
     } catch (err) {
       console.error("Liste oluşturma hatası:", err);
-      triggerToast("Hata Oluştu", "Sunucuya bağlanılamadı.", "error");
+      toast.error("Sunucuya bağlanılamadı.");
     } finally {
       setCreateLoading(false);
     }
@@ -599,17 +558,13 @@ export default function List() {
         setListData((prev) =>
           prev.filter((item) => item.id !== deleteTarget.id),
         );
-        triggerToast("Silindi", `"${deleteTarget.title}" koleksiyonu silindi.`);
+        toast.success(`"${deleteTarget.title}" koleksiyonu silindi.`);
       } else {
-        triggerToast(
-          "Hata Oluştu",
-          data.message || "Liste silinemedi.",
-          "error",
-        );
+        toast.error(data.message || "Liste silinemedi.");
       }
     } catch (err) {
       console.error("Liste silme hatası:", err);
-      triggerToast("Hata Oluştu", "Sunucuya bağlanılamadı.", "error");
+      toast.error("Sunucuya bağlanılamadı.");
     } finally {
       setDeleteLoading(false);
       setDeleteModalVisible(false);
@@ -764,8 +719,6 @@ export default function List() {
         onClose={() => setInspectList(null)}
         list={inspectList}
       />
-
-      <ToastNotification toast={toastInfo} onClose={() => setToastInfo(null)} />
     </div>
   );
 }

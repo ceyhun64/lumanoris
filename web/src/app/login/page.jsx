@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Eye,
   EyeOff,
@@ -20,12 +20,199 @@ import {
   Cpu,
   Layers,
   Globe,
+  ChevronDown,
 } from "lucide-react";
+import { toast } from "@/shared/hooks/use-toast";
+
+const TR_MONTHS = [
+  "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+  "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+];
+const TR_DAY_LABELS = ["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz"];
+
+// In-brand replacement for a native <select> — used for the calendar's
+// month/year pickers so they don't fall back to the browser's unstyleable
+// default dropdown look next to an otherwise fully custom popover.
+function MiniSelect({ value, options, onChange, className = "" }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const current = options.find((o) => o.value === value);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const el = ref.current?.querySelector('[data-selected="true"]');
+    if (el) el.scrollIntoView({ block: "center" });
+  }, [open]);
+
+  return (
+    <div className={`relative ${className}`} ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="w-full flex items-center justify-between gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white hover:border-white/20 hover:bg-white/[0.07] transition-colors"
+      >
+        <span>{current?.label}</span>
+        <ChevronDown
+          className={`w-3.5 h-3.5 text-white/40 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full mt-1.5 z-10 max-h-52 w-full overflow-y-auto rounded-xl border border-white/10 bg-[#0E0F16] shadow-[0_15px_40px_rgba(0,0,0,0.6)] p-1 space-y-0.5 animate-in fade-in zoom-in-95 duration-150">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              data-selected={opt.value === value}
+              onClick={() => {
+                onChange(opt.value);
+                setOpen(false);
+              }}
+              className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
+                opt.value === value
+                  ? "bg-fuchsia-600/20 text-fuchsia-300 font-semibold"
+                  : "text-white/70 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Custom calendar dropdown for the birthdate field — native <input type="date">
+// pickers render with an unstyleable, often barely-visible indicator on dark
+// themes, so this replaces it with an in-brand popover. Kept as a top-level
+// component (not nested inside AuthPage) so it isn't remounted — and its own
+// open/view state lost — on every keystroke elsewhere in the form.
+function BirthdatePicker({ value, onChange, inputCls, inputWrapperCls, fieldIconCls }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const today = new Date();
+  const parsed = value ? new Date(`${value}T00:00:00`) : null;
+  const defaultView = parsed || new Date(today.getFullYear() - 20, 0, 1);
+  const [viewYear, setViewYear] = useState(defaultView.getFullYear());
+  const [viewMonth, setViewMonth] = useState(defaultView.getMonth());
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  const years = [];
+  for (let y = today.getFullYear(); y >= today.getFullYear() - 100; y -= 1) years.push(y);
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstWeekday = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7; // Monday-first grid
+
+  const cells = [];
+  for (let i = 0; i < firstWeekday; i += 1) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d += 1) cells.push(d);
+
+  const displayLabel = parsed
+    ? `${String(parsed.getDate()).padStart(2, "0")}.${String(parsed.getMonth() + 1).padStart(2, "0")}.${parsed.getFullYear()}`
+    : "";
+
+  const isSelectedDay = (day) =>
+    !!parsed &&
+    parsed.getFullYear() === viewYear &&
+    parsed.getMonth() === viewMonth &&
+    parsed.getDate() === day;
+
+  function pickDay(day) {
+    const mm = String(viewMonth + 1).padStart(2, "0");
+    const dd = String(day).padStart(2, "0");
+    onChange(`${viewYear}-${mm}-${dd}`);
+    setOpen(false);
+  }
+
+  return (
+    <div className={inputWrapperCls} ref={wrapRef}>
+      <Calendar className={fieldIconCls} />
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className={`${inputCls} text-xs text-left`}
+      >
+        <span className={displayLabel ? "text-white" : "text-white/35"}>
+          {displayLabel || "gg.aa.yyyy"}
+        </span>
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full mt-2 z-50 w-72 rounded-2xl border border-white/10 bg-[#0A0B10] p-3 shadow-[0_20px_50px_rgba(0,0,0,0.7)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150">
+          <div className="flex items-center gap-2 mb-3">
+            <MiniSelect
+              value={viewMonth}
+              onChange={setViewMonth}
+              options={TR_MONTHS.map((m, i) => ({ value: i, label: m }))}
+              className="flex-1"
+            />
+            <MiniSelect
+              value={viewYear}
+              onChange={setViewYear}
+              options={years.map((y) => ({ value: y, label: String(y) }))}
+              className="w-24"
+            />
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {TR_DAY_LABELS.map((d) => (
+              <div
+                key={d}
+                className="text-center text-[10px] font-semibold text-white/40 py-1"
+              >
+                {d}
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {cells.map((day, idx) =>
+              day === null ? (
+                <div key={`blank-${idx}`} />
+              ) : (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => pickDay(day)}
+                  className={`h-8 rounded-lg text-xs transition-colors ${
+                    isSelectedDay(day)
+                      ? "bg-gradient-to-r from-fuchsia-600 to-indigo-600 text-white font-bold"
+                      : "text-white/70 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {day}
+                </button>
+              ),
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AuthPage() {
   const [isActive, setIsActive] = useState(false); // false = Login, true = Register
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [isPolicyOpen, setPolicyOpen] = useState(false);
   const [activePolicy, setActivePolicy] = useState(null);
   const [target, setTarget] = useState(null);
@@ -84,20 +271,18 @@ export default function AuthPage() {
         method: "POST",
         body: JSON.stringify({ action: "google_login" }),
       });
-      const result = await res
-        .json()
-        .catch(() => ({
-          success: false,
-          message: "Google entegrasyonu aktif.",
-        }));
+      const result = await res.json().catch(() => ({
+        success: false,
+        message: "Google entegrasyonu aktif.",
+      }));
       if (result.success) {
         redirectAfterLogin();
       } else {
-        alert(result.message || "Google girişi başlatıldı.");
+        toast.error(result.message || "Google ile giriş başarısız oldu.");
       }
     } catch (err) {
       console.error("Google login error:", err);
-      alert("Google kimlik doğrulama servisine bağlanıldı.");
+      toast.error("Google kimlik doğrulama servisine bağlanılamadı.");
     } finally {
       setLoading(false);
     }
@@ -136,6 +321,10 @@ export default function AuthPage() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    if (!registerData.dogum_tarihi) {
+      toast.warning("Lütfen doğum tarihinizi seçin.");
+      return;
+    }
     setLoading(true);
     const formData = new FormData();
     formData.append("data", JSON.stringify(registerData));
@@ -146,13 +335,13 @@ export default function AuthPage() {
       });
       const result = JSON.parse(await res.text());
       if (result.success) {
-        alert("Kayıt başarılı! Şimdi giriş yapabilirsiniz.");
+        toast.success("Hesabınız oluşturuldu. Şimdi giriş yapabilirsiniz.");
         setIsActive(false);
       } else {
-        alert(result.message || "Kayıt sırasında bir hata oluştu.");
+        toast.error(result.message || "Kayıt sırasında bir hata oluştu.");
       }
     } catch (err) {
-      alert("Sunucuyla bağlantı kurulamadı.");
+      toast.error("Sunucuyla bağlantı kurulamadı.");
     } finally {
       setLoading(false);
     }
@@ -193,6 +382,13 @@ export default function AuthPage() {
   const inputWrapperCls = "relative group flex items-center w-full";
   const inputCls =
     "w-full bg-[#0A0B10]/80 border border-white/[0.08] rounded-xl pl-11 pr-4 py-3.5 text-body text-white placeholder-white/30 outline-none transition-all duration-300 focus:border-fuchsia-500/50 focus:bg-[#0E0F16] focus:ring-4 focus:ring-fuchsia-500/10 hover:border-white/20 font-sans";
+  // Password fields reserve extra right padding so typed text never runs
+  // under the show/hide toggle button.
+  const passwordInputCls = `${inputCls} pr-11`;
+  const fieldIconCls =
+    "absolute left-3.5 w-4 h-4 text-white/45 group-focus-within:text-fuchsia-400 transition-colors pointer-events-none";
+  const eyeToggleCls =
+    "absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-white/50 hover:text-fuchsia-300 hover:bg-white/5 transition-colors";
 
   return (
     <div className="min-h-screen bg-[#030305] text-white flex selection:bg-fuchsia-500/30 selection:text-fuchsia-200 overflow-x-hidden font-sans relative">
@@ -228,13 +424,13 @@ export default function AuthPage() {
         </div>
 
         {/* Center Hero Content & Interactive Chat Simulation */}
-        <div className="relative z-10 my-auto py-12 flex flex-col gap-8 max-w-lg">
+        <div className="relative z-10 my-auto py-12 flex flex-col gap-8 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-300 text-xs font-medium w-fit shadow-[0_0_20px_rgba(217,70,239,0.15)]">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Next-Gen Autonomous Intelligence Platform</span>
           </div>
 
-          <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.1] text-white">
+          <h1 className="text-4xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white max-w-[680px]">
             Yapay zekâ botlarınla sohbet et, kendi{" "}
             <span className="bg-gradient-to-r from-fuchsia-400 via-purple-300 to-indigo-400 bg-clip-text text-transparent">
               ekosistemini
@@ -395,7 +591,7 @@ export default function AuthPage() {
                     E-posta Adresi
                   </label>
                   <div className={inputWrapperCls}>
-                    <Mail className="absolute left-3.5 w-4 h-4 text-white/30 group-focus-within:text-fuchsia-400 transition-colors" />
+                    <Mail className={fieldIconCls} />
                     <input
                       type="email"
                       placeholder="ornek@domain.com"
@@ -422,12 +618,12 @@ export default function AuthPage() {
                     </a>
                   </div>
                   <div className={inputWrapperCls}>
-                    <Lock className="absolute left-3.5 w-4 h-4 text-white/30 group-focus-within:text-fuchsia-400 transition-colors" />
+                    <Lock className={fieldIconCls} />
                     <input
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       required
-                      className={inputCls}
+                      className={passwordInputCls}
                       value={loginData.sifre}
                       onChange={(e) =>
                         setLoginData({ ...loginData, sifre: e.target.value })
@@ -435,8 +631,9 @@ export default function AuthPage() {
                     />
                     <button
                       type="button"
+                      aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 text-white/30 hover:text-white transition-colors p-1"
+                      className={eyeToggleCls}
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -530,7 +727,7 @@ export default function AuthPage() {
                     E-posta Adresi
                   </label>
                   <div className={inputWrapperCls}>
-                    <Mail className="absolute left-3.5 w-4 h-4 text-white/30 group-focus-within:text-fuchsia-400 transition-colors" />
+                    <Mail className={fieldIconCls} />
                     <input
                       type="email"
                       name="eposta"
@@ -548,17 +745,15 @@ export default function AuthPage() {
                     <label className="text-xs font-medium text-white/60 ml-1">
                       Doğum Tarihi
                     </label>
-                    <div className={inputWrapperCls}>
-                      <Calendar className="absolute left-3.5 w-4 h-4 text-white/30 group-focus-within:text-fuchsia-400 transition-colors" />
-                      <input
-                        type="date"
-                        name="dogum_tarihi"
-                        required
-                        className={`${inputCls} text-xs`}
-                        value={registerData.dogum_tarihi}
-                        onChange={handleRegisterChange}
-                      />
-                    </div>
+                    <BirthdatePicker
+                      value={registerData.dogum_tarihi}
+                      onChange={(iso) =>
+                        setRegisterData((prev) => ({ ...prev, dogum_tarihi: iso }))
+                      }
+                      inputCls={inputCls}
+                      inputWrapperCls={inputWrapperCls}
+                      fieldIconCls={fieldIconCls}
+                    />
                   </div>
 
                   <div className="space-y-1.5">
@@ -566,7 +761,7 @@ export default function AuthPage() {
                       Telefon
                     </label>
                     <div className={inputWrapperCls}>
-                      <Phone className="absolute left-3.5 w-4 h-4 text-white/30 group-focus-within:text-fuchsia-400 transition-colors" />
+                      <Phone className={fieldIconCls} />
                       <input
                         type="tel"
                         name="telefon"
@@ -585,16 +780,24 @@ export default function AuthPage() {
                     Şifre
                   </label>
                   <div className={inputWrapperCls}>
-                    <Lock className="absolute left-3.5 w-4 h-4 text-white/30 group-focus-within:text-fuchsia-400 transition-colors" />
+                    <Lock className={fieldIconCls} />
                     <input
-                      type="password"
+                      type={showRegisterPassword ? "text" : "password"}
                       name="sifre"
                       placeholder="••••••••"
                       required
-                      className={inputCls}
+                      className={passwordInputCls}
                       value={registerData.sifre}
                       onChange={handleRegisterChange}
                     />
+                    <button
+                      type="button"
+                      aria-label={showRegisterPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                      onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                      className={eyeToggleCls}
+                    >
+                      {showRegisterPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
                   </div>
                 </div>
 

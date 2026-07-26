@@ -21,15 +21,13 @@ import {
 import { FilterPopover2026 } from "@/shared/ui/filter-popover";
 import PublishModal from "@/features/chatbot-mgmt/PublishModal";
 import AddToSaleListModal from "@/features/chatbot-mgmt/AddToSaleListModal";
+import DeleteConfirmModal from "@/shared/ui/DeleteConfirmModal";
+import { toast } from "@/shared/hooks/use-toast";
 
 function Skeleton({ className = "" }) {
   return (
     <div className={`animate-pulse rounded-md bg-white/10 ${className}`} />
   );
-}
-
-function toast({ title, description, variant }) {
-  console.log(`[Toast ${variant || "default"}]: ${title} - ${description}`);
 }
 
 function PageLayout({ children, className = "" }) {
@@ -70,6 +68,7 @@ function ChatbotCard({
   const [deleting, setDeleting] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
   const [priceOpen, setPriceOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0c0c10]/90 backdrop-blur-2xl transition-all duration-300 hover:border-violet-500/40 hover:shadow-[0_10px_40px_rgba(0,0,0,0.5)] hover:-translate-y-1">
@@ -135,13 +134,7 @@ function ChatbotCard({
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                if (
-                  window.confirm("Bu botu silmek istediğinize emin misiniz?")
-                ) {
-                  onDelete();
-                }
-              }}
+              onClick={() => setConfirmDeleteOpen(true)}
               className="flex h-8 w-8 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 text-red-400 transition-colors hover:bg-red-500/20"
               title="Sil"
             >
@@ -190,6 +183,23 @@ function ChatbotCard({
         botId={id}
         weeklyPrice={weeklyPrice}
         monthlyPrice={monthlyPrice}
+      />
+      <DeleteConfirmModal
+        isOpen={confirmDeleteOpen}
+        onClose={() => setConfirmDeleteOpen(false)}
+        onConfirm={() => {
+          setConfirmDeleteOpen(false);
+          onDelete();
+        }}
+        title="Bu botu silmek istediğinize emin misiniz?"
+        description={
+          <>
+            "{title || "Bu chatbot"}" kalıcı olarak silinecektir.
+            <br />
+            Bu işlem geri alınamaz.
+          </>
+        }
+        confirmLabel="Sil"
       />
     </div>
   );
@@ -272,26 +282,14 @@ export default function App() {
       });
       const result = await res.json();
       if (!result.success) {
-        toast({
-          title: "Hata",
-          description: result.message || "Chatbot silinemedi.",
-          variant: "destructive",
-        });
+        toast.error(result.message || "Chatbot silinemedi.");
         return;
       }
       setChatbots((prev) => prev.filter((bot) => bot.id !== id));
-      toast({
-        title: "Başarılı",
-        description: "Chatbot başarıyla silindi.",
-        variant: "default",
-      });
+      toast.success("Chatbot başarıyla silindi.");
     } catch (err) {
       console.error("Delete error:", err);
-      toast({
-        title: "Hata",
-        description: "Sunucuya bağlanılamadı.",
-        variant: "destructive",
-      });
+      toast.error("Sunucuya bağlanılamadı.");
     }
   };
 

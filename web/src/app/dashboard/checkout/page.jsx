@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { resolveCoverSrc } from "@/shared/lib/image";
+import { toast } from "@/shared/hooks/use-toast";
 import {
   ArrowLeft,
   Trash2,
@@ -14,7 +15,6 @@ import {
   ChevronRight,
   Clock,
   Zap,
-  Info,
   BadgePercent,
 } from "lucide-react";
 
@@ -66,15 +66,9 @@ export default function Checkout() {
   const [confirmedItems, setConfirmedItems] = useState([]);
   const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
-  const [toastMessage, setToastMessage] = useState(null);
   const [cardInfo, setCardInfo] = useState({ number: "", expiry: "", cvv: "", holderName: "" });
   const [cardError, setCardError] = useState(null);
   const [paying, setPaying] = useState(false);
-
-  const showToast = (title, description, variant = "default") => {
-    setToastMessage({ title, description, variant });
-    setTimeout(() => setToastMessage(null), 4000);
-  };
 
   useEffect(() => {
     async function checkSession() {
@@ -119,7 +113,7 @@ export default function Checkout() {
         );
       } catch (err) {
         console.error("Cart fetch error:", err);
-        showToast("Hata", "Sepetiniz yüklenemedi.", "destructive");
+        toast.error("Sepetiniz yüklenemedi.");
       } finally {
         setLoading(false);
       }
@@ -138,18 +132,14 @@ export default function Checkout() {
       });
       const result = await res.json();
       if (!result.success) {
-        showToast("Hata", result.message || "Ürün sepetten kaldırılamadı.", "destructive");
+        toast.error(result.message || "Ürün sepetten kaldırılamadı.");
         return;
       }
       setCartItems((prev) => prev.filter((item) => item.id !== cartId));
-      showToast(
-        "Ürün Kaldırıldı",
-        "Model lisansı sepetinizden başarıyla kaldırıldı.",
-        "default",
-      );
+      toast.success("Model lisansı sepetinizden kaldırıldı.");
     } catch (error) {
       console.error("Removal error:", error);
-      showToast("Hata", "Ürün sepetten kaldırılamadı.", "destructive");
+      toast.error("Ürün sepetten kaldırılamadı.");
     }
   };
 
@@ -168,6 +158,7 @@ export default function Checkout() {
     }
     setCardError(null);
     setPaying(true);
+    const pendingToast = toast.loading("Ödemeniz işleniyor, lütfen bekleyin...");
     try {
       const payload = {
         items: confirmedItems.map((item) => ({
@@ -191,22 +182,30 @@ export default function Checkout() {
       });
       const result = await res.json();
       if (result.success) {
-        showToast(
-          "Sipariş Başarılı!",
-          "Yapay zeka modelleriniz anında hazır hale getirildi.",
-          "default",
-        );
+        pendingToast.update({
+          variant: "success",
+          description: "Ödemeniz alındı. Yapay zeka modelleriniz hazırlanıyor.",
+          duration: 3000,
+        });
         setCartItems([]);
         setConfirmedItems([]);
         setCardInfo({ number: "", expiry: "", cvv: "", holderName: "" });
         setStep(1);
         setTimeout(() => router.push("/dashboard"), 1500);
       } else {
-        showToast("Ödeme Başarısız", result.message || "Ödeme işlenemedi.", "destructive");
+        pendingToast.update({
+          variant: "destructive",
+          description: result.message || "Ödeme işlenemedi.",
+          duration: 8000,
+        });
       }
     } catch (error) {
       console.error("Payment error:", error);
-      showToast("Hata", "Ödeme sunucusuna ulaşılamadı.", "destructive");
+      pendingToast.update({
+        variant: "destructive",
+        description: "Ödeme sunucusuna ulaşılamadı.",
+        duration: 8000,
+      });
     } finally {
       setPaying(false);
     }
@@ -241,27 +240,6 @@ export default function Checkout() {
     <div className="min-h-screen bg-[#060608] text-zinc-100 selection:bg-indigo-500/30 selection:text-indigo-200 font-sans relative overflow-x-hidden">
       {/* Background ambient lighting effects */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-b from-indigo-600/10 via-purple-600/5 to-transparent blur-3xl pointer-events-none" />
-
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div
-            className={`flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-xl ${
-              toastMessage.variant === "destructive"
-                ? "bg-red-950/80 border-red-800/60 text-red-200"
-                : "bg-zinc-900/90 border-zinc-700/60 text-zinc-100"
-            }`}
-          >
-            <Info className="w-4 h-4 text-indigo-400 shrink-0" />
-            <div>
-              <p className="text-xs font-semibold">{toastMessage.title}</p>
-              <p className="text-caption text-zinc-400">
-                {toastMessage.description}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {}
       <header className="px-6 pt-10 pb-6 flex items-center justify-between relative z-10">
@@ -468,17 +446,9 @@ export default function Checkout() {
                     onClick={() => {
                       if (promoCode.toUpperCase() === "ENTERPRISE2026") {
                         setDiscount(subtotal * 0.15);
-                        showToast(
-                          "Promosyon Uygulandı",
-                          "%15 kurumsal indirim başarıyla etkinleştirildi.",
-                          "default",
-                        );
+                        toast.success("%15 kurumsal indirim uygulandı.");
                       } else {
-                        showToast(
-                          "Geçersiz Kod",
-                          "Lütfen geçerli bir promosyon kodu girin.",
-                          "destructive",
-                        );
+                        toast.warning("Girdiğiniz promosyon kodu geçersiz.");
                       }
                     }}
                     className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-medium transition-colors border border-zinc-700/50"

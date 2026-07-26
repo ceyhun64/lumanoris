@@ -14,15 +14,14 @@ import {
   X,
   Cpu,
   ShieldCheck,
-  CheckCircle2,
 } from "lucide-react";
+import { toast } from "@/shared/hooks/use-toast";
 
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [isPolicyOpen, setPolicyOpen] = useState(false);
   const [activePolicy, setActivePolicy] = useState(null); // "terms" | "privacy"
   const [loading, setLoading] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
 
   const [formData, setFormData] = useState({
     eposta: "",
@@ -31,11 +30,6 @@ export default function Register() {
     sifre: "",
     kullanici_adi: "",
   });
-
-  const showToast = (title, variant = "success", description = "") => {
-    setToastMessage({ title, variant, description });
-    setTimeout(() => setToastMessage(null), 4500);
-  };
 
   const handleGoogleSuccess = async (credentialResponse) => {
     setLoading(true);
@@ -56,18 +50,14 @@ export default function Register() {
       const resultText = await res.text();
       const result = JSON.parse(resultText);
       if (result.success) {
-        showToast(result.message || "Google girişi başarılı!");
+        toast.success(result.message || "Google ile giriş başarılı.");
         window.location.href = "/dashboard";
       } else {
-        showToast(result.message || "Google girişi başarısız.", "destructive");
+        toast.error(result.message || "Google ile giriş başarısız oldu.");
       }
     } catch (err) {
       console.error("Google login error:", err);
-      showToast(
-        "Google girişi başarısız.",
-        "destructive",
-        "Sunucuya bağlanılamadı. Lütfen tekrar deneyin.",
-      );
+      toast.error("Sunucuya bağlanılamadı. Lütfen tekrar deneyin.");
     } finally {
       setLoading(false);
     }
@@ -113,28 +103,16 @@ export default function Register() {
       const result = JSON.parse(resultText);
 
       if (result.success) {
-        showToast(
-          "Kayıt başarılı!",
-          "success",
-          "Giriş sayfasına yönlendiriliyorsunuz.",
-        );
+        toast.success("Hesabınız oluşturuldu. Giriş sayfasına yönlendiriliyorsunuz.");
         setTimeout(() => {
           window.location.href = "/login";
         }, 1500);
       } else {
-        showToast(
-          "Hata",
-          "destructive",
-          result.message || "Kayıt sırasında bir hata oluştu.",
-        );
+        toast.error(result.message || "Kayıt sırasında bir hata oluştu.");
       }
     } catch (err) {
       console.error("Kayıt hatası:", err);
-      showToast(
-        "Hata",
-        "destructive",
-        "Sunucuya bağlanılamadı. Lütfen tekrar deneyin.",
-      );
+      toast.error("Sunucuya bağlanılamadı. Lütfen tekrar deneyin.");
     } finally {
       setLoading(false);
     }
@@ -170,34 +148,16 @@ export default function Register() {
 
   const inputCls =
     "w-full bg-[#0A0B10]/80 border border-white/[0.08] rounded-xl pl-11 pr-4 py-3.5 text-body text-white placeholder-white/35 outline-none transition-all duration-300 focus:border-fuchsia-500/50 focus:bg-[#0E0F16] focus:ring-4 focus:ring-fuchsia-500/10 hover:border-white/20 font-sans";
+  // Password field reserves extra right padding so typed text never runs
+  // under the show/hide toggle button.
+  const passwordInputCls = `${inputCls} pr-11`;
+  const fieldIconCls =
+    "absolute left-3.5 w-4 h-4 text-white/45 group-focus-within:text-fuchsia-400 transition-colors pointer-events-none";
+  const eyeToggleCls =
+    "absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-white/50 hover:text-fuchsia-300 hover:bg-white/5 transition-colors";
 
   return (
     <div className="min-h-screen bg-[#09090F] text-white flex selection:bg-fuchsia-500/30 selection:text-fuchsia-200 overflow-x-hidden font-sans relative">
-      {/* Toast Notification Widget */}
-      {toastMessage && (
-        <div
-          className={`fixed top-6 right-6 z-50 px-5 py-4 rounded-2xl border text-xs font-medium shadow-2xl backdrop-blur-xl animate-bounce flex items-center gap-3 max-w-sm ${
-            toastMessage.variant === "destructive"
-              ? "bg-red-500/10 border-red-500/30 text-red-300"
-              : "bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-200"
-          }`}
-        >
-          {toastMessage.variant === "destructive" ? (
-            <X className="w-4 h-4 shrink-0" />
-          ) : (
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-          )}
-          <div>
-            <div className="font-bold">{toastMessage.title}</div>
-            {toastMessage.description && (
-              <div className="text-white/70 text-caption mt-0.5">
-                {toastMessage.description}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Ambient background lighting effects */}
       <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-fuchsia-600/[0.07] rounded-full blur-[160px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-violet-600/[0.07] rounded-full blur-[160px] pointer-events-none" />
@@ -349,7 +309,7 @@ export default function Register() {
                   E-posta Adresi
                 </label>
                 <div className="relative group flex items-center w-full">
-                  <Mail className="absolute left-3.5 w-4 h-4 text-white/30 group-focus-within:text-fuchsia-400 transition-colors" />
+                  <Mail className={fieldIconCls} />
                   <input
                     type="email"
                     name="eposta"
@@ -368,7 +328,7 @@ export default function Register() {
                     Doğum Tarihi
                   </label>
                   <div className="relative group flex items-center w-full">
-                    <Calendar className="absolute left-3.5 w-4 h-4 text-white/30 group-focus-within:text-fuchsia-400 transition-colors" />
+                    <Calendar className={fieldIconCls} />
                     <input
                       type="date"
                       name="dogum_tarihi"
@@ -385,7 +345,7 @@ export default function Register() {
                     Telefon
                   </label>
                   <div className="relative group flex items-center w-full">
-                    <Phone className="absolute left-3.5 w-4 h-4 text-white/30 group-focus-within:text-fuchsia-400 transition-colors" />
+                    <Phone className={fieldIconCls} />
                     <input
                       type="tel"
                       name="telefon"
@@ -404,20 +364,21 @@ export default function Register() {
                   Şifre Belirle
                 </label>
                 <div className="relative group flex items-center w-full">
-                  <Lock className="absolute left-3.5 w-4 h-4 text-white/30 group-focus-within:text-fuchsia-400 transition-colors" />
+                  <Lock className={fieldIconCls} />
                   <input
                     type={showPassword ? "text" : "password"}
                     name="sifre"
                     placeholder="••••••••"
                     required
-                    className={inputCls}
+                    className={passwordInputCls}
                     value={formData.sifre}
                     onChange={handleChange}
                   />
                   <button
                     type="button"
+                    aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 text-white/30 hover:text-white transition-colors p-1"
+                    className={eyeToggleCls}
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>

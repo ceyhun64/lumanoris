@@ -23,6 +23,7 @@ import {
   HelpCircle,
   ExternalLink,
 } from "lucide-react";
+import { toast } from "@/shared/hooks/use-toast";
 
 function PageLayout({ children, className = "" }) {
   return <div className={`min-h-screen ${className}`}>{children}</div>;
@@ -699,7 +700,7 @@ export default function App() {
 
           <Button
             onClick={() =>
-              alert("Abonelik yükseltme sayfasına yönlendiriliyorsunuz.")
+              toast.info("Abonelik yükseltme sayfasına yönlendiriliyorsunuz.")
             }
             className="group relative inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-600 to-purple-600 px-6 py-3.5 text-xs font-semibold text-white shadow-xl shadow-fuchsia-950/50 hover:from-fuchsia-500 hover:to-purple-500 transition-all duration-300 border border-fuchsia-400/30 shrink-0"
           >

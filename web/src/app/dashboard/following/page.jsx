@@ -16,7 +16,6 @@ import {
   Trash2,
   X,
   Clock,
-  CheckCircle2,
   ShieldCheck,
   Building2,
   TrendingUp,
@@ -29,6 +28,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { FilterPopover2026 } from "@/shared/ui/filter-popover";
+import { toast } from "@/shared/hooks/use-toast";
 
 // Safe router hook for interactive preview environments
 function useRouter() {
@@ -291,14 +291,8 @@ export default function Following() {
   // Modals & Toast State
   const [unfollowModalBot, setUnfollowModalBot] = useState(null);
   const [detailModalBot, setDetailModalBot] = useState(null);
-  const [toast, setToast] = useState(null);
 
   const router = useRouter();
-
-  const showToast = (message) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 3000);
-  };
 
   useEffect(() => {
     async function checkSession() {
@@ -369,7 +363,7 @@ export default function Following() {
 
   const handleUnfollow = (botId) => {
     setFollowedBots((prev) => prev.filter((b) => b.id !== botId));
-    showToast("Bot takip edilenler listenizden çıkarıldı.");
+    toast.success("Bot takip edilenler listenizden çıkarıldı.");
   };
 
   const filteredBots = useMemo(() => {
@@ -424,14 +418,6 @@ export default function Following() {
         <div className="absolute -top-40 right-1/3 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-violet-600/10 via-fuchsia-600/10 to-transparent blur-[140px]" />
         <div className="absolute top-[50%] right-[-100px] h-[400px] w-[400px] rounded-full bg-cyan-600/10 blur-[140px]" />
       </div>
-
-      {/* Floating Toast Notification */}
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-xl bg-zinc-900 border border-fuchsia-500/40 text-white px-4 py-3 shadow-2xl flex items-center gap-2.5 text-xs font-medium animate-in slide-in-from-bottom-5 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{toast}</span>
-        </div>
-      )}
 
       <div className="relative space-y-8">
         {/* Page Header */}

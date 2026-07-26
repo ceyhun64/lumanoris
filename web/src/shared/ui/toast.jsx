@@ -11,7 +11,7 @@ const ToastViewport = React.forwardRef(({ className, ...props }, ref) => (
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[380px]",
+      "fixed top-0 right-0 z-[100] flex max-h-screen w-full flex-col gap-2 p-4 sm:max-w-[380px]",
       className
     )}
     {...props}
@@ -20,14 +20,16 @@ const ToastViewport = React.forwardRef(({ className, ...props }, ref) => (
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl border p-4 pr-8 shadow-modal transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+  "group pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-xl border p-3.5 pr-8 shadow-card backdrop-blur-md transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out data-[state=closed]:slide-out-to-right-8 data-[state=open]:fade-in data-[state=open]:slide-in-from-top-2 data-[state=open]:duration-200 data-[state=closed]:duration-150",
   {
     variants: {
       variant: {
-        default: "border-fuchsia-400/15 bg-luma-elevated text-white",
-        success: "border-success/30 bg-luma-elevated text-white [&_[data-toast-icon]]:text-success",
-        destructive: "border-destructive/30 bg-luma-elevated text-white [&_[data-toast-icon]]:text-destructive",
-        info: "border-info/30 bg-luma-elevated text-white [&_[data-toast-icon]]:text-info",
+        default: "border-white/[0.08] bg-luma-elevated/95 text-white [&_[data-toast-icon]]:text-white/60",
+        success: "border-success/25 bg-luma-elevated/95 text-white [&_[data-toast-icon]]:text-success",
+        destructive: "border-destructive/25 bg-luma-elevated/95 text-white [&_[data-toast-icon]]:text-destructive",
+        warning: "border-warning/25 bg-luma-elevated/95 text-white [&_[data-toast-icon]]:text-warning",
+        info: "border-info/25 bg-luma-elevated/95 text-white [&_[data-toast-icon]]:text-info",
+        loading: "border-white/[0.08] bg-luma-elevated/95 text-white [&_[data-toast-icon]]:text-white/70",
       },
     },
     defaultVariants: { variant: "default" },

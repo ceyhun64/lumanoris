@@ -64,6 +64,18 @@ function dispatch(action) {
   listeners.forEach((listener) => listener(memoryState));
 }
 
+// How long a toast stays visible before auto-dismissing, per variant —
+// callers can still pass an explicit `duration` to override this.
+// `Infinity` (used for "loading") tells Radix's Toast.Root to never
+// auto-dismiss; the caller is expected to resolve it via update()/dismiss().
+const VARIANT_DURATION = {
+  success: 3000,
+  info: 4000,
+  warning: 5000,
+  destructive: 8000,
+  loading: Infinity,
+};
+
 function toast({ ...props }) {
   const id = genId();
   const update = (props) => dispatch({ type: actionTypes.UPDATE_TOAST, toast: { ...props, id } });
@@ -72,6 +84,7 @@ function toast({ ...props }) {
   dispatch({
     type: actionTypes.ADD_TOAST,
     toast: {
+      duration: props.variant ? VARIANT_DURATION[props.variant] : undefined,
       ...props,
       id,
       open: true,
@@ -81,6 +94,21 @@ function toast({ ...props }) {
 
   return { id, dismiss, update };
 }
+
+// Thin, opt-in convenience wrappers around the same toast({...}) call above —
+// every existing toast({...}) call site is untouched and keeps working
+// exactly as before. `message` is the one-line description; pass a `title`
+// (or any other toast prop) via the second argument to override it.
+function variantHelper(variant) {
+  return (message, { title, ...rest } = {}) =>
+    toast({ title, description: message, variant, ...rest });
+}
+
+toast.success = variantHelper("success");
+toast.error = variantHelper("destructive");
+toast.warning = variantHelper("warning");
+toast.info = variantHelper("info");
+toast.loading = variantHelper("loading");
 
 function useToast() {
   const [state, setState] = React.useState(memoryState);

@@ -13,9 +13,9 @@ import {
   X,
   Cpu,
   ShieldCheck,
-  CheckCircle2,
   ArrowLeft,
 } from "lucide-react";
+import { toast } from "@/shared/hooks/use-toast";
 
 export default function ForgotPassword() {
   const [step, setStep] = useState(1);
@@ -26,14 +26,8 @@ export default function ForgotPassword() {
   const [password, setPassword] = useState("");
   const [passwordRepeat, setPasswordRepeat] = useState("");
   const [loading, setLoading] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
   const [isPolicyOpen, setPolicyOpen] = useState(false);
   const [activePolicy, setActivePolicy] = useState(null);
-
-  const showToast = (title, variant = "success", description = "") => {
-    setToastMessage({ title, variant, description });
-    setTimeout(() => setToastMessage(null), 4500);
-  };
 
   const validateEmail = (emailVal) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -53,12 +47,12 @@ export default function ForgotPassword() {
   const handleSendCode = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
-      showToast("E-posta adresi boş olamaz.", "destructive");
+      toast.warning("E-posta adresinizi girmeniz gerekiyor.");
       return;
     }
 
     if (!validateEmail(email)) {
-      showToast("Geçerli bir e-posta adresi girin.", "destructive");
+      toast.warning("Lütfen geçerli bir e-posta adresi girin.");
       return;
     }
 
@@ -78,19 +72,19 @@ export default function ForgotPassword() {
         result = JSON.parse(resultText);
       } catch {
         console.error("Beklenmeyen sunucu yanıtı:", resultText);
-        showToast("Beklenmeyen sunucu yanıtı.", "destructive");
+        toast.error("Sunucudan beklenmeyen bir yanıt alındı.");
         return;
       }
 
       if (result.success) {
         setStep(2);
-        showToast("Doğrulama kodu e-posta adresinize gönderildi.", "success");
+        toast.success("Doğrulama kodu e-posta adresinize gönderildi.");
       } else {
-        showToast(result.message || "Kod gönderilemedi.", "destructive");
+        toast.error(result.message || "Doğrulama kodu gönderilemedi.");
       }
     } catch (err) {
       console.error("Kod gönderme hatası:", err);
-      showToast("Sunucuya bağlanılamadı. Lütfen tekrar deneyin.", "destructive");
+      toast.error("Sunucuya bağlanılamadı. Lütfen tekrar deneyin.");
     } finally {
       setLoading(false);
     }
@@ -99,28 +93,28 @@ export default function ForgotPassword() {
   const handleSavePassword = async (e) => {
     e.preventDefault();
     if (!verificationCode.trim()) {
-      showToast("Doğrulama kodu boş olamaz.", "destructive");
+      toast.warning("Doğrulama kodunu girmeniz gerekiyor.");
       return;
     }
 
     if (!password.trim()) {
-      showToast("Yeni şifre boş olamaz.", "destructive");
+      toast.warning("Yeni şifrenizi girmeniz gerekiyor.");
       return;
     }
 
     const passwordError = validatePassword(password);
     if (passwordError) {
-      showToast(passwordError, "destructive");
+      toast.warning(passwordError);
       return;
     }
 
     if (!passwordRepeat.trim()) {
-      showToast("Şifre tekrarı boş olamaz.", "destructive");
+      toast.warning("Şifre tekrarını girmeniz gerekiyor.");
       return;
     }
 
     if (password !== passwordRepeat) {
-      showToast("Şifreler eşleşmiyor.", "destructive");
+      toast.warning("Girdiğiniz şifreler birbiriyle eşleşmiyor.");
       return;
     }
 
@@ -143,25 +137,21 @@ export default function ForgotPassword() {
         result = JSON.parse(resultText);
       } catch {
         console.error("Beklenmeyen sunucu yanıtı:", resultText);
-        showToast("Beklenmeyen sunucu yanıtı.", "destructive");
+        toast.error("Sunucudan beklenmeyen bir yanıt alındı.");
         return;
       }
 
       if (result.success) {
-        showToast(
-          "Şifreniz başarıyla güncellendi.",
-          "success",
-          "Giriş sayfasına yönlendiriliyorsunuz.",
-        );
+        toast.success("Şifreniz güncellendi. Giriş sayfasına yönlendiriliyorsunuz.");
         setTimeout(() => {
           window.location.href = "/login";
         }, 1500);
       } else {
-        showToast(result.message || "Şifre güncellenemedi.", "destructive");
+        toast.error(result.message || "Şifre güncellenemedi.");
       }
     } catch (err) {
       console.error("Şifre güncelleme hatası:", err);
-      showToast("Sunucuya bağlanılamadı. Lütfen tekrar deneyin.", "destructive");
+      toast.error("Sunucuya bağlanılamadı. Lütfen tekrar deneyin.");
     } finally {
       setLoading(false);
     }
@@ -182,31 +172,6 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen bg-[#09090F] text-white flex selection:bg-fuchsia-500/30 selection:text-fuchsia-200 overflow-x-hidden font-sans relative">
-      {/* Toast Notification Widget */}
-      {toastMessage && (
-        <div
-          className={`fixed top-6 right-6 z-50 px-5 py-4 rounded-2xl border text-xs font-medium shadow-2xl backdrop-blur-xl animate-bounce flex items-center gap-3 max-w-sm ${
-            toastMessage.variant === "destructive"
-              ? "bg-red-500/10 border-red-500/30 text-red-300"
-              : "bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-200"
-          }`}
-        >
-          {toastMessage.variant === "destructive" ? (
-            <X className="w-4 h-4 shrink-0" />
-          ) : (
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-          )}
-          <div>
-            <div className="font-bold">{toastMessage.title}</div>
-            {toastMessage.description && (
-              <div className="text-white/70 text-caption mt-0.5">
-                {toastMessage.description}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Ambient background lighting effects */}
       <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-fuchsia-600/[0.07] rounded-full blur-[160px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-violet-600/[0.07] rounded-full blur-[160px] pointer-events-none" />
@@ -240,13 +205,13 @@ export default function ForgotPassword() {
           </div>
         </div>
 
-        <div className="relative z-10 my-auto py-12 flex flex-col gap-8 max-w-lg">
+        <div className="relative z-10 my-auto py-12 flex flex-col gap-8 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-300 text-xs font-medium w-fit shadow-[0_0_20px_rgba(217,70,239,0.15)]">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Güvenli Kimlik Kurtarma</span>
           </div>
 
-          <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.1] text-white">
+          <h1 className="text-4xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white max-w-[680px]">
             Şifrenizi güvenle sıfırlayın,{" "}
             <span className="bg-gradient-to-r from-fuchsia-400 via-purple-300 to-indigo-400 bg-clip-text text-transparent">
               hesabınıza erişin
