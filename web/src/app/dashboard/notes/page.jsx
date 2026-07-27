@@ -463,7 +463,7 @@ export default function DialoguePage() {
                     setIsModalOpen(true);
                   }
                 }}
-                className="group relative flex flex-col justify-between rounded-3xl border border-white/10 bg-white/[0.02] p-5 transition-all duration-300 hover:border-fuchsia-500/40 hover:bg-white/[0.04] hover:shadow-2xl hover:shadow-fuchsia-950/30 hover:-translate-y-1 cursor-pointer"
+                className="group relative flex flex-col justify-between rounded-3xl border border-white/10 bg-white/[0.02] p-5 transition-all duration-250 ease-out hover:border-fuchsia-500/40 hover:bg-white/[0.04] hover:shadow-2xl hover:shadow-fuchsia-950/30 hover:-translate-y-0.5 cursor-pointer"
               >
                 {/* Content preview */}
                 <div className="space-y-3">

@@ -157,7 +157,7 @@ export function Sidebar({ isMobileOpen = false, onNavigate, userId = null }) {
       <button
         type="button"
         onClick={() => handleNavigate(href)}
-        className={`group relative flex items-center w-full rounded-xl text-left transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 ${
+        className={`group relative flex items-center w-full rounded-xl text-left transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500/60 ${
           collapsed ? "justify-center p-2.5" : "px-3 py-2.5"
         } ${
           active
@@ -226,7 +226,7 @@ export function Sidebar({ isMobileOpen = false, onNavigate, userId = null }) {
 
   return (
     <div
-      className={`relative h-screen sticky top-0 z-50 shrink-0 select-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+      className={`relative h-screen sticky top-0 z-50 shrink-0 select-none transition-all duration-300 ease-out ${
         collapsed ? "w-[76px]" : "w-[260px]"
       } ${
         isMobileOpen ? "translate-x-0" : "max-md:-translate-x-full"
@@ -276,9 +276,9 @@ export function Sidebar({ isMobileOpen = false, onNavigate, userId = null }) {
             <button
               type="button"
               onClick={() => handleNavigate("/dashboard/chatbots/create")}
-              className={`group relative w-full flex items-center justify-center gap-2 rounded-xl transition-all duration-200 overflow-hidden shadow-lg shadow-violet-950/30 ${
+              className={`group relative w-full flex items-center justify-center gap-2 rounded-xl transition-all duration-200 overflow-hidden shadow-glow ${
                 collapsed ? "p-2.5" : "py-2.5 px-3.5"
-              } bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 hover:brightness-110 active:scale-[0.98] border border-white/20`}
+              } bg-gradient-btn hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 border border-white/20`}
             >
               {/* Shimmer overlay */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
@@ -305,7 +305,7 @@ export function Sidebar({ isMobileOpen = false, onNavigate, userId = null }) {
             <div>
               {!collapsed && (
                 <div className="px-2 mb-2 flex items-center justify-between">
-                  <span className="text-caption font-bold uppercase tracking-[0.12em] text-zinc-500">
+                  <span className="text-caption font-bold uppercase tracking-[0.12em] text-zinc-400">
                     Stüdyo
                   </span>
                   <span className="w-1.5 h-1.5 rounded-full bg-violet-400/80 animate-pulse" />
@@ -328,7 +328,7 @@ export function Sidebar({ isMobileOpen = false, onNavigate, userId = null }) {
             <div>
               {!collapsed && (
                 <div className="px-2 mb-2 flex items-center justify-between">
-                  <span className="text-caption font-bold uppercase tracking-[0.12em] text-zinc-500">
+                  <span className="text-caption font-bold uppercase tracking-[0.12em] text-zinc-400">
                     Keşfet
                   </span>
                   <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-400/80" />

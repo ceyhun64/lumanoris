@@ -29,7 +29,7 @@ function formatCompactNumber(n) {
 
 function StatBox({ icon: Icon, label, value, accent }) {
   const accentCls = {
-    zinc: { border: "border-white/[0.08]", bg: "bg-zinc-900/60", label: "text-zinc-500", value: "text-white" },
+    zinc: { border: "border-white/[0.08]", bg: "bg-zinc-900/60", label: "text-zinc-400", value: "text-white" },
     violet: { border: "border-violet-500/20", bg: "bg-violet-500/[0.03]", label: "text-violet-400", value: "text-violet-300" },
     fuchsia: { border: "border-fuchsia-500/20", bg: "bg-fuchsia-500/[0.03]", label: "text-fuchsia-400", value: "text-fuchsia-300" },
   }[accent || "zinc"];
@@ -274,7 +274,7 @@ export default function Explore() {
 
           <a
             href="/dashboard/chatbots/create"
-            className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 px-5 py-3 text-xs font-semibold text-white shadow-lg shadow-violet-950/40 hover:brightness-110 active:scale-95 transition cursor-pointer shrink-0"
+            className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-btn px-5 py-3 text-xs font-semibold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Yeni Bot Oluştur</span>

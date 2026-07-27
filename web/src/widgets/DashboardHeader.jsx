@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 
 const ICON_BTN_FOCUS =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050508]";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050508]";
 
 function Tooltip({ children, content }) {
   const [show, setShow] = useState(false);
@@ -237,6 +237,8 @@ export default function Header({ userId = null, onNavigate }) {
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [quitOpen, setQuitOpen] = useState(false);
   const profileMenuRef = useRef(null);
+  const notificationBtnRef = useRef(null);
+  const profileBtnRef = useRef(null);
   const [user, setUser] = useState({
     id: userId || null,
     username: "",
@@ -403,6 +405,26 @@ export default function Header({ userId = null, onNavigate }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showProfile]);
 
+  const closeNotification = () => {
+    setShowNotification(false);
+    notificationBtnRef.current?.focus();
+  };
+  const closeProfile = () => {
+    setShowProfile(false);
+    profileBtnRef.current?.focus();
+  };
+
+  useEffect(() => {
+    if (!showNotification && !showProfile) return;
+    function handleEscape(e) {
+      if (e.key !== "Escape") return;
+      if (showNotification) closeNotification();
+      if (showProfile) closeProfile();
+    }
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [showNotification, showProfile]);
+
   const goToExplore = () => {
     navigate(
       `/dashboard/explore?search=${encodeURIComponent(searchQuery.trim())}`,
@@ -434,7 +456,7 @@ export default function Header({ userId = null, onNavigate }) {
     <>
       <header className="sticky top-0 z-40 flex h-20 shrink-0 items-center justify-between gap-6 px-4 md:px-8 bg-[#050508]/85 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
         {/* Brand Logo / Studio Indicator & Command Bar */}
-        <div className="flex flex-1 items-center max-w-[580px] gap-4">
+        <div className="flex flex-1 min-w-0 items-center max-w-[580px] gap-4">
         
           <div className="group relative flex h-11 w-full items-center gap-3 rounded-2xl bg-white/[0.03] px-4 ring-1 ring-inset ring-white/[0.08] transition-all duration-300 focus-within:bg-gradient-to-r focus-within:from-fuchsia-500/[0.05] focus-within:to-violet-500/[0.05] focus-within:ring-fuchsia-500/50 focus-within:shadow-[0_0_25px_rgba(217,70,239,0.15)]">
             <button
@@ -467,11 +489,14 @@ export default function Header({ userId = null, onNavigate }) {
           <div className="relative">
             <Tooltip content="Bildirimler">
               <button
+                ref={notificationBtnRef}
                 onClick={() => {
                   setShowNotification(!showNotification);
                   setShowProfile(false);
                 }}
                 aria-label="Bildirimler"
+                aria-haspopup="dialog"
+                aria-expanded={showNotification}
                 className={`relative flex h-10 w-10 items-center justify-center rounded-2xl bg-white/[0.03] border border-white/[0.08] text-zinc-300 transition-all duration-200 hover:bg-violet-500/10 hover:border-violet-500/30 hover:text-violet-300 hover:shadow-[0_0_15px_rgba(139,92,246,0.15)] ${ICON_BTN_FOCUS}`}
               >
                 <Bell className="h-4 w-4" strokeWidth={1.75} />
@@ -486,7 +511,7 @@ export default function Header({ userId = null, onNavigate }) {
 
             {showNotification && (
               <NotificationPopup
-                onClose={() => setShowNotification(false)}
+                onClose={closeNotification}
                 notifications={notifications}
                 loading={notificationsLoading}
                 onMarkAllRead={markAllNotificationsRead}
@@ -513,7 +538,10 @@ export default function Header({ userId = null, onNavigate }) {
           {/* User Profile Menu Trigger */}
           <div className="relative ml-1 sm:ml-2" ref={profileMenuRef}>
             <button
+              ref={profileBtnRef}
               aria-label="Profil menüsü"
+              aria-haspopup="dialog"
+              aria-expanded={showProfile}
               onClick={() => setShowProfile((prev) => !prev)}
               className={`flex items-center gap-2.5 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] transition-all duration-200 hover:border-violet-500/40 hover:bg-white/[0.06] hover:shadow-[0_0_20px_rgba(139,92,246,0.15)] ${ICON_BTN_FOCUS}`}
             >
@@ -540,7 +568,7 @@ export default function Header({ userId = null, onNavigate }) {
                 user={user}
                 profileImage={profileImage}
                 onLogout={handleLogout}
-                onClose={() => setShowProfile(false)}
+                onClose={closeProfile}
               />
             )}
           </div>

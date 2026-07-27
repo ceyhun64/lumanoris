@@ -15,10 +15,10 @@ export default function PricingCard({
   return (
     <div
       className={cn(
-        "group relative flex flex-col justify-between rounded-3xl p-8 transition-all duration-500 backdrop-blur-2xl",
+        "group relative flex flex-col justify-between rounded-3xl p-8 transition-all duration-250 ease-out backdrop-blur-2xl",
         isFeatured
           ? "bg-gradient-to-b from-zinc-900/90 via-zinc-900/60 to-zinc-950/90 border-2 border-fuchsia-500/40 shadow-[0_0_50px_rgba(192,38,211,0.15)] hover:border-fuchsia-400/70 hover:shadow-[0_0_70px_rgba(192,38,211,0.25)] -translate-y-2"
-          : "bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700/80 hover:bg-zinc-900/70 hover:-translate-y-1 shadow-xl",
+          : "bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700/80 hover:bg-zinc-900/70 hover:-translate-y-0.5 shadow-xl",
         isSelected && "ring-2 ring-violet-500 border-transparent",
       )}
     >

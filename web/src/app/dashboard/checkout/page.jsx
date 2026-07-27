@@ -423,7 +423,7 @@ export default function Checkout() {
                     <span className="text-2xl font-bold tracking-tight text-white">
                       {formatCurrency(total)}
                     </span>
-                    <p className="text-caption text-zinc-500">
+                    <p className="text-caption text-zinc-400">
                       Güvenli şekilde faturalandırılır
                     </p>
                   </div>
@@ -458,13 +458,13 @@ export default function Checkout() {
 
                 <button
                   onClick={handleConfirm}
-                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-btn hover:brightness-110 text-white font-semibold text-xs shadow-glow transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-btn hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 text-white font-semibold text-xs shadow-glow transition-all duration-200 flex items-center justify-center gap-2 group cursor-pointer"
                 >
                   <span>Ödemeye Geç</span>
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </button>
 
-                <div className="mt-4 flex items-center justify-center gap-2 text-caption text-zinc-500">
+                <div className="mt-4 flex items-center justify-center gap-2 text-caption text-zinc-400">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   <span>30 Gün Para İade Garantisi</span>
                 </div>
@@ -661,7 +661,7 @@ export default function Checkout() {
                   <button
                     onClick={handlePayment}
                     disabled={paying}
-                    className="w-full py-4 rounded-xl bg-gradient-btn hover:brightness-110 text-white font-semibold text-xs shadow-glow transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full py-4 rounded-xl bg-gradient-btn hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 text-white font-semibold text-xs shadow-glow transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ShieldCheck className="w-4 h-4" />
                     <span>

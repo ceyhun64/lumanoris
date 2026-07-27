@@ -219,7 +219,7 @@ export default function MessageInput({ onSend, onResetChat }) {
                             <button
                                 onClick={() => setVoiceModalOpen(true)}
                                 disabled={!!selectedFileName}
-                                className="flex h-9 w-9 items-center justify-center rounded-lg text-fuchsia-300 transition-colors duration-150 hover:bg-fuchsia-500/10 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                className="flex h-9 w-9 items-center justify-center rounded-lg text-fuchsia-300 transition-colors duration-150 hover:bg-fuchsia-500/10 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 aria-label="Sesli mesaj"
                             >
                                 <Mic className="h-4 w-4" />
@@ -237,7 +237,7 @@ export default function MessageInput({ onSend, onResetChat }) {
                         <button
                             onClick={handleSend}
                             disabled={isRecording || !(message.trim() || selectedFileName || recordedAudioUrl)}
-                            className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-btn text-white transition-all duration-150 hover:brightness-110 disabled:opacity-30 disabled:hover:brightness-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-btn text-white transition-all duration-200 hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             aria-label="Gönder"
                         >
                             <Send className="h-4 w-4 -rotate-45" />

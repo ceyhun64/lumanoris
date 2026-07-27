@@ -160,7 +160,7 @@ function AddToListModalEmpty({ isOpen, onClose, onCreate, loading }) {
               onChange={(e) => setName(e.target.value)}
               placeholder="Örn: Favori Kod Asistanlarım"
               required
-              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-800 px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all"
+              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-800 px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 transition-all"
             />
           </div>
 
@@ -173,7 +173,7 @@ function AddToListModalEmpty({ isOpen, onClose, onCreate, loading }) {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Listeye dair kısa bir özet veya not ekleyin..."
               rows={3}
-              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-800 px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all resize-none"
+              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-800 px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 transition-all resize-none"
             />
           </div>
 
@@ -204,7 +204,7 @@ function AddToListModalEmpty({ isOpen, onClose, onCreate, loading }) {
             <button
               type="submit"
               disabled={loading || !name.trim()}
-              className="flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 rounded-xl shadow-lg shadow-violet-950/40 hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-gradient-btn rounded-xl shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="w-4 h-4" />
               <span>{loading ? "Kaydediliyor..." : "Koleksiyon Oluştur"}</span>
@@ -313,7 +313,7 @@ function ListCardItem({ list, onDelete, onViewDetail }) {
   const bots = list.bots || [];
 
   return (
-    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-zinc-800/80 bg-[#09090F] p-5 transition-all duration-300 hover:border-violet-500/40 hover:bg-[#0B0B14] hover:shadow-2xl hover:shadow-violet-950/20 hover:-translate-y-1">
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-zinc-800/80 bg-[#09090F] p-5 transition-all duration-250 ease-out hover:border-violet-500/40 hover:bg-[#0B0B14] hover:shadow-2xl hover:shadow-violet-950/20 hover:-translate-y-0.5">
       {/* Top Header */}
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-3">
@@ -620,7 +620,7 @@ export default function List() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setModalVisible(true)}
-              className="group relative inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xl shadow-violet-950/40 hover:brightness-110 active:scale-95 transition-all"
+              className="group relative inline-flex items-center gap-2 rounded-xl bg-gradient-btn px-4 py-2.5 text-xs font-semibold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
             >
               <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
               <span>Yeni Liste Oluştur</span>
@@ -674,7 +674,7 @@ export default function List() {
               </p>
               <button
                 onClick={() => setModalVisible(true)}
-                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-violet-950/40 hover:brightness-110 active:scale-95 transition-all"
+                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-btn px-4 py-2.5 text-xs font-semibold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
               >
                 <Plus className="w-4 h-4" />
                 <span>İlk Listenizi Oluşturun</span>

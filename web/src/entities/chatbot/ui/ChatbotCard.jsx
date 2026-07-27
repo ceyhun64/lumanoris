@@ -164,7 +164,7 @@ export default function ChatbotCard({ id, userId, authorUserId, ownerUserId, isI
                         src={resolveCoverSrc(image)}
                         alt="chatbot"
                         fill
-                        className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+                        className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                     <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />

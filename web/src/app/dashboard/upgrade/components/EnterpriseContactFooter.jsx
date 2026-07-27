@@ -20,7 +20,7 @@ export default function EnterpriseContactFooter({ sending, sent, onContact }) {
       <button
         onClick={onContact}
         disabled={sending || sent}
-        className="px-6 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold transition-all border border-zinc-700/60 shrink-0 disabled:opacity-70"
+        className="px-6 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold transition-all duration-200 border border-zinc-700/60 shrink-0 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {sent
           ? "Talebiniz Alındı ✓"

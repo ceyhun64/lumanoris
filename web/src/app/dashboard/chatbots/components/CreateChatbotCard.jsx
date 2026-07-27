@@ -16,7 +16,7 @@ export default function CreateChatbotCard() {
         <p className="font-display text-body-lg font-bold text-violet-200 tracking-tight">
           Yeni Chatbot Oluştur
         </p>
-        <p className="text-body-sm text-white/40">
+        <p className="text-body-sm text-luma-muted">
           Fikrini birkaç dakikada akıllı bir ajana dönüştür
         </p>
       </div>

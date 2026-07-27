@@ -251,7 +251,7 @@ function BentoBotCard({ bot, onOpenDetails }) {
   return (
     <div
       onClick={() => onOpenDetails(bot)}
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-zinc-900/50 to-zinc-950/80 backdrop-blur-2xl transition-all duration-300 hover:border-violet-500/40 hover:bg-zinc-900/90 hover:shadow-2xl hover:shadow-violet-600/10 hover:-translate-y-1.5 cursor-pointer"
+      className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-zinc-900/50 to-zinc-950/80 backdrop-blur-2xl transition-all duration-250 ease-out hover:border-violet-500/40 hover:bg-zinc-900/90 hover:shadow-2xl hover:shadow-violet-600/10 hover:-translate-y-0.5 cursor-pointer"
     >
       {/* Top Border Glow Sweep */}
       <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-violet-500/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-10" />
@@ -944,7 +944,7 @@ export function MainDashboard2026() {
           <div className="flex items-center gap-3 shrink-0">
             <a
               href="/dashboard/chatbots/create"
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-3 text-xs font-bold text-white shadow-xl shadow-violet-600/20 transition-all hover:opacity-95 hover:shadow-violet-600/30 active:scale-95"
+              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-btn px-5 py-3 text-xs font-bold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
             >
               <Plus className="h-4 w-4" />
               <span>Yeni Bot Oluştur</span>
@@ -996,7 +996,7 @@ export function MainDashboard2026() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Bot, açıklama veya geliştirici ara..."
-                className="w-full rounded-2xl border border-white/5 bg-zinc-900/80 pl-10 pr-10 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
+                className="w-full rounded-2xl border border-white/5 bg-zinc-900/80 pl-10 pr-10 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-fuchsia-500/60 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 transition-all"
               />
               {searchQuery ? (
                 <button

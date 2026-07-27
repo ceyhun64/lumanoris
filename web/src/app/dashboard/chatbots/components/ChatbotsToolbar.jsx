@@ -19,7 +19,7 @@ export default function ChatbotsToolbar({
           placeholder="Chatbot ismi ile ara..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 pl-11 text-sm text-white placeholder-white/30 backdrop-blur-xl transition-all duration-200 focus:border-violet-500/50 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+          className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 pl-11 text-sm text-white placeholder-white/30 backdrop-blur-xl transition-all duration-200 focus:border-fuchsia-500/60 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20"
         />
       </div>
 

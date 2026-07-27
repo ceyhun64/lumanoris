@@ -21,7 +21,7 @@ export default function PricingButton({
     default:
       "bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_25px_rgba(139,92,246,0.5)] border border-violet-400/30",
     primary:
-      "bg-gradient-to-r from-fuchsia-600 via-violet-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white shadow-[0_0_30px_rgba(192,38,211,0.4)] border border-fuchsia-400/40",
+      "bg-gradient-btn hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 text-white shadow-glow border border-fuchsia-400/40",
     secondary:
       "bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 border border-zinc-700/50",
     outline:

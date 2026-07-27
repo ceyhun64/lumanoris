@@ -36,7 +36,7 @@ export default function WalletTabsBar({ activeTab, onTabChange, searchQuery, onS
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="İşlemlerde ara..."
-          className="w-full rounded-2xl border border-white/10 bg-zinc-900/80 pl-9 pr-4 py-2 text-xs text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+          className="w-full rounded-2xl border border-white/10 bg-zinc-900/80 pl-9 pr-4 py-2 text-xs text-white placeholder-zinc-500 focus:border-fuchsia-500/60 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20"
         />
       </div>
     </div>

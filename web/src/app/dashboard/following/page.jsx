@@ -263,7 +263,7 @@ function BotQuickDetailModal({ bot, isOpen, onClose, router }) {
             onClick={() =>
               router.push("/dashboard/chat?botId=" + bot.chatbot_id)
             }
-            className="flex-1 py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 to-indigo-600 text-xs font-bold text-white shadow-lg hover:brightness-110 transition cursor-pointer flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-xl bg-gradient-btn text-xs font-bold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
           >
             <MessageSquare className="w-4 h-4" />
             <span>Sohbet Başlat</span>
@@ -438,7 +438,7 @@ export default function Following() {
 
           <button
             onClick={() => router.push("/dashboard/explore")}
-            className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 px-5 py-3 text-xs font-semibold text-white shadow-lg shadow-violet-950/40 hover:brightness-110 active:scale-95 transition cursor-pointer shrink-0"
+            className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-btn px-5 py-3 text-xs font-semibold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer shrink-0"
           >
             <Sparkles className="w-4 h-4" />
             <span>Pazaryerinde Keşfet</span>
@@ -496,7 +496,7 @@ export default function Following() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Bot ismi veya üretici ara..."
-              className="w-full bg-black/40 border border-white/[0.06] rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50 transition"
+              className="w-full bg-black/40 border border-white/[0.06] rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 transition"
             />
             {searchQuery && (
               <button
@@ -602,7 +602,7 @@ export default function Following() {
             ) : (
               <button
                 onClick={() => router.push("/dashboard/explore")}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-xs font-bold text-white shadow-lg hover:brightness-110 transition cursor-pointer"
+                className="px-6 py-3 rounded-xl bg-gradient-btn text-xs font-bold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
               >
                 Pazaryerine Git
               </button>
@@ -614,7 +614,7 @@ export default function Following() {
             {filteredBots.map((bot) => (
               <div
                 key={bot.id}
-                className="group relative rounded-2xl border border-white/[0.08] bg-zinc-900/60 backdrop-blur-xl overflow-hidden hover:border-violet-500/40 hover:bg-zinc-900/90 hover:shadow-[0_0_30px_-5px_rgba(139,92,246,0.15)] hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between"
+                className="group relative rounded-2xl border border-white/[0.08] bg-zinc-900/60 backdrop-blur-xl overflow-hidden hover:border-violet-500/40 hover:bg-zinc-900/90 hover:shadow-[0_0_30px_-5px_rgba(139,92,246,0.15)] hover:-translate-y-0.5 transition-all duration-250 ease-out cursor-pointer flex flex-col justify-between"
               >
                 {/* Top Cover Banner */}
                 <div>

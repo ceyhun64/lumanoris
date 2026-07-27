@@ -177,15 +177,34 @@ function ChatShowcase() {
 function MiniSelect({ value, options, onChange, className = "" }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const triggerRef = useRef(null);
   const current = options.find((o) => o.value === value);
+
+  const close = () => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
 
   useEffect(() => {
     if (!open) return;
     function handleClickOutside(e) {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
     }
+    // Capture phase + stopPropagation: this select can be opened while it's
+    // nested inside BirthdatePicker's own popover, which has an identical
+    // document-level Escape listener. Without this, one Escape press would
+    // close both layers at once instead of just the innermost (this) one.
+    function handleKeyDown(e) {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      close();
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown, true);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -197,7 +216,10 @@ function MiniSelect({ value, options, onChange, className = "" }) {
   return (
     <div className={`relative ${className}`} ref={ref}>
       <button
+        ref={triggerRef}
         type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
         className="w-full flex items-center justify-between gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white hover:border-white/20 hover:bg-white/[0.07] transition-colors"
       >
@@ -216,7 +238,7 @@ function MiniSelect({ value, options, onChange, className = "" }) {
               data-selected={opt.value === value}
               onClick={() => {
                 onChange(opt.value);
-                setOpen(false);
+                close();
               }}
               className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
                 opt.value === value
@@ -241,19 +263,32 @@ function MiniSelect({ value, options, onChange, className = "" }) {
 function BirthdatePicker({ value, onChange, inputCls, inputWrapperCls, fieldIconCls }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
+  const triggerRef = useRef(null);
   const today = new Date();
   const parsed = value ? new Date(`${value}T00:00:00`) : null;
   const defaultView = parsed || new Date(today.getFullYear() - 20, 0, 1);
   const [viewYear, setViewYear] = useState(defaultView.getFullYear());
   const [viewMonth, setViewMonth] = useState(defaultView.getMonth());
 
+  const closeCalendar = () => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
+
   useEffect(() => {
     if (!open) return;
     function handleClickOutside(e) {
       if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
     }
+    function handleKeyDown(e) {
+      if (e.key === "Escape") closeCalendar();
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [open]);
 
   const years = [];
@@ -280,14 +315,17 @@ function BirthdatePicker({ value, onChange, inputCls, inputWrapperCls, fieldIcon
     const mm = String(viewMonth + 1).padStart(2, "0");
     const dd = String(day).padStart(2, "0");
     onChange(`${viewYear}-${mm}-${dd}`);
-    setOpen(false);
+    closeCalendar();
   }
 
   return (
     <div className={inputWrapperCls} ref={wrapRef}>
       <Calendar className={fieldIconCls} />
       <button
+        ref={triggerRef}
         type="button"
+        aria-haspopup="dialog"
+        aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
         className={`${inputCls} text-xs text-left`}
       >
@@ -788,7 +826,7 @@ export default function AuthPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 px-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-fuchsia-600 via-purple-600 to-indigo-600 text-white shadow-[0_10px_30px_rgba(217,70,239,0.3)] hover:shadow-[0_15px_40px_rgba(217,70,239,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3.5 px-4 rounded-xl font-semibold text-sm bg-gradient-btn text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   <span>{loading ? "Giriş Yapılıyor..." : "Giriş Yap"}</span>
                   {!loading && <ArrowRight className="w-4 h-4" />}
@@ -930,7 +968,7 @@ export default function AuthPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 px-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-fuchsia-600 via-purple-600 to-indigo-600 text-white shadow-[0_10px_30px_rgba(217,70,239,0.3)] hover:shadow-[0_15px_40px_rgba(217,70,239,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+                  className="w-full py-3.5 px-4 rounded-xl font-semibold text-sm bg-gradient-btn text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
                 >
                   <span>{loading ? "Hesap Oluşturuluyor..." : "Kayıt Ol"}</span>
                   {!loading && <ArrowRight className="w-4 h-4" />}

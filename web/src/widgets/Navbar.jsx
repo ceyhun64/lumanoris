@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sidebar } from '@/widgets/Sidebar';
 import logo from '@/images/header-logo-icon.png';
 import { useRouter } from 'next/navigation';
@@ -8,7 +8,22 @@ import { Menu, X } from 'lucide-react';
 
 export default function NavbarMobile({ userId = null }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const toggleBtnRef = useRef(null);
     const router = useRouter();
+
+    const closeSidebar = () => {
+        setSidebarOpen(false);
+        toggleBtnRef.current?.focus();
+    };
+
+    useEffect(() => {
+        if (!sidebarOpen) return;
+        function handleKeyDown(e) {
+            if (e.key === 'Escape') closeSidebar();
+        }
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [sidebarOpen]);
 
     return (
         <>
@@ -22,9 +37,12 @@ export default function NavbarMobile({ userId = null }) {
                 </div>
 
                 <button
+                    ref={toggleBtnRef}
                     className="flex h-10 w-10 items-center justify-center rounded-lg text-white/70 transition-all duration-150 hover:bg-gradient-to-br hover:from-fuchsia-500/20 hover:to-violet-500/12 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
                     aria-label={sidebarOpen ? "Menüyü kapat" : "Menüyü aç"}
+                    aria-haspopup="true"
+                    aria-expanded={sidebarOpen}
                 >
                     {sidebarOpen ? <X className="h-5 w-5" strokeWidth={1.75} /> : <Menu className="h-5 w-5" strokeWidth={1.75} />}
                 </button>

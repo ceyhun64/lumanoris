@@ -269,7 +269,7 @@ export default function SatinAldiklarim() {
 
           <button
             onClick={() => router.push("/dashboard/explore")}
-            className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-600 via-violet-600 to-indigo-600 px-5 py-3 text-xs font-semibold text-white shadow-lg shadow-fuchsia-950/40 hover:brightness-110 active:scale-95 transition cursor-pointer shrink-0"
+            className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-btn px-5 py-3 text-xs font-semibold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer shrink-0"
           >
             <ShoppingBag className="w-4 h-4" />
             <span>Pazaryerini Keşfet</span>
@@ -460,7 +460,7 @@ export default function SatinAldiklarim() {
             ) : (
               <button
                 onClick={() => router.push("/dashboard/explore")}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 to-indigo-600 text-xs font-bold text-white shadow-lg hover:brightness-110 transition cursor-pointer"
+                className="px-6 py-3 rounded-xl bg-gradient-btn text-xs font-bold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
               >
                 Pazaryerini Keşfet
               </button>
@@ -490,7 +490,7 @@ export default function SatinAldiklarim() {
                       router.push("/dashboard/chat?botId=" + bot.chatbot_id);
                     }
                   }}
-                  className="group relative rounded-2xl border border-white/[0.08] bg-zinc-900/60 backdrop-blur-xl overflow-hidden hover:border-fuchsia-500/40 hover:bg-zinc-900/90 hover:shadow-[0_0_30px_-5px_rgba(217,70,239,0.15)] hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between"
+                  className="group relative rounded-2xl border border-white/[0.08] bg-zinc-900/60 backdrop-blur-xl overflow-hidden hover:border-fuchsia-500/40 hover:bg-zinc-900/90 hover:shadow-[0_0_30px_-5px_rgba(217,70,239,0.15)] hover:-translate-y-0.5 transition-all duration-250 ease-out cursor-pointer flex flex-col justify-between"
                 >
                   {/* Top Cover Section */}
                   <div>

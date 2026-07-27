@@ -241,7 +241,7 @@ function BuyProducerAccountModal({ isOpen, onClose, userId, onPurchased }) {
           <button
             onClick={handleBuy}
             disabled={loading}
-            className="flex-1 py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 to-indigo-600 text-xs font-semibold text-white shadow-lg shadow-fuchsia-900/40 hover:brightness-110 active:scale-95 transition cursor-pointer flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-xl bg-gradient-btn text-xs font-semibold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -293,7 +293,7 @@ function SellerOnboardingWizard({ userId, initialStatus, onComplete }) {
               setFormData({ ...formData, storeName: e.target.value })
             }
             placeholder="Örn: Nexus AI Labs"
-            className="w-full rounded-xl bg-black/50 border border-white/10 px-4 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:border-violet-500 focus:outline-none"
+            className="w-full rounded-xl bg-black/50 border border-white/10 px-4 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 focus:outline-none"
           />
         </div>
 
@@ -306,14 +306,14 @@ function SellerOnboardingWizard({ userId, initialStatus, onComplete }) {
             value={formData.iban}
             onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
             placeholder="TR00 0000 0000 0000 0000 0000 00"
-            className="w-full rounded-xl bg-black/50 border border-white/10 px-4 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:border-violet-500 focus:outline-none"
+            className="w-full rounded-xl bg-black/50 border border-white/10 px-4 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 focus:outline-none"
           />
         </div>
       </div>
 
       <button
         onClick={onComplete}
-        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-xs font-semibold text-white shadow-lg shadow-violet-900/30 hover:brightness-110 active:scale-95 transition cursor-pointer flex items-center justify-center gap-2"
+        className="w-full py-3.5 rounded-xl bg-gradient-btn text-xs font-semibold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
       >
         <ShieldCheck className="w-4 h-4" />
         <span>Satıcı Hesabını Onayla & Devam Et</span>
@@ -454,7 +454,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
                 value={botName}
                 onChange={(e) => setBotName(e.target.value)}
                 placeholder="Örn: E-Ticaret Destek Asistanı"
-                className="w-full rounded-xl bg-zinc-900 border border-white/10 px-4 py-3 text-xs text-white placeholder:text-zinc-600 focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-xl bg-zinc-900 border border-white/10 px-4 py-3 text-xs text-white placeholder:text-zinc-600 focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 focus:outline-none"
               />
             </div>
 
@@ -467,7 +467,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Müşterilere sipariş durumunu aktarır, ürün tavsiye eder..."
-                className="w-full rounded-xl bg-zinc-900 border border-white/10 px-4 py-3 text-xs text-white placeholder:text-zinc-600 focus:border-violet-500 focus:outline-none resize-none"
+                className="w-full rounded-xl bg-zinc-900 border border-white/10 px-4 py-3 text-xs text-white placeholder:text-zinc-600 focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 focus:outline-none resize-none"
               />
             </div>
 
@@ -533,7 +533,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
                 rows={6}
                 value={systemPrompt}
                 onChange={(e) => setSystemPrompt(e.target.value)}
-                className="w-full rounded-xl bg-zinc-900 border border-white/10 p-4 text-xs font-mono text-zinc-200 focus:border-violet-500 focus:outline-none leading-relaxed"
+                className="w-full rounded-xl bg-zinc-900 border border-white/10 p-4 text-xs font-mono text-zinc-200 focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 focus:outline-none leading-relaxed"
               />
             </div>
 
@@ -612,7 +612,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
             <button
               onClick={handleSubmit}
               disabled={isBuilding}
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 text-xs font-bold text-white shadow-xl shadow-fuchsia-950/50 hover:brightness-110 active:scale-[0.99] transition cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full py-4 rounded-xl bg-gradient-btn text-xs font-bold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isBuilding ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -689,7 +689,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
               value={inputMsg}
               onChange={(e) => setInputMsg(e.target.value)}
               placeholder="Test mesajı yazın..."
-              className="flex-1 bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-500"
+              className="flex-1 bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20"
             />
             <button
               type="submit"
@@ -811,7 +811,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
             </div>
 
             <div className="pt-6 mt-6 border-t border-white/5 flex items-center justify-between relative z-10">
-              <span className="text-xs font-mono text-zinc-500">
+              <span className="text-xs font-mono text-zinc-400">
                 Kapasite: {limits.independent_limit || "1/2 Kullanıldı"}
               </span>
               <span className="text-xs font-semibold text-violet-300 group-hover:translate-x-1 transition-transform flex items-center gap-1">
@@ -856,7 +856,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
             </div>
 
             <div className="pt-6 mt-6 border-t border-white/5 flex items-center justify-between relative z-10">
-              <span className="text-xs font-mono text-zinc-500">
+              <span className="text-xs font-mono text-zinc-400">
                 Kapasite: {limits.public_limit || "0/5 Kullanıldı"}
               </span>
               <span className="text-xs font-semibold text-fuchsia-300 group-hover:translate-x-1 transition-transform flex items-center gap-1">
@@ -886,7 +886,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
 
             <button
               onClick={() => setShowBuyPlan(true)}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-fuchsia-600 to-indigo-600 text-xs font-bold text-white shadow-xl shadow-fuchsia-900/40 hover:scale-105 active:scale-95 transition cursor-pointer shrink-0"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-btn text-xs font-bold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer shrink-0"
             >
               Şimdi Satın Al
             </button>
@@ -895,7 +895,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
 
         {/* Visual Workflow Steps Preview */}
         <div className="pt-4 border-t border-white/10 space-y-4">
-          <p className="text-xs font-mono font-semibold uppercase tracking-widest text-zinc-500">
+          <p className="text-xs font-mono font-semibold uppercase tracking-widest text-zinc-400">
             Süreç Nasıl İlerler?
           </p>
 
@@ -923,7 +923,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
               >
                 <st.icon className="w-5 h-5 text-violet-400" />
                 <h5 className="text-xs font-bold text-white">{st.title}</h5>
-                <p className="text-caption text-zinc-500 leading-relaxed">
+                <p className="text-caption text-zinc-400 leading-relaxed">
                   {st.desc}
                 </p>
               </div>

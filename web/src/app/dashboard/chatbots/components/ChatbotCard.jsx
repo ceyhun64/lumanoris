@@ -27,7 +27,7 @@ export default function ChatbotCard({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0c0c10]/90 backdrop-blur-2xl transition-all duration-300 hover:border-violet-500/40 hover:shadow-[0_10px_40px_rgba(0,0,0,0.5)] hover:-translate-y-1">
+    <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0c0c10]/90 backdrop-blur-2xl transition-all duration-250 ease-out hover:border-violet-500/40 hover:shadow-[0_10px_40px_rgba(0,0,0,0.5)] hover:-translate-y-0.5">
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-violet-950/40 to-slate-900/60">
         {image ? (
           <img
@@ -65,7 +65,7 @@ export default function ChatbotCard({
             <h3 className="font-display font-bold text-white text-base truncate">
               {title || "İsimsiz Bot"}
             </h3>
-            <p className="text-xs text-white/40">ID: #{id}</p>
+            <p className="text-xs text-luma-muted">ID: #{id}</p>
           </div>
         </div>
 

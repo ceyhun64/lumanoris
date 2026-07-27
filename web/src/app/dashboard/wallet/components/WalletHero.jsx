@@ -20,7 +20,7 @@ export default function WalletHero({ onWithdraw }) {
       <div className="flex items-center gap-3">
         <button
           onClick={onWithdraw}
-          className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-3 text-xs font-bold text-white shadow-xl shadow-violet-600/25 transition-all hover:opacity-95 active:scale-95"
+          className="inline-flex items-center gap-2 rounded-2xl bg-gradient-btn px-5 py-3 text-xs font-bold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
         >
           <ArrowDownToLine className="h-4 w-4" />
           <span>Para Çek</span>

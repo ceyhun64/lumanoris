@@ -43,7 +43,7 @@ export default function TransactionRow({ tx }) {
         >
           {isIncome ? `+${formatCurrency(tx.amount)}` : formatCurrency(tx.amount)}
         </div>
-        <span className="text-caption uppercase font-bold tracking-wider text-zinc-500">
+        <span className="text-caption uppercase font-bold tracking-wider text-zinc-400">
           {isIncome ? "Gelir" : "Ödeme"}
         </span>
       </div>
