@@ -794,7 +794,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                 >
                   {limits.can_create_independent
                     ? "Özel Erişim"
-                    : `Hakkınız Doldu (${limits.independent_limit})`}
+                    : `Hakkınız Doldu (${limits.independent_limit ?? "—"})`}
                 </Badge>
               </div>
 
@@ -839,7 +839,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                 >
                   {limits.can_create_public
                     ? "%80 Gelir Payı"
-                    : `Hakkınız Doldu (${limits.public_limit})`}
+                    : `Hakkınız Doldu (${limits.public_limit ?? "—"})`}
                 </Badge>
               </div>
 

@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import QuitModal from "@/features/auth/QuitModal";
+import { formatCurrency } from "@/shared/lib/format";
 import {
   Search,
   Bell,
@@ -31,14 +32,6 @@ import {
 const ICON_BTN_FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050508]";
 
-function formatCurrency(amount) {
-  const num = Number(amount) || 0;
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: "TRY",
-  }).format(num);
-}
-
 function Tooltip({ children, content }) {
   const [show, setShow] = useState(false);
 
@@ -58,23 +51,7 @@ function Tooltip({ children, content }) {
   );
 }
 
-function NotificationPopup({ onClose, userId }) {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!userId) return;
-    fetch("/api/notification/getnotification.php", { credentials: "include" })
-      .then((res) => res.json())
-      .then((result) => {
-        if (result.success && Array.isArray(result.notifications)) {
-          setNotifications(result.notifications);
-        }
-      })
-      .catch((err) => console.error("Bildirimler yüklenemedi:", err))
-      .finally(() => setLoading(false));
-  }, [userId]);
-
+function NotificationPopup({ onClose, notifications, loading, onMarkAllRead }) {
   const formatTime = (dateString) => {
     if (!dateString) return "";
     const date = new Date(String(dateString).replace(" ", "T"));
@@ -86,23 +63,8 @@ function NotificationPopup({ onClose, userId }) {
     return date.toLocaleDateString("tr-TR");
   };
 
-  const markAllRead = () => {
-    const unread = notifications.filter((n) => !n.is_read);
-    if (unread.length === 0) return;
-    setNotifications(notifications.map((n) => ({ ...n, is_read: true })));
-    unread.forEach((n) => {
-      const formData = new FormData();
-      formData.append("data", JSON.stringify({ id: n.id }));
-      fetch("/api/notification/readnotification.php", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      }).catch((err) => console.error("Bildirim okundu işaretlenemedi:", err));
-    });
-  };
-
   return (
-    <div className="absolute right-0 top-full mt-3 z-49 w-80 sm:w-96 rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-300">
+    <div className="absolute right-0 top-full mt-3 z-40 w-80 sm:w-96 rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-300">
       <div className="flex items-center justify-between pb-3.5 border-b border-white/5">
         <div className="flex items-center gap-2.5">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400">
@@ -117,7 +79,7 @@ function NotificationPopup({ onClose, userId }) {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={markAllRead}
+            onClick={onMarkAllRead}
             className="text-caption font-medium text-zinc-400 hover:text-violet-300 transition-colors"
           >
             Tümünü okundu işaretle
@@ -271,6 +233,8 @@ export default function Header({ userId = null, onNavigate }) {
   const [profileImage, setProfileImage] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [cartCount, setCartCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [quitOpen, setQuitOpen] = useState(false);
   const profileMenuRef = useRef(null);
   const [user, setUser] = useState({
@@ -356,6 +320,47 @@ export default function Header({ userId = null, onNavigate }) {
       clearInterval(interval);
     };
   }, [user.id]);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user.id) return;
+    try {
+      const res = await fetch("/api/notification/getnotification.php", {
+        credentials: "include",
+      });
+      const result = await res.json();
+      if (result.success && Array.isArray(result.notifications)) {
+        setNotifications(result.notifications);
+      }
+    } catch (err) {
+      console.error("Bildirimler yüklenemedi:", err);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, [user.id]);
+
+  useEffect(() => {
+    if (!user.id) return;
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user.id, fetchNotifications]);
+
+  const unreadNotificationCount = notifications.filter((n) => !n.is_read).length;
+
+  const markAllNotificationsRead = () => {
+    const unread = notifications.filter((n) => !n.is_read);
+    if (unread.length === 0) return;
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    unread.forEach((n) => {
+      const formData = new FormData();
+      formData.append("data", JSON.stringify({ id: n.id }));
+      fetch("/api/notification/readnotification.php", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      }).catch((err) => console.error("Bildirim okundu işaretlenemedi:", err));
+    });
+  };
 
   useEffect(() => {
     if (!userId) return;
@@ -470,15 +475,21 @@ export default function Header({ userId = null, onNavigate }) {
                 className={`relative flex h-10 w-10 items-center justify-center rounded-2xl bg-white/[0.03] border border-white/[0.08] text-zinc-300 transition-all duration-200 hover:bg-violet-500/10 hover:border-violet-500/30 hover:text-violet-300 hover:shadow-[0_0_15px_rgba(139,92,246,0.15)] ${ICON_BTN_FOCUS}`}
               >
                 <Bell className="h-4 w-4" strokeWidth={1.75} />
-                <span className="absolute top-2.5 right-2.5 flex h-2 w-2 rounded-full bg-fuchsia-500 animate-ping" />
-                <span className="absolute top-2.5 right-2.5 flex h-2 w-2 rounded-full bg-fuchsia-500" />
+                {unreadNotificationCount > 0 && (
+                  <>
+                    <span className="absolute top-2.5 right-2.5 flex h-2 w-2 rounded-full bg-fuchsia-500 animate-ping" />
+                    <span className="absolute top-2.5 right-2.5 flex h-2 w-2 rounded-full bg-fuchsia-500" />
+                  </>
+                )}
               </button>
             </Tooltip>
 
             {showNotification && (
               <NotificationPopup
                 onClose={() => setShowNotification(false)}
-                userId={user.id}
+                notifications={notifications}
+                loading={notificationsLoading}
+                onMarkAllRead={markAllNotificationsRead}
               />
             )}
           </div>

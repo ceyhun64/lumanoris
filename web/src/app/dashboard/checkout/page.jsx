@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { resolveCoverSrc } from "@/shared/lib/image";
+import { formatCurrency } from "@/shared/lib/format";
 import { toast } from "@/shared/hooks/use-toast";
 import {
   ArrowLeft,
@@ -17,8 +18,6 @@ import {
   Zap,
   BadgePercent,
 } from "lucide-react";
-
-const CURRENCY_SYMBOL = "$";
 
 function luhnCheck(digits) {
   let sum = 0;
@@ -36,24 +35,32 @@ function luhnCheck(digits) {
 }
 
 function validateCard(card) {
+  const errors = {};
   const number = (card.number || "").replace(/\D/g, "");
   const [month, year] = (card.expiry || "").split("/").map((v) => parseInt(v, 10));
   const cvv = (card.cvv || "").replace(/\D/g, "");
   const holderName = (card.holderName || "").trim();
 
-  if (!holderName) return "Kart sahibinin adı gereklidir.";
+  if (!holderName) errors.holderName = "Kart sahibinin adı gereklidir.";
+
   if (number.length < 13 || number.length > 19 || !luhnCheck(number)) {
-    return "Kart numarası geçersiz.";
+    errors.number = "Kart numarası geçersiz.";
   }
-  if (!month || !year || month < 1 || month > 12) return "Son kullanma tarihi geçersiz.";
-  const now = new Date();
-  const currentYear = now.getFullYear() % 100;
-  const currentMonth = now.getMonth() + 1;
-  if (year < currentYear || (year === currentYear && month < currentMonth)) {
-    return "Bu kartın süresi dolmuş.";
+
+  if (!month || !year || month < 1 || month > 12) {
+    errors.expiry = "Son kullanma tarihi geçersiz.";
+  } else {
+    const now = new Date();
+    const currentYear = now.getFullYear() % 100;
+    const currentMonth = now.getMonth() + 1;
+    if (year < currentYear || (year === currentYear && month < currentMonth)) {
+      errors.expiry = "Bu kartın süresi dolmuş.";
+    }
   }
-  if (!/^\d{3,4}$/.test(cvv)) return "CVV geçersiz.";
-  return null;
+
+  if (!/^\d{3,4}$/.test(cvv)) errors.cvv = "CVV geçersiz.";
+
+  return errors;
 }
 
 export default function Checkout() {
@@ -67,7 +74,7 @@ export default function Checkout() {
   const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
   const [cardInfo, setCardInfo] = useState({ number: "", expiry: "", cvv: "", holderName: "" });
-  const [cardError, setCardError] = useState(null);
+  const [cardErrors, setCardErrors] = useState({});
   const [paying, setPaying] = useState(false);
 
   useEffect(() => {
@@ -151,12 +158,12 @@ export default function Checkout() {
   };
 
   const handlePayment = async () => {
-    const validationError = validateCard(cardInfo);
-    if (validationError) {
-      setCardError(validationError);
+    const errors = validateCard(cardInfo);
+    if (Object.keys(errors).length > 0) {
+      setCardErrors(errors);
       return;
     }
-    setCardError(null);
+    setCardErrors({});
     setPaying(true);
     const pendingToast = toast.loading("Ödemeniz işleniyor, lütfen bekleyin...");
     try {
@@ -220,7 +227,7 @@ export default function Checkout() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#09090b] text-zinc-100 p-6 md:p-12 flex items-center justify-center font-sans">
+      <div className="min-h-screen bg-luma-base text-zinc-100 p-6 md:p-12 flex items-center justify-center font-sans">
         <div className="w-full max-w-4xl space-y-6 animate-pulse">
           <div className="h-8 w-32 bg-zinc-800 rounded-lg" />
           <div className="h-12 w-64 bg-zinc-800 rounded-xl" />
@@ -237,9 +244,9 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#060608] text-zinc-100 selection:bg-indigo-500/30 selection:text-indigo-200 font-sans relative overflow-x-hidden">
+    <div className="min-h-screen bg-luma-base text-zinc-100 selection:bg-fuchsia-500/30 selection:text-fuchsia-200 font-sans relative overflow-x-hidden">
       {/* Background ambient lighting effects */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-b from-indigo-600/10 via-purple-600/5 to-transparent blur-3xl pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-b from-fuchsia-600/10 via-violet-600/5 to-transparent blur-3xl pointer-events-none" />
 
       {}
       <header className="px-6 pt-10 pb-6 flex items-center justify-between relative z-10">
@@ -261,27 +268,27 @@ export default function Checkout() {
       {}
       <main className="px-6 pb-24 relative z-10">
         <div className="mb-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium mb-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-300 text-xs font-medium mb-3">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>2026 Kurumsal Sağlama</span>
+            <span>Güvenli Ödeme</span>
           </div>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
             {step === 1 ? "Sepetinizi Gözden Geçirin" : "Abonelik ve Ödemeyi Onaylayın"}
           </h1>
           <p className="text-sm text-zinc-400 mt-1">
             {step === 1
-              ? "Devreye almadan önce seçtiğiniz yapay zeka modellerini ve lisanslarını yönetin."
-              : `${confirmedItems.length} aktif model örneği için sağlama tamamlanıyor.`}
+              ? "Seçtiğiniz yapay zeka modellerini ve lisans sürelerini gözden geçirin."
+              : `${confirmedItems.length} ürün için ödemenizi tamamlayın.`}
           </p>
         </div>
 
         {}
         <div className="flex items-center gap-3 mb-8 pb-4 border-b border-zinc-800/60">
           <div
-            className={`flex items-center gap-2 text-xs font-semibold ${step >= 1 ? "text-indigo-400" : "text-zinc-500"}`}
+            className={`flex items-center gap-2 text-xs font-semibold ${step >= 1 ? "text-fuchsia-300" : "text-zinc-500"}`}
           >
             <span
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-caption border ${step >= 1 ? "border-indigo-500/50 bg-indigo-500/10 text-indigo-300" : "border-zinc-800 bg-zinc-900 text-zinc-500"}`}
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-caption border ${step >= 1 ? "border-fuchsia-500/50 bg-fuchsia-500/10 text-fuchsia-300" : "border-zinc-800 bg-zinc-900 text-zinc-500"}`}
             >
               1
             </span>
@@ -289,10 +296,10 @@ export default function Checkout() {
           </div>
           <ChevronRight className="w-4 h-4 text-zinc-700" />
           <div
-            className={`flex items-center gap-2 text-xs font-semibold ${step >= 2 ? "text-indigo-400" : "text-zinc-500"}`}
+            className={`flex items-center gap-2 text-xs font-semibold ${step >= 2 ? "text-fuchsia-300" : "text-zinc-500"}`}
           >
             <span
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-caption border ${step >= 2 ? "border-indigo-500/50 bg-indigo-500/10 text-indigo-300" : "border-zinc-800 bg-zinc-900 text-zinc-500"}`}
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-caption border ${step >= 2 ? "border-fuchsia-500/50 bg-fuchsia-500/10 text-fuchsia-300" : "border-zinc-800 bg-zinc-900 text-zinc-500"}`}
             >
               2
             </span>
@@ -315,7 +322,7 @@ export default function Checkout() {
             </p>
             <button
               onClick={() => router.push("/dashboard")}
-              className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-lg shadow-indigo-600/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+              className="px-6 py-3 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-medium text-xs shadow-lg shadow-fuchsia-600/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
             >
               Pazaryerine Göz At
             </button>
@@ -342,7 +349,7 @@ export default function Checkout() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800/80 text-caption font-medium text-zinc-300 border border-zinc-700/40">
-                          <Clock className="w-3 h-3 text-indigo-400" />
+                          <Clock className="w-3 h-3 text-fuchsia-400" />
                           {item.duration_weeks} Hafta Erişim
                         </span>
                       </div>
@@ -357,12 +364,10 @@ export default function Checkout() {
                     <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-zinc-800/80 gap-3">
                       <div className="text-right">
                         <span className="text-lg font-bold text-white">
-                          {CURRENCY_SYMBOL}
-                          {(item.price * (item.duration_weeks || 1)).toFixed(2)}
+                          {formatCurrency(item.price * (item.duration_weeks || 1))}
                         </span>
                         <p className="text-caption text-zinc-500">
-                          {CURRENCY_SYMBOL}
-                          {item.price.toFixed(2)} / hafta
+                          {formatCurrency(item.price)} / hafta
                         </p>
                       </div>
 
@@ -382,10 +387,10 @@ export default function Checkout() {
             {/* Order Summary Sidebar */}
             <div className="lg:col-span-4 sticky top-6">
               <div className="rounded-3xl border border-zinc-800/80 bg-zinc-900/60 p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden">
-                <div className="absolute -right-12 -top-12 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -right-12 -top-12 w-32 h-32 bg-fuchsia-500/10 rounded-full blur-2xl pointer-events-none" />
 
                 <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-indigo-400" />
+                  <Zap className="w-4 h-4 text-fuchsia-400" />
                   Sipariş Özeti
                 </h3>
 
@@ -393,24 +398,19 @@ export default function Checkout() {
                   <div className="flex justify-between text-zinc-400">
                     <span>Ara Toplam ({cartItems.length} ürün)</span>
                     <span className="text-zinc-200 font-medium">
-                      {CURRENCY_SYMBOL}
-                      {subtotal.toFixed(2)}
+                      {formatCurrency(subtotal)}
                     </span>
                   </div>
                   <div className="flex justify-between text-zinc-400">
                     <span>Tahmini Vergi (%8)</span>
                     <span className="text-zinc-200 font-medium">
-                      {CURRENCY_SYMBOL}
-                      {tax.toFixed(2)}
+                      {formatCurrency(tax)}
                     </span>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-emerald-400 font-medium">
                       <span>Uygulanan İndirim</span>
-                      <span>
-                        -{CURRENCY_SYMBOL}
-                        {discount.toFixed(2)}
-                      </span>
+                      <span>-{formatCurrency(discount)}</span>
                     </div>
                   )}
                 </div>
@@ -421,8 +421,7 @@ export default function Checkout() {
                   </span>
                   <div className="text-right">
                     <span className="text-2xl font-bold tracking-tight text-white">
-                      {CURRENCY_SYMBOL}
-                      {total.toFixed(2)}
+                      {formatCurrency(total)}
                     </span>
                     <p className="text-caption text-zinc-500">
                       Güvenli şekilde faturalandırılır
@@ -439,7 +438,7 @@ export default function Checkout() {
                       placeholder="Promosyon kodu (örn. ENTERPRISE2026)"
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value)}
-                      className="w-full bg-zinc-950/60 border border-zinc-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60 transition-colors"
+                      className="w-full bg-zinc-950/60 border border-zinc-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-fuchsia-500/60 transition-colors"
                     />
                   </div>
                   <button
@@ -459,7 +458,7 @@ export default function Checkout() {
 
                 <button
                   onClick={handleConfirm}
-                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-xs shadow-xl shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-btn hover:brightness-110 text-white font-semibold text-xs shadow-glow transition-all flex items-center justify-center gap-2 group cursor-pointer"
                 >
                   <span>Ödemeye Geç</span>
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -504,8 +503,7 @@ export default function Checkout() {
                         </div>
                       </div>
                       <span className="text-xs font-bold text-white">
-                        {CURRENCY_SYMBOL}
-                        {(item.price * item.duration_weeks).toFixed(2)}
+                        {formatCurrency(item.price * item.duration_weeks)}
                       </span>
                     </div>
                   ))}
@@ -515,29 +513,29 @@ export default function Checkout() {
               {/* Payment Method Selection Card */}
               <div className="rounded-3xl border border-zinc-800/80 bg-zinc-900/60 p-6 backdrop-blur-xl shadow-2xl">
                 <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-indigo-400" />
+                  <CreditCard className="w-4 h-4 text-fuchsia-400" />
                   Ödeme Yöntemi
                 </h3>
 
                 <div className="space-y-3">
-                  <label className="flex items-center justify-between p-4 rounded-2xl bg-indigo-950/20 border border-indigo-500/40 cursor-pointer shadow-lg">
+                  <label className="flex items-center justify-between p-4 rounded-2xl bg-fuchsia-950/20 border border-fuchsia-500/40 cursor-pointer shadow-lg">
                     <div className="flex items-center gap-3">
                       <input
                         type="radio"
                         name="payment"
                         defaultChecked
-                        className="accent-indigo-500"
+                        className="accent-fuchsia-500"
                       />
                       <div>
                         <p className="text-xs font-semibold text-white">
-                          Kredi / Banka Kartı (Stripe Enterprise)
+                          Kredi / Banka Kartı
                         </p>
                         <p className="text-caption text-zinc-400">
-                          Anında tokenizasyon ve otomatik yenileme
+                          Şifrelenmiş bağlantı üzerinden güvenli işlem
                         </p>
                       </div>
                     </div>
-                    <Lock className="w-4 h-4 text-indigo-400" />
+                    <Lock className="w-4 h-4 text-fuchsia-400" />
                   </label>
 
                   <label className="flex items-center justify-between p-4 rounded-2xl bg-zinc-950/40 border border-zinc-800/80 hover:border-zinc-700 transition-all opacity-50 cursor-not-allowed">
@@ -546,7 +544,7 @@ export default function Checkout() {
                         type="radio"
                         name="payment"
                         disabled
-                        className="accent-indigo-500"
+                        className="accent-fuchsia-500"
                       />
                       <div>
                         <p className="text-xs font-semibold text-zinc-300">
@@ -562,78 +560,114 @@ export default function Checkout() {
 
                 {/* Card details */}
                 <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="Kart Sahibinin Adı"
-                    value={cardInfo.holderName}
-                    autoComplete="cc-name"
-                    onChange={(e) =>
-                      setCardInfo((prev) => ({ ...prev, holderName: e.target.value }))
-                    }
-                    className="sm:col-span-2 bg-zinc-950/60 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60 transition-colors"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Kart Numarası"
-                    inputMode="numeric"
-                    autoComplete="cc-number"
-                    value={cardInfo.number}
-                    onChange={(e) =>
-                      setCardInfo((prev) => ({
-                        ...prev,
-                        number: e.target.value
-                          .replace(/\D/g, "")
-                          .replace(/(.{4})/g, "$1 ")
-                          .trim(),
-                      }))
-                    }
-                    className="sm:col-span-2 bg-zinc-950/60 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60 transition-colors"
-                  />
-                  <input
-                    type="text"
-                    placeholder="AA/YY"
-                    maxLength={5}
-                    autoComplete="cc-exp"
-                    value={cardInfo.expiry}
-                    onChange={(e) => {
-                      const digits = e.target.value.replace(/\D/g, "").slice(0, 4);
-                      const formatted =
-                        digits.length >= 3 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
-                      setCardInfo((prev) => ({ ...prev, expiry: formatted }));
-                    }}
-                    className="bg-zinc-950/60 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60 transition-colors"
-                  />
-                  <input
-                    type="text"
-                    placeholder="CVV"
-                    maxLength={4}
-                    inputMode="numeric"
-                    autoComplete="cc-csc"
-                    value={cardInfo.cvv}
-                    onChange={(e) =>
-                      setCardInfo((prev) => ({
-                        ...prev,
-                        cvv: e.target.value.replace(/\D/g, ""),
-                      }))
-                    }
-                    className="bg-zinc-950/60 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60 transition-colors"
-                  />
+                  <div className="sm:col-span-2">
+                    <input
+                      type="text"
+                      name="cardHolderName"
+                      aria-label="Kart Sahibinin Adı"
+                      aria-invalid={!!cardErrors.holderName}
+                      placeholder="Kart Sahibinin Adı"
+                      value={cardInfo.holderName}
+                      autoComplete="cc-name"
+                      onChange={(e) => {
+                        setCardInfo((prev) => ({ ...prev, holderName: e.target.value }));
+                        setCardErrors((prev) => ({ ...prev, holderName: undefined }));
+                      }}
+                      className={`w-full bg-zinc-950/60 border rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors ${cardErrors.holderName ? "border-rose-500/60 focus:border-rose-500/60" : "border-zinc-800 focus:border-fuchsia-500/60"}`}
+                    />
+                    {cardErrors.holderName && (
+                      <p className="mt-1.5 text-caption text-rose-400">{cardErrors.holderName}</p>
+                    )}
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <input
+                      type="text"
+                      name="cardNumber"
+                      aria-label="Kart Numarası"
+                      aria-invalid={!!cardErrors.number}
+                      placeholder="Kart Numarası"
+                      inputMode="numeric"
+                      autoComplete="cc-number"
+                      value={cardInfo.number}
+                      onChange={(e) => {
+                        setCardInfo((prev) => ({
+                          ...prev,
+                          number: e.target.value
+                            .replace(/\D/g, "")
+                            .replace(/(.{4})/g, "$1 ")
+                            .trim(),
+                        }));
+                        setCardErrors((prev) => ({ ...prev, number: undefined }));
+                      }}
+                      className={`w-full bg-zinc-950/60 border rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors ${cardErrors.number ? "border-rose-500/60 focus:border-rose-500/60" : "border-zinc-800 focus:border-fuchsia-500/60"}`}
+                    />
+                    {cardErrors.number && (
+                      <p className="mt-1.5 text-caption text-rose-400">{cardErrors.number}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <input
+                      type="text"
+                      name="cardExpiry"
+                      aria-label="Son Kullanma Tarihi (AA/YY)"
+                      aria-invalid={!!cardErrors.expiry}
+                      placeholder="AA/YY"
+                      maxLength={5}
+                      autoComplete="cc-exp"
+                      value={cardInfo.expiry}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, "").slice(0, 4);
+                        const formatted =
+                          digits.length >= 3 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+                        setCardInfo((prev) => ({ ...prev, expiry: formatted }));
+                        setCardErrors((prev) => ({ ...prev, expiry: undefined }));
+                      }}
+                      className={`w-full bg-zinc-950/60 border rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors ${cardErrors.expiry ? "border-rose-500/60 focus:border-rose-500/60" : "border-zinc-800 focus:border-fuchsia-500/60"}`}
+                    />
+                    {cardErrors.expiry && (
+                      <p className="mt-1.5 text-caption text-rose-400">{cardErrors.expiry}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <input
+                      type="text"
+                      name="cardCvv"
+                      aria-label="CVV"
+                      aria-invalid={!!cardErrors.cvv}
+                      placeholder="CVV"
+                      maxLength={4}
+                      inputMode="numeric"
+                      autoComplete="cc-csc"
+                      value={cardInfo.cvv}
+                      onChange={(e) => {
+                        setCardInfo((prev) => ({
+                          ...prev,
+                          cvv: e.target.value.replace(/\D/g, ""),
+                        }));
+                        setCardErrors((prev) => ({ ...prev, cvv: undefined }));
+                      }}
+                      className={`w-full bg-zinc-950/60 border rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors ${cardErrors.cvv ? "border-rose-500/60 focus:border-rose-500/60" : "border-zinc-800 focus:border-fuchsia-500/60"}`}
+                    />
+                    {cardErrors.cvv && (
+                      <p className="mt-1.5 text-caption text-rose-400">{cardErrors.cvv}</p>
+                    )}
+                  </div>
                 </div>
-                {cardError && (
-                  <p className="mt-3 text-xs text-red-400">{cardError}</p>
-                )}
 
                 <div className="mt-6 pt-6 border-t border-zinc-800/80">
                   <button
                     onClick={handlePayment}
                     disabled={paying}
-                    className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs shadow-xl shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full py-4 rounded-xl bg-gradient-btn hover:brightness-110 text-white font-semibold text-xs shadow-glow transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     <ShieldCheck className="w-4 h-4" />
                     <span>
                       {paying
                         ? "İşleniyor..."
-                        : `Ödemeyi Onayla ve Tamamla (${CURRENCY_SYMBOL}${total.toFixed(2)})`}
+                        : `Ödemeyi Onayla ve Tamamla (${formatCurrency(total)})`}
                     </span>
                   </button>
                 </div>
@@ -655,24 +689,19 @@ export default function Checkout() {
                   <div className="flex justify-between text-zinc-400">
                     <span>Ara Toplam</span>
                     <span className="text-zinc-200 font-medium">
-                      {CURRENCY_SYMBOL}
-                      {subtotal.toFixed(2)}
+                      {formatCurrency(subtotal)}
                     </span>
                   </div>
                   <div className="flex justify-between text-zinc-400">
                     <span>Vergi ve Yasal Uyumluluk</span>
                     <span className="text-zinc-200 font-medium">
-                      {CURRENCY_SYMBOL}
-                      {tax.toFixed(2)}
+                      {formatCurrency(tax)}
                     </span>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-emerald-400 font-medium">
                       <span>Kurumsal İndirim</span>
-                      <span>
-                        -{CURRENCY_SYMBOL}
-                        {discount.toFixed(2)}
-                      </span>
+                      <span>-{formatCurrency(discount)}</span>
                     </div>
                   )}
                 </div>
@@ -682,14 +711,13 @@ export default function Checkout() {
                     Toplam Tutar
                   </span>
                   <span className="text-2xl font-bold tracking-tight text-white">
-                    {CURRENCY_SYMBOL}
-                    {total.toFixed(2)}
+                    {formatCurrency(total)}
                   </span>
                 </div>
 
                 <div className="mt-6 p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/60 text-caption text-zinc-400 space-y-2">
                   <div className="flex items-center gap-2 text-zinc-300 font-medium">
-                    <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                    <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
                     <span>Anında Bulut Sağlama</span>
                   </div>
                   <p className="text-zinc-500 leading-relaxed">

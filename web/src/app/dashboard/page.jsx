@@ -985,7 +985,7 @@ export function MainDashboard2026() {
         </section>
 
         {/* Interactive Sticky Toolbar */}
-        <section className="sticky top-6 z-30 mb-8 rounded-3xl border border-white/10 bg-zinc-950/80 p-3 shadow-2xl backdrop-blur-2xl">
+        <section className="sticky top-1 z-30 mb-8 rounded-3xl border border-white/10 bg-zinc-950/80 p-3 shadow-2xl backdrop-blur-2xl">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             {/* Search Input */}
             <div className="relative flex-1">

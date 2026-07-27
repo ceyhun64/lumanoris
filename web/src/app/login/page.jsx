@@ -30,6 +30,147 @@ const TR_MONTHS = [
 ];
 const TR_DAY_LABELS = ["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz"];
 
+const CHAT_DEMO_MESSAGES = [
+  {
+    role: "ai",
+    text: "Merhaba! Bugün hangi karmaşık problemi optimize etmek veya hangi fikri hayata geçirmek istiyorsun?",
+  },
+  {
+    role: "user",
+    text: "SaaS platformum için ölçeklenebilir bir mimari tasarlayalım.",
+  },
+  {
+    role: "ai",
+    text: "Harika seçim — birkaç saniye içinde ilk mimari taslağını hazırlıyorum.",
+  },
+];
+
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const handler = (e) => setReduced(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return reduced;
+}
+
+function TypingDots() {
+  return (
+    <div className="flex items-center gap-1 px-1 py-1">
+      <span className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce [animation-delay:-0.3s]" />
+      <span className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce [animation-delay:-0.15s]" />
+      <span className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce" />
+    </div>
+  );
+}
+
+// Calm, looping chat preview for the auth hero panel — a quiet supporting
+// showcase, not the page's focal point. Whole messages fade/slide in (never
+// letter-by-letter); a brief three-dot indicator stands in for "typing"
+// between turns. Under prefers-reduced-motion the loop never starts and the
+// full conversation renders once, statically.
+function ChatShowcase() {
+  const reducedMotion = usePrefersReducedMotion();
+  const [visibleCount, setVisibleCount] = useState(
+    reducedMotion ? CHAT_DEMO_MESSAGES.length : 1,
+  );
+  const [typingRole, setTypingRole] = useState(null);
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    if (reducedMotion) {
+      setVisibleCount(CHAT_DEMO_MESSAGES.length);
+      return;
+    }
+
+    let cancelled = false;
+    const timeouts = [];
+    const wait = (ms) =>
+      new Promise((resolve) => {
+        timeouts.push(setTimeout(resolve, ms));
+      });
+
+    async function loop() {
+      while (!cancelled) {
+        setFading(false);
+        setVisibleCount(1);
+        setTypingRole(null);
+
+        for (let i = 1; i < CHAT_DEMO_MESSAGES.length; i += 1) {
+          await wait(2400);
+          if (cancelled) return;
+          setTypingRole(CHAT_DEMO_MESSAGES[i].role);
+          await wait(1100);
+          if (cancelled) return;
+          setTypingRole(null);
+          setVisibleCount(i + 1);
+        }
+
+        await wait(4000);
+        if (cancelled) return;
+        setFading(true);
+        await wait(400);
+      }
+    }
+
+    loop();
+    return () => {
+      cancelled = true;
+      timeouts.forEach(clearTimeout);
+    };
+  }, [reducedMotion]);
+
+  return (
+    <div
+      className={`space-y-3 font-sans text-xs transition-opacity duration-500 ${fading ? "opacity-0" : "opacity-100"}`}
+    >
+      {CHAT_DEMO_MESSAGES.slice(0, visibleCount).map((msg, i) =>
+        msg.role === "ai" ? (
+          <div
+            key={i}
+            className="flex items-start gap-2.5 animate-in fade-in slide-in-from-bottom-1 duration-500"
+          >
+            <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5 text-white/60 text-caption">
+              AI
+            </div>
+            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] text-white/80 leading-relaxed">
+              {msg.text}
+            </div>
+          </div>
+        ) : (
+          <div
+            key={i}
+            className="flex items-start gap-2.5 justify-end animate-in fade-in slide-in-from-bottom-1 duration-500"
+          >
+            <div className="p-3 rounded-xl bg-gradient-to-r from-fuchsia-600 to-violet-600 text-white font-medium shadow-lg max-w-[80%]">
+              {msg.text}
+            </div>
+          </div>
+        ),
+      )}
+
+      {typingRole && (
+        <div
+          className={`flex items-start gap-2.5 animate-in fade-in duration-300 ${typingRole === "user" ? "justify-end" : ""}`}
+        >
+          {typingRole === "ai" && (
+            <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-white/60 text-caption">
+              AI
+            </div>
+          )}
+          <div className="p-3 rounded-xl bg-white/[0.05] border border-white/[0.05]">
+            <TypingDots />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // In-brand replacement for a native <select> — used for the calendar's
 // month/year pickers so they don't fall back to the browser's unstyleable
 // default dropdown look next to an otherwise fully custom popover.
@@ -221,6 +362,7 @@ export default function AuthPage() {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       setTarget(params.get("to"));
+      if (params.get("tab") === "register") setIsActive(true);
     }
   }, []);
 
@@ -419,7 +561,7 @@ export default function AuthPage() {
 
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.02] text-xs text-white/60">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>System Operational</span>
+            <span>Sistem Aktif</span>
           </div>
         </div>
 
@@ -472,23 +614,7 @@ export default function AuthPage() {
               </div>
             </div>
 
-            <div className="space-y-3 font-sans text-xs">
-              <div className="flex items-start gap-2.5">
-                <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5 text-white/60 text-caption">
-                  AI
-                </div>
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] text-white/80 leading-relaxed">
-                  Merhaba! Bugün hangi karmaşık problemi optimize etmek veya
-                  hangi fikri hayata geçirmek istiyorsun?
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2.5 justify-end">
-                <div className="p-3 rounded-xl bg-gradient-to-r from-fuchsia-600 to-violet-600 text-white font-medium shadow-lg max-w-[80%]">
-                  SaaS platformum için ölçeklenebilir bir mimari tasarlayalım.
-                </div>
-              </div>
-            </div>
+            <ChatShowcase />
           </div>
         </div>
 

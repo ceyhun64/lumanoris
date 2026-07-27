@@ -24,45 +24,15 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "@/shared/hooks/use-toast";
+import { Card } from "@/shared/ui/card";
+import { Button } from "@/shared/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
 
 function PageLayout({ children, className = "" }) {
   return <div className={`min-h-screen ${className}`}>{children}</div>;
 }
 
 function PageSection({ children, className = "" }) {
-  return <div className={className}>{children}</div>;
-}
-
-function Card({ children, className = "" }) {
-  return <div className={className}>{children}</div>;
-}
-
-function Button({ children, onClick, className = "", type = "button" }) {
-  return (
-    <button type={type} onClick={onClick} className={className}>
-      {children}
-    </button>
-  );
-}
-
-function Tabs({ value, onValueChange, children, className = "" }) {
-  return <div className={className}>{children}</div>;
-}
-
-function TabsList({ children, className = "" }) {
-  return <div className={className}>{children}</div>;
-}
-
-function TabsTrigger({ value, onClick, children, className = "" }) {
-  return (
-    <button type="button" onClick={onClick} className={className}>
-      {children}
-    </button>
-  );
-}
-
-function TabsContent({ value, activeValue, children, className = "" }) {
-  if (value !== activeValue) return null;
   return <div className={className}>{children}</div>;
 }
 
@@ -484,6 +454,7 @@ function ContactForm() {
           </label>
           <input
             type="text"
+            name="fullName"
             required
             value={form.fullName}
             onChange={update("fullName")}
@@ -497,6 +468,7 @@ function ContactForm() {
           </label>
           <input
             type="email"
+            name="email"
             required
             value={form.email}
             onChange={update("email")}
@@ -511,6 +483,7 @@ function ContactForm() {
         </label>
         <input
           type="text"
+          name="subject"
           required
           value={form.subject}
           onChange={update("subject")}
@@ -638,7 +611,7 @@ export default function App() {
   ];
 
   return (
-    <PageLayout className="min-h-screen bg-[#07070b] text-white selection:bg-fuchsia-500/30 selection:text-fuchsia-200">
+    <PageLayout className="min-h-screen bg-luma-base text-white selection:bg-fuchsia-500/30 selection:text-fuchsia-200">
       {/* Background ambiance glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-fuchsia-600/10 via-purple-900/5 to-transparent blur-3xl pointer-events-none" />
 
@@ -702,7 +675,7 @@ export default function App() {
             onClick={() =>
               toast.info("Abonelik yükseltme sayfasına yönlendiriliyorsunuz.")
             }
-            className="group relative inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-600 to-purple-600 px-6 py-3.5 text-xs font-semibold text-white shadow-xl shadow-fuchsia-950/50 hover:from-fuchsia-500 hover:to-purple-500 transition-all duration-300 border border-fuchsia-400/30 shrink-0"
+            className="group shrink-0"
           >
             <span>Abonelik Seçeneklerini İncele</span>
             <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -724,21 +697,13 @@ export default function App() {
               <TabsList className="flex flex-col w-full h-auto bg-transparent p-0 space-y-1">
                 {tabs.map((tab) => {
                   const IconComponent = tab.icon;
-                  const isActive = activeTab === tab.key;
                   return (
                     <TabsTrigger
                       key={tab.key}
                       value={tab.key}
-                      onClick={() => setActiveTab(tab.key)}
-                      className={`w-full flex items-center justify-start gap-3 px-4 py-3 rounded-2xl text-xs font-medium transition-all duration-200 ${
-                        isActive
-                          ? "bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-950/40 border border-fuchsia-400/30 font-semibold"
-                          : "text-white/60 hover:bg-white/[0.04] hover:text-white border border-transparent"
-                      }`}
+                      className="w-full justify-start gap-3 px-4 py-3 rounded-2xl [&_svg]:text-white/50 [&[data-state=active]_svg]:text-white"
                     >
-                      <IconComponent
-                        className={`h-4 w-4 shrink-0 ${isActive ? "text-white" : "text-white/50"}`}
-                      />
+                      <IconComponent className="h-4 w-4 shrink-0" />
                       <span className="truncate">{tab.label}</span>
                     </TabsTrigger>
                   );
@@ -748,10 +713,9 @@ export default function App() {
 
             {/* Content Canvas */}
             <div className="lg:col-span-9">
-              <Card className="rounded-3xl border border-white/[0.08] bg-[#0c0c14]/90 p-6 sm:p-8 shadow-2xl backdrop-blur-2xl">
+              <Card className="rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-2xl">
                 <TabsContent
                   value="user"
-                  activeValue={activeTab}
                   className="mt-0 space-y-8"
                 >
                   <div className="border-b border-white/[0.06] pb-6">
@@ -798,7 +762,6 @@ export default function App() {
 
                 <TabsContent
                   value="security"
-                  activeValue={activeTab}
                   className="mt-0 space-y-6"
                 >
                   <div className="border-b border-white/[0.06] pb-6">
@@ -814,7 +777,6 @@ export default function App() {
 
                 <TabsContent
                   value="email"
-                  activeValue={activeTab}
                   className="mt-0 space-y-6"
                 >
                   <div className="border-b border-white/[0.06] pb-6">
@@ -830,7 +792,6 @@ export default function App() {
 
                 <TabsContent
                   value="phone"
-                  activeValue={activeTab}
                   className="mt-0 space-y-6"
                 >
                   <div className="border-b border-white/[0.06] pb-6">
@@ -847,7 +808,6 @@ export default function App() {
 
                 <TabsContent
                   value="language"
-                  activeValue={activeTab}
                   className="mt-0 space-y-6"
                 >
                   <div className="border-b border-white/[0.06] pb-6">
@@ -863,7 +823,6 @@ export default function App() {
 
                 <TabsContent
                   value="privacy"
-                  activeValue={activeTab}
                   className="mt-0 space-y-6"
                 >
                   <div className="border-b border-white/[0.06] pb-6">
@@ -880,7 +839,6 @@ export default function App() {
 
                 <TabsContent
                   value="terms"
-                  activeValue={activeTab}
                   className="mt-0 space-y-6"
                 >
                   <div className="border-b border-white/[0.06] pb-6">
@@ -896,7 +854,6 @@ export default function App() {
 
                 <TabsContent
                   value="contact"
-                  activeValue={activeTab}
                   className="mt-0 space-y-6"
                 >
                   <div className="border-b border-white/[0.06] pb-6">
