@@ -629,7 +629,7 @@ export default function List() {
         </div>
 
         {}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-2 rounded-2xl bg-[#09090F]/90 border border-zinc-800/80 backdrop-blur-xl shadow-xl">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-2 rounded-2xl bg-[#09090F]/90 border border-zinc-800/80 backdrop-blur-xl shadow-xl transition-all duration-200 focus-within:border-fuchsia-500/40 focus-within:ring-2 focus-within:ring-fuchsia-500/20">
           <div className="relative flex-1 flex items-center">
             <Search className="absolute left-3.5 w-4 h-4 text-zinc-400" />
             <input
@@ -637,6 +637,7 @@ export default function List() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Listelerim arasında ara..."
+              data-focus-managed
               className="w-full bg-transparent pl-10 pr-12 py-2 text-xs text-white placeholder-zinc-500 outline-none focus:ring-0"
             />
             <div className="hidden md:flex items-center gap-1 absolute right-3 px-1.5 py-0.5 rounded bg-zinc-800/80 text-caption text-zinc-400 font-mono border border-zinc-700/50">

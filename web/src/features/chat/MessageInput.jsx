@@ -200,6 +200,7 @@ export default function MessageInput({ onSend, onResetChat }) {
                             }
                         }}
                         disabled={isRecording}
+                        data-focus-managed
                         className={cn(
                             "h-[68px] max-h-[180px] flex-1 resize-none border-none bg-transparent py-[25px] pl-0 pr-2.5 font-sans text-body-lg font-normal text-white placeholder:text-white/45 focus:outline-none disabled:opacity-60",
                             message.length < 150 ? "overflow-hidden" : "overflow-y-auto",

@@ -152,12 +152,13 @@
   --transition-base: 0.25s ease;
 }
 
-/* Klavye ile gezinirken tutarlı, erişilebilir odak göstergesi (önceden hiç yoktu) */
+/* Klavye ile gezinirken tutarlı, erişilebilir odak göstergesi (önceden hiç yoktu).
+   input/textarea/select kasıtlı olarak dışarıda: bu component'ler zaten kendi
+   focus:border/focus:ring (veya wrapper'ın focus-within) tasarımını taşıyor;
+   bu genel outline, `input:focus-visible` özgüllüğü component'in `.outline-none`
+   sınıfını her zaman yendiği için üstüne binip çift çerçeve oluşturuyordu. */
 button:focus-visible,
 a:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible,
 [tabindex]:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
@@ -195,16 +196,21 @@ button[class*="-btn"]:disabled {
 
 /* Tüm metin/sayı/textarea inputlarına tutarlı odak vurgusu (38 farklı input
    varyantının arka plan/border'ı DEĞİŞMEDEN, sadece focus anındaki "canlı"
-   his standartlaşıyor). */
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus,
-input[type="number"]:focus,
-input[type="tel"]:focus,
-input[type="date"]:focus,
-input[type="search"]:focus,
-textarea:focus,
-select:focus {
+   his standartlaşıyor).
+   data-focus-managed: input zaten bir wrapper'ın focus-within halkasıyla
+   yönetiliyorsa (header arama, sohbet input'u, chatbot form alanları, liste/
+   geçmiş arama kutuları) bu genel kural devre dışı bırakılır — aksi halde
+   wrapper'ın halkasına ek olarak inputun kendi üzerinde ikinci bir çerçeve
+   oluşuyordu (çift focus). */
+input[type="text"]:focus:not([data-focus-managed]),
+input[type="email"]:focus:not([data-focus-managed]),
+input[type="password"]:focus:not([data-focus-managed]),
+input[type="number"]:focus:not([data-focus-managed]),
+input[type="tel"]:focus:not([data-focus-managed]),
+input[type="date"]:focus:not([data-focus-managed]),
+input[type="search"]:focus:not([data-focus-managed]),
+textarea:focus:not([data-focus-managed]),
+select:focus:not([data-focus-managed]) {
   border-color: var(--accent-primary) !important;
   box-shadow: 0 0 0 3px rgba(217,70,239, 0.15) !important;
 }

@@ -481,6 +481,7 @@ export function History() {
               placeholder="Geçmiş sohbetlerde ve mesajlarda ara..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              data-focus-managed
               className="w-full bg-transparent px-3 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none"
             />
 

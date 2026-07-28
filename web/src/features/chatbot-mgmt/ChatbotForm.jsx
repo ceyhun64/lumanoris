@@ -762,6 +762,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                                             value={formData.weeklyPrice}
                                             onChange={handleChange}
                                             placeholder="0"
+                                            data-focus-managed
                                             className="w-full bg-transparent font-display text-xl font-bold text-white outline-none placeholder:text-white/30"
                                         />
                                         <span className="ml-2.5 text-xl font-bold text-fuchsia-400">₺</span>
@@ -784,6 +785,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                                             value={formData.monthlyPrice}
                                             onChange={handleChange}
                                             placeholder="0"
+                                            data-focus-managed
                                             className="w-full bg-transparent font-display text-xl font-bold text-white outline-none placeholder:text-white/30"
                                         />
                                         <span className="ml-2.5 text-xl font-bold text-fuchsia-400">₺</span>

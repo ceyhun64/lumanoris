@@ -138,7 +138,7 @@ function NotificationPopup({ onClose, notifications, loading, onMarkAllRead }) {
 
 function ProfilePopup({ user, profileImage, onLogout, onClose }) {
   return (
-    <div className="absolute right-0 top-full mt-3 z-50 w-76 rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-300">
+    <div className="absolute right-0 top-full mt-3 z-50 w-120 rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-300">
       <div className="flex items-center gap-3.5 pb-3.5 border-b border-white/5">
         <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-gradient-to-tr from-violet-600 via-indigo-600 to-fuchsia-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg shadow-violet-950/50 ring-1 ring-white/20">
           {profileImage ? (
@@ -475,6 +475,7 @@ export default function Header({ userId = null, onNavigate }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearchKey}
+              data-focus-managed
               className="min-w-0 flex-1 bg-transparent text-body-sm text-white outline-none placeholder:text-zinc-500 font-medium"
             />
             <div className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/5 text-caption text-zinc-400 font-mono border border-white/10 shrink-0 shadow-inner">
