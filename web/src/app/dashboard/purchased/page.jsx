@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
+import { UserContext } from "@/shared/contexts/UserContext";
 import {
   ShoppingBag,
   ArrowUpRight,
@@ -123,10 +124,9 @@ function LoadingSkeleton() {
 }
 
 export default function SatinAldiklarim() {
+  const { userId } = useContext(UserContext);
   const [bots, setBots] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [userId, setUserId] = useState(null);
-  const [sessionChecked, setSessionChecked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
 
@@ -139,25 +139,6 @@ export default function SatinAldiklarim() {
   const router = useRouter();
 
   useEffect(() => {
-    async function checkSession() {
-      try {
-        const res = await fetch("/api/auth/sessioncheck.php", {
-          credentials: "include",
-        });
-        const result = JSON.parse(await res.text());
-        setUserId(result.authenticated ? result.user_id : null);
-      } catch (err) {
-        console.error("Session check error:", err);
-        setUserId(null);
-      } finally {
-        setSessionChecked(true);
-      }
-    }
-    checkSession();
-  }, [router]);
-
-  useEffect(() => {
-    if (!sessionChecked) return;
     if (!userId) {
       setLoading(false);
       return;
@@ -203,7 +184,7 @@ export default function SatinAldiklarim() {
     Promise.all([fetchSubscriptions, fetchCategories]).finally(() =>
       setLoading(false),
     );
-  }, [userId, sessionChecked]);
+  }, [userId]);
 
   const filteredBots = useMemo(() => {
     return bots.filter((bot) => {
@@ -490,7 +471,7 @@ export default function SatinAldiklarim() {
                       router.push("/dashboard/chat?botId=" + bot.chatbot_id);
                     }
                   }}
-                  className="group relative rounded-2xl border border-white/[0.08] bg-zinc-900/60 backdrop-blur-xl overflow-hidden hover:border-fuchsia-500/40 hover:bg-zinc-900/90 hover:shadow-[0_0_30px_-5px_rgba(217,70,239,0.15)] hover:-translate-y-0.5 transition-all duration-250 ease-out cursor-pointer flex flex-col justify-between"
+                  className="group relative rounded-2xl border border-white/[0.08] bg-zinc-900/60 backdrop-blur-xl overflow-hidden hover:border-fuchsia-500/40 hover:bg-zinc-900/90 hover:shadow-[0_0_30px_-5px_rgba(217,70,239,0.15)] hover:-translate-y-0.5 transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between"
                 >
                   {/* Top Cover Section */}
                   <div>

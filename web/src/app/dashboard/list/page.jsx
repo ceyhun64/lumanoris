@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, createContext } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
+import { UserContext } from "@/shared/contexts/UserContext";
 import {
   Plus,
   ChevronLeft,
@@ -24,9 +25,6 @@ import {
   Folder,
 } from "lucide-react";
 import { toast } from "@/shared/hooks/use-toast";
-
-// Fallback context if user context is required
-export const UserContext = createContext(null);
 
 function formatCompactNumber(n) {
   const num = Number(n) || 0;
@@ -313,7 +311,7 @@ function ListCardItem({ list, onDelete, onViewDetail }) {
   const bots = list.bots || [];
 
   return (
-    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-zinc-800/80 bg-[#09090F] p-5 transition-all duration-250 ease-out hover:border-violet-500/40 hover:bg-[#0B0B14] hover:shadow-2xl hover:shadow-violet-950/20 hover:-translate-y-0.5">
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-zinc-800/80 bg-[#09090F] p-5 transition-all duration-300 ease-out hover:border-violet-500/40 hover:bg-[#0B0B14] hover:shadow-2xl hover:shadow-violet-950/20 hover:-translate-y-0.5">
       {/* Top Header */}
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-3">
@@ -397,6 +395,7 @@ function ListCardItem({ list, onDelete, onViewDetail }) {
 }
 
 export default function List() {
+  const { userId } = useContext(UserContext);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalVisible2, setModalVisible2] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
@@ -408,7 +407,6 @@ export default function List() {
 
   const [inspectList, setInspectList] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [userId, setUserId] = useState(null);
   const [fetchError, setFetchError] = useState(null);
 
   const fetchUserLists = async (uid) => {
@@ -460,30 +458,13 @@ export default function List() {
   };
 
   useEffect(() => {
-    async function checkSession() {
-      try {
-        const res = await fetch("/api/auth/sessioncheck.php", {
-          credentials: "include",
-        });
-        const resultText = await res.text();
-        const result = JSON.parse(resultText);
-
-        if (result.authenticated) {
-          setUserId(result.user_id);
-          fetchUserLists(result.user_id);
-        } else {
-          setUserId(null);
-          setListData([]);
-        }
-      } catch (err) {
-        console.error("Session check error:", err);
-        setUserId(null);
-        setListData([]);
-        setFetchError("Sunucuya bağlanılamadı.");
-      }
+    if (!userId) {
+      setListData([]);
+      return;
     }
-    checkSession();
-  }, []);
+    fetchUserLists(userId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   const handleCreateList = async (listDataPayload) => {
     const listName =

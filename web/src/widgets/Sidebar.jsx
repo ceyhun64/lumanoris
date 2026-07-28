@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import QuitModal from "@/features/auth/QuitModal";
 import {
@@ -74,54 +74,13 @@ function MinimalTooltip({ children, text, side = "right" }) {
   );
 }
 
-export function Sidebar({ isMobileOpen = false, onNavigate, userId = null }) {
+const DEFAULT_ACCOUNT = { fullname: "", username: "", chatbotCount: 0, balance: 0 };
+
+export function Sidebar({ isMobileOpen = false, onNavigate, userId = null, account = DEFAULT_ACCOUNT }) {
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [isQuitModalOpen, setIsQuitModalOpen] = useState(false);
-  const [account, setAccount] = useState({
-    fullname: "",
-    username: "",
-    chatbotCount: 0,
-    balance: 0,
-  });
-
-  useEffect(() => {
-    if (!userId) return;
-    async function fetchAccount() {
-      try {
-        const res = await fetch(`/api/user/getuserheader.php?id=${userId}`);
-        if (res.ok) {
-          const result = await res.json();
-          if (result.success) {
-            setAccount((prev) => ({
-              ...prev,
-              fullname: result.fullname,
-              username: result.username,
-              chatbotCount: result.chatbotCount ?? 0,
-            }));
-          }
-        }
-      } catch (err) {
-        // Keep defaults on failure
-      }
-    }
-    async function fetchBalance() {
-      try {
-        const res = await fetch(`/api/wallet/getmybalance.php?user_id=${userId}`);
-        if (res.ok) {
-          const result = await res.json();
-          if (result.success) {
-            setAccount((prev) => ({ ...prev, balance: result.balance ?? 0 }));
-          }
-        }
-      } catch (err) {
-        // Keep defaults on failure
-      }
-    }
-    fetchAccount();
-    fetchBalance();
-  }, [userId]);
 
   const displayName = account.fullname || account.username || "Kullanıcı";
   const avatarLetter = (account.fullname || account.username || "?")

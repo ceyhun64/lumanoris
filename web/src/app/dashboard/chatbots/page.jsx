@@ -1,10 +1,11 @@
 "use client"
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { Bot, Search } from "lucide-react";
 import { toast } from "@/shared/hooks/use-toast";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { UserContext } from "@/shared/contexts/UserContext";
 import ChatbotsPageLayout from "./components/ChatbotsPageLayout";
 import ChatbotsCardGrid from "./components/ChatbotsCardGrid";
 import ChatbotCard from "./components/ChatbotCard";
@@ -14,10 +15,9 @@ import CreateChatbotCard from "./components/CreateChatbotCard";
 
 export default function App() {
   const router = useRouter();
+  const { userId } = useContext(UserContext);
   const [chatbots, setChatbots] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [userId, setUserId] = useState(null);
-  const [sessionChecked, setSessionChecked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -26,21 +26,6 @@ export default function App() {
   const [sortBy, setSortBy] = useState("newest");
 
   useEffect(() => {
-    async function checkSession() {
-      try {
-        const res = await fetch("/api/auth/sessioncheck.php", {
-          credentials: "include",
-        });
-        const result = await res.json();
-        setUserId(result.authenticated ? result.user_id : null);
-      } catch (err) {
-        setUserId(null);
-      } finally {
-        setSessionChecked(true);
-      }
-    }
-    checkSession();
-
     fetch("/api/content/getcategories.php")
       .then((res) => res.json())
       .then((data) => {
@@ -70,14 +55,13 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!sessionChecked) return;
     if (!userId) {
       setLoading(false);
       return;
     }
     fetchChatbots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionChecked, userId]);
+  }, [userId]);
 
   const handleDelete = async (id) => {
     try {

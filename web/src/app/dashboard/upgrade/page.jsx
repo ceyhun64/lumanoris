@@ -1,6 +1,7 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { toast } from "@/shared/hooks/use-toast";
+import { UserContext } from "@/shared/contexts/UserContext";
 import PricingPageHeader from "./components/PricingPageHeader";
 import PricingLoadingState from "./components/PricingLoadingState";
 import BillingCycleToggle from "./components/BillingCycleToggle";
@@ -68,25 +69,16 @@ const initialPlanData = [
 ];
 
 export default function PricingPlans() {
+  const { userId } = useContext(UserContext);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [plansData, setPlansData] = useState(initialPlanData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [userId, setUserId] = useState(null);
   const [upgrading, setUpgrading] = useState(null);
   const [upgradedPlan, setUpgradedPlan] = useState(null);
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [salesContactSending, setSalesContactSending] = useState(false);
   const [salesContactSent, setSalesContactSent] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/auth/sessioncheck.php", { credentials: "include" })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.authenticated) setUserId(data.user_id);
-      })
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     const fetchPlans = async () => {

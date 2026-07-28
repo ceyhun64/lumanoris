@@ -1,34 +1,22 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
+import React, { useState, useEffect, useMemo, useContext } from "react";
 import { formatDate } from "@/shared/lib/format";
-import WithdrawalModal from "./components/WithdrawalModal";
+import { UserContext } from "@/shared/contexts/UserContext";
 import WalletHero from "./components/WalletHero";
 import BalanceOverview from "./components/BalanceOverview";
 import WalletTabsBar from "./components/WalletTabsBar";
 import TransactionsPanel from "./components/TransactionsPanel";
 
+// Only loaded once the user opens the withdrawal modal.
+const WithdrawalModal = dynamic(() => import("./components/WithdrawalModal"), { ssr: false });
+
 export default function Wallet() {
+  const { userId, account, refetchBalance } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState("bakiye");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [userId, setUserId] = useState(null);
-  const [balance, setBalance] = useState(12450.5);
-  const [balanceTx, setBalanceTx] = useState([
-    {
-      amount: 5000,
-      description: "Bot Satış Geliri · Aura Architect Prime",
-      created_at: "2026-06-12 14:30:00",
-    },
-    {
-      amount: 2800,
-      description: "Premium Abonelik Ödemesi",
-      created_at: "2026-06-10 09:15:00",
-    },
-    {
-      amount: 4650.5,
-      description: "Banka Para Yatırma",
-      created_at: "2026-06-01 11:00:00",
-    },
-  ]);
+  const balance = account.balance;
+  const balanceTx = account.transactions;
   const [payments, setPayments] = useState([
     {
       order_id: "ORD-9821",
@@ -45,50 +33,14 @@ export default function Wallet() {
       chatbot_title: "Verba SEO & Content Titan",
     },
   ]);
-  const [sessionChecked, setSessionChecked] = useState(true);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Session checking effect matching original architecture
   useEffect(() => {
-    async function checkSession() {
-      try {
-        const res = await fetch("/api/auth/sessioncheck.php", {
-          credentials: "include",
-        });
-        const result = JSON.parse(await res.text());
-        if (result.authenticated) setUserId(result.user_id);
-      } catch (err) {
-        console.error("Session check error:", err);
-      } finally {
-        setSessionChecked(true);
-      }
-    }
-    checkSession();
-  }, []);
-
-  const fetchBalance = () => {
-    if (!userId) return;
-    fetch(`/api/wallet/getmybalance.php?user_id=${userId}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.success) {
-          setBalance(data.balance || 0);
-          setBalanceTx(
-            Array.isArray(data.transactions) ? data.transactions : [],
-          );
-        }
-      })
-      .catch((err) => console.error("Bakiye yüklenemedi:", err));
-  };
-
-  useEffect(() => {
-    if (!sessionChecked) return;
     if (!userId) {
       setLoading(false);
       return;
     }
-    fetchBalance();
     fetch(`/api/wallet/getmypayments.php?user_id=${userId}`)
       .then((r) => r.json())
       .then((data) => {
@@ -97,7 +49,7 @@ export default function Wallet() {
       })
       .catch((err) => console.error("Ödemeler yüklenemedi:", err))
       .finally(() => setLoading(false));
-  }, [userId, sessionChecked]);
+  }, [userId]);
 
   const transactions =
     activeTab === "bakiye"
@@ -191,7 +143,7 @@ export default function Wallet() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         balance={balance}
-        onSuccess={() => fetchBalance()}
+        onSuccess={() => refetchBalance()}
       />
     </div>
   );

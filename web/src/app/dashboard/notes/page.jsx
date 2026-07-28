@@ -1,6 +1,8 @@
 ﻿"use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useContext } from "react";
+import dynamic from "next/dynamic";
+import { UserContext } from "@/shared/contexts/UserContext";
 import {
   ChevronDown,
   Check,
@@ -21,7 +23,9 @@ import {
   Layers,
   Filter,
 } from "lucide-react";
-import ReportModal from "@/features/moderation/ReportModal";
+
+// Only loaded once the user opens the report dialog.
+const ReportModal = dynamic(() => import("@/features/moderation/ReportModal"), { ssr: false });
 
 const resolveAvatarSrc = (seed) => {
   return {
@@ -224,13 +228,13 @@ function CategoryFilter({ categories, onSelect, selected }) {
 }
 
 export default function DialoguePage() {
+  const { userId } = useContext(UserContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filtered, setFiltered] = useState("Tümü");
   const [tab, setTab] = useState("all");
   const [selectedChatbotId, setSelectedChatbotId] = useState(null);
   const [selectedHistory, selectHistory] = useState(null);
   const [hiddenBotIds, setHiddenBotIds] = useState([]);
-  const [userId, setUserId] = useState(null);
   const [categories, setCategories] = useState([]);
   const [histories, setHistories] = useState([]);
 
@@ -245,22 +249,6 @@ export default function DialoguePage() {
   const handleCloseModal = () => setIsModalOpen(false);
 
   useEffect(() => {
-    async function checkSession() {
-      try {
-        const res = await fetch("/api/auth/sessioncheck.php", {
-          credentials: "include",
-        });
-        const resultText = await res.text();
-        const result = JSON.parse(resultText);
-        if (result.authenticated) {
-          setUserId(result.user_id);
-        }
-      } catch (err) {
-        console.error("Session check error:", err);
-      }
-    }
-    checkSession();
-
     fetch("/api/content/getcategories.php").then(async (res) => {
       try {
         const data = await res.json();
@@ -463,7 +451,7 @@ export default function DialoguePage() {
                     setIsModalOpen(true);
                   }
                 }}
-                className="group relative flex flex-col justify-between rounded-3xl border border-white/10 bg-white/[0.02] p-5 transition-all duration-250 ease-out hover:border-fuchsia-500/40 hover:bg-white/[0.04] hover:shadow-2xl hover:shadow-fuchsia-950/30 hover:-translate-y-0.5 cursor-pointer"
+                className="group relative flex flex-col justify-between rounded-3xl border border-white/10 bg-white/[0.02] p-5 transition-all duration-300 ease-out hover:border-fuchsia-500/40 hover:bg-white/[0.04] hover:shadow-2xl hover:shadow-fuchsia-950/30 hover:-translate-y-0.5 cursor-pointer"
               >
                 {/* Content preview */}
                 <div className="space-y-3">

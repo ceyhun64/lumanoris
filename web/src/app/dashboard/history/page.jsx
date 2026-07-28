@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef, useContext } from "react";
+import { UserContext } from "@/shared/contexts/UserContext";
 
 import {
   Search,
@@ -203,6 +204,7 @@ function EmptyHistoryState({ hasFilter, onClearFilter }) {
 }
 
 export function History() {
+  const { userId } = useContext(UserContext);
   // State Management (All business logic preserved intact)
   const [editingId, setEditingId] = useState(null);
   const [editingTitle, setEditingTitle] = useState("");
@@ -239,7 +241,6 @@ export function History() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeMenuId, setActiveMenuId] = useState(null);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
-  const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -263,24 +264,6 @@ export function History() {
       window.location.href = targetUrl;
     }
   };
-
-  // Session Checker (Business logic preserved)
-  async function checkSession() {
-    try {
-      const res = await fetch("/api/auth/sessioncheck.php", {
-        credentials: "include",
-      });
-      if (!res.ok) return;
-      const resultText = await res.text();
-      const result = JSON.parse(resultText);
-
-      if (result.authenticated) {
-        setUserId(result.user_id);
-      }
-    } catch (err) {
-      console.error("Session check error:", err);
-    }
-  }
 
   // Delete Handler (Business logic preserved)
   const handleDelete = async () => {
@@ -355,10 +338,6 @@ export function History() {
       console.error("API update error:", err);
     }
   };
-
-  useEffect(() => {
-    checkSession();
-  }, []);
 
   useEffect(() => {
     if (!userId) return;

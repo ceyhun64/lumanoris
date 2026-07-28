@@ -64,7 +64,7 @@ function NotificationPopup({ onClose, notifications, loading, onMarkAllRead }) {
   };
 
   return (
-    <div className="absolute right-0 top-full mt-3 z-40 w-80 sm:w-96 rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-300">
+    <div className="absolute right-0 top-full mt-3 z-40 w-80 sm:w-96 rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-150">
       <div className="flex items-center justify-between pb-3.5 border-b border-white/5">
         <div className="flex items-center gap-2.5">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400">
@@ -138,7 +138,7 @@ function NotificationPopup({ onClose, notifications, loading, onMarkAllRead }) {
 
 function ProfilePopup({ user, profileImage, onLogout, onClose }) {
   return (
-    <div className="absolute right-0 top-full mt-3 z-50 w-120 rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-300">
+    <div className="absolute right-0 top-full mt-3 z-50 w-120 rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-150">
       <div className="flex items-center gap-3.5 pb-3.5 border-b border-white/5">
         <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-gradient-to-tr from-violet-600 via-indigo-600 to-fuchsia-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg shadow-violet-950/50 ring-1 ring-white/20">
           {profileImage ? (
@@ -225,7 +225,17 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
 }
 
 
-export default function Header({ userId = null, onNavigate }) {
+const DEFAULT_ACCOUNT = {
+  id: null,
+  username: "",
+  fullname: "",
+  chatbotCount: 0,
+  purchasedCount: 0,
+  sharedDialogueCount: 0,
+  balance: 0,
+};
+
+export default function Header({ userId = null, onNavigate, account = DEFAULT_ACCOUNT }) {
   const router = useRouter();
   const navigate = onNavigate || ((href) => router.push(href));
   const [showProfile, setShowProfile] = useState(false);
@@ -239,21 +249,11 @@ export default function Header({ userId = null, onNavigate }) {
   const profileMenuRef = useRef(null);
   const notificationBtnRef = useRef(null);
   const profileBtnRef = useRef(null);
-  const [user, setUser] = useState({
-    id: userId || null,
-    username: "",
-    fullname: "",
-    followerCount: 0,
-    chatbotCount: 0,
-    purchasedCount: 0,
-    sharedDialogueCount: 0,
-    balance: 0,
-  });
 
   const searchInputRef = useRef(null);
 
   const fetchCartCount = async () => {
-    const targetId = userId || user.id;
+    const targetId = userId || account.id;
     if (!targetId) return;
     try {
       const res = await fetch(
@@ -269,50 +269,7 @@ export default function Header({ userId = null, onNavigate }) {
   };
 
   useEffect(() => {
-    async function fetchUser() {
-      try {
-        const res = await fetch(`/api/user/getuserheader.php?id=${userId}`);
-        if (res.ok) {
-          const result = await res.json();
-          if (result.success) {
-            setUser((prev) => ({
-              ...prev,
-              id: result.id,
-              username: result.username,
-              fullname: result.fullname,
-              followerCount: 0,
-              chatbotCount: result.chatbotCount ?? 0,
-              purchasedCount: result.purchasedCount ?? 0,
-              sharedDialogueCount: result.sharedDialogueCount ?? 0,
-            }));
-          }
-        }
-      } catch (err) {
-        // Fallback demo state
-      }
-    }
-    if (userId) fetchUser();
-  }, [userId]);
-
-  useEffect(() => {
-    async function fetchBalance() {
-      try {
-        const res = await fetch(`/api/wallet/getmybalance.php?user_id=${userId}`);
-        if (res.ok) {
-          const result = await res.json();
-          if (result.success) {
-            setUser((prev) => ({ ...prev, balance: result.balance ?? 0 }));
-          }
-        }
-      } catch (err) {
-        // Graceful fallback for standalone canvas preview
-      }
-    }
-    if (userId) fetchBalance();
-  }, [userId]);
-
-  useEffect(() => {
-    if (!user.id) return;
+    if (!userId) return;
     fetchCartCount();
     const handleCartUpdate = () => fetchCartCount();
     window.addEventListener("cartUpdated", handleCartUpdate);
@@ -321,10 +278,10 @@ export default function Header({ userId = null, onNavigate }) {
       window.removeEventListener("cartUpdated", handleCartUpdate);
       clearInterval(interval);
     };
-  }, [user.id]);
+  }, [userId]);
 
   const fetchNotifications = useCallback(async () => {
-    if (!user.id) return;
+    if (!userId) return;
     try {
       const res = await fetch("/api/notification/getnotification.php", {
         credentials: "include",
@@ -338,14 +295,14 @@ export default function Header({ userId = null, onNavigate }) {
     } finally {
       setNotificationsLoading(false);
     }
-  }, [user.id]);
+  }, [userId]);
 
   useEffect(() => {
-    if (!user.id) return;
+    if (!userId) return;
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
-  }, [user.id, fetchNotifications]);
+  }, [userId, fetchNotifications]);
 
   const unreadNotificationCount = notifications.filter((n) => !n.is_read).length;
 
@@ -555,7 +512,7 @@ export default function Header({ userId = null, onNavigate }) {
                   />
                 ) : (
                   <span>
-                    {(user.fullname || user.username || "?")
+                    {(account.fullname || account.username || "?")
                       .charAt(0)
                       .toUpperCase()}
                   </span>
@@ -566,7 +523,7 @@ export default function Header({ userId = null, onNavigate }) {
 
             {showProfile && (
               <ProfilePopup
-                user={user}
+                user={account}
                 profileImage={profileImage}
                 onLogout={handleLogout}
                 onClose={closeProfile}

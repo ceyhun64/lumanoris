@@ -225,7 +225,7 @@ select:focus:not([data-focus-managed]) {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #D946EF #0D0D1A;
+  scrollbar-color: #3b1342 #0D0D1A;
 }
 
 *::-webkit-scrollbar {
@@ -237,12 +237,12 @@ select:focus:not([data-focus-managed]) {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #D946EF, #8B5CF6);
+  background: linear-gradient(to bottom, #742181, #8B5CF6);
   border-radius: 6px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #E879F9, #A78BFA);
+  background: linear-gradient(to bottom, #791c88, #A78BFA);
 }
 
 html {

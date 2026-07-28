@@ -1,9 +1,13 @@
 import { useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Bot, MessageSquare, Heart, Trash2, Rocket, ExternalLink } from "lucide-react";
-import PublishModal from "@/features/chatbot-mgmt/PublishModal";
-import AddToSaleListModal from "@/features/chatbot-mgmt/AddToSaleListModal";
-import DeleteConfirmModal from "@/shared/ui/DeleteConfirmModal";
+
+// Only loaded once a card's publish/price/delete modal is actually opened —
+// these are bundled once per page (not per card) but are rarely needed at all.
+const PublishModal = dynamic(() => import("@/features/chatbot-mgmt/PublishModal"), { ssr: false });
+const AddToSaleListModal = dynamic(() => import("@/features/chatbot-mgmt/AddToSaleListModal"), { ssr: false });
+const DeleteConfirmModal = dynamic(() => import("@/shared/ui/DeleteConfirmModal"), { ssr: false });
 
 export default function ChatbotCard({
   id,
@@ -27,7 +31,7 @@ export default function ChatbotCard({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0c0c10]/90 backdrop-blur-2xl transition-all duration-250 ease-out hover:border-violet-500/40 hover:shadow-[0_10px_40px_rgba(0,0,0,0.5)] hover:-translate-y-0.5">
+    <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0c0c10]/90 backdrop-blur-2xl transition-all duration-300 ease-out hover:border-violet-500/40 hover:shadow-[0_10px_40px_rgba(0,0,0,0.5)] hover:-translate-y-0.5">
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-violet-950/40 to-slate-900/60">
         {image ? (
           <img
@@ -115,7 +119,7 @@ export default function ChatbotCard({
               </button>
             ) : null}
             <Link
-              href={`/dashboard/chatbots/edit?id=${id}`}
+              href={`/dashboard/chatbots/create?id=${id}`}
               className="flex h-8 items-center gap-1 rounded-xl bg-gradient-btn px-3.5 text-xs font-semibold text-white shadow-glow transition-all hover:brightness-110"
             >
               <span>Yönet</span>

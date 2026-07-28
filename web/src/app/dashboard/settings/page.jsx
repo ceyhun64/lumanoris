@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { UserContext } from "@/shared/contexts/UserContext";
 import {
   Crown,
   User,
@@ -526,26 +527,13 @@ function ContactForm() {
 }
 
 export default function App() {
+  const { userId } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState("user");
-  const [userId, setUserId] = useState(null);
   const [userInfo, setUserInfo] = useState({
     ad: "",
     soyad: "",
     kullaniciAdi: "",
   });
-
-  useEffect(() => {
-    async function checkSession() {
-      try {
-        const res = await fetch("/api/auth/sessioncheck.php", { credentials: "include" });
-        const result = await res.json();
-        setUserId(result.authenticated ? result.user_id : null);
-      } catch (err) {
-        setUserId(null);
-      }
-    }
-    checkSession();
-  }, []);
 
   useEffect(() => {
     if (!userId) return;

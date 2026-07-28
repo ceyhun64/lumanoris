@@ -5,9 +5,9 @@ import React, {
   useEffect,
   useMemo,
   useRef,
-  createContext,
   useContext,
 } from "react";
+import { UserContext } from "@/shared/contexts/UserContext";
 import {
   Search,
   Sparkles,
@@ -43,9 +43,6 @@ import {
   Lock,
   ArrowRight,
 } from "lucide-react";
-
-// Fallback UserContext if parent layout context is not provided in preview
-export const UserContext = createContext(null);
 
 function formatCompactNumber(n) {
   const num = Number(n) || 0;
@@ -251,7 +248,7 @@ function BentoBotCard({ bot, onOpenDetails }) {
   return (
     <div
       onClick={() => onOpenDetails(bot)}
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-zinc-900/50 to-zinc-950/80 backdrop-blur-2xl transition-all duration-250 ease-out hover:border-violet-500/40 hover:bg-zinc-900/90 hover:shadow-2xl hover:shadow-violet-600/10 hover:-translate-y-0.5 cursor-pointer"
+      className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-zinc-900/50 to-zinc-950/80 backdrop-blur-2xl transition-all duration-300 ease-out hover:border-violet-500/40 hover:bg-zinc-900/90 hover:shadow-2xl hover:shadow-violet-600/10 hover:-translate-y-0.5 cursor-pointer"
     >
       {/* Top Border Glow Sweep */}
       <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-violet-500/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-10" />
@@ -716,7 +713,7 @@ function EmptyState2026({ onClearFilters }) {
 }
 
 export function MainDashboard2026() {
-  const userId = useContext(UserContext);
+  const { userId } = useContext(UserContext);
 
   // State definitions (preserving exact original business logic)
   const [allBots, setAllBots] = useState([]);

@@ -1,12 +1,17 @@
 ﻿"use client";
+import dynamic from "next/dynamic";
 import MessageInput from "@/features/chat/MessageInput";
 import ProfileCard from "@/entities/user/ui/ProfileCard";
-import WithdrawalModal from "@/features/wallet/WithdrawalModal";
-import BuyModal from "@/features/purchasing/BuyModal";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useContext } from "react";
+import { UserContext } from "@/shared/contexts/UserContext";
 import { resolveAvatarSrc } from "@/shared/lib/image";
-import DialogNotebookModal from "@/features/notes/DialogNotebookModal";
 import { useSearchParams } from "next/navigation";
+
+// Only loaded when the user actually opens one of these modals, instead of
+// shipping their code with every chat page load.
+const WithdrawalModal = dynamic(() => import("@/features/wallet/WithdrawalModal"), { ssr: false });
+const BuyModal = dynamic(() => import("@/features/purchasing/BuyModal"), { ssr: false });
+const DialogNotebookModal = dynamic(() => import("@/features/notes/DialogNotebookModal"), { ssr: false });
 import ReactMarkdown from "react-markdown";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -14,10 +19,10 @@ import { Button } from "@/shared/ui/button";
 import { Lock, NotebookPen, RotateCcw } from "lucide-react";
 
 export default function Chat() {
+  const { userId } = useContext(UserContext);
   const [bot, setBot] = useState(null);
   const [botId, setBotId] = useState(0);
   const [comments, setComments] = useState(null);
-  const [userId, setUserId] = useState();
   const [prompt, setPrompt] = useState("");
   const [conversation, setConversation] = useState();
   const [conversationId, setConversationId] = useState(-1);
@@ -127,28 +132,7 @@ export default function Chat() {
     }
 };
 
-  async function checkSession() {
-    try {
-      const res = await fetch("/api/auth/sessioncheck.php", {
-        credentials: "include", // cookie'yi gönder
-      });
-      const resultText = await res.text();
-      const result = JSON.parse(resultText);
-
-      if (result.authenticated) {
-        setUserId(result.user_id);
-      } else {
-        // router.push("/login"); // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
-      }
-    } catch (err) {
-      console.error("Session check error:", err);
-      // router.push("/login"); // Giriş kontrolü geçici olarak devre dışı - proje sonunda düzeltilecek
-    }
-  }
-
   useEffect(() => {
-    checkSession();
-
     fetch("/api/content/getadcounts.php")
       .then((response) => {
         if (!response.ok) {

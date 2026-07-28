@@ -1,11 +1,5 @@
 import { useState, useEffect } from 'react'
-import ShareModal from '@/features/sharing/ShareModal';
-import ReportModal from '@/features/moderation/ReportModal';
-import AddToListModal from '@/features/lists/AddToListModal';
-import BlockModal from '@/features/moderation/BlockModal';
-import CommentModal from '@/features/comments/CommentModal';
-import BuyModal from '@/features/purchasing/BuyModal';
-import DeleteConfirmModal from '@/shared/ui/DeleteConfirmModal';
+import dynamic from 'next/dynamic';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
 import { useRouter } from 'next/navigation';
 import {
@@ -20,6 +14,17 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
 import { requireLogin } from '@/shared/lib/auth-guard';
 import { resolveAvatarSrc } from '@/shared/lib/image';
+
+// Only loaded once the user actually opens one of these — this card renders
+// unconditionally on every chat page load, so keeping these static meant all
+// seven modals' code shipped with every chat visit regardless of use.
+const ShareModal = dynamic(() => import('@/features/sharing/ShareModal'), { ssr: false });
+const ReportModal = dynamic(() => import('@/features/moderation/ReportModal'), { ssr: false });
+const AddToListModal = dynamic(() => import('@/features/lists/AddToListModal'), { ssr: false });
+const BlockModal = dynamic(() => import('@/features/moderation/BlockModal'), { ssr: false });
+const CommentModal = dynamic(() => import('@/features/comments/CommentModal'), { ssr: false });
+const BuyModal = dynamic(() => import('@/features/purchasing/BuyModal'), { ssr: false });
+const DeleteConfirmModal = dynamic(() => import('@/shared/ui/DeleteConfirmModal'), { ssr: false });
 
 function formatCompact(n) {
     const num = Number(n) || 0;

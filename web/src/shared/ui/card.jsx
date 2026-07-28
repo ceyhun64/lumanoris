@@ -10,7 +10,7 @@ const Card = React.forwardRef(({ className, interactive = false, ...props }, ref
       // (ChatbotCard, wallet balance card, MarketplaceListCard, following
       // list items) — codifying the de facto standard rather than fighting
       // it on every migration.
-      "rounded-2xl border border-fuchsia-400/10 bg-gradient-card text-white shadow-card transition-all duration-250",
+      "rounded-2xl border border-fuchsia-400/10 bg-gradient-card text-white shadow-card transition-all duration-300",
       // `interactive` codifies the "clickable card" hover treatment that was
       // independently hand-copied (with tiny drifting variations in the
       // lift amount / glow color / duration) into ChatbotCard, following's

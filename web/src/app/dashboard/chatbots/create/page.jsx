@@ -1,7 +1,9 @@
 ﻿"use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
+import { UserContext } from "@/shared/contexts/UserContext";
 import { useRouter } from "next/navigation";
+import useSellerStatus from "@/shared/hooks/useSellerStatus";
 import {
   Lock,
   Globe2,
@@ -40,19 +42,6 @@ import {
 // Utility for class merging
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
-}
-
-function useSellerStatusFallback(userId) {
-  const [seller, setSeller] = useState({ loading: false, status: "active" });
-
-  useEffect(() => {
-    if (!userId) return;
-    // In actual production, this calls your existing hook
-    // We provide a safe mock fallback if hook/endpoint is unavailable
-    setSeller({ loading: false, status: "active" });
-  }, [userId]);
-
-  return { ...seller, refetch: () => console.log("Seller status refetched") };
 }
 
 function GlassCard({
@@ -705,7 +694,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
 }
 
 function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
-  const seller = useSellerStatusFallback(userId);
+  const seller = useSellerStatus(userId);
   const isEditing = !!bot;
   const [choice, setChoice] = useState(
     isEditing ? (bot.chatbot?.is_independent ? "independent" : "public") : null,
@@ -991,10 +980,9 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
 }
 
 export default function CreateChatbot() {
+  const { userId } = useContext(UserContext);
   const [bot, setBot] = useState(null);
   const [botId, setBotId] = useState(null);
-  const [userId, setUserId] = useState(null);
-  const [sessionChecked, setSessionChecked] = useState(false);
 
   const selectedCard = {
     title: "YÖNLENDİRME BOTU",
@@ -1002,29 +990,6 @@ export default function CreateChatbot() {
     icon: <Bot className="w-5 h-5 text-violet-400" />,
     bgColor: "#9BC8FF",
   };
-
-  // 1. Session check
-  useEffect(() => {
-    async function checkSession() {
-      try {
-        const res = await fetch("/api/auth/sessioncheck.php", {
-          credentials: "include",
-        });
-        const result = await res.json();
-        if (result.authenticated) {
-          setUserId(result.user_id);
-        } else {
-          // Dev / Preview fallback: Demo User ID
-          setUserId("demo_user_123");
-        }
-      } catch (err) {
-        setUserId("demo_user_123");
-      } finally {
-        setSessionChecked(true);
-      }
-    }
-    checkSession();
-  }, []);
 
   // 2. Query param reader
   useEffect(() => {
@@ -1064,7 +1029,7 @@ export default function CreateChatbot() {
   }
 
   // Unauthenticated fallback prompt
-  if (sessionChecked && !userId) {
+  if (!userId) {
     return (
       <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col items-center justify-center p-4 text-center">
         <GlassCard className="p-8  space-y-4">

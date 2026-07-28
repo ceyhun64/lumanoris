@@ -1,6 +1,7 @@
 ﻿"use client"
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useRouter } from "next/navigation";
+import { UserContext } from "@/shared/contexts/UserContext";
 import { resolveCoverSrc } from "@/shared/lib/image";
 import { formatCurrency } from "@/shared/lib/format";
 import { toast } from "@/shared/hooks/use-toast";
@@ -65,9 +66,8 @@ function validateCard(card) {
 
 export default function Checkout() {
   const router = useRouter();
+  const { userId } = useContext(UserContext);
   const [cartItems, setCartItems] = useState([]);
-  const [userId, setUserId] = useState(null);
-  const [sessionChecked, setSessionChecked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
   const [confirmedItems, setConfirmedItems] = useState([]);
@@ -78,22 +78,6 @@ export default function Checkout() {
   const [paying, setPaying] = useState(false);
 
   useEffect(() => {
-    async function checkSession() {
-      try {
-        const res = await fetch("/api/auth/sessioncheck.php", { credentials: "include" });
-        const result = await res.json();
-        setUserId(result.authenticated ? result.user_id : null);
-      } catch (err) {
-        setUserId(null);
-      } finally {
-        setSessionChecked(true);
-      }
-    }
-    checkSession();
-  }, []);
-
-  useEffect(() => {
-    if (!sessionChecked) return;
     if (!userId) {
       setLoading(false);
       return;
@@ -126,7 +110,7 @@ export default function Checkout() {
       }
     }
     fetchCart();
-  }, [sessionChecked, userId]);
+  }, [userId]);
 
   const handleRemove = async (cartId) => {
     try {

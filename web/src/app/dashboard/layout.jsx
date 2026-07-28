@@ -1,17 +1,18 @@
 ﻿'use client';
-import { React, useEffect, useState, createContext } from 'react';
+import { React, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Header from "@/widgets/DashboardHeader";
 import NavbarMobile from "@/widgets/Navbar";
 import { Sidebar } from "@/widgets/Sidebar";
-
-export const UserContext = createContext(null);
+import { useAccountData } from "@/shared/hooks/useAccountData";
+import { UserContext } from "@/shared/contexts/UserContext";
 
 export default function DashboardLayout({ children }) {
     const router = useRouter();
     const pathname = usePathname();
     const [userId, setUserId] = useState(null);
     const [authReady, setAuthReady] = useState(false);
+    const { account, refetchAccount, refetchBalance } = useAccountData(userId);
 
     // Checkout is a focused, distraction-free flow (common e-commerce
     // pattern) — no main nav sidebar/mobile navbar while paying.
@@ -44,7 +45,7 @@ export default function DashboardLayout({ children }) {
     }
 
     return (
-        <UserContext.Provider value={userId}>
+        <UserContext.Provider value={{ userId, account, refetchAccount, refetchBalance }}>
             <a
                 href="#main-content"
                 className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-2 focus-visible:left-2 focus-visible:z-[999] focus-visible:rounded-lg focus-visible:bg-luma-panel focus-visible:px-4 focus-visible:py-2 focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -69,7 +70,7 @@ export default function DashboardLayout({ children }) {
                     {/* Sidebar — hidden on mobile, shown md+ (and hidden entirely during checkout) */}
                     {!hideNav && (
                         <div className="hidden md:flex shrink-0">
-                            <Sidebar userId={userId} />
+                            <Sidebar userId={userId} account={account} />
                         </div>
                     )}
 
@@ -83,8 +84,8 @@ export default function DashboardLayout({ children }) {
                         )}
 
                         <main className="flex flex-col flex-1 min-h-0">
-                            <Header userId={userId} />
-                            <div id="main-content" className="flex-1">
+                            <Header userId={userId} account={account} />
+                            <div id="main-content" className="flex-1 w-full max-w-[1600px] mx-auto">
                                 {children}
                             </div>
                         </main>
