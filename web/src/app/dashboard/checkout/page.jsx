@@ -5,6 +5,7 @@ import { UserContext } from "@/shared/contexts/UserContext";
 import { resolveCoverSrc } from "@/shared/lib/image";
 import { formatCurrency } from "@/shared/lib/format";
 import { toast } from "@/shared/hooks/use-toast";
+import DeleteConfirmModal from "@/shared/ui/DeleteConfirmModal";
 import {
   ArrowLeft,
   Trash2,
@@ -76,6 +77,7 @@ export default function Checkout() {
   const [cardInfo, setCardInfo] = useState({ number: "", expiry: "", cvv: "", holderName: "" });
   const [cardErrors, setCardErrors] = useState({});
   const [paying, setPaying] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
 
   useEffect(() => {
     if (!userId) {
@@ -356,7 +358,7 @@ export default function Checkout() {
                       </div>
 
                       <button
-                        onClick={() => handleRemove(item.id)}
+                        onClick={() => setDeleteTargetId(item.id)}
                         className="p-2 rounded-lg bg-zinc-800/50 hover:bg-red-500/10 text-zinc-400 hover:text-red-400 transition-colors border border-transparent hover:border-red-500/20"
                         title="Ürünü kaldır"
                       >
@@ -714,6 +716,18 @@ export default function Checkout() {
           </div>
         )}
       </main>
+
+      <DeleteConfirmModal
+        isOpen={!!deleteTargetId}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={() => {
+          handleRemove(deleteTargetId);
+          setDeleteTargetId(null);
+        }}
+        title="Ürünü sepetten kaldır"
+        description={<>Bu ürün sepetinizden kaldırılacaktır.</>}
+        confirmLabel="Kaldır"
+      />
     </div>
   );
 }

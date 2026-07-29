@@ -64,6 +64,7 @@ function ProfileImageEdit({ userId }) {
       const result = await res.json();
       if (result.success) {
         setPreview(avatar || null);
+        window.dispatchEvent(new Event("profileUpdated"));
       } else {
         console.error("Photo save failed:", result.message);
       }

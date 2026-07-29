@@ -338,6 +338,10 @@ export default function Header({ userId = null, onNavigate, account = DEFAULT_AC
       }
     }
     fetchDbPhoto();
+    // Settings sayfasında fotoğraf yüklemesi başarılı olunca bu event
+    // dispatch ediliyor, header sayfa yenilenmeden güncel fotoğrafı çeker.
+    window.addEventListener("profileUpdated", fetchDbPhoto);
+    return () => window.removeEventListener("profileUpdated", fetchDbPhoto);
   }, [userId]);
 
   useEffect(() => {

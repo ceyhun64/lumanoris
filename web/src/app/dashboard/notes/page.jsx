@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo, useContext } from "react";
 import dynamic from "next/dynamic";
 import { UserContext } from "@/shared/contexts/UserContext";
+import CategoryFilter from "@/widgets/CategoryFilter";
 import {
   ChevronDown,
   Check,
@@ -198,31 +199,6 @@ function NotesEmpty() {
         Aradığınız kriterlere uygun kayıt bulunmuyor. Yeni bir diyalog başlatın
         veya filtreleri değiştirin.
       </p>
-    </div>
-  );
-}
-
-function CategoryFilter({ categories, onSelect, selected }) {
-  return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-      {categories.map((cat) => {
-        const catName = cat.kategori_adi_tr || cat.name || "Kategori";
-        const isSelected = selected === catName;
-        return (
-          <button
-            key={cat.id || catName}
-            onClick={() => onSelect(catName)}
-            className={cn(
-              "flex items-center gap-2 rounded-xl px-2 py-2 text-[13px] font-medium transition-all shrink-0",
-              isSelected
-                ? "bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-900/40 border border-fuchsia-400/30"
-                : "bg-white/[0.04] text-white/60 hover:bg-white/[0.08] hover:text-white border border-white/5",
-            )}
-          >
-            <span>{catName}</span>
-          </button>
-        );
-      })}
     </div>
   );
 }

@@ -39,6 +39,53 @@ export default function Chat() {
   // "Sınır Aşıldı" bandı.
   const [limitReached, setLimitReached] = useState(false);
   const [showLimitBuyModal, setShowLimitBuyModal] = useState(false);
+  const [coinsRemaining, setCoinsRemaining] = useState(null);
+  const [retryAt, setRetryAt] = useState(null);
+
+  const checkMessageAllowance = useCallback(async (uId, bId) => {
+      if (!uId || !bId) return;
+      try {
+          const res = await fetch(`/api/message/checkmessageallowance.php?chatbot_id=${bId}`);
+          const data = await res.json();
+          if (data.success) {
+              setCoinsRemaining(data.daily_coins_remaining);
+              setRetryAt(data.retry_at || null);
+          }
+      } catch (err) {
+          console.error("Mesaj hakkı sorgulama hatası:", err);
+      }
+  }, []);
+
+  useEffect(() => {
+      if (userId && botId) {
+          checkMessageAllowance(userId, botId);
+      }
+  }, [userId, botId, checkMessageAllowance]);
+
+  // "Sınır Aşıldı" bandındaki 24 saatlik geri sayım — sadece limit doluyken tik atar.
+  const [retryCountdownLabel, setRetryCountdownLabel] = useState("");
+  useEffect(() => {
+      if (!limitReached || !retryAt) {
+          setRetryCountdownLabel("");
+          return;
+      }
+      const target = new Date(retryAt.replace(" ", "T")).getTime();
+      const tick = () => {
+          const diff = target - Date.now();
+          if (diff <= 0) {
+              setRetryCountdownLabel("");
+              checkMessageAllowance(userId, botId);
+              return;
+          }
+          const h = Math.floor(diff / 3600000);
+          const m = Math.floor((diff % 3600000) / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          setRetryCountdownLabel(`${h}s ${m}dk ${s}sn`);
+      };
+      tick();
+      const interval = setInterval(tick, 1000);
+      return () => clearInterval(interval);
+  }, [limitReached, retryAt, userId, botId, checkMessageAllowance]);
 
   const checkSubscription = useCallback(async (uId, bId) => {
       if (!uId || !bId) return;
@@ -419,7 +466,11 @@ export default function Chat() {
     const allowanceResult = await allowanceRes.json();
     if (!allowanceResult.allowed) {
       setLimitReached(true);
+      checkMessageAllowance(userId, botId); // retry_at bandda gösterilecek şekilde tazelensin
       return;
+    }
+    if (allowanceResult.source === "coins" && typeof allowanceResult.remaining === "number") {
+      setCoinsRemaining(allowanceResult.remaining);
     }
   } catch (err) {
     console.error("Mesaj hakkı kontrolü hatası:", err);
@@ -749,6 +800,14 @@ const handleRetryReply = (retryText) => {
                 Günlük mesajlaşma limitine ulaştınız.
                 <br className="hidden sm:block" />
                 Chatbotu satın alarak daha fazla mesaj limitine erişebilirsiniz.
+                {retryCountdownLabel && (
+                  <>
+                    <br className="hidden sm:block" />
+                    <span className="text-fuchsia-300/80">
+                      Ücretsiz coinleriniz {retryCountdownLabel} sonra yenilenecek.
+                    </span>
+                  </>
+                )}
               </p>
             </div>
             <Button
@@ -759,10 +818,17 @@ const handleRetryReply = (retryText) => {
             </Button>
           </div>
         ) : (
-          <MessageInput
-            onSend={handleSendMessage}
-            onResetChat={handleResetChat}
-          />
+          <div className="space-y-2">
+            {typeof coinsRemaining === "number" && (
+              <p className="px-1 text-caption text-white/40">
+                Bugün kalan ücretsiz mesaj hakkınız: <span className="font-semibold text-fuchsia-300/80">{coinsRemaining}</span>
+              </p>
+            )}
+            <MessageInput
+              onSend={handleSendMessage}
+              onResetChat={handleResetChat}
+            />
+          </div>
         )}
       </div>
 

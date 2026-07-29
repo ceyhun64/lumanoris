@@ -106,7 +106,7 @@ export default function MarketCard({ bot, onRemove }) {
         "relative flex flex-col cursor-pointer p-3 rounded-lg border bg-[#0D0D1A] gap-3 justify-between transition-all duration-300 hover:shadow-[0_0_12px_rgba(217,70,239,0.25)]",
         isInCart ? "border-fuchsia-400/50" : "border-[rgba(255,241,250,0.2)]",
       )}
-      onClick={() => router.push("/dashboard/chat")}
+      onClick={() => router.push(`/dashboard/chat?botId=${bot.id}`)}
     >
       {/* Glow overlay */}
       <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none rounded-lg">

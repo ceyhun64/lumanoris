@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
-import { calculateMessageAllowance } from '@/shared/lib/pricing';
+import { calculateMessageAllowance, MONTHLY_DISCOUNT_FACTOR } from '@/shared/lib/pricing';
 import { Percent, Coins, Gift } from 'lucide-react';
 
 const WEEKS_TO_DURATION = { 1: '1_week', 2: '2_weeks', 3: '3_weeks', 4: '1_month' };
@@ -68,8 +68,8 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
             setPriceType(pType);
 
             // Gerçekte ödenecek tutar üzerinden mesaj hakkı önizlemesi
-            // (1 aylık seçimde createsubscription.php %5 indirim uyguluyor).
-            const actualPaid = selectedDuration === '1_month' ? calculatedPrice * 0.95 : calculatedPrice;
+            // (1 aylık seçimde createsubscription.php indirim uyguluyor).
+            const actualPaid = selectedDuration === '1_month' ? calculatedPrice * MONTHLY_DISCOUNT_FACTOR : calculatedPrice;
             setMessageAllowance(calculateMessageAllowance(actualPaid));
         }
     }, [selectedDuration, botData]);
