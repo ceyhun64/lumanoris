@@ -261,12 +261,32 @@ class SocialController {
     public static function getFollowedBots(): void {
         $userId = AuthMiddleware::requireAuth();
 
+        // Every account implicitly follows the platform's own "Lumanoris AI"
+        // bot (owned by the SYSTEM user), even without a chatbot_follows row —
+        // the UNION branch adds it once, only when not already followed for real.
         $bots = Database::getInstance()->selectMulti(
-            "c.id, c.isim, c.aciklama, c.profil_fotografi, c.kapak_fotografi, c.ucret_haftalik
+            "SELECT c.id, c.id AS chatbot_id, c.isim, c.aciklama, c.profil_fotografi, c.kapak_fotografi,
+                    c.ucret_haftalik, c.kategori_id, ck.kategori_adi_tr AS kategori_adi,
+                    u.kullanici_adi AS gelistirici_adi,
+                    (SELECT COUNT(*) FROM chatbot_follows WHERE chatbot_id = c.id) AS takipci_sayisi
              FROM chatbot_follows cf
              JOIN chatbotlar c ON c.id = cf.chatbot_id
-             WHERE cf.user_id = ?",
-            [$userId]
+             LEFT JOIN chatbot_kategoriler ck ON ck.id = c.kategori_id
+             LEFT JOIN kullanicilar u ON u.id = c.owner_user_id
+             WHERE cf.user_id = ?
+
+             UNION
+
+             SELECT c.id, c.id AS chatbot_id, c.isim, c.aciklama, c.profil_fotografi, c.kapak_fotografi,
+                    c.ucret_haftalik, c.kategori_id, ck.kategori_adi_tr AS kategori_adi,
+                    u.kullanici_adi AS gelistirici_adi,
+                    (SELECT COUNT(*) FROM chatbot_follows WHERE chatbot_id = c.id) AS takipci_sayisi
+             FROM chatbotlar c
+             JOIN kullanicilar u ON u.id = c.owner_user_id
+             LEFT JOIN chatbot_kategoriler ck ON ck.id = c.kategori_id
+             WHERE u.kullanici_adi = 'SYSTEM' AND c.isim = 'Lumanoris AI'
+               AND NOT EXISTS (SELECT 1 FROM chatbot_follows WHERE chatbot_id = c.id AND user_id = ?)",
+            [$userId, $userId]
         );
 
         JsonResponse::success(['bots' => $bots]);

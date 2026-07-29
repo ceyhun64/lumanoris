@@ -1,5 +1,5 @@
 <?php
-    $hakkinda_metini = $database->getGlobalVars('hakkinda')['hakkinda'];
+    $hakkinda_metini = $database->getGlobalVars('hakkinda')['hakkinda'] ?? '';
 ?>
 <main class="bg-gray-50 p-6 min-h-screen">
     <div class="max-w-screen-xl mx-auto">

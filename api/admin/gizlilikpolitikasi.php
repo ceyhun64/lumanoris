@@ -1,5 +1,5 @@
 <?php
-    $gizlilik_politikasi = $database->getGlobalVars('gizlilik_politikasi')['gizlilik_politikasi'];
+    $gizlilik_politikasi = $database->getGlobalVars('gizlilik_politikasi')['gizlilik_politikasi'] ?? '';
 ?>
 <main class="bg-gray-50 p-6 min-h-screen">
     <div class="max-w-screen-xl mx-auto">

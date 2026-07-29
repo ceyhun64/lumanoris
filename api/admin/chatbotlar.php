@@ -12,7 +12,7 @@ $kategoriler = $database->selectMulti("id, kategori_adi_tr FROM chatbot_kategori
                 <ul id="kategoriUl" class="space-y-2 overflow-auto">
                     <?php foreach ($chatbotlar as $chatbot): ?>
                         <li class="flex items-center bg-gray-100 hover:bg-indigo-50/70 text-gray-800 px-3 py-2 rounded-lg cursor-pointer transition duration-150" data-id="<?= $chatbot['id'] ?>">
-                            <span class="font-medium"><?= htmlspecialchars($chatbot['isim']) ?></span>
+                            <span class="font-medium"><?= htmlspecialchars($chatbot['isim'] ?? '') ?></span>
                         </li>   
                     <?php endforeach; ?>
                 </ul>
@@ -246,7 +246,7 @@ $kategoriler = $database->selectMulti("id, kategori_adi_tr FROM chatbot_kategori
                     showProgress: true
                 });
                 if (id === "0" && result.success) {
-                    const baslik1 = form.kategori_adi_tr.value;
+                    const baslik1 = form.isim.value;
                     const id = result.id;
                     const li = document.createElement("li");
                     li.className = "bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded cursor-pointer transition";
@@ -300,7 +300,7 @@ $kategoriler = $database->selectMulti("id, kategori_adi_tr FROM chatbot_kategori
                     });
                 }
                 else if(id !== "0" && result.success) {
-                    const existingLi = dataUl.querySelector(`li[data-id="id"]`);
+                    const existingLi = dataUl.querySelector(`li[data-id="${id}"]`);
                     const baslik1 = form.isim.value;
                     if (existingLi) {
                         existingLi.textContent = baslik1;

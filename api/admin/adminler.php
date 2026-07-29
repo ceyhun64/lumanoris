@@ -21,7 +21,7 @@ $adminler = $database->selectMulti("id, kullanici_adi FROM adminler");
           <!-- Liste öğesi stili güncellendi: flex, items-center, hover:bg-indigo-50/70, text-gray-800 -->
           <li class="flex items-center bg-gray-100 hover:bg-indigo-50/70 text-gray-800 px-3 py-2 rounded-lg cursor-pointer transition duration-150" data-id="<?= $admin['id'] ?>">
             <i class="bi bi-person-fill text-indigo-500 mr-2"></i>
-            <span class="font-medium"><?= htmlspecialchars($admin['kullanici_adi']) ?></span>
+            <span class="font-medium"><?= htmlspecialchars($admin['kullanici_adi'] ?? '') ?></span>
           </li>
         <?php endforeach; ?>
       </ul>

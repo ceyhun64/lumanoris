@@ -1,5 +1,5 @@
 <?php
-    $kullanim_kosullari = $database->getGlobalVars('kullanim_kosullari')['kullanim_kosullari'];
+    $kullanim_kosullari = $database->getGlobalVars('kullanim_kosullari')['kullanim_kosullari'] ?? '';
 ?>
 <main class="bg-gray-50 p-6 min-h-screen">
     <div class="max-w-screen-xl mx-auto">

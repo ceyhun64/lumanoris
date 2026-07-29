@@ -1,5 +1,5 @@
 <?php
-$is_offline = $database->getGlobalVars('offline')['offline'];
+$is_offline = $database->getGlobalVars('offline')['offline'] ?? '0';
 ?>
 <main class="bg-gray-50 p-6 min-h-screen">
     <div class="max-w-screen-xl mx-auto">

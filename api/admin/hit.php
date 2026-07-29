@@ -30,8 +30,8 @@ $hits = $database->selectMulti("page_url, COUNT(*) as hits FROM page_hits GROUP 
                             <tr class="even:bg-white odd:bg-gray-50 hover:bg-indigo-50/50 transition duration-150">
                                 <td class="px-5 py-3 font-medium text-gray-600"><?= $index + 1 ?></td>
                                 <td class="px-5 py-3 break-words text-gray-800">
-                                    <a href="<?= htmlspecialchars($row['page_url']) ?>" target="_blank" class="text-indigo-600 hover:text-indigo-800 transition">
-                                        <?= htmlspecialchars($row['page_url']) ?>
+                                    <a href="<?= htmlspecialchars($row['page_url'] ?? '') ?>" target="_blank" class="text-indigo-600 hover:text-indigo-800 transition">
+                                        <?= htmlspecialchars($row['page_url'] ?? '') ?>
                                     </a>
                                 </td>
                                 <td class="px-5 py-3 font-extrabold text-base text-indigo-700 text-right"><?= $row['hits'] ?></td>

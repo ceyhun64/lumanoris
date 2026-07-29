@@ -37,9 +37,19 @@ function getOrInitCoinBalance(Database $db, int $userId): array {
         return ['coins_remaining' => AppConfig::DAILY_FREE_MESSAGES, 'exhausted_at' => null];
     }
 
-    // One row per user — reset back to the daily allowance once the stored date has passed.
-    $lastReset = is_string($row['last_reset_date']) ? substr($row['last_reset_date'], 0, 10) : null;
-    if ($lastReset !== $today) {
+    // Two mutually exclusive renewal rules (spec: exhausted balances renew 24h
+    // after the exhausting message; untouched balances renew at midnight).
+    // Checking the calendar date alone — regardless of exhausted_at — used to
+    // let a user who ran out at 23:59 renew a minute later instead of waiting
+    // the full 24h, so the two rules are now applied separately.
+    if ($row['exhausted_at'] !== null) {
+        $shouldReset = strtotime($row['exhausted_at']) <= (time() - 86400);
+    } else {
+        $lastReset   = is_string($row['last_reset_date']) ? substr($row['last_reset_date'], 0, 10) : null;
+        $shouldReset = $lastReset !== $today;
+    }
+
+    if ($shouldReset) {
         $db->update(AppConfig::TABLE_COIN_BALANCES, [
             'coins_remaining' => AppConfig::DAILY_FREE_MESSAGES,
             'last_reset_date' => $today,

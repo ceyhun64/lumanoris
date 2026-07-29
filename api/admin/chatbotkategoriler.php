@@ -11,7 +11,7 @@ $chatbot_kategoriler = $database->selectMulti("* FROM chatbot_kategoriler");
                 <ul id="kategoriUl" class="space-y-2 overflow-auto">
                     <?php foreach ($chatbot_kategoriler as $kategori): ?>
                         <li class="flex items-center bg-gray-100 hover:bg-indigo-50/70 text-gray-800 px-3 py-2 rounded-lg cursor-pointer transition duration-150" data-id="<?= $kategori['id'] ?>">
-                            <span class="font-medium"><?= htmlspecialchars($kategori['kategori_adi_tr']) ?></span>
+                            <span class="font-medium"><?= htmlspecialchars($kategori['kategori_adi_tr'] ?? '') ?></span>
                         </li>
                     <?php endforeach; ?>
                 </ul>

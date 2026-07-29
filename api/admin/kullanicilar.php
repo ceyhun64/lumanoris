@@ -11,7 +11,7 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
                 <ul id="kategoriUl" class="space-y-2 overflow-auto">
                     <?php foreach ($kullanicilar as $kullanici): ?>
                         <li class="flex items-center bg-gray-100 hover:bg-indigo-50/70 text-gray-800 px-3 py-2 rounded-lg cursor-pointer transition duration-150" data-id="<?= $kullanici['id'] ?>">
-                            <span class="font-medium"><?= htmlspecialchars($kullanici['ad_soyad']) ?></span>
+                            <span class="font-medium"><?= htmlspecialchars($kullanici['ad_soyad'] ?? '') ?></span>
                         </li>
                     <?php endforeach; ?>
                 </ul>
@@ -166,7 +166,7 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
                     showProgress: true
                 });
                 if (id === "0" && result.success) {
-                    const baslik1 = form.kategori_adi_tr.value;
+                    const baslik1 = form.ad_soyad.value;
                     const id = result.id;
                     const li = document.createElement("li");
                     li.className = "bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded cursor-pointer transition";
@@ -219,8 +219,8 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
                     });
                 }
                 else if(id !== "0" && result.success) {
-                    const existingLi = dataUl.querySelector(`li[data-id="id"]`);
-                    const baslik1 = form.kategori_adi_tr.value;
+                    const existingLi = dataUl.querySelector(`li[data-id="${id}"]`);
+                    const baslik1 = form.ad_soyad.value;
                     if (existingLi) {
                         existingLi.textContent = baslik1;
                     }

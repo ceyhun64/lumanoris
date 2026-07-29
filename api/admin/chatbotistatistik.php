@@ -11,7 +11,7 @@ $chatbotlar = $database->selectMulti("id, isim FROM chatbotlar");
                 <ul id="dataUl" class="space-y-2 overflow-auto">
                     <?php foreach ($chatbotlar as $chatbot): ?>
                         <li class="flex items-center bg-gray-100 hover:bg-indigo-50/70 text-gray-800 px-3 py-2 rounded-lg cursor-pointer transition duration-150" data-id="<?= $chatbot['id'] ?>">
-                            <span class="font-medium"><?= htmlspecialchars($chatbot['isim']) ?></span>
+                            <span class="font-medium"><?= htmlspecialchars($chatbot['isim'] ?? '') ?></span>
                         </li>   
                     <?php endforeach; ?>
                 </ul>

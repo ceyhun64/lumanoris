@@ -12,7 +12,7 @@ $abonelikler = $database->selectMulti("* FROM plans");
                 <ul id="dataUl" class="space-y-2 overflow-auto">
                     <?php foreach ($abonelikler as $abonelik): ?>
                         <li class="flex items-center bg-gray-100 hover:bg-indigo-50/70 text-gray-800 px-3 py-2 rounded-lg cursor-pointer transition duration-150" data-id="<?= $abonelik['id'] ?>">
-                            <span class="font-medium"><?= htmlspecialchars($abonelik['name_tr']) ?></span>
+                            <span class="font-medium"><?= htmlspecialchars($abonelik['name_tr'] ?? '') ?></span>
                         </li>   
                     <?php endforeach; ?>
                 </ul>

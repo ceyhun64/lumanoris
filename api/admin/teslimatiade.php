@@ -1,5 +1,5 @@
 <?php
-$teslimat_iade_metini = $database->getGlobalVars('teslimat_iade_sartlari')['teslimat_iade_sartlari'];
+$teslimat_iade_metini = $database->getGlobalVars('teslimat_iade_sartlari')['teslimat_iade_sartlari'] ?? '';
 ?>
 <main class="bg-gray-50 p-6 min-h-screen">
     <div class="max-w-screen-xl mx-auto">
