@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   SearchX,
   Compass,
@@ -55,6 +55,7 @@ function formatTime(dateString) {
 
 export default function Explore() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("Tümü");
   const [selectedBots, setSelectedBots] = useState([]);
   const [isFromList, setIsFromList] = useState(false);
@@ -141,17 +142,14 @@ export default function Explore() {
   };
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const from = params.get("from");
-      const name = params.get("name");
-      const urlSearchTerm = params.get("search") || "";
+    const from = searchParams.get("from");
+    const name = searchParams.get("name");
+    const urlSearchTerm = searchParams.get("search") || "";
 
-      setIsFromList(from === "list");
-      setListName(name || "");
-      setSearchTerm(urlSearchTerm);
-    }
-  }, []);
+    setIsFromList(from === "list");
+    setListName(name || "");
+    setSearchTerm(urlSearchTerm);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchCategories();

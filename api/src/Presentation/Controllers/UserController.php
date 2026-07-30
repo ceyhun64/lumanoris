@@ -10,6 +10,12 @@ class UserController {
         $db    = Database::getInstance();
         $count = (int) $db->count(AppConfig::TABLE_CHATBOTS, 'author_user_id = ?', [$userId]);
 
+        $planRow  = $db->selectSingle('plan_name FROM user_plan_selection WHERE user_id = ?', [$userId]);
+        $planName = $planRow['plan_name'] ?? 'Ücretsiz Plan';
+
+        require_once __DIR__ . '/../../../functions/coin_engine.php';
+        $coinBalance = getOrInitCoinBalance($db, $userId);
+
         // Same "purchased" definition ChatbotRepository::getMenuItems uses
         // for the Chatbotlarım list: owns access via an active subscription
         // to a bot someone else authored — not just anything with
@@ -35,6 +41,9 @@ class UserController {
             'chatbotCount'        => $count,
             'purchasedCount'      => $purchasedCount,
             'sharedDialogueCount' => $sharedDialogueCount,
+            'planName'            => $planName,
+            'dailyCoinsRemaining' => (int) $coinBalance['coins_remaining'],
+            'dailyCoinsTotal'     => AppConfig::DAILY_FREE_MESSAGES,
         ]);
     }
 

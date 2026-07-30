@@ -159,9 +159,11 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
             <span className="text-xs font-semibold text-white truncate tracking-tight">
               {user.fullname || user.username || "Kullanıcı"}
             </span>
-            <span className="px-1.5 py-0.2 text-caption font-extrabold uppercase tracking-widest text-fuchsia-300 bg-fuchsia-500/15 border border-fuchsia-500/30 rounded">
-              PRO
-            </span>
+            {user.planName && user.planName !== "Ücretsiz Plan" && (
+              <span className="px-1.5 py-0.2 text-caption font-extrabold uppercase tracking-widest text-fuchsia-300 bg-fuchsia-500/15 border border-fuchsia-500/30 rounded">
+                PRO
+              </span>
+            )}
           </div>
           <span className="text-caption font-mono text-zinc-400 truncate mt-0.5">
             @{user.username || "lumanoris_user"}

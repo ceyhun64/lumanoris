@@ -528,7 +528,7 @@ function ContactForm() {
 }
 
 export default function App() {
-  const { userId } = useContext(UserContext);
+  const { userId, account } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState("user");
   const [userInfo, setUserInfo] = useState({
     ad: "",
@@ -651,7 +651,7 @@ export default function App() {
                 </span>
               </div>
               <h2 className="text-xl font-bold text-white tracking-tight">
-                Ücretsiz Plan
+                {account?.planName || "Ücretsiz Plan"}
               </h2>
               <p className="text-xs text-white/50 max-w-md">
                 Gelişmiş özellikler, yüksek limitler ve öncelikli destek için

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useContext } from "react";
 import { UserContext } from "@/shared/contexts/UserContext";
 import { useRouter } from "next/navigation";
 import useSellerStatus from "@/shared/hooks/useSellerStatus";
+import SellerOnboardingWizard from "@/features/seller/SellerOnboardingWizard";
 import {
   Lock,
   Globe2,
@@ -29,7 +30,6 @@ import {
   RefreshCw,
   X,
   CreditCard,
-  Building,
   User,
   Plus,
   Send,
@@ -247,72 +247,9 @@ function BuyProducerAccountModal({ isOpen, onClose, userId, onPurchased }) {
   );
 }
 
-function SellerOnboardingWizard({ userId, initialStatus, onComplete }) {
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    storeName: "",
-    iban: "",
-    identity: "",
-  });
-
-  return (
-    <div className="max-w-xl mx-auto rounded-2xl bg-zinc-900/80 border border-white/10 p-6 sm:p-8 backdrop-blur-xl shadow-2xl space-y-6">
-      <div className="text-center space-y-2">
-        <div className="inline-flex p-3 rounded-2xl bg-violet-500/10 text-violet-400 border border-violet-500/20 mb-2">
-          <Building className="w-6 h-6" />
-        </div>
-        <h2 className="text-xl sm:text-2xl font-bold text-white">
-          Pazaryeri Satıcı Profili
-        </h2>
-        <p className="text-xs sm:text-sm text-zinc-400 max-w-sm mx-auto">
-          Gelir elde etmeye başlamak için fatura ve ödeme bilgilerinizi
-          doğrulayın.
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <label className="block text-xs font-mono text-zinc-400 mb-1">
-            Mağaza veya Unvan Adınız
-          </label>
-          <input
-            type="text"
-            value={formData.storeName}
-            onChange={(e) =>
-              setFormData({ ...formData, storeName: e.target.value })
-            }
-            placeholder="Örn: Nexus AI Labs"
-            className="w-full rounded-xl bg-black/50 border border-white/10 px-4 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 focus:outline-none"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-mono text-zinc-400 mb-1">
-            Ödeme Yapılacak IBAN
-          </label>
-          <input
-            type="text"
-            value={formData.iban}
-            onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
-            placeholder="TR00 0000 0000 0000 0000 0000 00"
-            className="w-full rounded-xl bg-black/50 border border-white/10 px-4 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 focus:outline-none"
-          />
-        </div>
-      </div>
-
-      <button
-        onClick={onComplete}
-        className="w-full py-3.5 rounded-xl bg-gradient-btn text-xs font-semibold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
-      >
-        <ShieldCheck className="w-4 h-4" />
-        <span>Satıcı Hesabını Onayla & Devam Et</span>
-      </button>
-    </div>
-  );
-}
-
 function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
   const router = useRouter();
+  const { refetchAccount } = useContext(UserContext);
   const [botName, setBotName] = useState(bot?.chatbot?.isim || "");
   const [description, setDescription] = useState(
     bot?.chatbot?.aciklama || "",
@@ -359,6 +296,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
       );
       const result = await res.json();
       if (result.success) {
+        refetchAccount();
         router.push("/dashboard/chatbots");
       } else {
         setSubmitError(result.message || "Chatbot kaydedilemedi.");

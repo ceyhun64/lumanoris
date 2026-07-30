@@ -10,6 +10,9 @@ const DEFAULT_ACCOUNT = {
   sharedDialogueCount: 0,
   balance: 0,
   transactions: [],
+  planName: "Ücretsiz Plan",
+  dailyCoinsRemaining: 0,
+  dailyCoinsTotal: 0,
 };
 
 // Single shared source for the header/sidebar/wallet account summary.
@@ -33,6 +36,9 @@ export function useAccountData(userId) {
             chatbotCount: result.chatbotCount ?? 0,
             purchasedCount: result.purchasedCount ?? 0,
             sharedDialogueCount: result.sharedDialogueCount ?? 0,
+            planName: result.planName || "Ücretsiz Plan",
+            dailyCoinsRemaining: result.dailyCoinsRemaining ?? 0,
+            dailyCoinsTotal: result.dailyCoinsTotal ?? 0,
           }));
         }
       }

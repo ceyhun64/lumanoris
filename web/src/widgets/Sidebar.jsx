@@ -74,7 +74,15 @@ function MinimalTooltip({ children, text, side = "right" }) {
   );
 }
 
-const DEFAULT_ACCOUNT = { fullname: "", username: "", chatbotCount: 0, balance: 0 };
+const DEFAULT_ACCOUNT = {
+  fullname: "",
+  username: "",
+  chatbotCount: 0,
+  balance: 0,
+  planName: "Ücretsiz Plan",
+  dailyCoinsRemaining: 0,
+  dailyCoinsTotal: 0,
+};
 
 export function Sidebar({ isMobileOpen = false, onNavigate, userId = null, account = DEFAULT_ACCOUNT }) {
   const router = useRouter();
@@ -218,9 +226,11 @@ export function Sidebar({ isMobileOpen = false, onNavigate, userId = null, accou
                     <span className="font-semibold text-sm text-white tracking-tight truncate">
                       Lumanoris
                     </span>
-                    <span className="px-1.5 py-0.2 text-caption font-bold uppercase tracking-wider text-fuchsia-400 bg-fuchsia-500/10 border border-fuchsia-500/20 rounded">
-                      Pro
-                    </span>
+                    {account.planName && account.planName !== "Ücretsiz Plan" && (
+                      <span className="px-1.5 py-0.2 text-caption font-bold uppercase tracking-wider text-fuchsia-400 bg-fuchsia-500/10 border border-fuchsia-500/20 rounded">
+                        Pro
+                      </span>
+                    )}
                   </div>
                   <span className="text-caption text-zinc-500 truncate">
                     AI Studio & Market
@@ -342,20 +352,27 @@ export function Sidebar({ isMobileOpen = false, onNavigate, userId = null, accou
             );
           })()}
 
-          {/* Pro Upgrade Widget (When Expanded) */}
+          {/* Plan / Daily Token Widget (When Expanded) */}
           {!collapsed && (
             <div className="relative overflow-hidden p-3 rounded-xl bg-gradient-to-br from-violet-950/40 via-zinc-900/60 to-zinc-950 border border-violet-500/20 group">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5 text-xs font-medium text-violet-300">
                   <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                  <span>Pro Plan</span>
+                  <span>{account.planName}</span>
                 </div>
                 <span className="text-caption text-zinc-400 font-mono">
-                  84% Token
+                  {account.dailyCoinsTotal > 0
+                    ? `${Math.round((account.dailyCoinsRemaining / account.dailyCoinsTotal) * 100)}% Token`
+                    : "0% Token"}
                 </span>
               </div>
               <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden mb-3">
-                <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 w-[84%] rounded-full" />
+                <div
+                  className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full"
+                  style={{
+                    width: `${account.dailyCoinsTotal > 0 ? Math.round((account.dailyCoinsRemaining / account.dailyCoinsTotal) * 100) : 0}%`,
+                  }}
+                />
               </div>
               <button
                 type="button"

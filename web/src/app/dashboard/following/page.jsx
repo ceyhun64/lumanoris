@@ -599,13 +599,15 @@ export default function Following() {
               >
                 {/* Top Cover Banner */}
                 <div>
-                  <div className="relative aspect-[16/9] w-full bg-zinc-950 overflow-hidden">
-                    <img
-                      src={resolveImg(bot.kapak_fotografi)}
-                      alt={bot.isim}
-                      className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
+                  <div className="relative aspect-[16/9] w-full bg-zinc-950">
+                    <div className="absolute inset-0 overflow-hidden">
+                      <img
+                        src={resolveImg(bot.kapak_fotografi)}
+                        alt={bot.isim}
+                        className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
+                    </div>
 
                     {/* Unfollow Quick Button */}
                     <button
@@ -619,8 +621,10 @@ export default function Following() {
                       <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
                     </button>
 
-                    {/* Avatar Overlay */}
-                    <div className="absolute -bottom-4 left-4 h-10 w-10 overflow-hidden rounded-xl border-2 border-zinc-900 bg-zinc-950 shadow-lg">
+                    {/* Avatar Overlay — sits outside the image's own
+                        overflow-hidden wrapper above so its -bottom-4 overlap
+                        isn't clipped by it. */}
+                    <div className="absolute -bottom-4 left-4 z-10 h-10 w-10 overflow-hidden rounded-xl border-2 border-zinc-900 bg-zinc-950 shadow-lg">
                       <img
                         src={resolveImg(bot.profil_fotografi, "avatar")}
                         alt=""
