@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import Script from "next/script";
 import {
   Eye,
   EyeOff,
@@ -443,17 +444,28 @@ export default function AuthPage() {
     checkSession();
   }, []);
 
-  const handleGoogleLoginClick = async () => {
+  const googleButtonSlotRef = useRef(null);
+  const [googleReady, setGoogleReady] = useState(false);
+
+  // Google's Identity Services widget renders its own button into a DOM
+  // node — it doesn't accept custom styling. To keep our own button design,
+  // GIS renders into a visually hidden slot and our styled button forwards
+  // its click to the real (hidden) Google button.
+  const handleGoogleCredentialResponse = useCallback(async (response) => {
     setLoading(true);
     try {
-      // Standard simulated or direct Google OAuth flow trigger
+      const formData = new FormData();
+      formData.append(
+        "data",
+        JSON.stringify({ google_token: response.credential }),
+      );
       const res = await fetch("/api/auth/login-google.php", {
         method: "POST",
-        body: JSON.stringify({ action: "google_login" }),
+        body: formData,
       });
       const result = await res.json().catch(() => ({
         success: false,
-        message: "Google entegrasyonu aktif.",
+        message: "Sunucu yanıtı okunamadı.",
       }));
       if (result.success) {
         redirectAfterLogin();
@@ -466,6 +478,34 @@ export default function AuthPage() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const handleGoogleScriptLoad = () => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId || !window.google?.accounts?.id) return;
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      callback: handleGoogleCredentialResponse,
+    });
+    if (googleButtonSlotRef.current) {
+      window.google.accounts.id.renderButton(googleButtonSlotRef.current, {
+        type: "standard",
+        width: 320,
+      });
+    }
+    setGoogleReady(true);
+  };
+
+  const handleGoogleLoginClick = () => {
+    if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+      toast.error("Google ile giriş bu ortamda yapılandırılmamış.");
+      return;
+    }
+    if (!googleReady) {
+      toast.error("Google girişi hazırlanıyor, birkaç saniye sonra tekrar deneyin.");
+      return;
+    }
+    googleButtonSlotRef.current?.querySelector('div[role="button"]')?.click();
   };
 
   const handleLogin = async (e) => {
@@ -572,6 +612,20 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-[#030305] text-white flex selection:bg-fuchsia-500/30 selection:text-fuchsia-200 overflow-x-hidden font-sans relative">
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        strategy="afterInteractive"
+        onLoad={handleGoogleScriptLoad}
+      />
+      {/* Real Google Identity Services button, kept visually hidden — our
+          own styled buttons below forward their click to this one, since
+          Google's widget doesn't accept custom styling directly. */}
+      <div
+        ref={googleButtonSlotRef}
+        className="absolute h-px w-px overflow-hidden opacity-0"
+        style={{ pointerEvents: googleReady ? "auto" : "none" }}
+        aria-hidden="true"
+      />
       {/* Ambient background lighting effects */}
       <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-fuchsia-600/[0.07] rounded-full blur-[160px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-violet-600/[0.07] rounded-full blur-[160px] pointer-events-none" />

@@ -268,7 +268,12 @@
       "Bash(taskkill //F //PID 29608)",
       "Bash(taskkill //F //PID 7768)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:3000/ --max-time 5)",
-      "Bash(taskkill //F //PID 28044)"
+      "Bash(taskkill //F //PID 28044)",
+      "Bash(curl -s -g -o /dev/null -w \"%{http_code}\\\\n\" \"http://[::1]:8000/admin\" --max-time 5)",
+      "Bash(awk 'NR>=595 && NR<=625' page.jsx)",
+      "Bash(taskkill //F //PID 10948)",
+      "Bash(taskkill //F //PID 21576)",
+      "Bash(taskkill //F //PID 15420)"
     ],
     "additionalDirectories": [
       "\\tmp",
