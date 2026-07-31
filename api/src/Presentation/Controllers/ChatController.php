@@ -30,6 +30,13 @@ class ChatController {
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
         $data['user_id'] = $userId;
+        // conversation_name is VARCHAR(50) — the frontend derives it from the
+        // message's first few words with no length cap, so a long word (or
+        // several short ones) can exceed the column and throw a hard SQL
+        // truncation error (SQLSTATE 22001) instead of saving the message.
+        if (isset($data['conversation_name'])) {
+            $data['conversation_name'] = mb_substr((string) $data['conversation_name'], 0, 50);
+        }
         $id = Database::getInstance()->insert('chatbot_conversations', $data);
         JsonResponse::success(['message' => 'Yeni sohbet başarıyla başlatıldı!', 'id' => $id]);
     }

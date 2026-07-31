@@ -92,7 +92,7 @@ export default function ChatbotCard({
                 ? `${monthlyPrice} ₺/ay`
                 : "Ücretsiz"}
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
             <button
               onClick={() => setConfirmDeleteOpen(true)}
               className="flex h-8 w-8 items-center justify-center rounded-xl text-white/30 transition-colors hover:bg-red-500/10 hover:text-red-400"
