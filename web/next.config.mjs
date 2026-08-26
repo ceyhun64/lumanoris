@@ -37,15 +37,18 @@ const nextConfig = {
         // Next.js runtime'ı inline bootstrap script'i enjekte ediyor;
         // nonce'a geçmek ayrı bir iş (her sayfanın SSR'a alınması gerekir),
         // bu yüzden şimdilik 'unsafe-inline'.
-        `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        `script-src 'self' 'unsafe-inline' https://accounts.google.com${isDev ? " 'unsafe-eval'" : ''}`,
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
         "font-src 'self' https://fonts.gstatic.com data:",
         "img-src 'self' data: blob: https:",
-        "connect-src 'self'",
-        // FE-005 / SEC-017: sayfanın kendisi hiçbir yere gömülemez ve
-        // gömemez; ödeme 3D akışı eklendiğinde frame-src genişletilmeli.
+        "connect-src 'self' https://accounts.google.com",
+        // FE-005 / SEC-017: sayfa hiçbir yere gömülemez (frame-ancestors). Gömebildiği
+        // tek kaynak Google Identity Services: login/page.jsx gsi/client script'ini
+        // yüklüyor ve renderButton butonu accounts.google.com kaynaklı bir iframe
+        // içinde çiziyor — script/style/connect/frame izinlerinin dördü de gerekli.
+        // Ödeme 3D akışı eklendiğinde frame-src ayrıca genişletilmeli.
         "frame-ancestors 'none'",
-        "frame-src 'none'",
+        "frame-src https://accounts.google.com",
         "object-src 'none'",
         "base-uri 'self'",
         "form-action 'self'",

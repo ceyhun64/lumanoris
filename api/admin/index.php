@@ -4,10 +4,6 @@ configure_error_log();
 require_once __DIR__ . '/../functions/util.php';
 require_once __DIR__ . '/functions/tailmind.php';
 date_default_timezone_set('Europe/Istanbul');
-require_once '../functions/db.php';
-$database = Database::getInstance();
-$conn = $database->getConnection();
-
 // The admin panel turned display_errors on unconditionally, regardless of
 // APP_DEBUG — so in production a PHP notice or warning would be printed into
 // the page (and, for anything that emits JSON, into the response body). Honour
@@ -17,6 +13,14 @@ ini_set('display_errors', $adminDebug ? '1' : '0');
 ini_set('display_startup_errors', $adminDebug ? '1' : '0');
 ini_set('log_errors', '1');
 error_reporting(E_ALL);
+
+// ERR-004: DB bağlantısı bu satırların ALTINDA kurulmalı. Üstünde kurulduğunda,
+// bağlantı hata verirse display_errors henüz ayarlanmamış oluyordu ve panel boş
+// gövdeli bir 500 döndürüyordu — canlıda neyin kırıldığı görünmüyordu.
+require_once '../functions/db.php';
+$database = Database::getInstance();
+$conn = $database->getConnection();
+
 
 $currentPath = $_SERVER['REQUEST_URI'];
 

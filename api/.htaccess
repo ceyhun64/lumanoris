@@ -11,13 +11,13 @@
 # same denylist for `php -S`. Change both together.
 
 # --- secrets, dumps, logs, archives -----------------------------------------
-<FilesMatch "(?i)(^\.env|^\.env\..*|^error_log$|\.(sql|sql\.gz|zip|tar|gz|bak|swp|log|key|pem|p12|pfx|ini|dist|lock)$)">
+<FilesMatch "(?i)(^\.env|^\.env\..*|^error_log$|^composer\.json$|^_restoretest\.php$|\.(sql|sql\.gz|zip|tar|gz|bak|swp|log|key|pem|p12|pfx|ini|dist|lock)$)">
     Require all denied
 </FilesMatch>
 
 # Apache 2.2 fallback — Require is 2.4+. Harmless when both are present.
 <IfModule !mod_authz_core.c>
-    <FilesMatch "(?i)(^\.env|^\.env\..*|^error_log$|\.(sql|sql\.gz|zip|tar|gz|bak|swp|log|key|pem|p12|pfx|ini|dist|lock)$)">
+    <FilesMatch "(?i)(^\.env|^\.env\..*|^error_log$|^composer\.json$|^_restoretest\.php$|\.(sql|sql\.gz|zip|tar|gz|bak|swp|log|key|pem|p12|pfx|ini|dist|lock)$)">
         Order allow,deny
         Deny from all
     </FilesMatch>
@@ -31,7 +31,7 @@
 # --- whole directories that must never be walked ----------------------------
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteRule (^|/)(db_backup|src|vendor|migrations|database|\.git)(/|$) - [F,L,NC]
+    RewriteRule (^|/)(db_backup|src|vendor|migrations|database|functions|\.git)(/|$) - [F,L,NC]
 </IfModule>
 
 # --- do not leak the directory listing when an index is missing -------------

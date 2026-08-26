@@ -32,52 +32,11 @@ env_load();
 require_once __DIR__ . '/logging.php';
 configure_error_log();
 
-require_once __DIR__ . '/db.php';
-
-$database = Database::getInstance();
-$conn     = $database->getConnection();
-
-// ─── Response helpers ─────────────────────────────────────────────────────────
-
-function json_success(array $data = [], int $status = 200): void {
-    http_response_code($status);
-    echo json_encode(array_merge(['success' => true], $data), JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-function json_error(string $message, int $status = 400, array $extra = []): void {
-    http_response_code($status);
-    echo json_encode(array_merge(['success' => false, 'message' => $message], $extra), JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-function require_method(string $method): void {
-    if ($_SERVER['REQUEST_METHOD'] !== strtoupper($method)) {
-        json_error('Method not allowed', 405);
-    }
-}
-
-function require_auth(): int {
-    if (!isset($_SESSION['user_id'])) {
-        json_error('Oturum açmanız gerekiyor.', 401);
-    }
-    return (int) $_SESSION['user_id'];
-}
-
-function parse_post_data(): array {
-    $data = null;
-    if (isset($_POST['data'])) {
-        $data = json_decode($_POST['data'], true);
-    }
-    if (!is_array($data)) {
-        json_error('Geçersiz istek verisi.', 400);
-    }
-    return $data;
-}
-
-function parse_get_data(): array {
-    return $_GET ?? [];
-}
+// ERR-004: bu üç kanca eskiden dosyanın SONUNDA, yani DB bağlantısından SONRA
+// kayıtlıydı. Sonuç: .env eksikse ya da veritabanı erişilemezse Database::getInstance()
+// henüz hiçbir handler yokken fırlatıyor, PHP display_errors=0 ile hiçbir çıktı üretmiyor
+// ve istemci **boş gövdeli 500** alıyordu — canlıda teşhis edilemeyen bir hata. Kayıt
+// artık bağlantıdan ÖNCE yapılıyor, böylece aynı arıza düzgün bir JSON hataya dönüşüyor.
 
 // ─── Global exception → JSON response ────────────────────────────────────────
 
@@ -180,3 +139,50 @@ register_shutdown_function(function (): void {
             : 'Sunucu hatası oluştu.',
     ], JSON_UNESCAPED_UNICODE);
 });
+
+require_once __DIR__ . '/db.php';
+
+$database = Database::getInstance();
+$conn     = $database->getConnection();
+
+// ─── Response helpers ─────────────────────────────────────────────────────────
+
+function json_success(array $data = [], int $status = 200): void {
+    http_response_code($status);
+    echo json_encode(array_merge(['success' => true], $data), JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+function json_error(string $message, int $status = 400, array $extra = []): void {
+    http_response_code($status);
+    echo json_encode(array_merge(['success' => false, 'message' => $message], $extra), JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+function require_method(string $method): void {
+    if ($_SERVER['REQUEST_METHOD'] !== strtoupper($method)) {
+        json_error('Method not allowed', 405);
+    }
+}
+
+function require_auth(): int {
+    if (!isset($_SESSION['user_id'])) {
+        json_error('Oturum açmanız gerekiyor.', 401);
+    }
+    return (int) $_SESSION['user_id'];
+}
+
+function parse_post_data(): array {
+    $data = null;
+    if (isset($_POST['data'])) {
+        $data = json_decode($_POST['data'], true);
+    }
+    if (!is_array($data)) {
+        json_error('Geçersiz istek verisi.', 400);
+    }
+    return $data;
+}
+
+function parse_get_data(): array {
+    return $_GET ?? [];
+}
