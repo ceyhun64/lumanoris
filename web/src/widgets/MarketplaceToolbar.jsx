@@ -67,7 +67,7 @@ export default function MarketplaceToolbar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex shrink-0 items-center gap-2 rounded-xl border border-fuchsia-400/25 bg-fuchsia-500/10 px-4 py-2.5 text-body-sm font-medium text-fuchsia-200 transition-colors hover:bg-fuchsia-500/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex shrink-0 items-center gap-2 rounded-xl border border-fuchsia-400/25 bg-fuchsia-500/10 px-4 py-2.5 text-body-sm font-medium text-fuchsia-200 transition-colors hover:bg-fuchsia-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ListFilter className="h-4 w-4" />
               {activeLabel}
@@ -92,7 +92,7 @@ export default function MarketplaceToolbar({
         </DropdownMenu>
       </div>
 
-      <div className="mt-1 border-t border-white/[0.05] px-1.5 pt-1.5">
+      <div className="mt-1 border-t border-white/5 px-1.5 pt-1.5">
         <CategoryFilter
           bare
           categories={categories}

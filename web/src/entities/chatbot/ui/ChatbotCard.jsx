@@ -315,7 +315,7 @@ function StatBtn({ active, activeClass, onClick, children }) {
 function ActionBtn({ onClick, children }) {
     return (
         <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-fuchsia-500/8 border border-fuchsia-400/18 text-fuchsia-300 text-caption font-semibold hover:bg-fuchsia-500/15 hover:border-fuchsia-400/35 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-fuchsia-500/10 border border-fuchsia-400/20 text-fuchsia-300 text-caption font-semibold hover:bg-fuchsia-500/15 hover:border-fuchsia-400/35 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-luma-base"
             onClick={onClick}
         >
             {children}

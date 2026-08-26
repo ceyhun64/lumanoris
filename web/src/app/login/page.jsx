@@ -138,7 +138,7 @@ function ChatShowcase() {
             <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5 text-white/60 text-caption">
               AI
             </div>
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] text-white/80 leading-relaxed">
+            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 text-white/80 leading-relaxed">
               {msg.text}
             </div>
           </div>
@@ -163,7 +163,7 @@ function ChatShowcase() {
               AI
             </div>
           )}
-          <div className="p-3 rounded-xl bg-white/[0.05] border border-white/[0.05]">
+          <div className="p-3 rounded-xl bg-white/5 border border-white/5">
             <TypingDots />
           </div>
         </div>
@@ -637,7 +637,7 @@ export default function AuthPage() {
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3 group cursor-pointer">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-violet-600 p-0.5 shadow-[0_0_30px_rgba(217,70,239,0.3)] transition-transform duration-500 group-hover:scale-105">
-              <div className="w-full h-full bg-[#030305] rounded-[10px] flex items-center justify-center">
+              <div className="w-full h-full bg-[#030305] rounded-md flex items-center justify-center">
                 <Bot className="w-5 h-5 text-fuchsia-400" />
               </div>
             </div>
@@ -797,8 +797,8 @@ export default function AuthPage() {
               </div>
 
               {loginError && (
-                <div className="mb-5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs leading-relaxed flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs leading-relaxed flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
                   <span>{loginError}</span>
                 </div>
               )}

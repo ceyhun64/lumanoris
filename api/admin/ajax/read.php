@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/_guard.php';
 if (empty($_SESSION['admin'])) {
     http_response_code(403);
     echo json_encode(["success" => false, "message" => "Yetkisiz erişim."]);
@@ -34,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     try {
         Database::assertAllowedAdminTable($table, true);
-        Database::assertSafeWhereFragment($columns); // columns is spliced into the SQL too — same injection surface as $where
+        Database::assertSafeColumnList($columns);
         if (!empty($where)) {
             Database::assertSafeWhereFragment($where);
         }

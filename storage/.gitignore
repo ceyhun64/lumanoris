@@ -1,0 +1,5 @@
+# Runtime artefacts only — never versioned. The directory itself is kept so a
+# fresh clone has somewhere to write (SEC-001: these used to live inside the
+# document root, at api/admin/db_backup/).
+*
+!.gitignore

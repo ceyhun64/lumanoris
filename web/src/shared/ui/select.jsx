@@ -12,7 +12,7 @@ const SelectTrigger = React.forwardRef(({ className, children, ...props }, ref) 
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-fuchsia-400/14 bg-luma-input px-4 py-2 text-sm text-white font-sans transition-all duration-200",
+      "flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-fuchsia-400/15 bg-luma-input px-4 py-2 text-sm text-white font-sans transition-all duration-200",
       "placeholder:text-fuchsia-300/40",
       "focus:outline-none focus:border-fuchsia-500/55 focus:ring-2 focus:ring-fuchsia-500/15",
       "disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
@@ -56,7 +56,7 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
       ref={ref}
       position={position}
       className={cn(
-        "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-xl border border-fuchsia-400/12 bg-luma-elevated text-white shadow-modal",
+        "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-xl border border-fuchsia-400/15 bg-luma-elevated text-white shadow-modal",
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
         "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
         position === "popper" &&

@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
-import { calculateMessageAllowance, MONTHLY_DISCOUNT_FACTOR } from '@/shared/lib/pricing';
+import { calculateMessageAllowance } from '@/shared/lib/pricing';
 import { Percent, Coins, Gift } from 'lucide-react';
 
 const WEEKS_TO_DURATION = { 1: '1_week', 2: '2_weeks', 3: '3_weeks', 4: '1_month' };
@@ -67,9 +67,10 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
             setPrice(calculatedPrice);
             setPriceType(pType);
 
-            // Gerçekte ödenecek tutar üzerinden mesaj hakkı önizlemesi
-            // (1 aylık seçimde createsubscription.php indirim uyguluyor).
-            const actualPaid = selectedDuration === '1_month' ? calculatedPrice * MONTHLY_DISCOUNT_FACTOR : calculatedPrice;
+            // Bot data already stores the discounted monthly price, and the
+            // server charges it as-is, so the allowance preview must not apply
+            // MONTHLY_DISCOUNT_FACTOR a second time.
+            const actualPaid = calculatedPrice;
             setMessageAllowance(calculateMessageAllowance(actualPaid));
         }
     }, [selectedDuration, botData]);
@@ -151,7 +152,13 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
                         </span>
                         <p className="text-body-sm leading-snug text-white/80">
                             Aylık planı tercih et, haftalık toplam fiyata kıyasla
-                            {' '}<b className="text-fuchsia-300">%{Math.round((1 - (botData.ucret_aylik / (botData.ucret_haftalik * 4))) * 100)} kâr</b> sağla.
+                            {' '}<b className="text-fuchsia-300">
+                                {/* Haftalık fiyat 0 ise bölme Infinity üretiyor ve
+                                    ekranda "%-Infinity kâr" yazıyordu. */}
+                                %{botData.ucret_haftalik > 0
+                                    ? Math.round((1 - (botData.ucret_aylik / (botData.ucret_haftalik * 4))) * 100)
+                                    : 0} kâr
+                            </b> sağla.
                         </p>
                     </div>
                 )}

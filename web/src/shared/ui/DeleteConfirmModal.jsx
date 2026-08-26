@@ -32,7 +32,7 @@ export default function DeleteConfirmModal({
                         <Button
                             onClick={onClose}
                             variant="secondary"
-                            className="h-auto border-transparent bg-white/10 py-3 text-body-lg hover:border-transparent hover:bg-white/18"
+                            className="h-auto border-transparent bg-white/10 py-3 text-body-lg hover:border-transparent hover:bg-white/20"
                         >
                             İptal
                         </Button>

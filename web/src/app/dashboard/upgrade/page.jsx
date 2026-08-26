@@ -168,7 +168,7 @@ export default function PricingPlans() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-violet-500 selection:text-white px-4 sm:px-6 lg:px-8 py-12 lg:py-20 font-display">
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-violet-500 selection:text-white px-4 sm:px-6 lg:px-8 py-12 lg:py-20 font-display">
         <div>
           <PricingPageHeader
             eyebrow="Planlar ve Fiyatlandırma"
@@ -181,7 +181,7 @@ export default function PricingPlans() {
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-violet-500 selection:text-white px-4 sm:px-6 lg:px-8 py-12 lg:py-20 font-display">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-violet-500 selection:text-white px-4 sm:px-6 lg:px-8 py-12 lg:py-20 font-display">
       <div>
         <PricingPageHeader
           eyebrow="Esnek Fiyatlandırma"

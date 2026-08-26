@@ -25,6 +25,9 @@ class ChatbotController {
         // author_user_id — otherwise anyone could create bots "as" another
         // user, or dodge their own free-tier limit by claiming someone else's id.
         $authorUserId  = AuthMiddleware::requireAuth();
+        // Creating/updating a bot writes rows and can carry image uploads; it
+        // had no throttle of any kind.
+        checkRateLimit(Database::getInstance(), 'savechatbot:' . $authorUserId, 20, 300);
         $isIndependent = !empty($data['is_independent']) ? 1 : 0;
         $data['is_independent'] = $isIndependent;
         $data['author_user_id'] = $authorUserId;
@@ -33,14 +36,18 @@ class ChatbotController {
 
         $db    = Database::getInstance();
         $limit = $isIndependent ? getIndependentBotLimit($db, $authorUserId) : getPublicBotLimit($db, $authorUserId);
+        $planName = getUserPlanName($db, $authorUserId);
         $counts = $repo->countByOwner($authorUserId);
         $used  = $isIndependent ? $counts['independent'] : $counts['public'];
 
         if ($used >= $limit) {
             JsonResponse::error(
                 $isIndependent
-                    ? 'Ücretsiz bağımsız chatbot hakkınızı kullandınız.'
-                    : 'Ücretsiz herkese açık chatbot hakkınızı kullandınız.',
+                    // BIZ-002: mesaj eskiden her planda "Ücretsiz" diyordu;
+                    // Gümüş planındaki kullanıcı 3. botunda "ücretsiz hakkınızı
+                    // kullandınız" görüyordu. Plan adı ve limit artık mesajda.
+                    ? sprintf('%s planınızdaki %d bağımsız chatbot hakkınızı kullandınız.', $planName, $limit)
+                    : sprintf('%s planınızdaki %d herkese açık chatbot hakkınızı kullandınız.', $planName, $limit),
                 422, AppConfig::ERR_LIMIT_REACHED
             );
         }
@@ -53,10 +60,76 @@ class ChatbotController {
         }
 
         $data['owner_user_id'] = $data['author_user_id'];
-        $data = self::handleImageUploads($data);
 
-        $id = $repo->create($data);
+        /**
+         * BIZ-007 🟡 — yüklenen görsel diske yazılıyor ama kayıt başarısız
+         * olursa dosya diskte kalıyordu (Tur 3'ten devredilen açık soru).
+         *
+         * `handleImageUploads()` `move_uploaded_file()` çağırıyor; hemen
+         * ardından gelen `pickAllowed()` reddi `JsonResponse::error()` ile
+         * **exit** ediyor, ya da `create()` istisna atabiliyor. Her iki
+         * durumda da `assets/kapak_fotografi/…` altında hiçbir satırın
+         * göstermediği bir dosya kalıyor. Transaction yok, temizlik yok:
+         * dosyalar sessizce birikiyor ve hiçbir zaman silinmiyor.
+         *
+         * Shutdown kancası çıkış yolu ne olursa olsun çalışıyor; kayıt
+         * başarıyla oluştuysa `$botCreated` true olur ve dosyalar korunur.
+         */
+        $uploadedBefore = self::uploadedPathsIn($data);
+        $data           = self::handleImageUploads($data);
+        $uploadedNow    = array_values(array_diff(self::uploadedPathsIn($data), $uploadedBefore));
+
+        $botCreated = false;
+        if ($uploadedNow !== []) {
+            register_shutdown_function(static function () use ($uploadedNow, &$botCreated): void {
+                if ($botCreated) {
+                    return;
+                }
+                foreach ($uploadedNow as $relPath) {
+                    $abs = __DIR__ . '/../../../' . $relPath;
+                    if (is_file($abs) && @unlink($abs)) {
+                        error_log('[savechatbot] yetim görsel silindi: ' . $relPath);
+                    }
+                }
+            });
+        }
+
+        // SEC-014: kalan anahtarlar hâlâ istemciden geliyor ve doğrudan
+        // INSERT'e gidiyordu — `yayimlanma_tarih`/`edit_tarih` sahteleştirilebilir,
+        // `ucret_haftalik`/`ucret_aylik` ise publishChatbot'un fiyat
+        // doğrulamasını atlayarak yazılabilirdi. İçerik sütunları beyaz
+        // listede; kimlik ve yayın alanları yukarıda sunucu tarafından
+        // belirleniyor.
+        [$content, $rejected] = InputSanitizer::pickAllowed($data, array_merge(
+            self::UPDATABLE_CHATBOT_COLUMNS,
+            ['author_user_id', 'owner_user_id', 'is_independent']
+        ));
+        if ($rejected !== []) {
+            JsonResponse::error(
+                'Bu alanlar gönderilemez: ' . implode(', ', $rejected)
+                . '. Fiyat ve yayın durumu yayınlama akışında belirlenir.',
+                403,
+                AppConfig::ERR_PERMISSION
+            );
+        }
+        $data = $content;
+
+        $id         = $repo->create($data);
+        $botCreated = true;
+
         JsonResponse::success(['message' => 'Chatbot başarıyla oluşturuldu!', 'id' => $id]);
+    }
+
+    /** BIZ-007: $data içindeki yüklenmiş görsel yollarını toplar. */
+    private static function uploadedPathsIn(array $data): array {
+        $paths = [];
+        foreach (['kapak_fotografi', 'profil_fotografi'] as $col) {
+            $val = $data[$col] ?? null;
+            if (is_string($val) && str_starts_with($val, 'assets/')) {
+                $paths[] = $val;
+            }
+        }
+        return $paths;
     }
 
     public static function getDefaultBot(): void {
@@ -82,27 +155,83 @@ class ChatbotController {
             JsonResponse::error('Chatbot bulunamadı veya bu bota erişim izniniz yok.', 404, AppConfig::ERR_NOT_FOUND);
         }
 
+        // API-001 🟠 — bu uç nokta başarıda ZARFSIZ ({chatbot:…}), hatada
+        // ZARFLI ({success:false,…}) yanıt veriyordu. İstemci ikisini ayırt
+        // edemediği için hiç kontrol yapmıyordu: 404 tamamen sessiz kalıyor,
+        // sohbet sayfası boş açılıyor, hiçbir hata mesajı görünmüyordu.
+        // Artık iki yol da aynı zarfı kullanıyor; `data.chatbot` erişimi
+        // değişmediği için mevcut okuma noktaları kırılmıyor.
         $comments = $repo->getComments($id);
-        echo json_encode([
+        JsonResponse::success([
             'chatbot'  => $chatbot,
             'comments' => ['count' => count($comments), 'list' => $comments],
-        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-        exit;
+        ]);
+    }
+
+    /**
+     * DB-009: sayfalama eklendi. `limit`/`offset` isteğe bağlı; varsayılan
+     * 100, tavan 200 (repository'de zorlanıyor). Yanıt geriye dönük uyumlu —
+     * `bots` anahtarı aynı yerde, `total`/`limit`/`offset` yalnızca eklendi.
+     */
+    private static function paginationFromQuery(): array {
+        return [
+            'limit'  => InputSanitizer::positiveInt($_GET['limit'] ?? 0) ?: 100,
+            'offset' => max(0, InputSanitizer::int($_GET['offset'] ?? 0)),
+        ];
     }
 
     public static function getChatbots(): void {
-        $search = InputSanitizer::string($_GET['search'] ?? '');
-        $repo   = new ChatbotRepository();
-        JsonResponse::success(['bots' => $repo->getPublished(['search' => $search !== '' ? $search : null])]);
+        $search  = InputSanitizer::string($_GET['search'] ?? '');
+        $filters = self::paginationFromQuery() + ['search' => $search !== '' ? $search : null];
+        $repo    = new ChatbotRepository();
+
+        JsonResponse::success([
+            'bots'   => $repo->getPublished($filters),
+            'total'  => $repo->countPublished($filters),
+            'limit'  => $filters['limit'],
+            'offset' => $filters['offset'],
+        ]);
     }
 
     public static function getChatbotsV2(): void {
-        $userId = AuthMiddleware::optionalAuth();
-        $search = InputSanitizer::string($_GET['search'] ?? '');
-        $repo   = new ChatbotRepository();
-        echo json_encode($repo->getPublishedV2($userId, ['search' => $search !== '' ? $search : null]));
+        $userId  = AuthMiddleware::optionalAuth();
+        $search  = InputSanitizer::string($_GET['search'] ?? '');
+        $filters = self::paginationFromQuery() + ['search' => $search !== '' ? $search : null];
+        $repo    = new ChatbotRepository();
+
+        // API-002: bu uç nokta çıplak dizi döndürüyor (V1 zarflı). Bugün
+        // hiçbir istemci onu çağırmıyor, ama sözleşmeyi burada değiştirmek
+        // ileride sessiz bir kırılma yaratır — zarf tekilleştirmesi ERR-003
+        // kapsamında topluca yapılmalı. Şimdilik davranış korunuyor.
+        echo json_encode($repo->getPublishedV2($userId, $filters), JSON_UNESCAPED_UNICODE);
         exit;
     }
+
+    /**
+     * SEC-003 🟠 — mass assignment ile publishChatbot'un dört kapısı atlanıyordu.
+     *
+     * `publishChatbot` bir botu herkese açık yapmadan önce dört kontrol
+     * yapıyor: fiyat aralığı doğrulaması, sahiplik, ücretsiz public bot limiti
+     * ve satıcı KYC durumu. `updateChatbot` ise yalnızca sahipliğe bakıp
+     * istemciden gelen diziyi olduğu gibi UPDATE'e veriyordu — yani
+     * `{"id":N,"is_independent":0,"ucret_haftalik":0.01}` tek istekte aynı
+     * sonucu üretiyordu: yayında, KYC'siz, limit dışı ve fiyatı doğrulanmamış
+     * bir bot.
+     *
+     * Beyaz liste yalnızca "içerik" sütunlarını kapsıyor. Yayın durumu ve
+     * fiyat, kendi kontrollerini taşıyan publishChatbot/unpublishChatbot
+     * üzerinden değişir.
+     */
+    private const UPDATABLE_CHATBOT_COLUMNS = [
+        'isim',
+        'aciklama',
+        'kapak_fotografi',
+        'profil_fotografi',
+        'kategori_id',
+        'style_prompt',
+        'sohbet_basi_mesaj',
+        'training_prompt',
+    ];
 
     public static function updateChatbot(): void {
         require_method('POST');
@@ -125,10 +254,47 @@ class ChatbotController {
         unset($data['id'], $data['author_user_id'], $data['owner_user_id']);
         $data = self::handleImageUploads($data);
 
+        [$data, $rejected] = InputSanitizer::pickAllowed($data, self::UPDATABLE_CHATBOT_COLUMNS);
+        if ($rejected !== []) {
+            JsonResponse::error(
+                'Bu alanlar bu uç noktadan güncellenemez: ' . implode(', ', $rejected)
+                . '. Yayın durumu ve fiyat için yayınlama akışını kullanın.',
+                403,
+                AppConfig::ERR_PERMISSION
+            );
+        }
+        if ($data === []) {
+            JsonResponse::error('Güncellenecek alan yok.', 400, AppConfig::ERR_VALIDATION);
+        }
+
         $repo->updateById($id, $data);
         JsonResponse::success(['message' => 'Chatbot başarıyla güncellendi!', 'id' => $id]);
     }
 
+    /**
+     * BIZ-006 🟠 — bu uç nokta hard delete yapıyordu ve ödenmiş abonelikleri
+     * yok ediyordu.
+     *
+     * `ChatbotRepository::deleteById()` çıplak bir `DELETE FROM chatbotlar`;
+     * hiçbir çocuk satır kodda silinmiyor. Üç dönemde üç farklı yanlış:
+     *
+     *   • FK'lardan önce  → abonelikler YETİM kalıyordu (002/002b'nin
+     *     temizlediği 62 satırın kaynağı tam olarak burasıydı),
+     *   • 003 sonrası (CASCADE) → abonelikler ZİNCİRLEME siliniyordu:
+     *     müşteri ödemiş, satıcı botu silince satın alma kaydı yok oluyordu,
+     *   • 006 sonrası (RESTRICT) → veritabanı doğru şekilde engelliyor ama
+     *     satıcı çıplak bir `1451` görüyor.
+     *
+     * Doğru davranış silmeyi engellemek değil, **doğru aracı göstermek**:
+     * satılmış bir bot yayından kaldırılabilir (`unpublishChatbot`), ve
+     * `userHasAccess()`'in `full` dalı `is_independent`'a bakmadığı için
+     * mevcut aboneler süreleri dolana kadar erişmeye devam eder — yani
+     * istenen "soft delete" davranışı zaten çalışıyor.
+     *
+     * Buradaki kontrol FK'yı bir hata kaynağı olmaktan çıkarıp son savunma
+     * hattına çeviriyor: normal yolda kullanıcı ne yapacağını anlatan bir
+     * mesaj alıyor, FK yalnızca buradan kaçan bir yol kalırsa devreye giriyor.
+     */
     public static function deleteChatbot(): void {
         require_method('POST');
         $userId = AuthMiddleware::requireAuth();
@@ -147,6 +313,41 @@ class ChatbotController {
             JsonResponse::error('Bu chatbot üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
         }
 
+        // Satın alma kaydı olan bot hard delete edilemez. Süresi dolmuş
+        // abonelikler de sayılır: abonelik satırı bir SATIN ALMA kaydıdır,
+        // süresinin dolması onu muhasebe kaydı olmaktan çıkarmaz.
+        $db    = Database::getInstance();
+        $sales = $db->selectSingle(
+            '(SELECT COUNT(*) FROM user_subscriptions WHERE chatbot_id = ?) AS abonelik,
+             (SELECT COUNT(*) FROM chatbot_purchase_credits WHERE chatbot_id = ?) AS kredi',
+            [$id, $id]
+        );
+        $subscriptions = (int) ($sales['abonelik'] ?? 0);
+        $credits       = (int) ($sales['kredi'] ?? 0);
+
+        if ($subscriptions > 0 || $credits > 0) {
+            $bot           = $repo->findById($id);
+            $alreadyHidden = $bot && (int) $bot['is_independent'] === 1;
+
+            JsonResponse::error(
+                $alreadyHidden
+                    ? 'Bu chatbot satın alınmış olduğu için silinemez. Zaten yayından '
+                      . 'kaldırılmış durumda; mevcut aboneler süreleri dolana kadar '
+                      . 'erişmeye devam edecek.'
+                    : 'Bu chatbot satın alınmış olduğu için silinemez. Bunun yerine '
+                      . 'yayından kaldırabilirsiniz: pazaryerinden düşer, mevcut aboneler '
+                      . 'süreleri dolana kadar erişmeye devam eder.',
+                409,
+                AppConfig::ERR_PERMISSION,
+                [
+                    'reason'        => 'has_sales',
+                    'subscriptions' => $subscriptions,
+                    'credits'       => $credits,
+                    'can_unpublish' => !$alreadyHidden,
+                ]
+            );
+        }
+
         $repo->deleteById($id);
         JsonResponse::success(['message' => 'Chatbot silindi.']);
     }
@@ -159,13 +360,14 @@ class ChatbotController {
         $data    = json_decode($_POST['data'] ?? '', true) ?? null;
         $id      = InputSanitizer::positiveInt($data['id'] ?? 0);
         $weekly  = isset($data['ucret_haftalik']) ? (float) $data['ucret_haftalik'] : 0;
-        $monthly = isset($data['ucret_aylik'])    ? (float) $data['ucret_aylik']    : 0;
+        // PAY-009: aylık fiyat İSTEMCİDEN alınmıyor, sunucuda türetiliyor.
+        $monthly = self::deriveMonthlyPrice($weekly);
 
         if (!$data || !$id) {
             JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
         }
-        self::assertValidPrice($weekly, 'Haftalık', AppConfig::MAX_WEEKLY_PRICE);
-        self::assertValidPrice($monthly, 'Aylık', AppConfig::MAX_WEEKLY_PRICE * 4);
+        self::assertValidPrice($weekly, 'Haftalık', AppConfig::MAX_WEEKLY_PRICE, AppConfig::MIN_WEEKLY_PRICE);
+        self::assertValidPrice($monthly, 'Aylık', AppConfig::MAX_WEEKLY_PRICE * 4, round(AppConfig::MIN_WEEKLY_PRICE * 4 * AppConfig::DISCOUNT_MONTHLY_FACTOR));
 
         $repo = new ChatbotRepository();
         $bot  = $repo->findById($id);
@@ -181,7 +383,7 @@ class ChatbotController {
         $publicLimit = getPublicBotLimit($db, $userId);
         $counts      = $repo->countByOwner($userId);
         if ($counts['public'] >= $publicLimit) {
-            JsonResponse::error('Ücretsiz herkese açık chatbot hakkınızı kullandınız.', 422, AppConfig::ERR_LIMIT_REACHED);
+            JsonResponse::error(sprintf('%s planınızdaki %d herkese açık chatbot hakkınızı kullandınız.', getUserPlanName($db, $userId), $publicLimit), 422, AppConfig::ERR_LIMIT_REACHED);
         }
 
         $sellerStatus = $repo->getSellerStatus($userId);
@@ -280,15 +482,16 @@ class ChatbotController {
 
         $id      = InputSanitizer::positiveInt($data['id']);
         $weekly  = InputSanitizer::price($data['ucret_haftalik'] ?? 0);
-        $monthly = InputSanitizer::price($data['ucret_aylik'] ?? 0);
+        // PAY-009: aynı türetme burada da — iki uç nokta aynı formülü paylaşıyor.
+        $monthly = self::deriveMonthlyPrice($weekly);
 
         // InputSanitizer::price() only rejects negatives, not zero or
         // absurdly large values — this endpoint previously had no range
         // check at all (unlike publishChatbot's now-shared assertValidPrice),
         // so a seller could silently zero out or wildly overprice an
         // already-published bot via "Satış Listesine Ekle".
-        self::assertValidPrice($weekly, 'Haftalık', AppConfig::MAX_WEEKLY_PRICE);
-        self::assertValidPrice($monthly, 'Aylık', AppConfig::MAX_WEEKLY_PRICE * 4);
+        self::assertValidPrice($weekly, 'Haftalık', AppConfig::MAX_WEEKLY_PRICE, AppConfig::MIN_WEEKLY_PRICE);
+        self::assertValidPrice($monthly, 'Aylık', AppConfig::MAX_WEEKLY_PRICE * 4, round(AppConfig::MIN_WEEKLY_PRICE * 4 * AppConfig::DISCOUNT_MONTHLY_FACTOR));
 
         $repo = new ChatbotRepository();
 
@@ -314,11 +517,21 @@ class ChatbotController {
      * updateChatbotPrice — previously each endpoint enforced a different
      * (or no) rule, so the same "set this bot's price" action behaved
      * inconsistently depending on which screen triggered it.
+     *
+     * The lower bound used to be a bare `$value <= 0`, so AppConfig's
+     * MIN_WEEKLY_PRICE was documented and mirrored into pricing.js but read by
+     * no PHP code at all — a 0,01 ₺ bot passed both layers. $min is now
+     * explicit and scales the same way $max does for the monthly field.
      */
-    private static function assertValidPrice(float $value, string $label, float $max): void {
-        if ($value <= 0 || $value > $max) {
+    private static function assertValidPrice(float $value, string $label, float $max, float $min): void {
+        if ($value < $min || $value > $max) {
             JsonResponse::error(
-                sprintf('%s fiyat 0\'dan büyük ve en fazla %s₺ olmalıdır.', $label, number_format($max, 0, ',', '.')),
+                sprintf(
+                    '%s fiyat en az %s₺, en fazla %s₺ olmalıdır.',
+                    $label,
+                    number_format($min, 2, ',', '.'),
+                    number_format($max, 0, ',', '.')
+                ),
                 400, AppConfig::ERR_VALIDATION
             );
         }
@@ -353,5 +566,26 @@ class ChatbotController {
             }
         }
         return $data;
+    }
+
+    /**
+     * PAY-009 🟡 — aylık fiyat yalnızca İSTEMCİDE haftalıktan türetiliyordu.
+     *
+     * `web/src/shared/lib/pricing.js:36` şunu yapıyor:
+     *     Math.round(weekly * 4 * MONTHLY_DISCOUNT_FACTOR)
+     * Sunucu ise iki fiyatı bağımsız kabul ediyor, yalnızca ayrı ayrı
+     * aralık kontrolü yapıyordu. Yani satıcı haftalık ₺100 / aylık ₺1
+     * gönderebiliyordu: dört haftalık abonelik ₺400 yerine ₺1'e satılırdı.
+     * `linePrice()` `duration_weeks >= 4` için aylık fiyatı kullandığından
+     * bu doğrudan gelir kaybı.
+     *
+     * Aylık fiyat artık sunucuda türetiliyor ve istemcinin gönderdiği değer
+     * yok sayılıyor — formül AppConfig'de, pricing.js ile aynı sabiti
+     * paylaşıyor.
+     */
+    private static function deriveMonthlyPrice(float $weekly): float {
+        return InputSanitizer::price(
+            round($weekly * 4 * AppConfig::DISCOUNT_MONTHLY_FACTOR, 2)
+        );
     }
 }

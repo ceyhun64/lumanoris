@@ -12,6 +12,14 @@ class NoteController {
     }
 
     public static function getDialogues(): void {
+        // The dialogue book is a deliberately public feed (notes/page.jsx has a
+        // "Paylaştıklarım" tab), but it was readable with no session at all, so
+        // every user's input_message/output_message could be scraped from
+        // outside the app entirely. The feed is only ever rendered inside the
+        // authenticated dashboard, so requiring a session costs the product
+        // nothing and takes it off the open internet.
+        AuthMiddleware::requireAuth();
+
         // user_dialog_books.chatbot_id is already the real chatbot id (see
         // addDialogBook / DialogNotebookModal.jsx) — the previous query
         // joined it against chatbot_conversations.id as if it were a
@@ -33,6 +41,10 @@ class NoteController {
     }
 
     public static function getDialogInteracts(): void {
+        // Same feed as getDialogues, same reasoning: it returns other users'
+        // comments and usernames, and is only rendered inside the dashboard.
+        AuthMiddleware::requireAuth();
+
         $id = InputSanitizer::positiveInt($_GET['id'] ?? 0);
         if (!$id) JsonResponse::error('ID gereklidir.', 400, AppConfig::ERR_VALIDATION);
 

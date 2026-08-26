@@ -332,7 +332,8 @@ export default function Following() {
       .then((text) => {
         try {
           const data = JSON.parse(text);
-          if (Array.isArray(data)) setCategories(data);
+          // ERR-003: getcategories artık zarflı ({success, categories}).
+        if (Array.isArray(data?.categories)) setCategories(data.categories);
         } catch (e) {
           console.error("Kategori parse hatası:", e);
         }
@@ -386,14 +387,14 @@ export default function Following() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#09090b] text-zinc-100 p-4 sm:p-8 font-sans">
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4 sm:p-8 font-sans">
         <LoadingSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 antialiased selection:bg-fuchsia-500/30 selection:text-fuchsia-200 p-4 sm:p-8 font-sans pb-24">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 antialiased selection:bg-fuchsia-500/30 selection:text-fuchsia-200 p-4 sm:p-8 font-sans pb-24">
       {/* Background Ambient Glow Effects */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-40 right-1/3 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-violet-600/10 via-fuchsia-600/10 to-transparent blur-[140px]" />
@@ -408,7 +409,7 @@ export default function Following() {
               <Heart className="w-3.5 h-3.5 fill-violet-400 text-violet-400" />
               <span>Favori Asistanlarım</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
               Takip Ettiklerim
             </h1>
             <p className="text-sm text-zinc-400 max-w-xl">
@@ -550,7 +551,7 @@ export default function Following() {
         </div>
 
         {fetchError && (
-          <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-300">
+          <div className="mb-6 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-300">
             {fetchError}
           </div>
         )}

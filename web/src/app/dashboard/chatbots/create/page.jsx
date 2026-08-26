@@ -39,6 +39,16 @@ import {
   Code,
 } from "lucide-react";
 
+// Deny-by-default limits used whenever the server's real limits cannot be
+// read. Creation stays blocked rather than being optimistically allowed.
+const LIMITS_UNAVAILABLE = {
+  can_create_independent: false,
+  can_create_public: false,
+  independent_limit: "—",
+  public_limit: "—",
+  unavailable: true,
+};
+
 // Utility for class merging
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -268,6 +278,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
   ]);
   const [inputMsg, setInputMsg] = useState("");
   const [isBuilding, setIsBuilding] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
   const handleSubmit = async () => {
@@ -309,23 +320,126 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
     }
   };
 
-  const handleSendMessage = (e) => {
+  /**
+   * UX-001 🟠 — bu önizleme SAHTEYDİ.
+   *
+   * Eski hâli `setTimeout(800)` sonrası sabit bir şablon yazıyordu:
+   * `"${userText}" sorunuzu sistem talimatıma [${systemPrompt.slice(0,30)}...]
+   * göre yanıtlıyorum!`. Sayfa `generatereply.php`'yi hiç çağırmıyordu; yani
+   * kullanıcı prompt'unu test ettiğini sanıyor, aldığı cevap ise prompt'un
+   * içeriğinden tamamen bağımsız oluyordu. "Canlı Test Modu" ve "Sandbox v2.4"
+   * etiketleri bu yanılgıyı pekiştiriyordu.
+   *
+   * Artık iki hâl var ve ikisi de dürüst:
+   *   • Kayıtlı bir botu düzenlerken (botId > 0) gerçek `generatereply.php`
+   *     çağrılıyor — sunucu sistem talimatını kendi kuruyor (SEC-015), yani
+   *     görülen cevap gerçekten kaydedilmiş prompt'un cevabı.
+   *   • Henüz kaydedilmemiş yeni bir botta gerçek bir çağrı yapılamaz (sunucu
+   *     erişim kontrolü ve talimat için chatbot_id ister). Sahte cevap
+   *     üretmek yerine ne yapılması gerektiği söyleniyor.
+   */
+  const isSavedBot = Boolean(botId) && botId !== -1;
+
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!inputMsg.trim()) return;
+    if (!inputMsg.trim() || isPreviewLoading) return;
 
     const userText = inputMsg;
     setInputMsg("");
     setSimulatedChat((prev) => [...prev, { sender: "user", text: userText }]);
 
-    setTimeout(() => {
+    if (!isSavedBot) {
       setSimulatedChat((prev) => [
         ...prev,
         {
-          sender: "bot",
-          text: `"${userText}" sorunuzu sistem talimatıma [${systemPrompt.slice(0, 30)}...] göre yanıtlıyorum!`,
+          sender: "system",
+          text: "Gerçek önizleme için botu önce kaydedin. Kaydettikten sonra bu panelde botunuzun gerçek cevaplarını test edebilirsiniz.",
         },
       ]);
-    }, 800);
+      return;
+    }
+
+    setIsPreviewLoading(true);
+    try {
+      const res = await fetch("/api/chat/generatereply.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          data: JSON.stringify({ chatbot_id: botId, message: userText }),
+        }),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        setSimulatedChat((prev) => [
+          ...prev,
+          {
+            sender: "system",
+            text:
+              payload?.message ||
+              "Önizleme cevabı alınamadı. Daha sonra tekrar deneyin.",
+          },
+        ]);
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let fullText = "";
+      let placed = false;
+
+      // AI-002: SSE kareleri okuma sınırlarında bölünebilir; tamamlanmamış
+      // son satır tamponda bekletiliyor (sohbet sayfasıyla aynı desen).
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const frame = JSON.parse(line.slice(6).trim());
+            if (frame.error) continue;
+            const chunk = frame.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            if (!chunk) continue;
+            fullText += chunk;
+            setSimulatedChat((prev) => {
+              if (!placed) {
+                placed = true;
+                return [...prev, { sender: "bot", text: fullText }];
+              }
+              const next = [...prev];
+              next[next.length - 1] = { sender: "bot", text: fullText };
+              return next;
+            });
+          } catch (err) {
+            // yarım kalmış SSE satırı — bir sonraki chunk'ta tamamlanır
+          }
+        }
+      }
+
+      if (!fullText) {
+        setSimulatedChat((prev) => [
+          ...prev,
+          {
+            sender: "system",
+            text: "Yapay zeka servisinden cevap alınamadı. Mesaj hakkınız iade edildi.",
+          },
+        ]);
+      }
+    } catch (err) {
+      setSimulatedChat((prev) => [
+        ...prev,
+        { sender: "system", text: "Sunucuya ulaşılamadı." },
+      ]);
+    } finally {
+      setIsPreviewLoading(false);
+    }
   };
 
   return (
@@ -571,14 +685,26 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
                 <h4 className="text-xs font-bold text-white leading-tight">
                   {botName || "Önizleme Asistanı"}
                 </h4>
-                <p className="text-caption text-emerald-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />{" "}
-                  Canlı Test Modu
+                <p className="text-caption flex items-center gap-1">
+                  {/* UX-001: etiket artık gerçeği söylüyor. "Canlı Test Modu"
+                      + "Sandbox v2.4", hiçbir model çağrısı yapılmayan sabit
+                      bir şablonun üstünde duruyordu. */}
+                  {isSavedBot ? (
+                    <>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-emerald-400">Gerçek yanıt · mesaj hakkınızdan düşer</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                      <span className="text-amber-400">Önizleme için botu kaydedin</span>
+                    </>
+                  )}
                 </p>
               </div>
             </div>
             <span className="text-caption font-mono text-zinc-500 bg-zinc-900 px-2 py-1 rounded border border-white/5">
-              Sandbox v2.4
+              {isSavedBot ? "Canlı" : "Taslak"}
             </span>
           </div>
 
@@ -595,15 +721,25 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
                 <div
                   className={cn(
                     "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed",
-                    msg.sender === "user"
-                      ? "bg-violet-600 text-white rounded-br-xs shadow-md shadow-violet-950/50"
-                      : "bg-zinc-800/90 text-zinc-200 border border-white/10 rounded-bl-xs",
+                    msg.sender === "user" &&
+                      "bg-violet-600 text-white rounded-br-xs shadow-md shadow-violet-950/50",
+                    msg.sender === "bot" &&
+                      "bg-zinc-800/90 text-zinc-200 border border-white/10 rounded-bl-xs",
+                    msg.sender === "system" &&
+                      "bg-amber-500/10 text-amber-200/90 border border-amber-400/25 rounded-bl-xs",
                   )}
                 >
                   {msg.text}
                 </div>
               </div>
             ))}
+            {isPreviewLoading && (
+              <div className="flex justify-start">
+                <div className="max-w-[85%] rounded-2xl rounded-bl-xs border border-white/10 bg-zinc-800/90 px-3.5 py-2.5 text-xs text-zinc-400">
+                  Yanıt üretiliyor…
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Input field */}
@@ -615,12 +751,13 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
               type="text"
               value={inputMsg}
               onChange={(e) => setInputMsg(e.target.value)}
-              placeholder="Test mesajı yazın..."
+              placeholder={isSavedBot ? "Test mesajı yazın..." : "Önce botu kaydedin..."}
               className="flex-1 bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20"
             />
             <button
               type="submit"
-              className="p-2 rounded-xl bg-violet-600 text-white hover:bg-violet-500 transition cursor-pointer"
+              disabled={isPreviewLoading}
+              className="p-2 rounded-xl bg-violet-600 text-white hover:bg-violet-500 transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
             </button>
@@ -643,20 +780,26 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
 
   const fetchLimits = () => {
     if (!userId) return;
-    // Real endpoint call: /api/chatbot/getchatbotlimits.php?user_id=${userId}
     fetch(`/api/chatbot/getchatbotlimits.php?user_id=${userId}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) setLimits(data);
+        if (data.success) {
+          setLimits(data);
+          return;
+        }
+        // A `success: false` response used to be ignored entirely, leaving
+        // `limits` null forever — and the guard below only renders once it is
+        // set, so the page sat on its loading skeleton indefinitely.
+        setLimits(LIMITS_UNAVAILABLE);
       })
-      .catch((err) => {
-        // Safe mock fallback for preview mode
-        setLimits({
-          can_create_independent: true,
-          can_create_public: true,
-          independent_limit: "1/2",
-          public_limit: "0/5",
-        });
+      .catch(() => {
+        // Never invent permissive limits. The old fallback reported
+        // can_create_* = true with made-up "1/2" and "0/5" counters that
+        // contradicted the real server-side limits (AppConfig's
+        // FREE_INDEPENDENT_BOT_LIMIT = 1 / FREE_PUBLIC_BOT_LIMIT = 2), so a
+        // backend outage advertised capacity the user did not have and an
+        // action the server would then refuse. Deny until we actually know.
+        setLimits(LIMITS_UNAVAILABLE);
       });
   };
 
@@ -697,6 +840,25 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
           title="Yeni Bir Chatbot Yaratın"
           description="Yapay zeka asistanınızı birkaç adımda yayına alın. İlk olarak chatbot'un erişim modelini belirleyin."
         />
+
+        {limits.unavailable && (
+          /* Without this the deny-by-default state looks like the account
+             simply has no quota left, with no way to tell it apart from a
+             backend that is merely unreachable. */
+          <div className="rounded-2xl border border-amber-400/25 bg-amber-400/[0.07] px-5 py-4">
+            <p className="text-body-sm leading-relaxed text-amber-200/90">
+              <span className="font-semibold">Chatbot limitleriniz okunamadı.</span>{" "}
+              Sunucuya ulaşılamadığı için oluşturma geçici olarak kapalı.
+              <button
+                type="button"
+                onClick={fetchLimits}
+                className="ml-2 underline underline-offset-2 hover:text-amber-100"
+              >
+                Tekrar dene
+              </button>
+            </p>
+          </div>
+        )}
 
         {/* Twin Choice Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

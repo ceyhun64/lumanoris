@@ -297,7 +297,14 @@
       "Bash(node rc_settings.js)",
       "Bash(node rc_responsive.js)",
       "Bash(taskkill //F //PID 20996)",
-      "Bash(node rc_final_regression.js)"
+      "Bash(node rc_final_regression.js)",
+      "Bash(curl -s -i \"https://lumanoris-coral.vercel.app/\" --max-time 15)",
+      "Bash(curl -s -i \"https://lumanoris-coral.vercel.app/api/auth/login.php\" -X POST --max-time 15 -F \"data={\\\\\"eposta\\\\\":\\\\\"test@test.com\\\\\",\\\\\"sifre\\\\\":\\\\\"test\\\\\"}\")",
+      "Bash(curl -s -i \"https://lumanoris-coral.vercel.app/api/content/getcategories.php\" --max-time 15)",
+      "Bash(curl -s -i \"https://lumanoris-coral.vercel.app/api/auth/sessioncheck.php\" --max-time 15)",
+      "Bash(curl -s -i \"https://lumanoris-coral.vercel.app/api/auth/register.php\" -X POST --max-time 15)",
+      "Bash(php -l \"c:\\\\PROJECTS\\\\lumanoris-dashboard\\\\api\\\\functions\\\\db.php\")",
+      "Bash(DB_HOST=localhost:3306 DB_USER=root DB_PASS=Ceycey.123 DB_NAME=lumanoris php -r ' *)"
     ],
     "additionalDirectories": [
       "\\tmp",

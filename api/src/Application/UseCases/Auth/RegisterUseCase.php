@@ -18,10 +18,12 @@ class RegisterUseCase {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new ValidationException('Geçerli bir e-posta adresi girin.');
         }
-        // No length/strength check previously existed server-side — a
-        // 1-character password was accepted and bcrypt-hashed as-is.
-        if (strlen($password) < 8) {
-            throw new ValidationException('Şifre en az 8 karakter olmalıdır.');
+        // SEC-011 🟡 — politika tek yerde ve kayıt + sıfırlama yollarının
+        // İKİSİNDE de uygulanıyor. Eskiden yalnızca burada, yalnızca 8
+        // karakter olarak vardı; sıfırlama akışında hiç yoktu.
+        $policyError = InputSanitizer::passwordPolicyError($password, [$email, $username]);
+        if ($policyError !== null) {
+            throw new ValidationException($policyError);
         }
 
         if ($this->users->existsByUsernameOrEmail($username, $email)) {

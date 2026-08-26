@@ -16,7 +16,7 @@ const Card = React.forwardRef(({ className, interactive = false, ...props }, ref
       // lift amount / glow color / duration) into ChatbotCard, following's
       // list items, MarketplaceListCard and others — one lift+glow now, not
       // N slightly-different ones.
-      interactive && "cursor-pointer border-transparent hover:-translate-y-0.5 hover:border-fuchsia-400/22 hover:shadow-[0_6px_24px_rgba(217,70,239,0.13)]",
+      interactive && "cursor-pointer border-transparent hover:-translate-y-0.5 hover:border-fuchsia-400/20 hover:shadow-[0_6px_24px_rgba(217,70,239,0.13)]",
       className
     )}
     {...props}

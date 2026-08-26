@@ -1,0 +1,45 @@
+# Document-root guard for the PHP side (SEC-001, SEC-020, DEP-002).
+#
+# Nothing under api/ except the .php entry points and api/assets/ is meant to
+# be fetched over HTTP. Before this file existed, `GET /admin/.env` returned
+# the Gemini API key, `GET /admin/db_backup/<dump>.sql` returned a 1.5 MB dump
+# containing every user e-mail and bcrypt hash, and `GET /admin/error_log`
+# returned request logs that include TC kimlik no and IBAN values
+# (ParamPosMarketplace.php logs json_encode($params) verbatim).
+#
+# The built-in dev server ignores .htaccess entirely — router.php carries the
+# same denylist for `php -S`. Change both together.
+
+# --- secrets, dumps, logs, archives -----------------------------------------
+<FilesMatch "(?i)(^\.env|^\.env\..*|^error_log$|\.(sql|sql\.gz|zip|tar|gz|bak|swp|log|key|pem|p12|pfx|ini|dist|lock)$)">
+    Require all denied
+</FilesMatch>
+
+# Apache 2.2 fallback — Require is 2.4+. Harmless when both are present.
+<IfModule !mod_authz_core.c>
+    <FilesMatch "(?i)(^\.env|^\.env\..*|^error_log$|\.(sql|sql\.gz|zip|tar|gz|bak|swp|log|key|pem|p12|pfx|ini|dist|lock)$)">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
+
+# --- dotfiles ---------------------------------------------------------------
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# --- whole directories that must never be walked ----------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule (^|/)(db_backup|src|vendor|migrations|database|\.git)(/|$) - [F,L,NC]
+</IfModule>
+
+# --- do not leak the directory listing when an index is missing -------------
+Options -Indexes -MultiViews
+
+# --- baseline response headers ---------------------------------------------
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

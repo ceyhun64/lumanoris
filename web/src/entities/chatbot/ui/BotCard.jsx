@@ -142,7 +142,7 @@ export default function BotCard({ bot, userId, onRemove }) {
                     </DropdownMenu>
                 </div>
 
-                <p className="text-label text-white/38 leading-none">
+                <p className="text-label text-luma-muted leading-none">
                     {dialogues} Diyalog · {time} önce yayımlandı
                 </p>
             </div>

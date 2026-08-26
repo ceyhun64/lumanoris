@@ -1,5 +1,28 @@
+# SEC-001: mod_rewrite rules are NOT inherited from a parent .htaccess, so the
+# denylist in api/.htaccess is repeated here — otherwise the RewriteRule below
+# would take over this directory and re-expose .env / db_backup / error_log.
+# router.php carries the same list for the built-in dev server.
+<FilesMatch "(?i)(^\.env|^\.env\..*|^error_log$|\.(sql|sql\.gz|zip|tar|gz|bak|swp|log|key|pem|p12|pfx|ini|lock)$)">
+    Require all denied
+</FilesMatch>
+<IfModule !mod_authz_core.c>
+    <FilesMatch "(?i)(^\.env|^\.env\..*|^error_log$|\.(sql|sql\.gz|zip|tar|gz|bak|swp|log|key|pem|p12|pfx|ini|lock)$)">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+Options -Indexes -MultiViews
+
 RewriteEngine On
 RewriteBase /admin/
+
+# Deny first, then route. [F] short-circuits before the index.php fallback.
+RewriteRule (^|/)(db_backup|functions|partials|subpages|\.git)(/|$) - [F,L,NC]
+RewriteRule (^|/)(\.env|error_log|composer\.(json|lock))$ - [F,L,NC]
 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

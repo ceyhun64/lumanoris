@@ -2,37 +2,37 @@
 class ContentController {
     public static function getCategories(): void {
         $results = Database::getInstance()->selectMulti('id, kategori_adi_tr FROM chatbot_kategoriler', []);
-        echo json_encode($results);
+        JsonResponse::success(['categories' => $results]);
         exit;
     }
 
     public static function getLandingImages(): void {
-        echo json_encode(Database::getInstance()->getGlobalVars('anasayfa_resim1', 'anasayfa_resim2', 'anasayfa_resim3'));
+        JsonResponse::success(['content' => Database::getInstance()->getGlobalVars('anasayfa_resim1', 'anasayfa_resim2', 'anasayfa_resim3')]);
         exit;
     }
 
     public static function getAbout(): void {
-        echo json_encode(Database::getInstance()->getGlobalVars('hakkinda'));
+        JsonResponse::success(['content' => Database::getInstance()->getGlobalVars('hakkinda')]);
         exit;
     }
 
     public static function getContactInfo(): void {
-        echo json_encode(Database::getInstance()->getGlobalVars('email_adres', 'merkez_adres', 'telefon_numarasi'));
+        JsonResponse::success(['content' => Database::getInstance()->getGlobalVars('email_adres', 'merkez_adres', 'telefon_numarasi')]);
         exit;
     }
 
     public static function getTermsOfSale(): void {
-        echo json_encode(Database::getInstance()->getGlobalVars('satis_kosullari'));
+        JsonResponse::success(['content' => Database::getInstance()->getGlobalVars('satis_kosullari')]);
         exit;
     }
 
     public static function getDelivery(): void {
-        echo json_encode(Database::getInstance()->getGlobalVars('teslimat_iade_sartlari'));
+        JsonResponse::success(['content' => Database::getInstance()->getGlobalVars('teslimat_iade_sartlari')]);
         exit;
     }
 
     public static function getSocials(): void {
-        echo json_encode(Database::getInstance()->getGlobalVars('facebook_link', 'instagram_link', 'twitter_link', 'youtube_link', 'linkedin_link', 'tiktok_link'));
+        JsonResponse::success(['content' => Database::getInstance()->getGlobalVars('facebook_link', 'instagram_link', 'twitter_link', 'youtube_link', 'linkedin_link', 'tiktok_link')]);
         exit;
     }
 
@@ -45,7 +45,7 @@ class ContentController {
     }
 
     public static function getAdCounts(): void {
-        echo json_encode(Database::getInstance()->getGlobalVars('chat_reklam_sikligi'));
+        JsonResponse::success(['content' => Database::getInstance()->getGlobalVars('chat_reklam_sikligi')]);
         exit;
     }
 

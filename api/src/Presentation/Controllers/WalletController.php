@@ -3,13 +3,34 @@ class WalletController {
     /**
      * Shared by getMyBalance() (display) and withdraw() (validation) so the
      * two can never drift into disagreeing about what a seller's balance is.
+     *
+     * DB-003 🟠 — bu sorgu `param_marketplace_payments`'a JOIN yapıyordu ama
+     * `p.status`'u hiç okumuyordu; yalnızca `d.status`'a bakıyordu. `d.status`
+     * ise her zaman 'approved' yazıldığı için (PAY-001) ödeme durumu sütununun
+     * para üzerinde HİÇBİR etkisi yoktu — şemada duran `idx_status` index'i de
+     * kullanılmıyordu.
+     *
+     * Artık bir satır bakiyeye ancak İKİSİ birden onaylıysa giriyor:
+     * tahsilatın kendisi ('paid') ve satıcı payı ('approved'). Filtre SQL'de,
+     * yani index kullanılabiliyor; ve fail-closed: tanınmayan bir durum
+     * bakiyeye eklenmiyor.
      */
-    private static function computeBalanceAndTransactions(Database $db, int $userId): array {
+    /**
+     * PAY-005 🟠 — çekim geçmişini okuyan sorgu istisnayı YUTUYORDU. Okuma
+     * başarısız olduğunda (tablo yok, izin hatası, geçici bir DB sorunu)
+     * bakiye "hiç çekim yapılmamış gibi" hesaplanıyordu — yani şişmiş.
+     * `withdraw()` bu şişmiş değeri doğrulama ölçütü olarak kullanıyordu.
+     *
+     * $strict = true olduğunda istisna yükseltiliyor. Gösterimde (getMyBalance)
+     * tolerans kabul edilebilir; doğrulamada (withdraw) asla.
+     */
+    private static function computeBalanceAndTransactions(Database $db, int $userId, bool $strict = false): array {
         $incomeRows = $db->selectMulti(
-            "d.payable_amount, d.status, d.created_at, p.order_id
+            "d.payable_amount, d.status, d.created_at, p.order_id, p.status AS payment_status
              FROM param_marketplace_details d
              JOIN param_marketplace_payments p ON p.id = d.payment_id
              WHERE d.seller_user_id = ?
+               AND p.status IN ('paid', 'refunded')
              ORDER BY d.created_at DESC",
             [$userId]
         );
@@ -19,19 +40,28 @@ class WalletController {
             $withdrawRows = $db->selectMulti('* FROM para_cekme_talepleri WHERE user_id = ? ORDER BY id DESC', [$userId]);
         } catch (Exception $e) {
             error_log('[getmybalance] para_cekme_talepleri okunamadı: ' . $e->getMessage());
+            // PAY-005: doğrulama yolunda yutma yok — eksik veriyle bakiye
+            // hesaplamak, gerçekte olmayan parayı çekilebilir göstermek demek.
+            if ($strict) {
+                throw $e;
+            }
         }
 
         $transactions = [];
         $balance      = 0.0;
 
         foreach ($incomeRows as $r) {
-            $amount = (float) $r['payable_amount'];
-            if ($r['status'] === 'approved') {
+            $amount        = (float) $r['payable_amount'];
+            $paymentStatus = (string) ($r['payment_status'] ?? '');
+
+            // Tahsilat gerçekten alınmadıysa satıcı payı ne yazarsa yazsın
+            // bakiyeye girmez.
+            if ($r['status'] === 'approved' && $paymentStatus === 'paid') {
                 $balance        += $amount;
                 $transactions[] = ['amount' => $amount, 'type' => 'income', 'status' => $r['status'], 'created_at' => $r['created_at'], 'description' => 'Satışlarınızdan elde ettiğiniz gelir bakiyenize aktarıldı. #' . $r['order_id']];
-            } elseif ($r['status'] === 'refunded') {
+            } elseif ($r['status'] === 'refunded' || $paymentStatus === 'refunded') {
                 $balance        -= $amount;
-                $transactions[] = ['amount' => -$amount, 'type' => 'refund', 'status' => $r['status'], 'created_at' => $r['created_at'], 'description' => 'Satış iadesi işlendi. #' . $r['order_id']];
+                $transactions[] = ['amount' => -$amount, 'type' => 'refund', 'status' => 'refunded', 'created_at' => $r['created_at'], 'description' => 'Satış iadesi işlendi. #' . $r['order_id']];
             }
         }
 
@@ -102,7 +132,7 @@ class WalletController {
 
         $conn->beginTransaction();
         try {
-            $available = self::computeBalanceAndTransactions($db, $userId)['balance'];
+            $available = self::computeBalanceAndTransactions($db, $userId, true)['balance'];
             if ($amount > $available) {
                 $conn->rollBack();
                 $conn->prepare('SELECT RELEASE_LOCK(?)')->execute([$lockName]);
@@ -216,7 +246,63 @@ class WalletController {
      * 4 sabit üyelik paketi (Ücretsiz/Gümüş/Altın/Elmas). Fiyat ve özellikler
      * yer tutucu değerlerdir — iş ekibi tarafından kolayca güncellenebilir.
      */
+    /**
+     * BIZ-002 🟠 — katalog KODDA duruyordu: dört plan, fiyatları ve
+     * özellikleriyle birlikte bir PHP dizisiydi; `plans` tablosu 0 satırdı.
+     * Yani veritabanında bir plan tablosu vardı ama hiçbir şey onu okumuyor,
+     * hiçbir şey ona yazmıyordu.
+     *
+     * Artık katalog `plans` + `plan_icerikler`'den okunuyor (migration 007).
+     * Tablo hazır değilse aşağıdaki kodlanmış listeye düşüyor — böylece
+     * migration uygulanmadan da sayfa çalışmaya devam ediyor.
+     *
+     * Kullanıcının mevcut planı da işaretleniyor: `is_current`. Eskiden
+     * "Mevcut Paket" etiketi Ücretsiz plana sabitlenmişti.
+     */
     public static function getPricing(): void {
+        $userId = AuthMiddleware::optionalAuth();
+        $db     = Database::getInstance();
+        require_once __DIR__ . '/../../../functions/plans.php';
+
+        $catalog = getPlanCatalog($db);
+
+        if ($catalog !== []) {
+            $currentPlan = $userId > 0 ? getUserPlanName($db, $userId) : 'Ücretsiz';
+            $badges      = ['Altın' => 'Önerilen'];
+            $output      = [];
+
+            foreach ($catalog as $p) {
+                $isCurrent = ($p['name_tr'] === $currentPlan);
+                $price     = (float) ($p['monthly_price'] ?? 0);
+
+                $output[] = [
+                    'title'         => $p['name_tr'],
+                    'monthly_price' => $price > 0
+                        ? '₺' . number_format($price, 2, ',', '.')
+                        : '₺0',
+                    'yearly_price'  => $p['yearly_price'] !== null
+                        ? '₺' . number_format((float) $p['yearly_price'], 2, ',', '.')
+                        : null,
+                    'description'   => $p['description_tr'] ?? '',
+                    'features'      => $p['features'] ?? [],
+                    'buttonText'    => $isCurrent ? 'Mevcut Paket' : 'Bu Paketi Seç',
+                    'buttonType'    => ($p['name_tr'] === 'Altın') ? 'primary' : 'default',
+                    'badge'         => $badges[$p['name_tr']] ?? null,
+                    'is_current'    => $isCurrent,
+                    // Pazarlama metni yerine gerçek kotalar — istemci
+                    // isterse "3 bot / 50 mesaj" diye gösterebilir.
+                    'limits'        => [
+                        'independent_bots' => (int) $p['independent_bot_limit'],
+                        'public_bots'      => (int) $p['public_bot_limit'],
+                        'daily_messages'   => (int) $p['daily_message_limit'],
+                    ],
+                ];
+            }
+
+            JsonResponse::success(['all_plans' => $output]);
+        }
+
+        // ── Geri düşüş: migration 007 uygulanmamış ───────────────────────
         $output = [
             [
                 'title'         => 'Ücretsiz',
@@ -263,6 +349,27 @@ class WalletController {
         JsonResponse::success(['all_plans' => $output]);
     }
 
+    /**
+     * BIZ-001 🔴 — bu metot ₺149 / ₺299 / ₺599'luk üç paketi **hiçbir ödeme
+     * almadan** yazıyordu: `plan_name` doğrulanmıyordu (istemci "Elmas" da
+     * yazabilirdi, "Kral" da), hiçbir tahsilat çağrılmıyordu ve kullanıcıya
+     * "Üyelik paketiniz güncellendi." deniyordu.
+     *
+     * Kaydın kendisi de karşılıksızdı (BIZ-002): yazdığı satırı yalnızca
+     * dashboard başlığı okuyor; `chatbot_limits.php` ve coin motoru plan
+     * satırına hiç bakmıyor, herkese ücretsiz limitleri veriyor. Yani ödeme
+     * alınmış olsaydı bile kullanıcı hiçbir şey satın almamış olacaktı.
+     *
+     * Ödeme entegrasyonu (DEP-001 🔴, PAY-001 🔴) tamamlanana ve planlar
+     * gerçekten limit üretene kadar doğru davranış **fail-closed**: sahte bir
+     * başarı yerine açık bir "kullanılamıyor" yanıtı. Sahte başarı üretmek
+     * ücretli kullanıcının bir şey aldığına inanmasına yol açıyordu.
+     *
+     * Bunu tekrar açmak için gereken üç şey:
+     *   1. `chargeCard()`'ın gerçek Param POS tahsilatı yapması (PAY-001),
+     *   2. plan adının sunucudaki fiyat kataloğuna karşı doğrulanması,
+     *   3. `chatbot_limits.php` + `coin_engine.php`'nin bu satırı okuması (BIZ-002).
+     */
     public static function upgradePlan(): void {
         require_method('POST');
         $userId   = AuthMiddleware::requireAuth();
@@ -273,21 +380,25 @@ class WalletController {
             JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
         }
 
-        $db = Database::getInstance();
-        $db->getConnection()->exec(
-            'CREATE TABLE IF NOT EXISTS user_plan_selection (
-                user_id INT PRIMARY KEY,
-                plan_name VARCHAR(30) NOT NULL,
-                selected_at DATETIME NOT NULL
-            )'
-        );
-        $db->insert('user_plan_selection', [
-            'user_id'     => $userId,
-            'plan_name'   => $planName,
-            'selected_at' => date('Y-m-d H:i:s'),
-        ], true);
+        // Plan adı, sunucudaki kataloğa karşı doğrulanır — istemci serbest
+        // metin gönderemez. (Ödeme açıldığında da bu kontrol gerekli.)
+        $known = ['Ücretsiz', 'Gümüş', 'Altın', 'Elmas'];
+        if (!in_array($planName, $known, true)) {
+            JsonResponse::error('Geçersiz paket.', 400, AppConfig::ERR_VALIDATION);
+        }
 
-        JsonResponse::success(['message' => 'Üyelik paketiniz güncellendi.', 'plan_name' => $planName]);
+        error_log(sprintf(
+            '[upgradePlan] ödeme entegrasyonu yok — reddedildi. user_id=%d plan=%s',
+            $userId,
+            $planName
+        ));
+
+        JsonResponse::error(
+            'Ücretli paket yükseltmeleri şu anda kullanılamıyor. Ödeme altyapısı '
+            . 'devreye alındığında bu sayfadan yükseltme yapabileceksiniz.',
+            503,
+            AppConfig::ERR_UNAVAILABLE
+        );
     }
 
     public static function getSubscription(): void {
@@ -319,5 +430,128 @@ class WalletController {
         } else {
             JsonResponse::success(['has_active_sub' => false, 'duration_weeks' => null]);
         }
+    }
+
+    /**
+     * PAY-006 🟠 — para çekme taleplerinin `durum` alanını güncelleyen
+     * HİÇBİR kod yoktu.
+     *
+     * `withdraw()` talebi `durum='beklemede'` ile yazıyordu; ne bir admin
+     * ekranı, ne bir endpoint, ne bir job o değeri değiştiriyordu. Tablo
+     * legacy admin CRUD motorunun beyaz listesinde de yoktu, yani admin
+     * panelinden de dokunulamıyordu. Sonuç: her talep kalıcı olarak
+     * "beklemede" kalıyor ve `computeBalanceAndTransactions()` bekleyen
+     * talepleri bakiyeden düştüğü için satıcının parası **süresiz olarak
+     * kilitleniyordu** — ödeme yapılsa bile.
+     *
+     * Aşağıdaki iki uç nokta yaşam döngüsünü kapatıyor. Bilinçli olarak
+     * legacy CRUD beyaz listesine eklemek yerine ayrı yazıldılar: durum
+     * geçişleri serbest metin değil, ve `odendi` yazmak gerçek para hareketi
+     * anlamına geldiği için kayıt izi bırakması gerekiyor.
+     */
+    /**
+     * Para çekme talebi durumları.
+     *
+     * DİKKAT — bu liste veritabanındaki gerçek değerlerle birebir eşleşmek
+     * zorunda. İlk yazımda ASCII'ye sadeleştirilmişti (`onaylandi`, `odendi`)
+     * ama kayıtlı veri Türkçe yazımı kullanıyor (`onaylandı`). Sonuç: admin
+     * bir talebi onaylayamıyor, `?status=onaylandı` filtresi de "Geçersiz
+     * durum" veriyordu. Canlı veri kontrolüyle yakalandı.
+     *
+     * `beklemede` `withdraw()` tarafından yazılıyor; `reddedildi` ve `iptal`
+     * `computeBalanceAndTransactions()` tarafından bakiyeden düşülmeyen
+     * durumlar olarak okunuyor — üçü de burada aynen korunmalı.
+     */
+    private const WITHDRAWAL_STATUSES = ['beklemede', 'onaylandı', 'ödendi', 'reddedildi', 'iptal'];
+
+    /**
+     * İstemci ASCII yazım gönderebilir (klavye, kopyalama, eski entegrasyon).
+     * Kanonik Türkçe biçime çeviriyoruz ki veritabanında tek bir yazım olsun.
+     */
+    private static function normalizeWithdrawalStatus(string $status): string {
+        $aliases = [
+            'onaylandi' => 'onaylandı',
+            'odendi'    => 'ödendi',
+        ];
+        $status = trim($status);
+        return $aliases[mb_strtolower($status)] ?? $status;
+    }
+
+    public static function listWithdrawals(): void {
+        AuthMiddleware::requireAdmin();
+
+        $db     = Database::getInstance();
+        $status = self::normalizeWithdrawalStatus(InputSanitizer::string($_GET['status'] ?? '', 32));
+        if ($status !== '' && !in_array($status, self::WITHDRAWAL_STATUSES, true)) {
+            JsonResponse::error('Geçersiz durum filtresi.', 400, AppConfig::ERR_VALIDATION);
+        }
+
+        $rows = $status !== ''
+            ? $db->selectMulti(
+                'p.id, p.user_id, p.iban, p.miktar, p.durum, p.created_at, k.kullanici_adi, k.eposta
+                 FROM para_cekme_talepleri p
+                 JOIN kullanicilar k ON k.id = p.user_id
+                 WHERE p.durum = ? ORDER BY p.id DESC',
+                [$status]
+            )
+            : $db->selectMulti(
+                'p.id, p.user_id, p.iban, p.miktar, p.durum, p.created_at, k.kullanici_adi, k.eposta
+                 FROM para_cekme_talepleri p
+                 JOIN kullanicilar k ON k.id = p.user_id
+                 ORDER BY p.id DESC'
+            );
+
+        JsonResponse::success(['requests' => $rows]);
+    }
+
+    public static function updateWithdrawalStatus(): void {
+        require_method('POST');
+        $adminName = AuthMiddleware::requireAdmin();
+
+        $data   = json_decode($_POST['data'] ?? '', true) ?? [];
+        $id     = InputSanitizer::positiveInt($data['id'] ?? $_POST['id'] ?? 0);
+        $status = self::normalizeWithdrawalStatus(InputSanitizer::string($data['durum'] ?? $_POST['durum'] ?? '', 32));
+
+        if (!$id) {
+            JsonResponse::error('Talep ID gerekli.', 400, AppConfig::ERR_VALIDATION);
+        }
+        if (!in_array($status, self::WITHDRAWAL_STATUSES, true)) {
+            JsonResponse::error(
+                'Geçersiz durum. İzin verilenler: ' . implode(', ', self::WITHDRAWAL_STATUSES),
+                400,
+                AppConfig::ERR_VALIDATION
+            );
+        }
+
+        $db      = Database::getInstance();
+        $request = $db->selectSingle('id, user_id, miktar, durum FROM para_cekme_talepleri WHERE id = ?', [$id]);
+        if (!$request) {
+            JsonResponse::error('Talep bulunamadı.', 404, AppConfig::ERR_NOT_FOUND);
+        }
+
+        // Kapanmış bir talebin yeniden açılması bakiyeyi geriye doğru
+        // değiştirir; kasıtlı olabilir ama sessizce olmamalı.
+        $closed = ['odendi', 'reddedildi', 'iptal'];
+        if (in_array((string) $request['durum'], $closed, true) && empty($data['force'])) {
+            JsonResponse::error(
+                'Bu talep zaten kapatılmış (' . $request['durum'] . '). Değiştirmek için force gönderin.',
+                409,
+                AppConfig::ERR_VALIDATION
+            );
+        }
+
+        $db->update('para_cekme_talepleri', ['durum' => $status], 'id = ?', [$id]);
+
+        error_log(sprintf(
+            '[withdrawal] durum güncellendi id=%d user_id=%d tutar=%s %s -> %s admin=%s',
+            $id,
+            (int) $request['user_id'],
+            (string) $request['miktar'],
+            (string) $request['durum'],
+            $status,
+            $adminName
+        ));
+
+        JsonResponse::success(['message' => 'Talep durumu güncellendi.', 'id' => $id, 'durum' => $status]);
     }
 }

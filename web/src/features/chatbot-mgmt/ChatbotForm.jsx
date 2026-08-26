@@ -16,7 +16,6 @@ import {
     deriveMonthlyPrice,
     calculateMessageAllowance,
     validatePrice,
-    MONTHLY_DISCOUNT_FACTOR,
 } from "@/shared/lib/pricing";
 import { RefreshCw, Upload, ChevronDown, FileText, Tag, AlertCircle } from "lucide-react";
 
@@ -364,7 +363,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                 const weeklyError = validatePrice(formData.weeklyPrice, 'Haftalık', MAX_WEEKLY_PRICE);
                 if (weeklyError) newErrors.weeklyPrice = weeklyError;
 
-                const monthlyError = validatePrice(formData.monthlyPrice, 'Aylık', MAX_WEEKLY_PRICE * 4);
+                const monthlyError = validatePrice(formData.monthlyPrice, 'Aylık', MAX_WEEKLY_PRICE * 4, deriveMonthlyPrice(MIN_WEEKLY_PRICE));
                 if (monthlyError) newErrors.monthlyPrice = monthlyError;
             }
 
@@ -793,7 +792,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                                     </div>
                                 </div>
                                 <p className="text-caption text-white/40">
-                                    İzin verilen aralık: {MIN_WEEKLY_PRICE}₺ – {(MAX_WEEKLY_PRICE * 4).toLocaleString('tr-TR')}₺
+                                    İzin verilen aralık: {deriveMonthlyPrice(MIN_WEEKLY_PRICE)}₺ – {(MAX_WEEKLY_PRICE * 4).toLocaleString('tr-TR')}₺
                                 </p>
                             </div>
 
@@ -811,7 +810,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                                     <p className="relative mt-4 border-t border-white/[0.06] pt-4 text-body-sm leading-relaxed text-white/70">
                                         Alıcıların bu fiyatla, 1 haftalık satın almada <b className="text-fuchsia-300">{calculateMessageAllowance(Number(formData.weeklyPrice))} mesaj hakkı</b>
                                         {formData.monthlyPrice > 0 && (
-                                            <>, 1 aylık satın almada <b className="text-fuchsia-300">{calculateMessageAllowance(Number(formData.monthlyPrice) * MONTHLY_DISCOUNT_FACTOR)} mesaj hakkı</b></>
+                                            <>, 1 aylık satın almada <b className="text-fuchsia-300">{calculateMessageAllowance(Number(formData.monthlyPrice))} mesaj hakkı</b></>
                                         )} kazanacak.
                                     </p>
                                 )}

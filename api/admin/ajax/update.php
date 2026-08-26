@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/_guard.php';
 if (empty($_SESSION['admin'])) {
     http_response_code(403);
     echo json_encode(["success" => false, "message" => "Yetkisiz erişim."]);

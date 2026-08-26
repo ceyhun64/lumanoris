@@ -77,7 +77,7 @@ $is_offline = $database->getGlobalVars('offline')['offline'] ?? '0';
     
     function backupDatabase()
     {
-        fetch('ajax/db_backup.php?mode=backup', {method: 'GET'})
+        fetch('ajax/db_backup.php', { method: 'POST', body: new URLSearchParams({ mode: 'backup', csrf_token: CSRF_TOKEN }) })
         .then(response => response.json()) 
         .then(t => {
             new Notification({
@@ -101,7 +101,7 @@ $is_offline = $database->getGlobalVars('offline')['offline'] ?? '0';
             return;
         }
 
-        fetch('ajax/db_backup.php?mode=restore', {method: 'GET'})
+        fetch('ajax/db_backup.php', { method: 'POST', body: new URLSearchParams({ mode: 'restore', confirm: 'RESTORE', csrf_token: CSRF_TOKEN }) })
         .then(response => response.json()) 
         .then(t => {
             new Notification({

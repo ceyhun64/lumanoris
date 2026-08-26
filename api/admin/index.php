@@ -1,18 +1,64 @@
 <?php
-require($_SERVER['DOCUMENT_ROOT'] . '/functions/util.php');
-require($_SERVER['DOCUMENT_ROOT'] . '/admin/functions/tailmind.php');
+require_once __DIR__ . '/../functions/logging.php';
+configure_error_log();
+require_once __DIR__ . '/../functions/util.php';
+require_once __DIR__ . '/functions/tailmind.php';
 date_default_timezone_set('Europe/Istanbul');
 require_once '../functions/db.php';
 $database = Database::getInstance();
 $conn = $database->getConnection();
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// The admin panel turned display_errors on unconditionally, regardless of
+// APP_DEBUG — so in production a PHP notice or warning would be printed into
+// the page (and, for anything that emits JSON, into the response body). Honour
+// the same flag the API's exception handler uses; errors are logged either way.
+$adminDebug = strtolower((string) ($_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG') ?: '')) === 'true';
+ini_set('display_errors', $adminDebug ? '1' : '0');
+ini_set('display_startup_errors', $adminDebug ? '1' : '0');
+ini_set('log_errors', '1');
 error_reporting(E_ALL);
 
 $currentPath = $_SERVER['REQUEST_URI'];
 
-session_start();
+// Route table, resolved before any output. The switch that used to do this ran
+// after the header partial had already been echoed, so a 404 status could not
+// be sent from there at all ("headers already sent") — and with no default
+// branch an unknown /admin/* path rendered an empty 200 byte-identical to
+// /admin/. Deciding the route up here makes the status code possible.
+$adminRoutes = [
+    '/admin'                    => null,   // dashboard root, no sub-page
+    '/admin/'                   => null,
+    '/admin/adminler'           => 'adminler.php',
+    '/admin/seo'                => 'seo.php',
+    '/admin/sosyalmedya'        => 'sosyal.php',
+    '/admin/hit'                => 'hit.php',
+    '/admin/smtp'               => 'smtp.php',
+    '/admin/genelayar'          => 'genelayar.php',
+    '/admin/iletisim'           => 'iletisim.php',
+    '/admin/api'                => 'api.php',
+    '/admin/chatbotkategoriler' => 'chatbotkategoriler.php',
+    '/admin/kullanicilar'       => 'kullanicilar.php',
+    '/admin/chatbotlar'         => 'chatbotlar.php',
+    '/admin/chatbotistatistik'  => 'chatbotistatistik.php',
+    '/admin/chatayar'           => 'chatayar.php',
+    '/admin/abonelik'           => 'abonelik.php',
+    '/admin/odemeentegrasyon'   => 'odemeentegrasyon.php',
+    '/admin/anasayfa'           => 'anasayfa.php',
+    '/admin/hakkinda'           => 'hakkinda.php',
+    '/admin/kullanimkosullari'  => 'kullanimkosullari.php',
+    '/admin/gizlilikpolitikasi' => 'gizlilikpolitikasi.php',
+    '/admin/teslimatiade'       => 'teslimatiade.php',
+    '/admin/satiskosullari'     => 'satiskosullari.php',
+];
+
+$routePath  = strtok($currentPath, '?');
+$routeKnown = array_key_exists($routePath, $adminRoutes);
+if (!$routeKnown) {
+    http_response_code(404);
+}
+
+require_once __DIR__ . '/functions/session.php';
+admin_session_start();
 if (empty($_SESSION['csrf_token'])) {
   $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -33,73 +79,13 @@ if (empty($_SESSION['csrf_token'])) {
 
     <main id="admin-panel-content" class="flex-1 bg-gray-100 min-h-screen p-6 transition-all duration-300">
       <?php
-      switch ($currentPath) {
-        case '/admin':
-        case '/admin/':
-          break;
-        case '/admin/adminler':
-          include 'adminler.php';
-          break;
-        case '/admin/seo':
-          include 'seo.php';
-          break;
-        case '/admin/sosyalmedya':
-          include 'sosyal.php';
-          break;
-        case '/admin/hit':
-          include 'hit.php';
-          break;
-        case '/admin/smtp':
-          include 'smtp.php';
-          break;
-        case '/admin/genelayar':
-          include 'genelayar.php';
-          break;
-        case '/admin/iletisim':
-            include 'iletisim.php';
-            break;
-        case '/admin/api':
-            include 'api.php';
-            break;
-        case '/admin/chatbotkategoriler':
-            include 'chatbotkategoriler.php';
-            break;
-        case '/admin/kullanicilar':
-            include 'kullanicilar.php';
-            break;
-        case '/admin/chatbotlar':
-            include 'chatbotlar.php';
-            break;
-        case '/admin/chatbotistatistik':
-            include 'chatbotistatistik.php';
-            break;
-        case '/admin/chatayar':
-            include 'chatayar.php';
-            break;
-        case '/admin/abonelik':
-            include 'abonelik.php';
-            break;
-        case '/admin/odemeentegrasyon':
-            include 'odemeentegrasyon.php';
-            break;
-        case '/admin/anasayfa':
-            include 'anasayfa.php';
-            break;
-        case '/admin/hakkinda':
-            include 'hakkinda.php';
-            break;
-        case '/admin/kullanimkosullari':
-            include 'kullanimkosullari.php';
-            break;
-        case '/admin/gizlilikpolitikasi':
-            include 'gizlilikpolitikasi.php';
-            break;
-        case '/admin/teslimatiade':
-            include 'teslimatiade.php';
-            break;
-        case '/admin/satiskosullari':
-            include 'satiskosullari.php';
-            break;
+      if (!$routeKnown) {
+          echo '<div class="rounded-xl bg-white p-8 text-center text-gray-600 shadow">'
+             . '<p class="text-lg font-semibold text-gray-800">Sayfa bulunamadı</p>'
+             . '<p class="mt-2 text-sm">Aradığınız yönetim sayfası mevcut değil.</p>'
+             . '</div>';
+      } elseif ($adminRoutes[$routePath] !== null) {
+          include $adminRoutes[$routePath];
       }
       ?>
     </main>

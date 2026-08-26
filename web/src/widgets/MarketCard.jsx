@@ -103,7 +103,7 @@ export default function MarketCard({ bot, onRemove }) {
   return (
     <div
       className={cn(
-        "relative flex flex-col cursor-pointer p-3 rounded-lg border bg-[#0D0D1A] gap-3 justify-between transition-all duration-300 hover:shadow-[0_0_12px_rgba(217,70,239,0.25)]",
+        "relative flex flex-col cursor-pointer p-3 rounded-lg border bg-luma-elevated gap-3 justify-between transition-all duration-300 hover:shadow-[0_0_12px_rgba(217,70,239,0.25)]",
         isInCart ? "border-fuchsia-400/50" : "border-[rgba(255,241,250,0.2)]",
       )}
       onClick={() => router.push(`/dashboard/chat?botId=${bot.id}`)}
@@ -229,7 +229,7 @@ export default function MarketCard({ bot, onRemove }) {
 
             {menuOpen && (
               <div
-                className="absolute bottom-20 left-1/2 -translate-x-1/2 py-3 px-6 w-[280px] z-[99999] rounded-xl bg-[#111120] shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+                className="absolute bottom-20 left-1/2 -translate-x-1/2 py-3 px-6 w-[280px] z-[99999] rounded-xl bg-luma-card shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
                 onClick={(e) => e.stopPropagation()}
               >
                 <ul className="list-none flex flex-col gap-3">
@@ -452,7 +452,7 @@ export default function MarketCard({ bot, onRemove }) {
 
           {/* Buy button */}
           <button
-            className="flex px-3 py-1 cursor-pointer justify-center items-center rounded-xl text-white text-center font-display text-caption font-medium min-w-[56px] transition-all bg-gradient-to-br from-[#3730A3] to-[#8B5CF6]/20 hover:from-[#D946EF] hover:to-[#8B5CF6] border-none outline-none"
+            className="flex px-3 py-1 cursor-pointer justify-center items-center rounded-xl text-white text-center font-display text-caption font-medium min-w-[56px] transition-all bg-gradient-to-br from-[#3730A3] to-violet-500/20 hover:from-fuchsia-500 hover:to-violet-500 border-none outline-none"
             onClick={async (e) => {
               e.stopPropagation();
               try {

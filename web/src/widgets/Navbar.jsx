@@ -27,7 +27,7 @@ export default function NavbarMobile({ userId = null }) {
 
     return (
         <>
-            <div className="flex h-16 items-center justify-between px-4 bg-gradient-to-b from-[rgba(11,11,30,0.9)] to-[#09090F] backdrop-blur-xl">
+            <div className="flex h-16 items-center justify-between px-4 bg-gradient-to-b from-[rgba(11,11,30,0.9)] to-luma-base backdrop-blur-xl">
                 <div
                     className="flex items-center gap-2.5 cursor-pointer select-none transition-opacity hover:opacity-80"
                     onClick={() => router.push('/dashboard')}
@@ -38,7 +38,7 @@ export default function NavbarMobile({ userId = null }) {
 
                 <button
                     ref={toggleBtnRef}
-                    className="flex h-10 w-10 items-center justify-center rounded-lg text-white/70 transition-all duration-150 hover:bg-gradient-to-br hover:from-fuchsia-500/20 hover:to-violet-500/12 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg text-white/70 transition-all duration-150 hover:bg-gradient-to-br hover:from-fuchsia-500/20 hover:to-violet-500/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
                     aria-label={sidebarOpen ? "Menüyü kapat" : "Menüyü aç"}
                     aria-haspopup="true"

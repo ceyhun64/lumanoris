@@ -1,27 +1,35 @@
 <?php
-if ($_SERVER["REQUEST_METHOD"] == "POST")
-{
-    if(!csrf_check($_POST['csrf_token']))
-    {
-        echo '<script>alert("Geçersiz istek (CSRF hatası)!");</script>';
+/**
+ * BE-001 🟠: bu dosya admin girişinin İKİNCİ ve tamamen bağımsız
+ * implementasyonunu taşıyordu (JS'siz geri düşüş yolu). `session_regenerate_id`
+ * ve rate limit ikisinde de yoktu; üstelik bu yol kimlik doğrulaması olmadan
+ * erişilebildiği için `admin/ajax/giris.php`'ye eklenen her korumayı
+ * atlatmanın hazır bir yoluydu.
+ *
+ * Kimlik doğrulama artık tek yerde: admin/functions/admin_login.php.
+ */
+require_once __DIR__ . '/../functions/admin_login.php';
+
+$login_error = null;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_SESSION['admin'])) {
+    if (!csrf_check($_POST['csrf_token'] ?? '')) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        exit();
-    }
-    if(!isset($_SESSION['admin']))
-    {
-        $admin_adi = $_POST['admin_adi'];
-        $admin_sifre = $_POST['admin_sifre'];
-        $admin_bilgi = $database->selectSingle("* FROM adminler WHERE kullanici_adi = ?", [$admin_adi]);
-        if($admin_bilgi && password_verify($admin_sifre, $admin_bilgi['sifre']))
-        {
-            $_SESSION['admin'] = $admin_adi;
-            header("Location: /admin/");
+        $login_error = 'Geçersiz istek (CSRF hatası)!';
+    } else {
+        $result = admin_login_attempt(
+            $database,
+            (string) ($_POST['admin_adi'] ?? ''),
+            (string) ($_POST['admin_sifre'] ?? '')
+        );
+
+        if ($result['ok']) {
+            header('Location: /admin/');
             exit();
         }
-        else
-        {
-            echo '<script>alert("Geçersiz kullanıcı adı veya şifre");</script>';
-        }
+
+        http_response_code($result['status']);
+        $login_error = $result['message'];
     }
 }
 ?>
@@ -49,6 +57,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 
       <!-- Body -->
       <div class="p-6">
+        <?php if ($login_error !== null): ?>
+          <div role="alert" class="mb-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <?= htmlspecialchars($login_error, ENT_QUOTES, 'UTF-8') ?>
+          </div>
+        <?php endif; ?>
         <form id="login-form" action="" method="POST" class="space-y-4">
           <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']; ?>">
 

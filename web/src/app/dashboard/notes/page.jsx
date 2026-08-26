@@ -228,8 +228,8 @@ export default function DialoguePage() {
     fetch("/api/content/getcategories.php").then(async (res) => {
       try {
         const data = await res.json();
-        if (Array.isArray(data)) {
-          setCategories([{ id: "all", kategori_adi_tr: "Tümü" }, ...data]);
+        if (Array.isArray(data?.categories)) {
+          setCategories([{ id: "all", kategori_adi_tr: "Tümü" }, ...data.categories]);
         }
       } catch (e) {
         console.error(e);
@@ -357,7 +357,7 @@ export default function DialoguePage() {
                 <Sparkles className="h-3 w-3" /> Arşiv
               </span>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <h1 className="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
               Diyalog Defteri
             </h1>
             <p className="text-sm text-white/50">
@@ -431,8 +431,8 @@ export default function DialoguePage() {
               >
                 {/* Content preview */}
                 <div className="space-y-3">
-                  <div className="relative max-h-[160px] overflow-hidden rounded-2xl bg-[#09090f] p-4 border border-white/5">
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#09090f] via-transparent to-transparent pointer-events-none" />
+                  <div className="relative max-h-[160px] overflow-hidden rounded-2xl bg-luma-base p-4 border border-white/5">
+                    <div className="absolute inset-0 bg-gradient-to-t from-luma-base via-transparent to-transparent pointer-events-none" />
                     <h3 className="text-sm font-semibold text-white/90 group-hover:text-fuchsia-300 transition-colors">
                       {card.title}
                     </h3>

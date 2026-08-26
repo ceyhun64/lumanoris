@@ -13,6 +13,8 @@ final class AppConfig {
     const FREE_PUBLIC_BOT_LIMIT      = 2;
 
     // ── Producer-plan bot limits ───────────────────────────────────────────
+    // NOT WIRED UP: chatbot_limits.php only ever applies the FREE_* limits;
+    // nothing consults these when a producer plan is active.
     const PRODUCER_INDEPENDENT_LIMIT = 10;
     const PRODUCER_PUBLIC_LIMIT      = 20;
 
@@ -32,17 +34,30 @@ final class AppConfig {
     const DEFAULT_PAGE_LIMIT = 20;
 
     // ── Marketplace ────────────────────────────────────────────────────────
+    // NOT WIRED UP: no code reads these two, and no service fee is charged
+    // anywhere today. They are kept as the recorded intent, but nothing
+    // enforces them — do not assume a fee is applied because they exist.
+    // (MIN_WEEKLY_PRICE carried the same trap until it was actually enforced.)
     const SERVICE_FEE_PERCENT  = 5;
     const SERVICE_FEE_EXEMPT_ABOVE = 1000; // ₺
+    // Applied EXACTLY ONCE, at the moment a seller sets a price: pricing.js
+    // deriveMonthlyPrice() stores chatbotlar.ucret_aylik as round(weekly*4*0.9).
+    // Everything downstream (checkout display, MarketplaceController::linePrice)
+    // must therefore use ucret_aylik as-is — re-applying this factor at purchase
+    // time charged the discount twice (weekly*3.24 instead of weekly*3.6).
+    // Mirrored in web/src/shared/lib/pricing.js as MONTHLY_DISCOUNT_FACTOR.
     const DISCOUNT_MONTHLY_FACTOR  = 0.9;  // 10% discount on monthly subscription
     const SELLER_COMMISSION_WEEKLY  = 0.85; // Seller keeps 85% of weekly sales
     const SELLER_COMMISSION_MONTHLY = 0.80; // Seller keeps 80% of monthly sales
-    // Bounds a seller may set a bot's weekly sale price to. Enforced in
-    // ChatbotController::publishChatbot/updateChatbotPrice; mirrored on the
-    // frontend in shared/lib/pricing.js so the popup can show the same
-    // range as an inline note instead of only rejecting out-of-range values
-    // after submit. Placeholder business limits — confirm actual values
-    // with product/finance before relying on them long-term.
+    // Bounds a seller may set a bot's weekly sale price to. Both bounds are
+    // enforced in ChatbotController::assertValidPrice (publishChatbot /
+    // updateChatbotPrice) and mirrored in shared/lib/pricing.js validatePrice.
+    // MIN_WEEKLY_PRICE was previously documented here as enforced while no PHP
+    // read it and the frontend only checked `n <= 0`, so a 0,01 ₺ bot passed
+    // both layers. The monthly field's floor is the same value run through the
+    // monthly derivation (round(min * 4 * DISCOUNT_MONTHLY_FACTOR) = 4 ₺).
+    // Placeholder business limits — confirm actual values with product/finance
+    // before relying on them long-term.
     const MIN_WEEKLY_PRICE = 1;
     const MAX_WEEKLY_PRICE = 5000; // ₺
 
@@ -77,6 +92,9 @@ final class AppConfig {
     const ERR_DUPLICATE        = 'DUPLICATE_ENTRY';
     const ERR_SERVER           = 'SERVER_ERROR';
     const ERR_PAYMENT          = 'PAYMENT_ERROR';
+    // Özellik kodda var ama arkasındaki entegrasyon henüz yok — sahte başarı
+    // yerine bu kodla açıkça reddediyoruz (BIZ-001, PAY-012, DEP-001).
+    const ERR_UNAVAILABLE      = 'FEATURE_UNAVAILABLE';
 
     // ── External config (from environment / bootstrap) ────────────────────
     const LUMANORIS_USERNAME   = 'lumanoris';

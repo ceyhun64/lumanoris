@@ -35,7 +35,9 @@ export default function ForgotPassword() {
   };
 
   const validatePassword = (passVal) => {
-    if (passVal.length < 8) return "Şifre en az 8 karakter olmalıdır.";
+    // SEC-011: sunucudaki politika ile aynı alt sınır. İstemci 8, sunucu 10
+    // isterken kullanıcı formu geçip sunucudan hata alıyordu.
+    if (passVal.length < 10) return "Şifre en az 10 karakter olmalıdır.";
     if (!/(?=.*[a-z])/.test(passVal))
       return "Şifre en az bir küçük harf içermelidir.";
     if (!/(?=.*[A-Z])/.test(passVal))
@@ -78,7 +80,13 @@ export default function ForgotPassword() {
 
       if (result.success) {
         setStep(2);
-        toast.success("Doğrulama kodu e-posta adresinize gönderildi.");
+        // SEC-012: sunucu artık kayıtlı/kayıtsız ayrımı yapmıyor (hesap
+        // enumerasyonu). Mesajı da ondan alıyoruz ki iki durum istemcide de
+        // ayırt edilemesin.
+        toast.success(
+          result.message ||
+            "Eğer bu e-posta adresi kayıtlıysa, sıfırlama kodu gönderildi.",
+        );
       } else {
         toast.error(result.message || "Doğrulama kodu gönderilemedi.");
       }
@@ -171,7 +179,7 @@ export default function ForgotPassword() {
     "w-full bg-[#0A0B10]/80 border border-white/[0.08] rounded-xl pl-11 pr-4 py-3.5 text-body text-white placeholder-white/35 outline-none transition-all duration-300 focus:border-fuchsia-500/50 focus:bg-[#0E0F16] focus:ring-4 focus:ring-fuchsia-500/10 hover:border-white/20 font-sans";
 
   return (
-    <div className="min-h-screen bg-[#09090F] text-white flex selection:bg-fuchsia-500/30 selection:text-fuchsia-200 overflow-x-hidden font-sans relative">
+    <div className="min-h-screen bg-luma-base text-white flex selection:bg-fuchsia-500/30 selection:text-fuchsia-200 overflow-x-hidden font-sans relative">
       {/* Ambient background lighting effects */}
       <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-fuchsia-600/[0.07] rounded-full blur-[160px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-violet-600/[0.07] rounded-full blur-[160px] pointer-events-none" />
@@ -185,7 +193,7 @@ export default function ForgotPassword() {
             onClick={() => (window.location.href = "/")}
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-violet-600 p-0.5 shadow-[0_0_30px_rgba(217,70,239,0.3)] transition-transform duration-500 group-hover:scale-105">
-              <div className="w-full h-full bg-[#030305] rounded-[10px] flex items-center justify-center">
+              <div className="w-full h-full bg-[#030305] rounded-md flex items-center justify-center">
                 <Bot className="w-5 h-5 text-fuchsia-400" />
               </div>
             </div>
@@ -253,8 +261,8 @@ export default function ForgotPassword() {
                 <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5 text-white/60 text-caption">
                   AI
                 </div>
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] text-white/80 leading-relaxed">
-                  Şifre yenileme sürecinde güçlü şifre kurallarına (en az 8
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 text-white/80 leading-relaxed">
+                  Şifre yenileme sürecinde güçlü şifre kurallarına (en az 10
                   karakter, büyük/küçük harf ve rakam) dikkat etmeniz önerilir.
                 </div>
               </div>

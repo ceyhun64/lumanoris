@@ -736,8 +736,8 @@ export function MainDashboard2026() {
       .then(async (res) => {
         try {
           const data = JSON.parse(await res.text());
-          if (Array.isArray(data)) {
-            setCategories([{ id: "all", kategori_adi_tr: "Tümü" }, ...data]);
+          if (Array.isArray(data?.categories)) {
+            setCategories([{ id: "all", kategori_adi_tr: "Tümü" }, ...data.categories]);
           } else {
             setCategories([{ id: "all", kategori_adi_tr: "Tümü" }]);
           }
@@ -929,7 +929,7 @@ export function MainDashboard2026() {
               <Sparkles className="h-3.5 w-3.5 text-violet-400" />
               <span>2026 AI Agent Marketplace</span>
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+            <h1 className="font-display text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
               Anasayfa
             </h1>
             <p className="mt-2 text-sm text-zinc-400 max-w-xl leading-relaxed">
@@ -1074,7 +1074,7 @@ export function MainDashboard2026() {
         </section>
 
         {error && (
-          <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-300">
+          <div className="mb-6 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-300">
             {error}
           </div>
         )}

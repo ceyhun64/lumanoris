@@ -422,7 +422,7 @@ export function History() {
               <Clock className="h-3.5 w-3.5 text-violet-400" />
               <span>Zaman Çizelgesi</span>
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
               Geçmiş Sohbetler
             </h1>
             <p className="mt-1.5 text-sm text-zinc-400">

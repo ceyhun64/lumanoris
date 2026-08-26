@@ -1,0 +1,13 @@
+# Uploads are user-supplied bytes served from a public path. Even though the
+# endpoint now verifies content and names files itself, never let this
+# directory hand anything to a script interpreter — a server configured to map
+# extra extensions to PHP (AddHandler, an inherited .htaccess) would otherwise
+# turn a stored file into code.
+php_flag engine off
+<IfModule mod_php.c>
+    php_admin_flag engine off
+</IfModule>
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule \.(php[0-9]?|phtml|phar|cgi|pl|py|sh|htaccess)$ - [F,L,NC]
+</IfModule>

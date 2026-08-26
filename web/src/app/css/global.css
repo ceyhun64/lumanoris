@@ -216,14 +216,17 @@ select:focus:not([data-focus-managed]) {
 }
 
 
-/* DayPicker CSS Variables for Dark Theme */
+/* Global reset + ince kaydırma çubuğu.
+   (Önceki "DayPicker CSS Variables for Dark Theme" yorumu yanlıştı: DayPicker
+   değişkenleri burada değil, app/layout.js içindeki inline <style> bloğunda
+   tanımlı. Aşağıdaki iki ardışık `*` bloğu tek bloğa alındı — kurallar aynı,
+   yalnızca tekrar eden seçici kaldırıldı.)
+   NOT: `padding: 0` Tailwind preflight'ın üstüne EK bir kural; kaldırmak
+   görünümü değiştirebileceği için dokunulmadı (bkz. STYLE_AUDIT.md I6). */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-}
-
-* {
   scrollbar-width: thin;
   scrollbar-color: #3b1342 #0D0D1A;
 }

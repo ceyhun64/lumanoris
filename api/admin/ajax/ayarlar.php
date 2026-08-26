@@ -1,10 +1,10 @@
 <?php
+require_once __DIR__ . '/_guard.php';
 // Gerekli dosyaları dahil et
 require '../../functions/db.php';
 $database = Database::getInstance();
 $conn = $database->getConnection();
 
-session_start();
 header('Content-Type: application/json');
 
 if (empty($_SESSION['admin'])) {

@@ -1,9 +1,9 @@
 <?php
+require_once __DIR__ . '/_guard.php';
 require '../../functions/db.php';
 $database = Database::getInstance();
 $conn = $database->getConnection();
 
-session_start();
 header('Content-Type: application/json');
 
 if (empty($_SESSION['admin'])) {
@@ -26,28 +26,81 @@ foreach ($_POST as $key => $value) {
 }
 
 if (!empty($_FILES)) {
-    $uploadDir = '../../assets/img/global/'; // Resimlerin kaydedileceği klasör
-    
+    /**
+     * SEC-021 🟠 — bu yükleme yolu yalnızca UZANTIYA bakıyordu ve izin
+     * verilenler arasında **svg** vardı.
+     *
+     * İki ayrı sorun:
+     *
+     *   1. **SVG bir belgedir, resim değil.** İçine `<script>` ya da
+     *      `onload=` gömülebilir. Dosya `assets/img/global/` altına yazılıp
+     *      site kaynağından servis edildiği için, doğrudan açıldığında
+     *      JavaScript siteyle AYNI ORIGIN'de çalışır — oturum çerezine
+     *      erişebilir. `api/assets/.htaccess` PHP yorumlayıcısını kapatıyor
+     *      ama SVG'nin JavaScript'i tarayıcıda çalışır, sunucuda değil.
+     *   2. **Uzantı içeriği kanıtlamaz.** Aynı dizindeki
+     *      `admin/ajax/upload.php` magic-byte doğrulaması yapıyor
+     *      (`finfo_file`); bu yol o kontrolü hiç yapmıyordu. Yani
+     *      `zararli.php` içerikli bir dosya `resim.png` adıyla yüklenebilirdi.
+     *
+     * Artık: SVG kaldırıldı, MIME magic-byte ile doğrulanıyor, ve dosya adı
+     * sunucuda üretiliyor (istemcinin verdiği ad hiç kullanılmıyor).
+     */
+    $uploadDir = __DIR__ . '/../../assets/img/global/';
+
     if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0777, true);
+        // 0777 dünyaya yazılabilir demekti; 0755 yeterli.
+        mkdir($uploadDir, 0755, true);
     }
 
-    $allowedImageExt = ["jpg", "jpeg", "png", "gif", "webp", "svg"];
+    // MIME -> uzantı. SVG bilinçli olarak YOK (bkz. yukarıdaki 1. madde).
+    $allowedMimes = [
+        'image/jpeg' => 'jpg',
+        'image/png'  => 'png',
+        'image/gif'  => 'gif',
+        'image/webp' => 'webp',
+    ];
+    $maxBytes = 5 * 1024 * 1024;
 
     foreach ($_FILES as $key => $file) {
-        if ($file['error'] === UPLOAD_ERR_OK) {
-            $fileName = time() . '_' . basename($file['name']);
-            $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-            if (!in_array($ext, $allowedImageExt)) {
-                continue;
-            }
-            $targetPath = $uploadDir . $fileName;
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            continue;
+        }
+        if (($file['size'] ?? 0) > $maxBytes) {
+            continue;
+        }
+        // Yüklenen dosya gerçekten HTTP yüklemesi mi?
+        if (!is_uploaded_file($file['tmp_name'])) {
+            continue;
+        }
 
-            if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-                // Veritabanına kaydedilecek dosya yolunu (string) diziye ekle
-                // Burada veritabanındaki var_key değerinin HTML formundaki name ile aynı olması önemli
-                $updateData[$key] = 'assets/img/global/' . $fileName;
+        // Magic-byte doğrulaması — upload.php ile aynı yaklaşım.
+        $mime = null;
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo !== false) {
+                $mime = finfo_file($finfo, $file['tmp_name']);
+                finfo_close($finfo);
             }
+        }
+        if ($mime === null || $mime === false) {
+            $info = @getimagesize($file['tmp_name']);
+            $mime = $info['mime'] ?? null;
+        }
+
+        if (!isset($allowedMimes[$mime])) {
+            error_log('[updategv] reddedilen yükleme, mime=' . var_export($mime, true) . ' key=' . $key);
+            continue;
+        }
+
+        // Dosya adı sunucuda üretiliyor; istemcinin verdiği ad kullanılmıyor.
+        $fileName   = date('Ymd-His') . '_' . bin2hex(random_bytes(8)) . '.' . $allowedMimes[$mime];
+        $targetPath = $uploadDir . $fileName;
+
+        if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+            @chmod($targetPath, 0644);
+            // Burada veritabanındaki var_key değerinin HTML formundaki name ile aynı olması önemli
+            $updateData[$key] = 'assets/img/global/' . $fileName;
         }
     }
 }

@@ -37,8 +37,30 @@ abstract class BaseRepository {
         return $stmt->fetchColumn();
     }
 
+    /**
+     * BIZ-004 🟡 — sütun adı doğrulaması YOKTU.
+     *
+     * insert() ve update() sütun adlarını $data'nın anahtarlarından alıp
+     * doğrudan SQL'e gömüyordu. Sütun adları parametrelenemez; anahtarlar
+     * istemciden geliyorsa (beş yazma endpoint'inde geliyordu — SEC-002,
+     * SEC-003, SEC-014) tek savunma bir beyaz liste grameridir, o da yoktu.
+     *
+     * Bu kontrol SON savunma hattı, birincisi değil: çağıranlar ayrıca kendi
+     * sütun beyaz listelerini uyguluyor (InputSanitizer::pickAllowed).
+     */
+    private static function assertSafeColumns(array $data, string $context): void {
+        foreach (array_keys($data) as $column) {
+            if (!InputSanitizer::isSafeIdentifier($column)) {
+                throw new InvalidArgumentException(
+                    $context . ': geçersiz sütun adı reddedildi (' . substr((string) $column, 0, 40) . ')'
+                );
+            }
+        }
+    }
+
     /** Inserts a row and returns the new auto-increment ID. */
     protected static function insert(string $table, array $data): int {
+        self::assertSafeColumns($data, 'insert(' . $table . ')');
         $cols        = array_keys($data);
         $placeholders = implode(', ', array_map(fn($c) => ":$c", $cols));
         $colList     = implode(', ', $cols);
@@ -55,6 +77,7 @@ abstract class BaseRepository {
      *   self::update('table', ['name' => 'x'], 'id = :id', ['id' => 5])
      */
     protected static function update(string $table, array $data, string $where, array $whereParams = []): int {
+        self::assertSafeColumns($data, 'update(' . $table . ')');
         $setParts = implode(', ', array_map(fn($c) => "`$c` = :$c", array_keys($data)));
         $sql      = "UPDATE `$table` SET $setParts WHERE $where";
         $stmt     = self::pdo()->prepare($sql);

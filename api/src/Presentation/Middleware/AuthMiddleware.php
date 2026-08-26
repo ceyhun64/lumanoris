@@ -42,6 +42,21 @@ class AuthMiddleware {
         exit; // unreachable but satisfies static analysis
     }
 
+    /**
+     * SEC-009 🟡 — remember-me ile oturum açarken iki şey eksikti.
+     *
+     * 1) `session_regenerate_id()` çağrılmıyordu. Normal giriş ve Google
+     *    girişi bunu yapıyor; remember-me yolu yapmıyordu. Yani saldırgan
+     *    kurbana kendi PHPSESSID'sini kabul ettirip, kurban "beni hatırla"
+     *    ile geri döndüğünde aynı oturumu paylaşabiliyordu (oturum sabitleme).
+     *
+     * 2) Token rotasyonu yoktu. Aynı (selector, validator) çifti kalıcı
+     *    süresi boyunca tekrar tekrar kullanılabiliyordu; çalınan bir çerez
+     *    30 gün boyunca geçerli kalıyor ve kullanımı hiçbir iz bırakmıyordu.
+     *    Artık her başarılı kullanımda çift yenileniyor — çalınan çerez ilk
+     *    meşru kullanımdan sonra geçersizleşir ve kullanıcı (beklenmedik
+     *    şekilde çıkış yaptığında) durumu fark edebilir.
+     */
     private static function tryRememberMe(): ?int {
         if (!isset($_COOKIE['remember_me'])) {
             return null;
@@ -61,11 +76,60 @@ class AuthMiddleware {
         }
 
         if (!hash_equals($tokenData['hashed_validator'], hash('sha256', $validator))) {
+            // Geçerli bir selector ama yanlış validator: ya çerez bozulmuş ya
+            // da biri deniyor. Her iki hâlde de bu selector'ı yakıyoruz.
+            $repo->deleteRememberTokenBySelector($selector);
+            self::clearRememberCookie();
             return null;
         }
 
         $userId = (int) $tokenData['user_id'];
+
+        // (1) Yetki yükselmesinden önce oturum kimliğini yenile.
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+        }
+
+        // (2) Tek kullanımlık token: eskisini sil, yenisini ver.
+        $newSelector  = InputSanitizer::randomToken(6);
+        $newValidator = InputSanitizer::randomToken(32);
+        $expirySeconds = 86400 * AppConfig::REMEMBER_ME_DAYS;
+
+        try {
+            $repo->deleteRememberTokenBySelector($selector);
+            $repo->setRememberToken(
+                $userId,
+                $newSelector,
+                hash('sha256', $newValidator),
+                date('Y-m-d H:i:s', time() + $expirySeconds)
+            );
+
+            setcookie('remember_me', $newSelector . ':' . $newValidator, [
+                'expires'  => time() + $expirySeconds,
+                'path'     => '/',
+                'httponly' => true,
+                'secure'   => !empty($_SERVER['HTTPS']),
+                'samesite' => 'Strict',
+            ]);
+        } catch (Throwable $e) {
+            // Rotasyon başarısız olduysa kullanıcıyı dışarı atmıyoruz; oturum
+            // zaten kuruldu. Ama eski token silinmiş olabileceği için çerezi
+            // temizliyoruz: bir sonraki ziyarette normal giriş istenir.
+            error_log('[remember-me] rotasyon başarısız: ' . $e->getMessage());
+            self::clearRememberCookie();
+        }
+
         $_SESSION['user_id'] = $userId;
         return $userId;
+    }
+
+    private static function clearRememberCookie(): void {
+        setcookie('remember_me', '', [
+            'expires'  => time() - 3600,
+            'path'     => '/',
+            'httponly' => true,
+            'secure'   => !empty($_SERVER['HTTPS']),
+            'samesite' => 'Strict',
+        ]);
     }
 }

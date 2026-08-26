@@ -48,7 +48,7 @@ export default function AddToListModalEmpty({ isOpen, onClose, onCreate, header 
                     <Button
                         onClick={onClose}
                         variant="secondary"
-                        className="h-auto min-w-[120px] flex-1 border border-transparent bg-white/[0.06] py-3 text-title-sm hover:bg-white/[0.1]"
+                        className="h-auto min-w-[120px] flex-1 border border-transparent bg-white/[0.06] py-3 text-title-sm hover:bg-white/10"
                     >
                         İptal
                     </Button>

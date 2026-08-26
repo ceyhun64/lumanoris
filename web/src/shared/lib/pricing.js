@@ -6,7 +6,10 @@
 // must be updated too, but now there is exactly one frontend place to do it.
 
 // AppConfig::DISCOUNT_MONTHLY_FACTOR — monthly price is 4 weeks' worth at a
-// 10% discount.
+// 10% discount. Applied EXACTLY ONCE, in deriveMonthlyPrice() below, whose
+// result is stored as chatbotlar.ucret_aylik. Nothing downstream may apply it
+// again: checkout displays, and MarketplaceController::linePrice() charges,
+// ucret_aylik as-is.
 export const MONTHLY_DISCOUNT_FACTOR = 0.9;
 
 // AppConfig::SELLER_COMMISSION_WEEKLY / SELLER_COMMISSION_MONTHLY — the cut
@@ -42,12 +45,18 @@ export function calculateMessageAllowance(totalPaid) {
 /**
  * Returns a Turkish error message if `value` isn't a valid price for the
  * given bound, or null when it's fine. `max` lets callers pass a different
- * ceiling for weekly vs. monthly (monthly is naturally ~4x weekly).
+ * ceiling for weekly vs. monthly (monthly is naturally ~4x weekly), and `min`
+ * the matching floor — this used to check only `n <= 0`, so MIN_WEEKLY_PRICE
+ * was shown in the UI copy while a 0,01 ₺ price passed validation on both
+ * sides. Mirrors ChatbotController::assertValidPrice.
  */
-export function validatePrice(value, label, max = MAX_WEEKLY_PRICE) {
+export function validatePrice(value, label, max = MAX_WEEKLY_PRICE, min = MIN_WEEKLY_PRICE) {
     const n = Number(value);
     if (isNaN(n) || n <= 0) {
         return `${label} fiyat geçerli pozitif bir sayı olmalıdır.`;
+    }
+    if (n < min) {
+        return `${label} fiyat en az ${min.toLocaleString('tr-TR')}₺ olabilir.`;
     }
     if (n > max) {
         return `${label} fiyat en fazla ${max.toLocaleString('tr-TR')}₺ olabilir.`;

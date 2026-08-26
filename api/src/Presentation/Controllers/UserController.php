@@ -10,8 +10,14 @@ class UserController {
         $db    = Database::getInstance();
         $count = (int) $db->count(AppConfig::TABLE_CHATBOTS, 'author_user_id = ?', [$userId]);
 
-        $planRow  = $db->selectSingle('plan_name FROM user_plan_selection WHERE user_id = ?', [$userId]);
-        $planName = $planRow['plan_name'] ?? 'Ücretsiz Plan';
+        // UX-002: plan adı artık limitlerle AYNI kaynaktan geliyor
+        // (functions/plans.php). Eskiden burası `user_plan_selection`'ın
+        // serbest metnini okuyor, bot ekranı ise stub'dan 1/2 alıyordu;
+        // ikisi arasında hiçbir bağ yoktu ve kullanıcı "Elmas" başlığıyla
+        // 1/2 limitini aynı anda görüyordu.
+        require_once __DIR__ . '/../../../functions/plans.php';
+        $userPlan = getUserPlan($db, $userId);
+        $planName = (string) $userPlan['name_tr'];
 
         require_once __DIR__ . '/../../../functions/coin_engine.php';
         $coinBalance = getOrInitCoinBalance($db, $userId);
@@ -43,7 +49,9 @@ class UserController {
             'sharedDialogueCount' => $sharedDialogueCount,
             'planName'            => $planName,
             'dailyCoinsRemaining' => (int) $coinBalance['coins_remaining'],
-            'dailyCoinsTotal'     => AppConfig::DAILY_FREE_MESSAGES,
+            // BIZ-002: toplam da plandan gelmeli. Sabit bırakıldığında Elmas
+            // planındaki kullanıcı "1000/10" gibi anlamsız bir oran görüyordu.
+            'dailyCoinsTotal'     => (int) $userPlan['daily_message_limit'],
         ]);
     }
 
@@ -127,6 +135,28 @@ class UserController {
         }
     }
 
+    /**
+     * SEC-016 🟡 — avatar değeri HİÇ doğrulanmadan saklanıyordu.
+     *
+     * Chatbot görselleri için titiz bir yükleme yolu var
+     * (ChatbotController::handleImageUploads: boyut sınırı, magic-byte MIME
+     * doğrulaması, MIME'dan türetilen uzantı, sunucunun ürettiği dosya adı).
+     * Kullanıcı avatarları o yolu tamamen atlıyordu: `$data['avatar']` ne
+     * gelirse `kullanicilar.avatar` (LONGTEXT) sütununa yazılıyordu.
+     *
+     * Pratik sonuçları: sınırsız uzunlukta veri (LONGTEXT'e istediği kadar
+     * yazabilir), `javascript:` / `data:text/html` gibi şemalar (avatar bir
+     * <img src> içinde render ediliyor) ve tamamen dış URL'ler (kullanıcı
+     * profil resmini istediği sunucudan çektirerek görüntüleyenlerin IP'sini
+     * toplayabilir).
+     *
+     * Kabul edilen üç biçim:
+     *   • ""                       → fotoğrafı kaldır
+     *   • assets/…                 → bu sunucunun yükleme yolu
+     *   • data:image/…;base64,…    → küçük gömülü görsel (istemci kırpma akışı)
+     */
+    private const MAX_AVATAR_DATA_URI_BYTES = 512 * 1024;
+
     public static function uploadProfilePhoto(): void {
         require_method('POST');
         $userId = AuthMiddleware::requireAuth();
@@ -139,6 +169,45 @@ class UserController {
         // truly missing key should be rejected.
         if ($avatar === null) {
             JsonResponse::error('Eksik alanlar!', 400, AppConfig::ERR_VALIDATION);
+        }
+        if (!is_string($avatar)) {
+            JsonResponse::error('Geçersiz avatar değeri.', 400, AppConfig::ERR_VALIDATION);
+        }
+
+        $avatar = trim($avatar);
+
+        if ($avatar !== '') {
+            $isLocalPath = (bool) preg_match('#^assets/[A-Za-z0-9_\-/]+\.(png|jpe?g|gif|webp)$#i', $avatar);
+            $isDataUri   = (bool) preg_match('#^data:image/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=]+$#i', $avatar);
+
+            if (!$isLocalPath && !$isDataUri) {
+                JsonResponse::error(
+                    'Geçersiz avatar. Yalnızca bu sunucuya yüklenmiş bir görsel yolu '
+                    . 'veya gömülü bir görsel kabul edilir.',
+                    400,
+                    AppConfig::ERR_VALIDATION
+                );
+            }
+
+            // ".." yolu assets/ dışına çıkarabilirdi.
+            if (str_contains($avatar, '..')) {
+                JsonResponse::error('Geçersiz avatar yolu.', 400, AppConfig::ERR_VALIDATION);
+            }
+
+            if ($isDataUri && strlen($avatar) > self::MAX_AVATAR_DATA_URI_BYTES) {
+                JsonResponse::error('Görsel çok büyük (en fazla 512 KB).', 400, AppConfig::ERR_VALIDATION);
+            }
+
+            if ($isDataUri) {
+                // Base64 gövdesi gerçekten bir görsel mi? Uzantı/MIME iddiası
+                // tek başına yeterli değil — chatbot yolundaki magic-byte
+                // kontrolünün karşılığı.
+                $payload = substr($avatar, strpos($avatar, ',') + 1);
+                $binary  = base64_decode($payload, true);
+                if ($binary === false || @getimagesizefromstring($binary) === false) {
+                    JsonResponse::error('Görsel çözümlenemedi.', 400, AppConfig::ERR_VALIDATION);
+                }
+            }
         }
 
         $ok = (new UserRepository())->updateById($userId, ['avatar' => $avatar]);

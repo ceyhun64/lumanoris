@@ -390,7 +390,7 @@ export function Sidebar({ isMobileOpen = false, onNavigate, userId = null, accou
             <button
               type="button"
               onClick={() => setIsQuitModalOpen(true)}
-              className={`flex items-center w-full rounded-xl p-1.5 text-left hover:bg-red-500/10 text-zinc-400 hover:text-red-400 transition-colors group ${
+              className={`flex items-center w-full rounded-xl p-1.5 text-left hover:bg-rose-500/10 text-zinc-400 hover:text-rose-400 transition-colors group ${
                 collapsed ? "justify-center" : "justify-between"
               }`}
             >
@@ -400,7 +400,7 @@ export function Sidebar({ isMobileOpen = false, onNavigate, userId = null, accou
                 </div>
                 {!collapsed && (
                   <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-medium text-zinc-200 truncate group-hover:text-red-300">
+                    <span className="text-xs font-medium text-zinc-200 truncate group-hover:text-rose-300">
                       {displayName}
                     </span>
                     <span className="text-caption text-zinc-500 truncate">

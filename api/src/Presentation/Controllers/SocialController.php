@@ -119,8 +119,28 @@ class SocialController {
         $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
-        $data['user_id'] = $userId;
-        $id = Database::getInstance()->insert('chatbot_comments', $data);
+        // SEC-014 🟡 — istemcinin JSON'u doğrudan insert()'e gidiyordu.
+        // `commented_at` sunucunun; istemciden yazılabilmesi sahte tarihli
+        // yorumlar demekti, tanımsız bir anahtar ise ham SQL hatası.
+        [$data, $rejected] = InputSanitizer::pickAllowed($data, ['chatbot_id', 'comment']);
+        if ($rejected !== []) {
+            JsonResponse::error(
+                'Bu alanlar gönderilemez: ' . implode(', ', $rejected),
+                403,
+                AppConfig::ERR_PERMISSION
+            );
+        }
+
+        $chatbotId = InputSanitizer::positiveInt($data['chatbot_id'] ?? 0);
+        $comment   = InputSanitizer::text($data['comment'] ?? '', 2000);
+        if (!$chatbotId) JsonResponse::error('chatbot_id gereklidir.', 400, AppConfig::ERR_VALIDATION);
+        if (trim($comment) === '') JsonResponse::error('Yorum boş olamaz.', 400, AppConfig::ERR_VALIDATION);
+
+        $id = Database::getInstance()->insert('chatbot_comments', [
+            'chatbot_id' => $chatbotId,
+            'user_id'    => $userId,
+            'comment'    => $comment,
+        ]);
         JsonResponse::success(['message' => 'Yorum başarıyla eklendi', 'id' => $id]);
     }
 

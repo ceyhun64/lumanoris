@@ -84,17 +84,26 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface {
         ]);
     }
 
+
+    /** SEC-009: token rotasyonu için tek bir selector'ı siler. */
+    public function deleteRememberTokenBySelector(string $selector): void {
+        self::delete(self::T_TOKENS, 'selector = ?', [$selector]);
+    }
     public function clearRememberToken(int $userId): void {
         self::delete(self::T_TOKENS, 'user_id = ?', [$userId]);
     }
 
+    // The column is `avatar` (longtext), not `profil_foto` — which does not
+    // exist on kullanicilar at all, so both of these threw MySQL 1054 the
+    // moment anything called them. The live path never did (UserController
+    // reads `avatar` through findById), which is why it went unnoticed.
     public function getProfilePhoto(int $id): ?string {
-        $row = self::one('SELECT profil_foto FROM `' . self::T . '` WHERE id = ?', [$id]);
-        return $row ? $row['profil_foto'] : null;
+        $row = self::one('SELECT avatar FROM `' . self::T . '` WHERE id = ?', [$id]);
+        return $row ? $row['avatar'] : null;
     }
 
     public function updateProfilePhoto(int $id, string $path): void {
-        self::update(self::T, ['profil_foto' => $path], 'id = :_id', ['_id' => $id]);
+        self::update(self::T, ['avatar' => $path], 'id = :_id', ['_id' => $id]);
     }
 
     public function linkGoogleId(int $id, string $googleId): void {

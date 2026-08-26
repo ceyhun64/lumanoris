@@ -1,0 +1,18 @@
+# SEC-020: api/assets/ serves user-supplied avatars and chatbot images
+# (ChatbotController::saveChatbot writes here). Never let this path reach a
+# script interpreter — a server that maps an extra extension to PHP
+# (AddHandler, an inherited config) would otherwise execute a stored file.
+# Mirrors api/admin/uploads/.htaccess.
+php_flag engine off
+<IfModule mod_php.c>
+    php_admin_flag engine off
+</IfModule>
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule \.(php[0-9]?|phtml|phar|cgi|pl|py|sh|htaccess)$ - [F,L,NC]
+</IfModule>
+Options -Indexes -ExecCGI
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phar
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>

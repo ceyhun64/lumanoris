@@ -80,7 +80,8 @@ export default function Explore() {
       if (data.success === false)
         throw new Error(data.message || "Kategori API'sinden hata alındı.");
 
-      setCategories([{ id: 0, kategori_adi_tr: "Tümü" }, ...data]);
+      // ERR-003: getcategories artık zarflı ({success, categories}).
+      setCategories([{ id: 0, kategori_adi_tr: "Tümü" }, ...(data.categories ?? [])]);
     } catch (e) {
       console.warn("Kategoriler yüklenemedi. Sadece 'Tümü' gösterilecek.", e);
     }
@@ -246,7 +247,7 @@ export default function Explore() {
   const categoryCount = Math.max(0, categories.length - 1);
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 antialiased selection:bg-fuchsia-500/30 selection:text-fuchsia-200 p-4 sm:p-8 font-sans pb-24">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 antialiased selection:bg-fuchsia-500/30 selection:text-fuchsia-200 p-4 sm:p-8 font-sans pb-24">
       {/* Background Ambient Glow Effects */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-40 right-1/3 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-violet-600/10 via-fuchsia-600/10 to-transparent blur-[140px]" />
@@ -261,7 +262,7 @@ export default function Explore() {
               <Compass className="w-3.5 h-3.5" />
               <span>Pazaryeri</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
               Keşfet
             </h1>
             <p className="text-sm text-zinc-400 max-w-xl">

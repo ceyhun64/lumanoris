@@ -29,7 +29,8 @@ export default function App() {
     fetch("/api/content/getcategories.php")
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) setCategories(data);
+        // ERR-003: getcategories artık zarflı ({success, categories}).
+        if (Array.isArray(data?.categories)) setCategories(data.categories);
       })
       .catch((err) => console.error("Categories fetch error:", err));
   }, []);
@@ -158,7 +159,7 @@ export default function App() {
       />
 
       {error && (
-        <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-300">
+        <div className="mb-6 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-300">
           {error}
         </div>
       )}

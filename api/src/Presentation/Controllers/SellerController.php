@@ -83,8 +83,22 @@ class SellerController {
         $param       = new ParamPosMarketplace();
         $result      = $param->addSubMerchant($paramParams);
         $now         = date('Y-m-d H:i:s');
-        $payloadJson = json_encode($paramParams, JSON_UNESCAPED_UNICODE);
 
+        // DEP-002 🟠 — buraya eskiden `json_encode($paramParams)` yazılıyordu,
+        // yani TC kimlik no, IBAN, doğum tarihi, telefon ve adres
+        // `param_marketplace_sellers.param_payload_json` sütununda DÜZ METİN
+        // olarak duruyordu. Aynı veri error_log'a da düşüyordu (orası da
+        // indirilebiliyordu — SEC-001) ve bir DB dökümü bunların hepsini tek
+        // dosyada veriyordu.
+        //
+        // Bu sütunun tek meşru amacı hata ayıklama: "başvuruda hangi alanlar
+        // gönderildi, hangisi eksikti?". Bunun için değerler gerekmiyor.
+        // Gateway'e giden veri zaten istekle birlikte gidiyor; burada
+        // saklanan yalnızca bir kayıt izi.
+        $payloadJson = json_encode(
+            self::redactSellerPayload($paramParams),
+            JSON_UNESCAPED_UNICODE
+        );
         if (!$result['success']) {
             $errMsg = $result['message'] ?: 'Param sub-merchant başvurusu reddedildi.';
             if ($existing) {
@@ -92,6 +106,39 @@ class SellerController {
             } else {
                 $db->insert('param_marketplace_sellers', ['user_id' => $userId, 'guid_altuyeisyeri' => '', 'status' => 'rejected', 'tip' => $tip, 'last_error' => $errMsg, 'last_attempt_at' => $now, 'param_payload_json' => $payloadJson]);
             }
+
+            // DEP-001 🔴 — bu akış titizlikle yazılmış (tam doğrulama,
+            // idempotency, red kaydı, `active` yalnızca gateway başarısında).
+            // Sorun burada değil: `ParamPosMarketplace::addSubMerchant()` bir
+            // stub ve HER ZAMAN başarısız dönüyor. Sonuç zincirleme:
+            //   status != 'active'  →  saveChatbot, publishChatbot, addToCart,
+            //   createSubscription, getPublished (INNER JOIN) ve userHasAccess'in
+            //   ikinci dalı kapanıyor.
+            // Yani temiz bir kurulumda kimse satıcı olamıyor → hiçbir bot
+            // yayınlanamıyor → pazaryeri boş → hiçbir satış yapılamıyor.
+            //
+            // Bu kilit KOD DÜZEYİNDE açılamaz: `status='active'` yazmak, KYC
+            // yapılmamış bir satıcıya para akışı açmak demek olurdu. Doğru
+            // çözüm gerçek Param POS entegrasyonu. Yapılabilecek olan,
+            // kullanıcıyı yanıltmamak: hatanın entegrasyon eksikliğinden mi
+            // yoksa başvurusundan mı kaynaklandığını açıkça söylemek.
+            $stubbed = str_contains($errMsg, 'dev stub');
+            if ($stubbed) {
+                error_log(sprintf(
+                    '[seller_register] DEP-001: Param POS entegrasyonu yok, satıcı kaydı yapılamıyor. user_id=%d tip=%d',
+                    $userId,
+                    $tip
+                ));
+                JsonResponse::error(
+                    'Pazaryeri satıcı kaydı şu anda alınamıyor: ödeme sağlayıcısı '
+                    . 'entegrasyonu henüz devreye alınmadı. Bilgileriniz kaydedildi, '
+                    . 'entegrasyon tamamlandığında başvurunuz işleme alınacak.',
+                    503,
+                    AppConfig::ERR_UNAVAILABLE,
+                    ['status' => 'rejected', 'reason' => 'integration_unavailable']
+                );
+            }
+
             JsonResponse::error($errMsg, 422, AppConfig::ERR_PAYMENT, ['status' => 'rejected']);
         }
 
@@ -200,7 +247,16 @@ class SellerController {
         $cronSecret = $_ENV['PARAM_RECONCILE_SECRET'] ?? $_SERVER['PARAM_RECONCILE_SECRET'] ?? getenv('PARAM_RECONCILE_SECRET') ?: '';
         $provided   = $_GET['secret'] ?? $_POST['secret'] ?? $_SERVER['HTTP_X_RECONCILE_SECRET'] ?? '';
 
-        if ($cronSecret === '' || !hash_equals((string) $cronSecret, (string) $provided)) {
+        // Fail-closed is correct, but an unset PARAM_RECONCILE_SECRET and a
+        // wrong one were indistinguishable: the reconciliation cron just got
+        // "Yetkisiz." forever with nothing to diagnose from. The response stays
+        // identical either way — an anonymous caller learns nothing — while the
+        // operator gets the actual reason in the error log.
+        if ($cronSecret === '') {
+            error_log('[reconcile] PARAM_RECONCILE_SECRET is not set — the reconciliation endpoint will reject every call. Set it in api/.env (see api/.env.example).');
+            JsonResponse::error('Yetkisiz.', 403, AppConfig::ERR_PERMISSION);
+        }
+        if (!hash_equals((string) $cronSecret, (string) $provided)) {
             JsonResponse::error('Yetkisiz.', 403, AppConfig::ERR_PERMISSION);
         }
 
@@ -218,10 +274,74 @@ class SellerController {
         processRefund($db, $db->getConnection(), $data ?? []);
     }
 
+    /**
+     * PAY-007 🟠 — bu uç nokta TAMAMEN korumasızdı.
+     *
+     * `$_POST`'u olduğu gibi `handleParamCallback()`'e veriyordu: imza
+     * doğrulaması yok, kaynak IP kontrolü yok, replay koruması yok, hız
+     * sınırı yok. Gerçek callback mantığı devreye girdiğinde (bugün stub)
+     * bu, internetteki herhangi birinin "ödeme başarılı" bildirimi
+     * uydurabilmesi anlamına gelir — yani ödemeden ürün.
+     *
+     * Buradaki üç katman, gerçek entegrasyondan BAĞIMSIZ olarak doğru:
+     *   1. Paylaşılan sır (PARAM_CALLBACK_SECRET) — fail-closed. Tanımlı
+     *      değilse callback hiç kabul edilmiyor; sessizce açık kalmıyor.
+     *   2. Replay koruması — aynı işlem kimliği ikinci kez işlenmiyor.
+     *   3. Hız sınırı — imza denemesi yapan bir saldırgan sınırsız
+     *      deneyemesin.
+     *
+     * Param POS'un gerçek imza şeması (hash algoritması ve alan sırası)
+     * entegrasyon yazılırken buraya eklenmeli; o gelene kadar paylaşılan sır
+     * asgari ve gerçek bir savunma.
+     */
     public static function paramposCallback(): void {
+        require_method('POST');
         require_once __DIR__ . '/../../../functions/ParamPosMarketplace.php';
         require_once __DIR__ . '/../../../functions/checkout_payments.php';
+
         $db = Database::getInstance();
+
+        checkRateLimit($db, 'parampos_cb:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 60, 60);
+
+        $secret   = env_get('PARAM_CALLBACK_SECRET', '') ?? '';
+        $provided = (string) ($_POST['secret'] ?? $_SERVER['HTTP_X_PARAM_SIGNATURE'] ?? '');
+
+        if (trim($secret) === '') {
+            error_log('[parampos_callback] PARAM_CALLBACK_SECRET tanımlı değil — callback reddediliyor. api/.env dosyasına ekleyin.');
+            JsonResponse::error('Yetkisiz.', 403, AppConfig::ERR_PERMISSION);
+        }
+        if (!hash_equals($secret, $provided)) {
+            error_log('[parampos_callback] geçersiz imza, ip=' . ($_SERVER['REMOTE_ADDR'] ?? '-'));
+            JsonResponse::error('Yetkisiz.', 403, AppConfig::ERR_PERMISSION);
+        }
+
+        // Replay: aynı bildirim tekrar tekrar gönderilip aynı siparişi
+        // birden çok kez "ödendi" yapamasın.
+        $eventId = (string) ($_POST['Islem_ID'] ?? $_POST['islem_id'] ?? $_POST['order_id'] ?? '');
+        if ($eventId !== '') {
+            $db->ensureTable('param_callback_events', 'CREATE TABLE IF NOT EXISTS param_callback_events (
+                    event_id   VARCHAR(191) PRIMARY KEY,
+                    seen_at    DATETIME NOT NULL
+                )');
+
+            try {
+                $inserted = $db->execute(
+                    'INSERT IGNORE INTO param_callback_events (event_id, seen_at) VALUES (?, NOW())',
+                    [$eventId]
+                );
+                if ($inserted === 0) {
+                    // Zaten işlenmiş. Gateway'e 200 dönüyoruz ki tekrar
+                    // denemesin, ama hiçbir şey yeniden işlenmiyor.
+                    error_log('[parampos_callback] yinelenen bildirim yoksayıldı: ' . $eventId);
+                    http_response_code(200);
+                    echo 'OK';
+                    exit;
+                }
+            } catch (Throwable $e) {
+                error_log('[parampos_callback] replay kontrolü başarısız: ' . $e->getMessage());
+            }
+        }
+
         handleParamCallback($db, $db->getConnection(), $_POST);
     }
 
@@ -267,5 +387,29 @@ class SellerController {
         @file_put_contents($cacheFile, $payload);
         echo $payload;
         exit;
+    }
+
+    /**
+     * DEP-002: kişisel veri taşıyan alanları maskeler; anahtar adları kalır.
+     * ParamPosMarketplace::redact() ile aynı listeyi paylaşır ama burada
+     * SellerController'ın kendi alan adları (Yetkili_Kisi_TC vb.) da var.
+     */
+    private static function redactSellerPayload(array $params): array {
+        $sensitive = [
+            'TC_VN', 'IBAN_No', 'GSM_No', 'Adres', 'EPosta',
+            'Kisi_DogumTarihi', 'Yetkili_Kisi_TC', 'Yetkili_Kisi_DogumTarihi',
+            'Ad_Soyad', 'IBAN_Unvan', 'Unvan',
+        ];
+
+        $out = [];
+        foreach ($params as $key => $value) {
+            if (in_array($key, $sensitive, true)) {
+                $text      = (string) $value;
+                $out[$key] = $text === '' ? '(boş)' : '***(' . strlen($text) . ' karakter)';
+                continue;
+            }
+            $out[$key] = $value;
+        }
+        return $out;
     }
 }

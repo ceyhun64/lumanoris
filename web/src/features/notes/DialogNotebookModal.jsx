@@ -78,6 +78,17 @@ export default function DialogNotebookModal({ userId, botId, inputMessage, outpu
                             className="w-full bg-transparent font-display text-body-lg text-white placeholder:text-white/40 focus:outline-none"
                         />
                     </div>
+                    {/* The copy above says "share", but nothing told the user
+                        that the message pair itself — not just the title —
+                        becomes readable by every other user. Spell it out at
+                        the point of no return. */}
+                    <div className="mb-6 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] px-4 py-3 text-left">
+                        <p className="text-body-sm leading-relaxed text-amber-200/90">
+                            <span className="font-semibold">Bu bir herkese açık paylaşımdır.</span>{" "}
+                            Yayınladığınızda sorunuz ve yapay zekânın yanıtı, kullanıcı adınızla
+                            birlikte Diyalog Defteri sayfasında tüm kullanıcılara görünür olur.
+                        </p>
+                    </div>
                     <div className="flex justify-between gap-6">
                         <Button
                             onClick={onClose}

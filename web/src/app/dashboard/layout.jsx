@@ -52,7 +52,7 @@ export default function DashboardLayout({ children }) {
             >
                 İçeriğe geç
             </a>
-            <div className="relative flex h-screen overflow-hidden bg-[#09090F]">
+            <div className="relative flex h-screen overflow-hidden bg-luma-base">
                 {/* Ambient glow layer — a quiet hint of depth, not a colored
                     wash. Black stays dominant; the two blobs are faint and
                     tucked into corners so they read as ambient light rather

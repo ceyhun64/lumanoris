@@ -59,7 +59,7 @@ export default function AddToSaleListModal({
 
         const weeklyError = validatePrice(weekly, 'Haftalık', MAX_WEEKLY_PRICE);
         if (weeklyError) { setErrorMsg(weeklyError); return; }
-        const monthlyError = validatePrice(monthly, 'Aylık', MAX_WEEKLY_PRICE * 4);
+        const monthlyError = validatePrice(monthly, 'Aylık', MAX_WEEKLY_PRICE * 4, deriveMonthlyPrice(MIN_WEEKLY_PRICE));
         if (monthlyError) { setErrorMsg(monthlyError); return; }
 
         const payload = {
@@ -137,7 +137,7 @@ export default function AddToSaleListModal({
                     <span className="shrink-0 text-lg font-bold text-fuchsia-400">₺</span>
                 </div>
                 <p className="mb-4 text-caption text-white/40">
-                    İzin verilen aralık: {MIN_WEEKLY_PRICE}₺ – {(MAX_WEEKLY_PRICE * 4).toLocaleString('tr-TR')}₺
+                    İzin verilen aralık: {deriveMonthlyPrice(MIN_WEEKLY_PRICE)}₺ – {(MAX_WEEKLY_PRICE * 4).toLocaleString('tr-TR')}₺
                     {' · '}Önerilen: haftalık fiyatın 4 katının %10 indirimlisi
                 </p>
 

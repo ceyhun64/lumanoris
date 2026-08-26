@@ -23,6 +23,9 @@ class MessageController {
     public static function consumeMessage(): void {
         require_method('POST');
         $userId = AuthMiddleware::requireAuth();
+        // Bounded by the daily coin budget in normal use; this is the floor that
+        // stops a client hammering the endpoint itself.
+        checkRateLimit(Database::getInstance(), 'consumemsg:' . $userId, 60, 60);
         require_once __DIR__ . '/../../../functions/coin_engine.php';
 
         $data      = json_decode($_POST['data'] ?? '', true) ?? null;

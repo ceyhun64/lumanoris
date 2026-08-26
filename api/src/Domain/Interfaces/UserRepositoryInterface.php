@@ -4,6 +4,7 @@ interface UserRepositoryInterface {
     public function findByEmail(string $email): ?array;
     public function findByUsername(string $username): ?array;
     public function findByRememberToken(string $token): ?array;
+    public function deleteRememberTokenBySelector(string $selector): void;
     public function create(array $data): int;
     public function updateById(int $id, array $data): bool;
     public function setRememberToken(int $id, string $selector, string $hashedValidator, string $expiry): void;

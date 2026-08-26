@@ -95,7 +95,7 @@ export default function ChatbotCard({
           <div className="flex flex-wrap items-center justify-end gap-1.5">
             <button
               onClick={() => setConfirmDeleteOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-xl text-white/30 transition-colors hover:bg-red-500/10 hover:text-red-400"
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-white/30 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
               title="Sil"
             >
               <Trash2 className="h-3.5 w-3.5" />

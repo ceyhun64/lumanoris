@@ -64,7 +64,7 @@ function DeleteConfirmModal({
           </button>
         </div>
 
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 mb-4">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 mb-4">
           <Trash2 className="w-7 h-7" />
         </div>
 
@@ -124,7 +124,7 @@ function AddToListModalEmpty({ isOpen, onClose, onCreate, loading }) {
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-zinc-800 bg-[#09090F] p-6 shadow-2xl">
+      <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-zinc-800 bg-luma-base p-6 shadow-2xl">
         <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400">
@@ -219,7 +219,7 @@ function ListDetailModal({ isOpen, onClose, list, onRemoveBot }) {
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-zinc-800 bg-[#09090F] p-6 shadow-2xl">
+      <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-zinc-800 bg-luma-base p-6 shadow-2xl">
         <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600/20 to-fuchsia-600/20 border border-violet-500/30 text-violet-300 font-bold">
@@ -283,7 +283,7 @@ function ListDetailModal({ isOpen, onClose, list, onRemoveBot }) {
                   </span>
                   <button
                     onClick={() => onRemoveBot && onRemoveBot(list.id, bot.id)}
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                     title="Listeden Çıkar"
                   >
                     <Trash2 className="w-6 h-6" />
@@ -311,7 +311,7 @@ function ListCardItem({ list, onDelete, onViewDetail }) {
   const bots = list.bots || [];
 
   return (
-    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-zinc-800/80 bg-[#09090F] p-5 transition-all duration-300 ease-out hover:border-violet-500/40 hover:bg-[#0B0B14] hover:shadow-2xl hover:shadow-violet-950/20 hover:-translate-y-0.5">
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-zinc-800/80 bg-luma-base p-5 transition-all duration-300 ease-out hover:border-violet-500/40 hover:bg-[#0B0B14] hover:shadow-2xl hover:shadow-violet-950/20 hover:-translate-y-0.5">
       {/* Top Header */}
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-3">
@@ -589,7 +589,7 @@ export default function List() {
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               Listelerim & Koleksiyonlar
             </h1>
             <p className="text-xs text-zinc-400 leading-relaxed max-w-xl">
@@ -610,7 +610,7 @@ export default function List() {
         </div>
 
         {}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-2 rounded-2xl bg-[#09090F]/90 border border-zinc-800/80 backdrop-blur-xl shadow-xl transition-all duration-200 focus-within:border-fuchsia-500/40 focus-within:ring-2 focus-within:ring-fuchsia-500/20">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-2 rounded-2xl bg-luma-base/90 border border-zinc-800/80 backdrop-blur-xl shadow-xl transition-all duration-200 focus-within:border-fuchsia-500/40 focus-within:ring-2 focus-within:ring-fuchsia-500/20">
           <div className="relative flex-1 flex items-center">
             <Search className="absolute left-3.5 w-4 h-4 text-zinc-400" />
             <input
@@ -635,7 +635,7 @@ export default function List() {
         </div>
 
         {fetchError && (
-          <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-300">
+          <div className="mb-6 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-300">
             {fetchError}
           </div>
         )}

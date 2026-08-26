@@ -87,7 +87,9 @@ class TrainingController {
 
     public static function readPdf(): void {
         require_method('POST');
-        AuthMiddleware::requireAuth();
+        $userId = AuthMiddleware::requireAuth();
+        // PDF parsing is CPU- and disk-heavy; it had no ceiling at all.
+        checkRateLimit(Database::getInstance(), 'readpdf:' . $userId, 10, 300);
         require_once __DIR__ . '/../../../vendor/autoload.php';
 
         $input = json_decode(file_get_contents('php://input'), true);

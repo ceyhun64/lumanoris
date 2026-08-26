@@ -13,10 +13,6 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
         );
     }
 
-    public function findBySlug(string $slug): ?array {
-        return self::one('SELECT * FROM `' . self::T . '` WHERE slug = ?', [$slug]);
-    }
-
     public function create(array $data): int {
         return self::insert(self::T, $data);
     }
@@ -77,41 +73,92 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
         return $row ? $row['status'] : null;
     }
 
-    public function getPublished(array $filters = []): array {
-        $params = [];
-        $where  = ' WHERE c.id > 0 AND c.is_independent = 0';
+    /**
+     * DB-001 🟠 / DB-009 🔵 / DB-012 — pazaryeri listesi.
+     *
+     * Eski hâli altı sınırsız alt tabloya `LEFT JOIN` yapıp `COUNT(DISTINCT)`
+     * ile sayıyordu. Bu bir **kartezyen çarpım**: bir botun sohbet, takip,
+     * liste, beğeni, beğenmeme ve yorum satırları birbiriyle çarpılıyor,
+     * MySQL o ara sonucu üretip sonra `DISTINCT` ile eliyor.
+     *
+     * Canlı ölçüm (2026-08-26, 9 yayında bot): **2.062 ara satır — bot başına
+     * 229 kat.** Küçük veriyle görünmez; gerçek veriyle çarpım çok hızlı
+     * büyür, çünkü altı sayının hepsi aynı anda artar. Bu, ana sayfanın
+     * sorgusu ve sayfalaması da yoktu.
+     *
+     * Düzeltme skaler alt sorgu: her sayı kendi indeksli aramasını yapıyor,
+     * ara sonuç bot sayısı kadar satır. Aynı dosyadaki `getMenuItems()` bu
+     * deseni zaten kullanıyordu.
+     *
+     * DB-012 — V1 ve V2 ayrı ayrı duruyordu ve aralarındaki fark tam iki
+     * maddeydi (V2 "ilgilenmiyorum" filtresi ekliyor, `toplam_comments`
+     * sayımını çıkarıyor). İki gövde yerine tek gövde: `getPublishedV2()`
+     * artık buraya delege ediyor. `toplam_comments` ikisinde de dönüyor —
+     * V2'nin onu çıkarması bir tasarım kararı değil, kopyalama farkıydı.
+     *
+     * @param array{search?:?string, exclude_uninterested?:bool, limit?:int, offset?:int} $filters
+     * @param int $userId "ilgilenmiyorum" filtresi için; 0 = filtre yok
+     */
+    public function getPublished(array $filters = [], int $userId = 0): array {
+        [$where, $params] = self::publishedWhere($filters, $userId);
 
-        if (!empty($filters['search'])) {
-            $where   .= ' AND c.isim LIKE ?';
-            $params[] = '%' . $filters['search'] . '%';
-        }
+        // DB-009: sorgunun üst sınırı yoktu. Varsayılan 100, tavan 200 —
+        // istemci sayfalayabilsin diye toplam da döndürülüyor (bkz.
+        // countPublished()).
+        $limit  = (int) ($filters['limit'] ?? 100);
+        $limit  = max(1, min($limit, 200));
+        $offset = max(0, (int) ($filters['offset'] ?? 0));
 
         return self::all(
             "SELECT c.id, c.kapak_fotografi, c.profil_fotografi, c.kategori_id, c.isim, c.aciklama,
                     c.ucret_haftalik, c.yayimlanma_tarih, 1 AS durum, u.kullanici_adi AS owner_name,
-                    COUNT(DISTINCT cc.id) AS toplam_chats, COUNT(DISTINCT cf.id) AS toplam_follows,
-                    COUNT(DISTINCT cl.id) AS toplam_lists, COUNT(DISTINCT cli.id) AS toplam_likes,
-                    COUNT(DISTINCT cdi.id) AS toplam_dislikes, COUNT(DISTINCT cm.id) AS toplam_comments
+                    (SELECT COUNT(*) FROM chatbot_chats     WHERE chatbot_id = c.id) AS toplam_chats,
+                    (SELECT COUNT(*) FROM chatbot_follows   WHERE chatbot_id = c.id) AS toplam_follows,
+                    (SELECT COUNT(*) FROM chatbot_in_list   WHERE chatbot_id = c.id) AS toplam_lists,
+                    (SELECT COUNT(*) FROM chatbot_likes     WHERE chatbot_id = c.id) AS toplam_likes,
+                    (SELECT COUNT(*) FROM chatbot_dislikes  WHERE chatbot_id = c.id) AS toplam_dislikes,
+                    (SELECT COUNT(*) FROM chatbot_comments  WHERE chatbot_id = c.id) AS toplam_comments
              FROM `" . self::T . "` c
-             INNER JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id AND pms.status = 'active'
-             LEFT JOIN chatbot_chats cc ON cc.chatbot_id = c.id
-             LEFT JOIN chatbot_follows cf ON cf.chatbot_id = c.id
-             LEFT JOIN chatbot_in_list cl ON cl.chatbot_id = c.id
-             LEFT JOIN chatbot_likes cli ON cli.chatbot_id = c.id
-             LEFT JOIN chatbot_dislikes cdi ON cdi.chatbot_id = c.id
-             LEFT JOIN chatbot_comments cm ON cm.chatbot_id = c.id
+             INNER JOIN param_marketplace_sellers pms
+                     ON pms.user_id = c.author_user_id AND pms.status = 'active'
              LEFT JOIN kullanicilar u ON u.id = c.owner_user_id
-             $where GROUP BY c.id ORDER BY c.id DESC",
+             $where
+             ORDER BY c.id DESC
+             LIMIT $limit OFFSET $offset",
             $params
         );
     }
 
-    public function getPublishedV2(int $userId, array $filters = []): array {
+    /** DB-009: sayfalama için toplam kayıt sayısı. */
+    public function countPublished(array $filters = [], int $userId = 0): int {
+        [$where, $params] = self::publishedWhere($filters, $userId);
+
+        $row = self::one(
+            "SELECT COUNT(*) AS total
+             FROM `" . self::T . "` c
+             INNER JOIN param_marketplace_sellers pms
+                     ON pms.user_id = c.author_user_id AND pms.status = 'active'
+             $where",
+            $params
+        );
+        return (int) ($row['total'] ?? 0);
+    }
+
+    /**
+     * Listeleme ve sayım aynı WHERE'i kullanmak zorunda — ayrı yazılırlarsa
+     * toplam ile sayfa içeriği sessizce ayrışır.
+     *
+     * @return array{0:string, 1:array}
+     */
+    private static function publishedWhere(array $filters, int $userId): array {
         $params = [];
         $where  = ' WHERE c.id > 0 AND c.is_independent = 0';
 
-        if ($userId > 0) {
-            $where   .= ' AND c.kategori_id NOT IN (SELECT category_id FROM chatbot_uninterested WHERE user_id = ?)';
+        if (!empty($filters['exclude_uninterested']) && $userId > 0) {
+            // DB-005: chatbot_uninterested(user_id) indekssiz; alt sorgu
+            // yine de tam tarama yapmasın diye NOT EXISTS kullanılıyor.
+            $where   .= ' AND NOT EXISTS (SELECT 1 FROM chatbot_uninterested cu
+                                          WHERE cu.user_id = ? AND cu.category_id = c.kategori_id)';
             $params[] = $userId;
         }
         if (!empty($filters['search'])) {
@@ -119,25 +166,16 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
             $params[] = '%' . $filters['search'] . '%';
         }
 
-        return self::all(
-            "SELECT c.id, c.kapak_fotografi, c.profil_fotografi, c.kategori_id, c.isim, c.aciklama,
-                    c.ucret_haftalik, c.yayimlanma_tarih, 1 AS durum, u.kullanici_adi AS owner_name,
-                    COUNT(DISTINCT cc.id) AS toplam_chats, COUNT(DISTINCT cf.id) AS toplam_follows,
-                    COUNT(DISTINCT cl.id) AS toplam_lists, COUNT(DISTINCT cli.id) AS toplam_likes,
-                    COUNT(DISTINCT cdi.id) AS toplam_dislikes
-             FROM `" . self::T . "` c
-             INNER JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id AND pms.status = 'active'
-             LEFT JOIN chatbot_chats cc ON cc.chatbot_id = c.id
-             LEFT JOIN chatbot_follows cf ON cf.chatbot_id = c.id
-             LEFT JOIN chatbot_in_list cl ON cl.chatbot_id = c.id
-             LEFT JOIN chatbot_likes cli ON cli.chatbot_id = c.id
-             LEFT JOIN chatbot_dislikes cdi ON cdi.chatbot_id = c.id
-             LEFT JOIN kullanicilar u ON u.id = c.owner_user_id
-             $where GROUP BY c.id ORDER BY c.id DESC",
-            $params
-        );
+        return [$where, $params];
     }
 
+    /**
+     * DB-012: V1'den farkı yalnızca "ilgilenmiyorum" filtresiydi. Tek gövdeye
+     * indirildi; imza korunuyor çünkü `getchatbots_v2.php` onu çağırıyor.
+     */
+    public function getPublishedV2(int $userId, array $filters = []): array {
+        return $this->getPublished($filters + ['exclude_uninterested' => true], $userId);
+    }
     /** Returns bots the user owns or has active subscriptions for. */
     public function getMenuItems(int $userId): array {
         return self::all(
@@ -195,56 +233,85 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
     }
 
     /**
-     * Single source of truth for "may this user see this chatbot's private
-     * content" (full detail, style_prompt, training data — anywhere that
-     * content is gated, this is the one policy to call). A user has access
-     * when any of:
+     * PAY-002 🔴 — ödeme duvarı yoktu.
      *
-     *  - they are the chatbot's author/owner — regardless of publish state,
-     *    so an author can always view/edit their own independent or
-     *    unpublished bot;
-     *  - the chatbot is currently published to the marketplace by a seller
-     *    in active standing — public marketplace bots are open to everyone
-     *    to browse/chat, purchased or not (paying unlocks a larger per-bot
-     *    message allowance via coin_engine.php, not access itself);
-     *  - they hold a subscription to it that has not yet expired, even if
-     *    the seller has since unpublished it — unpublishing must not cut
-     *    off a customer who already paid for the remaining term (this is
-     *    the branch that was previously missing entirely).
+     * Eskiden tek bir erişim kavramı vardı ve içindeki
+     * `c.is_independent = 0 AND pms.user_id IS NOT NULL` dalı, **satıştaki her
+     * botu** abonelik olmadan herkese açıyordu. SEC-015 ile birleşince
+     * (`generateReply` sistem talimatını istemciden alıyordu) sonuç şuydu:
+     * `getchatbot` + `get_training_chunks` ile persona ve tüm eğitim metni
+     * çekilip doğrudan modele verilebiliyordu — ürünün tamamı ücretsiz.
      *
-     * Deliberately excluded: an *expired* subscription falls through and is
-     * denied unless the bot is also still publicly published — this is what
-     * actually revokes access once the paid term ends. There is no admin
-     * bypass here because the customer-facing API has no admin-role concept;
-     * the separate legacy admin panel (api/admin/) uses its own session and
-     * queries `chatbotlar` directly, so it is unaffected by this policy.
+     * Artık iki ayrı kavram var:
+     *
+     *   'preview' — pazaryeri vitrini. Yayındaki (bağımsız olmayan, satıcısı
+     *               aktif) bir botun KARTINI görmek için yeter: isim,
+     *               açıklama, fiyat, yorumlar, karşılama mesajı.
+     *   'full'    — botun kendisini kullanmak ve özel içeriğini (style_prompt,
+     *               training_prompt, sohbet) görmek. Yalnızca sahibi ya da
+     *               süresi geçmemiş aktif aboneliği olan kullanıcı.
+     *
+     * Çağıran taraf hangisini istediğini açıkça söylemek zorunda; varsayılan
+     * 'full', yani unutulan bir çağrı ücretsiz erişim değil, reddedilen
+     * erişim üretir (fail-closed).
      */
-    public function userHasAccess(int $chatbotId, int $userId): bool {
+    public function userHasAccess(int $chatbotId, int $userId, string $purpose = 'full'): bool {
+        if ($userId <= 0) {
+            return false;
+        }
+
+        $ownerOrSubscriber =
+            "c.author_user_id = ?
+             OR c.owner_user_id = ?
+             OR EXISTS (
+                  SELECT 1 FROM user_subscriptions us
+                  WHERE us.user_id = ? AND us.chatbot_id = c.id
+                    AND us.status = 1 AND us.expiry_date > NOW()
+                )";
+
+        if ($purpose === 'preview') {
+            $row = self::one(
+                "SELECT 1
+                 FROM `" . self::T . "` c
+                 LEFT JOIN param_marketplace_sellers pms
+                        ON pms.user_id = c.author_user_id AND pms.status = 'active'
+                 WHERE c.id = ?
+                   AND (
+                        $ownerOrSubscriber
+                     OR (c.is_independent = 0 AND pms.user_id IS NOT NULL)
+                   )",
+                [$chatbotId, $userId, $userId, $userId]
+            );
+            return $row !== null;
+        }
+
         $row = self::one(
             "SELECT 1
              FROM `" . self::T . "` c
-             LEFT JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id AND pms.status = 'active'
              WHERE c.id = ?
-               AND (
-                    c.author_user_id = ?
-                 OR (c.is_independent = 0 AND pms.user_id IS NOT NULL)
-                 OR EXISTS (
-                      SELECT 1 FROM user_subscriptions us
-                      WHERE us.user_id = ? AND us.chatbot_id = c.id
-                        AND us.status = 1 AND us.expiry_date > NOW()
-                    )
-               )",
-            [$chatbotId, $userId, $userId]
+               AND ($ownerOrSubscriber)",
+            [$chatbotId, $userId, $userId, $userId]
         );
         return $row !== null;
     }
 
+    /**
+     * PAY-002: kart verisi 'preview' erişimiyle, botun özel içeriği 'full'
+     * erişimiyle döner. `style_prompt` (persona) ücretli içeriğin kendisi —
+     * abonesi olmayan bir kullanıcıya gönderilirse ödeme duvarı yine delinir,
+     * çünkü istemci onu doğrudan modele verebilir.
+     *
+     * `has_access` alanı istemcinin "abone ol" ekranını mı yoksa sohbeti mi
+     * göstereceğini bilmesini sağlıyor.
+     */
     public function getDetail(int $id, int $userId): ?array {
-        if (!$this->userHasAccess($id, $userId)) {
+        $hasFull = $this->userHasAccess($id, $userId, 'full');
+
+        if (!$hasFull && !$this->userHasAccess($id, $userId, 'preview')) {
             return null;
         }
 
-        return self::one(
+        $row = self::one(
             "SELECT c.id, c.isim, c.is_independent,
                     (SELECT kullanici_adi FROM kullanicilar WHERE id = c.author_user_id) AS author_username,
                     (SELECT kullanici_adi FROM kullanicilar WHERE id = c.owner_user_id)  AS owner_username,
@@ -259,6 +326,18 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
              WHERE c.id = ?",
             [$id]
         );
+
+        if ($row === null) {
+            return null;
+        }
+
+        $row['has_access'] = $hasFull;
+        if (!$hasFull) {
+            // Persona ücretli içerik — önizlemede gönderilmiyor.
+            unset($row['style_prompt']);
+        }
+
+        return $row;
     }
 
     public function getComments(int $chatbotId): array {

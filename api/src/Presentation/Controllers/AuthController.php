@@ -10,7 +10,17 @@ class AuthController {
         $password   = $data['sifre'] ?? '';
         $rememberMe = (bool) ($data['rememberMe'] ?? false);
 
-        checkRateLimit(Database::getInstance(), 'login:' . ($_SERVER['REMOTE_ADDR'] ?? '') . ':' . $identifier, 8, 300);
+        $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
+
+        // Two limits, because one alone leaves a hole:
+        //   per IP+identifier — stops password-guessing against one account;
+        //   per IP            — stops credential stuffing and user enumeration,
+        //                       which simply changed the e-mail each attempt and
+        //                       reset the first counter every time.
+        // The per-IP budget is deliberately looser so a shared NAT/office egress
+        // does not lock out legitimate users at the same rate as an attacker.
+        checkRateLimit(Database::getInstance(), 'login:' . $clientIp . ':' . $identifier, 8, 300);
+        checkRateLimit(Database::getInstance(), 'login-ip:' . $clientIp, 30, 300);
 
         try {
             $useCase = new LoginUseCase(new UserRepository());
@@ -115,9 +125,36 @@ class AuthController {
             JsonResponse::error('Geçersiz Google token.', 401, AppConfig::ERR_AUTH_REQUIRED);
         }
 
+        // SEC-004 🟠 — hesap ele geçirme.
+        //
+        // GoogleLoginUseCase, Google hesabını `google_id` VEYA `eposta` ile
+        // eşleştiriyor: doğrulanmamış bir e-postaya sahip bir Google hesabı,
+        // aynı e-postayla parola kullanarak açılmış mevcut bir hesaba
+        // bağlanabiliyordu. Google, `email_verified: false` olan token'ları
+        // pekâlâ imzalar (kurumsal/GSuite dışı bazı akışlar, yeni oluşturulmuş
+        // hesaplar). İmza geçerli olduğu için `verifyIdToken` bunu kabul eder;
+        // sahipliği doğrulayan tek alan `email_verified`.
+        $email         = (string) ($payload['email'] ?? '');
+        $emailVerified = $payload['email_verified'] ?? false;
+        // Google bu alanı bazı akışlarda "true" dizesi olarak gönderir.
+        $emailVerified = ($emailVerified === true || $emailVerified === 'true' || $emailVerified === 1 || $emailVerified === '1');
+
+        if ($email === '' || !$emailVerified) {
+            JsonResponse::error(
+                'Google hesabınızın e-posta adresi doğrulanmamış. Google hesabınızı '
+                . 'doğruladıktan sonra tekrar deneyin.',
+                403,
+                AppConfig::ERR_PERMISSION
+            );
+        }
+
+        if (empty($payload['sub'])) {
+            JsonResponse::error('Geçersiz Google token.', 401, AppConfig::ERR_AUTH_REQUIRED);
+        }
+
         try {
             $useCase = new GoogleLoginUseCase(new UserRepository());
-            $userId  = $useCase->execute($payload['sub'], $payload['email'], $payload['name'] ?? '');
+            $userId  = $useCase->execute($payload['sub'], $email, $payload['name'] ?? '');
         } catch (AppException $e) {
             JsonResponse::fromException($e);
         }
@@ -144,10 +181,23 @@ class AuthController {
 
         checkRateLimit(Database::getInstance(), 'passreset:' . ($_SERVER['REMOTE_ADDR'] ?? '') . ':' . $email, 3, 600);
 
+        // SEC-012 🟡 — hesap enumerasyonu. Bu uç nokta bilinmeyen bir adrese
+        // 404 "Bu e-posta ile kayıtlı bir kullanıcı bulunamadı.", bilinen bir
+        // adrese 200 döndürüyordu; yani kayıtsız bir saldırgan hangi
+        // e-postaların sistemde olduğunu tek tek doğrulayabiliyordu.
+        // Artık iki yol da AYNI yanıtı veriyor.
+        $genericResponse = [
+            'success' => true,
+            'message' => 'Eğer bu e-posta adresi kayıtlıysa, sıfırlama kodu gönderildi. '
+                . 'Gelen kutunuzu ve spam klasörünüzü kontrol edin.',
+        ];
+
         $users = new UserRepository();
         $user  = $users->findByEmail($email);
         if (!$user) {
-            JsonResponse::error('Bu e-posta ile kayıtlı bir kullanıcı bulunamadı.', 404, AppConfig::ERR_NOT_FOUND);
+            error_log('[passwordreset] bilinmeyen e-posta için talep: ' . $email);
+            echo json_encode($genericResponse, JSON_UNESCAPED_UNICODE);
+            exit;
         }
 
         $code     = (string) random_int(100000, 999999);
@@ -155,15 +205,13 @@ class AuthController {
 
         $db   = Database::getInstance();
         $conn = $db->getConnection();
-        $conn->exec(
-            'CREATE TABLE IF NOT EXISTS password_resets (
+        $db->ensureTable('password_resets', 'CREATE TABLE IF NOT EXISTS password_resets (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
                 code_hash VARCHAR(64) NOT NULL,
                 expires_at DATETIME NOT NULL,
                 INDEX (user_id)
-            )'
-        );
+            )');
         // Only one active reset code per user at a time.
         $db->delete('password_resets', 'user_id = ?', [$user['id']]);
         // expires_at is computed by MySQL itself (NOW() + INTERVAL), not PHP's
@@ -185,7 +233,21 @@ class AuthController {
                     <p>Eğer bu talebi siz yapmadıysanız, lütfen bu e-postayı dikkate almayın.</p>";
 
         $result = sendEmail(AppConfig::noreplyEmail(), 'Sistem', $email, $subject, $body);
-        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+
+        // Gönderim başarısızsa bunu YUTMUYORUZ (DEP-003: eski stub sessizce
+        // "gönderildi" diyordu ve hesap kurtarılamaz hâle geliyordu) — ama
+        // yanıt yine de enumerasyona kapalı kalmalı. Bu yüzden hata kullanıcıya
+        // "kayıtlı mı?" bilgisini vermeyen bir biçimde bildiriliyor.
+        if (empty($result['success'])) {
+            error_log('[passwordreset] e-posta gönderilemedi: ' . ($result['message'] ?? '-'));
+            JsonResponse::error(
+                'Şu anda sıfırlama e-postası gönderilemiyor. Lütfen daha sonra tekrar deneyin.',
+                503,
+                AppConfig::ERR_UNAVAILABLE
+            );
+        }
+
+        echo json_encode($genericResponse, JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -212,6 +274,13 @@ class AuthController {
             JsonResponse::error('Şifreler eşleşmiyor!', 400, AppConfig::ERR_VALIDATION);
         }
 
+        // SEC-011: sıfırlama yolunda hiçbir parola politikası YOKTU — kayıt
+        // olurken 8 karakter zorunluyken, sıfırlarken "1" kabul ediliyordu.
+        $policyError = InputSanitizer::passwordPolicyError($password, [$email]);
+        if ($policyError !== null) {
+            JsonResponse::error($policyError, 400, AppConfig::ERR_VALIDATION);
+        }
+
         // The reset code is only 6 digits (1M combinations) — without this,
         // it's brute-forceable within the 15-minute expiry window.
         checkRateLimit(Database::getInstance(), 'resetcode:' . ($_SERVER['REMOTE_ADDR'] ?? '') . ':' . $email, 10, 600);
@@ -236,6 +305,62 @@ class AuthController {
         $users->updateById($user['id'], ['sifre' => $hashed]);
         $db->delete('password_resets', 'user_id = ?', [$user['id']]);
 
-        JsonResponse::success(['message' => 'Şifre güncellendi.']);
+        // SEC-010 🟡 — parola değişimi mevcut oturumları İPTAL ETMİYORDU.
+        // "Hesabım ele geçirildi, şifremi değiştireyim" senaryosunun tamamı
+        // buna dayanır: saldırganın açık oturumu ve remember-me token'ı
+        // parola değişiminden sonra da çalışmaya devam ediyordu.
+        (new UserRepository())->clearRememberToken((int) $user['id']);
+        self::destroyOtherSessionsFor((int) $user['id']);
+
+        JsonResponse::success([
+            'message' => 'Şifre güncellendi. Güvenliğiniz için tüm cihazlardaki oturumlar kapatıldı.',
+        ]);
+    }
+
+    /**
+     * SEC-010 yardımcı: PHP'nin dosya tabanlı oturum deposunda bir kullanıcıya
+     * ait tüm oturumları sonlandırır.
+     *
+     * Oturum verisi kullanıcıya göre indekslenmediği için depodaki dosyalar
+     * taranıyor. Kurulum farklı bir save handler kullanıyorsa (redis,
+     * memcached, DB) tarama sessizce atlanır — o durumda tek etkin savunma
+     * remember-me token'ının silinmesi olur; bu yüzden ikisi birlikte yapılır.
+     */
+    private static function destroyOtherSessionsFor(int $userId): void {
+        if ($userId <= 0) {
+            return;
+        }
+
+        // Mevcut istek bir oturumdaysa (kullanıcı giriş yapmışken şifresini
+        // değiştiriyorsa) onu koruyalım; diğerleri kapansın.
+        $currentSid = session_status() === PHP_SESSION_ACTIVE ? session_id() : null;
+
+        if (strtolower((string) ini_get('session.save_handler')) !== 'files') {
+            return;
+        }
+
+        $path = (string) ini_get('session.save_path');
+        // "N;/path" ya da "N;MODE;/path" biçimleri.
+        if (str_contains($path, ';')) {
+            $parts = explode(';', $path);
+            $path  = end($parts);
+        }
+        if ($path === '' || !is_dir($path)) {
+            return;
+        }
+
+        $files = glob(rtrim($path, '/\\') . DIRECTORY_SEPARATOR . 'sess_*') ?: [];
+        $needle = 'user_id|i:' . $userId . ';';
+
+        foreach ($files as $file) {
+            $sid = substr(basename($file), 5);
+            if ($currentSid !== null && $sid === $currentSid) {
+                continue;
+            }
+            $contents = @file_get_contents($file);
+            if ($contents !== false && str_contains($contents, $needle)) {
+                @unlink($file);
+            }
+        }
     }
 }

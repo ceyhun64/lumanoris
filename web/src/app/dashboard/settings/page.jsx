@@ -377,28 +377,97 @@ function LanguageSelector() {
   );
 }
 
+/**
+ * FE-001 🟠 — bu iki bileşen sabit kodlu, iki cümlelik yer tutuculardı.
+ *
+ * Gerçek KVKK ve kullanım koşulları metni admin panelinden yönetiliyor
+ * (`/admin/gizlilikpolitikasi`, `/admin/kullanimkosullari` → `global_vars` →
+ * `/api/content/getprivacy.php`, `getusage.php`). O zincirin tamamı çalışıyordu;
+ * yalnızca son halka bağlı değildi, yani yönetilen metin hiçbir kullanıcıya
+ * ulaşmıyordu. (Tur 1'de "ölü" sayılan `widgets/info/*` bileşenleri aslında
+ * çalışan koddu; ölü olan, sayfaya gömülü yer tutucuydu.)
+ *
+ * Metin admin tarafından yazılan HTML — CSP (next.config.mjs headers()) ve
+ * admin oturumu bunun tek güven sınırı; kullanıcı girdisi buraya hiç girmiyor.
+ */
+function LegalDocument({ title, endpoint, contentKey }) {
+  const [html, setHtml] = useState(null);
+  const [state, setState] = useState("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const res = await fetch(endpoint, { signal: controller.signal });
+        const result = await res.json().catch(() => null);
+        if (cancelled) return;
+
+        if (!res.ok || !result?.success || !result?.content?.[contentKey]) {
+          setState("empty");
+          return;
+        }
+        setHtml(result.content[contentKey]);
+        setState("ready");
+      } catch (err) {
+        if (!cancelled && err.name !== "AbortError") setState("error");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [endpoint, contentKey]);
+
+  return (
+    <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-xs leading-relaxed text-white/70">
+      <h4 className="text-sm font-semibold text-white">{title}</h4>
+
+      {state === "loading" && <p className="text-white/40">Yükleniyor…</p>}
+
+      {state === "error" && (
+        <p className="text-white/50">
+          Metin şu anda yüklenemedi. Bağlantınızı kontrol edip sayfayı
+          yenileyin.
+        </p>
+      )}
+
+      {state === "empty" && (
+        <p className="text-white/50">
+          Bu metin henüz yayınlanmamış. Ayrıntılı bilgi için destek ekibimizle
+          iletişime geçebilirsiniz.
+        </p>
+      )}
+
+      {state === "ready" && (
+        <div
+          className="[&_h2]:mb-3 [&_h2]:text-base [&_h2]:text-white [&_h4]:mb-2 [&_h4]:mt-4 [&_h4]:text-sm [&_h4]:text-fuchsia-400 [&_li]:mb-1 [&_p]:mb-3 [&_ul]:pl-5"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      )}
+    </div>
+  );
+}
+
 function PrivacyPolicy2() {
   return (
-    <div className="space-y-4 p-4 rounded-2xl bg-white/[0.02] border border-white/10 text-xs text-white/70 leading-relaxed">
-      <h4 className="text-sm font-semibold text-white">Gizlilik Politikası</h4>
-      <p>
-        Kişisel verileriniz 6698 sayılı Kişisel Verilerin Korunması Kanunu
-        (KVKK) uyarınca güvenle işlenmekte ve saklanmaktadır. Detaylı bilgi için
-        destek ekibimizle görüşebilirsiniz.
-      </p>
-    </div>
+    <LegalDocument
+      title="Gizlilik Politikası"
+      endpoint="/api/content/getprivacy.php"
+      contentKey="gizlilik_politikasi"
+    />
   );
 }
 
 function TermsOfUse() {
   return (
-    <div className="space-y-4 p-4 rounded-2xl bg-white/[0.02] border border-white/10 text-xs text-white/70 leading-relaxed">
-      <h4 className="text-sm font-semibold text-white">Kullanım Koşulları</h4>
-      <p>
-        Platformumuzu kullanarak tüm hizmet şartlarını, telif hakları
-        sözleşmesini ve topluluk kurallarını kabul etmiş sayanırsınız.
-      </p>
-    </div>
+    <LegalDocument
+      title="Kullanım Koşulları"
+      endpoint="/api/content/getusage.php"
+      contentKey="kullanim_kosullari"
+    />
   );
 }
 
@@ -613,7 +682,7 @@ export default function App() {
                 <Sparkles className="h-3 w-3" /> Kontrol Paneli
               </span>
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
               Hesap Ayarları
             </h1>
             <p className="text-sm text-white/50">

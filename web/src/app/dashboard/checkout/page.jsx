@@ -5,7 +5,12 @@ import { UserContext } from "@/shared/contexts/UserContext";
 import { resolveCoverSrc } from "@/shared/lib/image";
 import { formatCurrency } from "@/shared/lib/format";
 import { toast } from "@/shared/hooks/use-toast";
+import dynamic from "next/dynamic";
 import DeleteConfirmModal from "@/shared/ui/DeleteConfirmModal";
+
+// Loaded on demand, like the other modals in this codebase.
+const MesafeliSatisPopup = dynamic(() => import("@/widgets/info/MesafeliSatisPopup"), { ssr: false });
+const TeslimatIadePopup = dynamic(() => import("@/widgets/info/TeslimatIadePopup"), { ssr: false });
 import {
   ArrowLeft,
   Trash2,
@@ -18,7 +23,6 @@ import {
   ChevronRight,
   Clock,
   Zap,
-  BadgePercent,
 } from "lucide-react";
 
 function luhnCheck(digits) {
@@ -72,12 +76,12 @@ export default function Checkout() {
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
   const [confirmedItems, setConfirmedItems] = useState([]);
-  const [promoCode, setPromoCode] = useState("");
-  const [discount, setDiscount] = useState(0);
   const [cardInfo, setCardInfo] = useState({ number: "", expiry: "", cvv: "", holderName: "" });
   const [cardErrors, setCardErrors] = useState({});
   const [paying, setPaying] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [legalAccepted, setLegalAccepted] = useState(false);
+  const [legalPopup, setLegalPopup] = useState(null);
 
   useEffect(() => {
     if (!userId) {
@@ -101,6 +105,8 @@ export default function Checkout() {
               price: weeklyPrice,
               monthlyPrice: Number(row.monthlyPrice) || weeklyPrice * 4,
               duration_weeks: Number(row.order_weeks) || 4,
+              // Authoritative line total from the server — never recomputed here.
+              lineTotal: Number(row.lineTotal) || 0,
             };
           }),
         );
@@ -204,12 +210,15 @@ export default function Checkout() {
     }
   };
 
-  const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.price * (item.duration_weeks || 1),
-    0,
-  );
-  const tax = subtotal * 0.08;
-  const total = Math.max(0, subtotal - discount + tax);
+  // The server is the only authority on price: getCart returns a finished
+  // lineTotal per row (weekly x weeks, or the stored monthly price), and
+  // createSubscription charges the same figure through the same helper. The
+  // page must not re-derive it — an independent second calculation here is
+  // exactly what let checkout advertise a total the backend never charged.
+  // Step 2 bills the snapshot handleConfirm actually submits.
+  const billableItems = step === 2 ? confirmedItems : cartItems;
+  const subtotal = billableItems.reduce((acc, item) => acc + item.lineTotal, 0);
+  const total = subtotal;
 
   if (loading) {
     return (
@@ -350,7 +359,7 @@ export default function Checkout() {
                     <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-zinc-800/80 gap-3">
                       <div className="text-right">
                         <span className="text-lg font-bold text-white">
-                          {formatCurrency(item.price * (item.duration_weeks || 1))}
+                          {formatCurrency(item.lineTotal)}
                         </span>
                         <p className="text-caption text-zinc-500">
                           {formatCurrency(item.price)} / hafta
@@ -387,18 +396,6 @@ export default function Checkout() {
                       {formatCurrency(subtotal)}
                     </span>
                   </div>
-                  <div className="flex justify-between text-zinc-400">
-                    <span>Tahmini Vergi (%8)</span>
-                    <span className="text-zinc-200 font-medium">
-                      {formatCurrency(tax)}
-                    </span>
-                  </div>
-                  {discount > 0 && (
-                    <div className="flex justify-between text-emerald-400 font-medium">
-                      <span>Uygulanan İndirim</span>
-                      <span>-{formatCurrency(discount)}</span>
-                    </div>
-                  )}
                 </div>
 
                 <div className="pt-4 pb-6 flex items-center justify-between">
@@ -413,33 +410,6 @@ export default function Checkout() {
                       Güvenli şekilde faturalandırılır
                     </p>
                   </div>
-                </div>
-
-                {/* Promo Code Input */}
-                <div className="mb-6 flex gap-2">
-                  <div className="relative flex-1">
-                    <BadgePercent className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                    <input
-                      type="text"
-                      placeholder="Promosyon kodu (örn. ENTERPRISE2026)"
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
-                      className="w-full bg-zinc-950/60 border border-zinc-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-fuchsia-500/60 transition-colors"
-                    />
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (promoCode.toUpperCase() === "ENTERPRISE2026") {
-                        setDiscount(subtotal * 0.15);
-                        toast.success("%15 kurumsal indirim uygulandı.");
-                      } else {
-                        toast.warning("Girdiğiniz promosyon kodu geçersiz.");
-                      }
-                    }}
-                    className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-medium transition-colors border border-zinc-700/50"
-                  >
-                    Uygula
-                  </button>
                 </div>
 
                 <button
@@ -644,9 +614,40 @@ export default function Checkout() {
                 </div>
 
                 <div className="mt-6 pt-6 border-t border-zinc-800/80">
+                  {/* TR distance-selling rules require the sales contract and
+                      the delivery/return terms to be presented and accepted
+                      before payment. Both popups already existed under
+                      widgets/info but were mounted nowhere, so checkout carried
+                      no legal text at all. */}
+                  <label className="mb-4 flex cursor-pointer items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={legalAccepted}
+                      onChange={(e) => setLegalAccepted(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-fuchsia-500"
+                    />
+                    <span className="text-caption leading-relaxed text-zinc-400">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); setLegalPopup("sale"); }}
+                        className="text-fuchsia-300 underline underline-offset-2 hover:text-fuchsia-200"
+                      >
+                        Mesafeli Satış Sözleşmesi
+                      </button>
+                      {" ve "}
+                      <button
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); setLegalPopup("delivery"); }}
+                        className="text-fuchsia-300 underline underline-offset-2 hover:text-fuchsia-200"
+                      >
+                        Teslimat ve İade Koşulları
+                      </button>
+                      {"'nı okudum ve kabul ediyorum."}
+                    </span>
+                  </label>
                   <button
                     onClick={handlePayment}
-                    disabled={paying}
+                    disabled={paying || !legalAccepted}
                     className="w-full py-4 rounded-xl bg-gradient-btn hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 text-white font-semibold text-xs shadow-glow transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ShieldCheck className="w-4 h-4" />
@@ -678,18 +679,6 @@ export default function Checkout() {
                       {formatCurrency(subtotal)}
                     </span>
                   </div>
-                  <div className="flex justify-between text-zinc-400">
-                    <span>Vergi ve Yasal Uyumluluk</span>
-                    <span className="text-zinc-200 font-medium">
-                      {formatCurrency(tax)}
-                    </span>
-                  </div>
-                  {discount > 0 && (
-                    <div className="flex justify-between text-emerald-400 font-medium">
-                      <span>Kurumsal İndirim</span>
-                      <span>-{formatCurrency(discount)}</span>
-                    </div>
-                  )}
                 </div>
 
                 <div className="pt-4 flex items-center justify-between">
@@ -716,6 +705,9 @@ export default function Checkout() {
           </div>
         )}
       </main>
+
+      {legalPopup === "sale" && <MesafeliSatisPopup onClose={() => setLegalPopup(null)} />}
+      {legalPopup === "delivery" && <TeslimatIadePopup onClose={() => setLegalPopup(null)} />}
 
       <DeleteConfirmModal
         isOpen={!!deleteTargetId}

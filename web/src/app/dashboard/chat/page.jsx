@@ -32,9 +32,9 @@ export default function Chat() {
   const [logoClicked, setLogoClicked] = useState(false);
   const [isDialogModalOpen, setIsDialogModalOpen] = useState(false);
   const [activeDialog, setActiveDialog] = useState({ input: "", output: "" });
+  const [botLoadError, setBotLoadError] = useState(null);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [checkingSub, setCheckingSub] = useState(true);
-  const [fullTrainingPrompt, setFullTrainingPrompt] = useState("");
   // Sohbet Luma Coini: mesaj hakkı tükendiğinde mesaj kutusunun yerini alan
   // "Sınır Aşıldı" bandı.
   const [limitReached, setLimitReached] = useState(false);
@@ -152,32 +152,12 @@ export default function Chat() {
     setIsDialogModalOpen(true);
   };
 
-  const loadFullTrainingPrompt = async (id) => {
-    let currentOffset = 0;
-    let accumulatedPrompt = "";
-    let hasMore = true;
-    const CHUNK_LIMIT = 10000; // PHP'deki limit ile aynı olmalı
-
-    try {
-        while (hasMore) {
-            const response = await fetch(`/api/training/get_training_chunks.php?botId=${id}&offset=${currentOffset}`);
-            const data = await response.json();
-
-            if (data.success) {
-                accumulatedPrompt += data.chunk;
-                currentOffset += CHUNK_LIMIT; // 10.000 birim ilerle
-                hasMore = data.hasMore;
-                
-                // Debug için log ekleyelim
-            } else {
-                hasMore = false;
-            }
-        }
-        setFullTrainingPrompt(accumulatedPrompt);
-    } catch (error) {
-        console.error("Eğitim verisi yüklenirken hata:", error);
-    }
-};
+  // AI-001 / SEC-015 / COIN-001: bu fonksiyon botun TÜM eğitim metnini
+  // (LONGTEXT, sınırsız) 10 KB'lık parçalar hâlinde tarayıcıya indiriyor ve
+  // her mesajda Gemini'ye geri gönderiyordu. Artık sistem talimatı sunucuda
+  // kuruluyor (ChatController::generateReply), yani bu indirmenin hiçbir
+  // gerekçesi kalmadı: ücretli içeriğin istemciye hiç ulaşmaması ödeme
+  // duvarının kendisi.
 
   useEffect(() => {
     fetch("/api/content/getadcounts.php")
@@ -188,7 +168,8 @@ export default function Chat() {
         return response.json();
       })
       .then((data) => {
-        setChatAdFrequency(Number(data.chat_reklam_sikligi));
+        // ERR-003: yanıt artık zarflı ({success, content}).
+        setChatAdFrequency(Number(data?.content?.chat_reklam_sikligi ?? 0));
       })
       .catch((error) => {
         console.error("Fetch error:", error);
@@ -217,10 +198,26 @@ export default function Chat() {
     setConversationId(conversationIdd);
     setPrompt(initialPrompt);
 
+    // No botId in the URL means no bot is selected yet — the page used to
+    // request getchatbot.php?id=0 anyway and take a 400, filling the console
+    // with an error that looked like a real failure.
+    if (!botIdd || Number(botIdd) <= 0) return;
+
+    // API-001: getchatbot.php artık başarıda da zarflı yanıt veriyor, yani
+    // "başarılı mı?" sorusu ilk kez cevaplanabilir. Kontrolsüz hâlde 404
+    // (silinmiş bot) ve 403 (aboneliği olmayan kullanıcı) sessizce boş bir
+    // sayfaya dönüşüyordu; kullanıcı neden hiçbir şey olmadığını göremiyordu.
     fetch(`/api/chatbot/getchatbot.php?id=${botIdd}&user_id=${userId}`)
-      .then((res) => res.text())
-      .then(async (tdata) => {
-        let data = JSON.parse(tdata);
+      .then(async (res) => {
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data || data.success === false) {
+          setBotLoadError(
+            data?.message ||
+              "Chatbot yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin.",
+          );
+          return;
+        }
+
         const botData = data.chatbot;
         const commentsData = data.comments;
 
@@ -235,6 +232,9 @@ export default function Chat() {
         if (botData) {
           setBot(botData);
         }
+      })
+      .catch(() => {
+        setBotLoadError("Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.");
       });
   }, [userId]);
 
@@ -395,9 +395,6 @@ export default function Chat() {
 
   useEffect(() => {
     botIdRef.current = botId;
-    if (botId > 0) {
-      loadFullTrainingPrompt(botId);
-    }
   }, [botId]);
 
   /*const handleResetChat = () => {
@@ -453,29 +450,15 @@ export default function Chat() {
     }*/
   if (!data.text.trim() && !data.fileName && !data.audioUrl) return;
 
-  // Mesaj hakkı kontrolü (Sohbet Luma Coini): önce bu bota özel satın alma
-  // bonusu, yoksa günlük ortak coin havuzu. Hak yoksa Gemini'ye gidilmez.
-  try {
-    const allowanceRes = await fetch("/api/message/consumemessage.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        data: JSON.stringify({ user_id: userId, chatbot_id: botId }),
-      }),
-    });
-    const allowanceResult = await allowanceRes.json();
-    if (!allowanceResult.allowed) {
-      setLimitReached(true);
-      checkMessageAllowance(userId, botId); // retry_at bandda gösterilecek şekilde tazelensin
-      return;
-    }
-    if (allowanceResult.source === "coins" && typeof allowanceResult.remaining === "number") {
-      setCoinsRemaining(allowanceResult.remaining);
-    }
-  } catch (err) {
-    console.error("Mesaj hakkı kontrolü hatası:", err);
-    return;
-  }
+  // COIN-001 / AI-005: mesaj hakkı artık SUNUCUDA, generatereply.php içinde
+  // tüketiliyor. Buradaki ayrı `consumemessage.php` çağrısı iki soruna yol
+  // açıyordu:
+  //   • Tek gerçek limit buydu — istemci bu isteği atlayınca sunucu tarafında
+  //     hiçbir şey mesajı saymıyordu (etkin limit 10/gün yerine 28.800/gün).
+  //   • Coin ÖNCE yakılıyor, Gemini SONRA çağrılıyordu; upstream hata verirse
+  //     iade yoktu, kullanıcı cevap almadan hakkını kaybediyordu.
+  // Sunucu tarafında tüketim + upstream hatasında iade var; 429 durumunu
+  // generateReply() içindeki res.ok kontrolü ele alıyor.
 
   // Fonksiyon içinde kullanacağımız yerel değişkenler
   let currentConvId = (data.convId && data.convId > 0) ? data.convId : conversationId;
@@ -582,41 +565,101 @@ const generateReply = async (userText) => {
 
   try {
     const controller = new AbortController();
-    timeoutId = setTimeout(() => controller.abort(), 15000);
+    // AI-004: sunucu tarafındaki cURL zaman aşımıyla aynı (20 sn). Eskiden
+    // istemci 15 sn'de kesiyor, sunucu 30 sn beklemeye devam ediyordu:
+    // kullanıcı hata görüyor, upstream isteği (ve faturası) sürüyordu.
+    timeoutId = setTimeout(() => controller.abort(), 20000);
 
-    const systemInstruction = `GÖREV: Aşağıdaki [BİLGİ KAYNAĞI] kısmına %100 sadık kalarak cevap ver.
-    Bilgi kaynağı dışına çıkma. [KİŞİLİK/STİL] direktiflerini uygula.
-
-    [BİLGİ KAYNAĞI]:
-    ${fullTrainingPrompt || "Bilgi kaynağı yok, kullanıcının sana sorduğu sorulara cevap ver."}
-
-    [KİŞİLİK/STİL]:
-    ${bot?.style_prompt}`;
-
-    // Gemini API anahtarı artık sunucuda kalıyor — istemci ona hiç dokunmuyor.
+    // SEC-015 / COIN-001 / PAY-002: sistem talimatı artık burada KURULMUYOR.
+    // İstemci yalnızca hangi botla konuştuğunu ve ne dediğini söylüyor;
+    // persona, eğitim metni, boyut sınırı ve mesaj hakkı tüketimi sunucuda.
+    // Bu, istemcinin botun personasını değiştirmesini, ücretli içeriği
+    // indirmesini ve mesaj limitini atlamasını aynı anda kapatıyor.
     const geminiRes = await fetch("/api/chat/generatereply.php", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       signal: controller.signal,
       body: new URLSearchParams({
-        data: JSON.stringify({ system_instruction: systemInstruction, message: userText }),
+        data: JSON.stringify({ chatbot_id: botId, message: userText }),
       }),
     });
+
+    // Sunucu akışa başlamadan önce reddedebiliyor (403 yetki, 429 mesaj hakkı,
+    // 500 yapılandırma) — o durumda gövde SSE değil JSON. res.ok kontrolü
+    // olmadan bunlar sessizce boş bir cevaba dönüşüyordu.
+    if (!geminiRes.ok) {
+      clearTimeout(timeoutId);
+      let payload = null;
+      try {
+        payload = await geminiRes.json();
+      } catch (e) {}
+
+      if (geminiRes.status === 429) {
+        setLimitReached(true);
+        if (typeof payload?.remaining === "number") setCoinsRemaining(payload.remaining);
+        checkMessageAllowance(userId, botId);
+        setMessages((prev) => prev.filter((m) => m.id !== placeholderId));
+        return;
+      }
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === placeholderId
+            ? {
+                ...msg,
+                text:
+                  payload?.message ||
+                  "Yapay zeka servisine şu anda ulaşılamıyor. Sorun sürerse yöneticinize bildirin.",
+              }
+            : msg,
+        ),
+      );
+      return;
+    }
 
     const reader = geminiRes.body.getReader();
     const decoder = new TextDecoder("utf-8");
     let fullText = "";
+    let upstreamError = null;
+
+    // AI-002: her chunk kendi başına `split("\n")` ile ayrıştırılıyordu.
+    // Ağ paketleri SSE kare sınırlarına saygı duymaz — bir `data: {...}`
+    // satırı iki okuma arasında bölünebilir. Bölündüğünde iki yarım parça da
+    // geçersiz JSON olur, `catch {}` ikisini de sessizce yutar ve o metin
+    // parçası cevaptan DÜŞER. Kullanıcı ortasından kelime eksik bir cevap
+    // görür; hiçbir yerde iz kalmaz.
+    //
+    // Tampon: tamamlanmamış son satır bir sonraki okumaya devrediliyor.
+    let buffer = "";
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split("\n");
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Son parça tamamlanmamış olabilir — onu tamponda bırak.
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
       for (const line of lines) {
         if (line.startsWith("data: ")) {
           try {
             const jsonStr = line.replace("data: ", "").trim();
             const gData = JSON.parse(jsonStr);
+            // generatereply.php emits an `error` frame when the upstream call
+            // fails; without this the stream just ended empty and the reason
+            // was lost on both sides.
+            if (gData.error) {
+              upstreamError = gData.error;
+              continue;
+            }
+            // Sunucunun ilk SSE karesi (event: meta) kalan mesaj hakkını
+            // taşıyor — coin sayacı için ayrı bir istek atmaya gerek yok.
+            if (typeof gData.remaining === "number" || gData.source) {
+              if (typeof gData.remaining === "number") setCoinsRemaining(gData.remaining);
+              continue;
+            }
             const textChunk = gData.candidates?.[0]?.content?.parts?.[0]?.text || "";
             if (textChunk) {
               fullText += textChunk;
@@ -648,12 +691,18 @@ const generateReply = async (userText) => {
       return;
     }
 
-    // Akış hata fırlatmadan tamamlandı ama Gemini'den hiç içerik dönmedi
-    // (ör. servise erişilemedi) — sahte "yazıyor..." animasyonunu sonsuza
-    // kadar ekranda bırakmak yerine açık bir hata + yeniden dene göster.
+    // Stream finished without throwing but produced no content. If the server
+    // told us why (upstream 4xx/5xx), say so instead of the generic wording —
+    // a suspended key and a transient outage need different user action.
+    const failureText = upstreamError
+      ? (upstreamError.code === 429
+          ? "Yapay zeka servisi şu anda yoğun. Lütfen biraz sonra tekrar deneyin."
+          : "Yapay zeka servisine şu anda ulaşılamıyor. Sorun sürerse yöneticinize bildirin.")
+      : "Şu anda cevap veremiyorum.";
+
     setMessages((prev) => prev.map((msg) =>
       msg.id === placeholderId
-        ? { ...msg, text: "Şu anda cevap veremiyorum.", error: true, retryText: userText }
+        ? { ...msg, text: failureText, error: true, retryText: userText }
         : msg
     ));
   } catch (err) {
@@ -671,6 +720,27 @@ const generateReply = async (userText) => {
 const handleRetryReply = (retryText) => {
   generateReply(retryText);
 };
+
+  // API-001: yükleme başarısızsa boş bir sohbet ekranı yerine nedenini göster.
+  if (botLoadError) {
+    return (
+      <div className="flex h-[calc(100vh-84.5px)] w-full flex-col items-center justify-center gap-4 px-6 text-center text-white">
+        <div className="rounded-2xl border border-red-400/25 bg-red-500/10 px-6 py-5">
+          <h2 className="font-display text-xl font-semibold">Chatbot açılamadı</h2>
+          <p className="mt-2 max-w-md text-sm leading-relaxed text-white/60">
+            {botLoadError}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="rounded-full border border-white/15 px-5 py-2 text-sm text-white/80 transition hover:bg-white/5"
+        >
+          Tekrar dene
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex h-[calc(100vh-84.5px)] w-full flex-col px-4 text-white md:px-16">

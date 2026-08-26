@@ -24,22 +24,13 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Load .env from api/ root if it exists (simple key=value parser, no library needed)
-(static function (): void {
-    $envFile = __DIR__ . '/../.env';
-    if (!is_file($envFile)) return;
-    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-        $line = trim($line);
-        if ($line === '' || $line[0] === '#') continue;
-        $pos = strpos($line, '=');
-        if ($pos === false) continue;
-        $key   = trim(substr($line, 0, $pos));
-        $value = trim(substr($line, $pos + 1), " \t\"'");
-        if ($key === '' || isset($_ENV[$key])) continue;
-        $_ENV[$key] = $value;
-        putenv("$key=$value");
-    }
-})();
+// Load .env from api/ root. The parser lives in functions/env.php so that
+// db.php — which the admin panel requires directly, without bootstrap — sees
+// the same configuration (SEC-008).
+require_once __DIR__ . '/env.php';
+env_load();
+require_once __DIR__ . '/logging.php';
+configure_error_log();
 
 require_once __DIR__ . '/db.php';
 
@@ -97,12 +88,95 @@ set_exception_handler(function (Throwable $e) {
     // Only leak the real exception message when APP_DEBUG=true is set (local
     // dev). Otherwise it can expose DB schema, file paths, and other internals
     // to any client that triggers a 500 — full detail is still in error_log.
-    $debug   = strtolower((string) ($_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG') ?: '')) === 'true';
-    $message = $debug ? ('Sunucu hatası: ' . $e->getMessage()) : 'Sunucu hatası oluştu.';
+    $message = env_bool('APP_DEBUG', false)
+        ? ('Sunucu hatası: ' . $e->getMessage())
+        : 'Sunucu hatası oluştu.';
 
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
     echo json_encode([
         'success' => false,
         'message' => $message,
     ], JSON_UNESCAPED_UNICODE);
     exit;
+});
+
+/**
+ * ERR-002 🟡 — istisna dışındaki iki hata sınıfı yakalanmıyordu.
+ *
+ * `set_exception_handler` yalnızca fırlatılan istisnaları görür. PHP uyarıları
+ * ve notice'ları (undefined index, division by zero, dosya bulunamadı) hiçbir
+ * yere düşmüyordu; en kötüsü de fatal error'lardı: bellek sınırı aşımı,
+ * zaman aşımı ya da tanımsız fonksiyon çağrısı yanıtı YARIDA kesiyor ve
+ * istemci geçersiz/boş bir JSON alıyordu — durum kodu 200 kalıyordu.
+ *
+ * Aşağıdaki iki kanca bu boşlukları kapatıyor: uyarılar loglanıp yanıt
+ * gövdesinden uzak tutuluyor, fatal error'lar ise shutdown sırasında
+ * yakalanıp düzgün bir JSON hataya dönüştürülüyor.
+ */
+set_error_handler(function (int $severity, string $message, string $file = '', int $line = 0): bool {
+    // error_reporting ile bastırılmışsa (@ operatörü dahil) karışma.
+    if (!(error_reporting() & $severity)) {
+        return false;
+    }
+
+    $labels = [
+        E_WARNING           => 'warning',
+        E_NOTICE            => 'notice',
+        E_DEPRECATED        => 'deprecated',
+        E_USER_WARNING      => 'user-warning',
+        E_USER_NOTICE       => 'user-notice',
+        E_USER_DEPRECATED   => 'user-deprecated',
+        E_RECOVERABLE_ERROR => 'recoverable',
+    ];
+    $label = $labels[$severity] ?? ('severity-' . $severity);
+
+    error_log(sprintf('[%s] %s in %s:%d', $label, $message, $file, $line));
+
+    // Bilinçli olarak İSTİSNAYA ÇEVİRMİYORUZ. Uyarıyı istisnaya çevirmek
+    // temiz görünür ama bugün çalışan yolları kırar: vendor/ altındaki
+    // google/apiclient ve smalot/pdfparser PHP 8.1'de deprecation üretiyor;
+    // bunları fırlatmak, çalışan PDF ayrıştırma ve Google girişini anında
+    // 500'e döndürürdü. Buradaki amaç hatayı GÖRÜNÜR kılmak ve yanıt
+    // gövdesine sızmasını engellemek.
+    //
+    // true dönmek PHP'nin kendi çıktı/log davranışını devre dışı bırakır —
+    // display_errors yanlışlıkla açık kalsa bile uyarı JSON gövdesine
+    // karışmaz (ERR-002'nin asıl şikâyeti buydu).
+    return true;
+});
+
+register_shutdown_function(function (): void {
+    $error = error_get_last();
+    if ($error === null) {
+        return;
+    }
+
+    $fatal = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR];
+    if (!in_array($error['type'], $fatal, true)) {
+        return;
+    }
+
+    error_log(sprintf(
+        '[fatal] %s in %s:%d',
+        $error['message'],
+        $error['file'],
+        $error['line']
+    ));
+
+    // SSE gibi yanıtı çoktan başlamış uç noktalarda gövdeye JSON eklemek
+    // akışı bozar; yalnızca henüz hiçbir şey gönderilmemişse yaz.
+    if (headers_sent()) {
+        return;
+    }
+
+    http_response_code(500);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'success' => false,
+        'message' => env_bool('APP_DEBUG', false)
+            ? ('Ölümcül hata: ' . $error['message'])
+            : 'Sunucu hatası oluştu.',
+    ], JSON_UNESCAPED_UNICODE);
 });

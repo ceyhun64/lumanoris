@@ -19,7 +19,7 @@ export default function SuggestedCard({ bot }) {
 
     return (
         <div
-            className="flex flex-col cursor-pointer rounded-2xl border border-fuchsia-400/10 bg-gradient-to-b from-[#111120] to-[#0D0D1A] transition-all duration-300 hover:-translate-y-0.5 hover:border-fuchsia-400/22 hover:shadow-[0_10px_28px_rgba(217,70,239,0.15)] overflow-hidden"
+            className="flex flex-col cursor-pointer rounded-2xl border border-fuchsia-400/10 bg-gradient-to-b from-luma-card to-luma-elevated transition-all duration-300 hover:-translate-y-0.5 hover:border-fuchsia-400/20 hover:shadow-[0_10px_28px_rgba(217,70,239,0.15)] overflow-hidden"
             onClick={() => router.push(`/dashboard/chat?botId=${id}`)}
         >
             {/* Image */}

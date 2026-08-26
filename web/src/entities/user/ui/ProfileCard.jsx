@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
 import { requireLogin } from '@/shared/lib/auth-guard';
 import { resolveAvatarSrc } from '@/shared/lib/image';
+import { useAbortableEffect, isAbortError } from '@/shared/hooks/useAbortableEffect';
 
 // Only loaded once the user actually opens one of these — this card renders
 // unconditionally on every chat page load, so keeping these static meant all
@@ -72,51 +73,36 @@ export default function ProfileCard({bot, comments}) {
         if (!img) return "";
         return img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
     };
-    useEffect(() => {
-        if (bot) {
-        setProfile({
-            id: bot.id,
-            title: bot.isim,
-            author: bot.author_username, // Şimdilik ID
-            seller: bot.owner_username,
-            description: bot.aciklama,
-            image: formatImage(bot.profil_fotografi),
-            price: 0,
-            priceType: "TL",
-            duration: "1",
-            follows: bot.follows,
-            commentCount: comments.count || 0,
-        });
-        }
-    }, [bot, comments]);
-
-    // Not: Chatbot profili girişsiz de görüntülenebilir (sadece içerik
-    // gösterimi); beğeni/yorum/takip/satın alma gibi aksiyonlar kendi
-    // handler'larında userId kontrolü yapıp gerekirse /login'e yönlendirir.
-    useEffect(() => {
-                async function checkSession() {
-                    try {
-                        const res = await fetch("/api/auth/sessioncheck.php", {
-                        credentials: "include", // cookie'yi gönder
-                        });
-                        const resultText = await res.text();
-                        const result = JSON.parse(resultText);
-
-                        if (result.authenticated) {
-                        setUserId(result.user_id);
-                        }
-                    } catch (err) {
-                        console.error("Session check error:", err);
-                    }
-                }
-                checkSession();
-            }, [router]);
-
-    useEffect(() => {
-        const fetchCartStatus = async (uid) => {
+    // REACT-001: oturum kontrolü artık iptal edilebilir. Kullanıcı cevap
+    // gelmeden sayfadan ayrılırsa setUserId çalışmıyor.
+    useAbortableEffect((signal, isActive) => {
+        (async () => {
             try {
-                const response = await fetch(`/api/marketplace/getcart.php?user_id=${uid}`);
+                const res = await fetch("/api/auth/sessioncheck.php", {
+                    credentials: "include", // cookie'yi gönder
+                    signal,
+                });
+                const result = await res.json();
+                if (isActive() && result.authenticated) {
+                    setUserId(result.user_id);
+                }
+            } catch (err) {
+                if (!isAbortError(err)) console.error("Session check error:", err);
+            }
+        })();
+    }, [router]);
+
+    // REACT-001: sepet durumu — bot değiştiğinde eski istek iptal ediliyor.
+    // İptal edilmediğinde iki cevap yarışıyor ve yavaş olan kazanabiliyordu,
+    // yani bir önceki botun sepet durumu ekranda kalabiliyordu.
+    useAbortableEffect((signal, isActive) => {
+        if (!userId || !profile.id) return;
+
+        (async () => {
+            try {
+                const response = await fetch(`/api/marketplace/getcart.php?user_id=${userId}`, { signal });
                 const data = await response.json();
+                if (!isActive()) return;
 
                 if (data?.success && Array.isArray(data.cart)) {
                     const existing = data.cart.find(item => Number(item.chatbot_id) === Number(profile.id));
@@ -126,63 +112,56 @@ export default function ProfileCard({bot, comments}) {
                     }
                 }
             } catch (error) {
-                console.error("Sepet durumu alınamadı:", error);
+                if (!isAbortError(error)) console.error("Sepet durumu alınamadı:", error);
             }
-        };
-
-        if (userId && profile.id) {
-            fetchCartStatus(userId);
-        }
+        })();
     }, [userId, profile.id]);
 
     // "Örnek Geçmiş" — this bot's own past conversations with the current
     // user, so they can jump straight back into one instead of starting over.
-    useEffect(() => {
-        const fetchPastConversations = async (uid) => {
+    useAbortableEffect((signal, isActive) => {
+        if (!userId || !profile.id) return;
+
+        (async () => {
             try {
-                const res = await fetch(`/api/chat/gethistory.php?user_id=${uid}`);
+                const res = await fetch(`/api/chat/gethistory.php?user_id=${userId}`, { signal });
                 const data = await res.json();
+                if (!isActive()) return;
+
                 const items = Array.isArray(data?.results)
                     ? data.results.filter(item => Number(item.chatbot_id) === Number(profile.id))
                     : [];
                 setPastConversations(items.slice(0, 3));
             } catch (err) {
-                console.error("Geçmiş sohbetler alınamadı:", err);
+                if (!isAbortError(err)) console.error("Geçmiş sohbetler alınamadı:", err);
             }
-        };
-
-        if (userId && profile.id) {
-            fetchPastConversations(userId);
-        }
+        })();
     }, [userId, profile.id]);
 
-    useEffect(() => {
-        const fetchUserLists = async (uid) => {
+    useAbortableEffect((signal, isActive) => {
+        if (!userId) return;
+
+        (async () => {
             try {
-                const response = await fetch(`/api/social/getuserlists.php?id=${uid}`);
+                const response = await fetch(`/api/social/getuserlists.php?id=${userId}`, { signal });
                 const data = await response.json();
+                if (!isActive()) return;
 
                 if (Array.isArray(data?.lists)) {
-                    // Sadece id ve userId'yi al, gerisini siktir et
                     const minimalLists = data.lists.map(list => ({
                         id: list.id,
-                        userId: uid,
-                        name: list.name
+                        userId,
+                        name: list.name,
                     }));
-
-                    setUserLists(minimalLists); // userLists state'ine sadece bu ikiliyi atar
+                    setUserLists(minimalLists);
                 }
             } catch (error) {
-                console.error("Hata:", error);
+                if (!isAbortError(error)) console.error("Kullanıcı listeleri alınamadı:", error);
             }
-        };
-
-        if (userId) {
-            fetchUserLists(userId);
-        }
+        })();
     }, [userId]);
 
-    useEffect(() => {
+    useAbortableEffect((signal, isActive) => {
         // Deps used to be [profile.id, userId] — neither is actually read
         // inside this fetch (it uses bot.id directly, and the backend reads
         // identity from the session cookie via optionalAuth(), not a request
@@ -194,10 +173,11 @@ export default function ProfileCard({bot, comments}) {
         // component mounts (the parent only renders it once bot exists).
         if (!bot.id) return;
 
-        const checkUserBotStatus = async () => {
+        (async () => {
             try {
-                const res = await fetch(`/api/social/getuserbotstatus.php?chatbot_id=${bot.id}`);
+                const res = await fetch(`/api/social/getuserbotstatus.php?chatbot_id=${bot.id}`, { signal });
                 const result = await res.json();
+                if (!isActive()) return;
 
                 if (result.success) {
                     setLiked(result.didLike);
@@ -205,11 +185,9 @@ export default function ProfileCard({bot, comments}) {
                     setIsFollowing(result.didFollow);
                 }
             } catch (err) {
-                console.error("getuserbotstatus API error:", err);
+                if (!isAbortError(err)) console.error("getuserbotstatus API error:", err);
             }
-        };
-
-        checkUserBotStatus();
+        })();
     }, [bot.id]);
 
     const handleAddToCart = async (e) => {
@@ -502,7 +480,7 @@ export default function ProfileCard({bot, comments}) {
             {/* "Bot Hakkında" — pazaryeri profilinin tam hâli artık burada,
                 istek üzerine açılıyor; sohbet ekranına kalıcı yük bindirmiyor. */}
             <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-md border-fuchsia-400/15">
                     <DialogHeader>
                         <div className="flex items-center gap-3.5">
                             <div className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl ring-2 ring-fuchsia-400/20">

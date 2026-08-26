@@ -216,7 +216,7 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
       <div className="mt-3 pt-2.5 border-t border-white/5">
         <button
           onClick={onLogout}
-          className="flex items-center justify-between w-full px-3 py-2 text-xs font-medium text-red-400 rounded-lg hover:bg-red-500/10 hover:border hover:border-red-500/20 transition-all"
+          className="flex items-center justify-between w-full px-3 py-2 text-xs font-medium text-rose-400 rounded-lg hover:bg-rose-500/10 hover:border hover:border-rose-500/20 transition-all"
         >
           <span>Oturumu Kapat</span>
           <LogOut className="w-3.5 h-3.5" />

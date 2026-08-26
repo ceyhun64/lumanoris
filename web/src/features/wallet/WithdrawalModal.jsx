@@ -200,7 +200,7 @@ export default function WithdrawalModal({ isOpen, onClose, moneyAmount, userId, 
                         <Button
                             onClick={() => setShowConfirmModal(false)}
                             variant="secondary"
-                            className="h-auto border-transparent bg-white/10 px-4 py-2.5 text-body hover:border-transparent hover:bg-white/18"
+                            className="h-auto border-transparent bg-white/10 px-4 py-2.5 text-body hover:border-transparent hover:bg-white/20"
                         >
                             Vazgeç
                         </Button>

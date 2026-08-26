@@ -45,6 +45,18 @@ error_log
 # PHP local DB dumps / backups — never commit real or scratch data
 db_backup/
 *.sql
+# storage/ tamamen ignore EDİLMİYOR: içindeki storage/.gitignore her şeyi
+# ignore edip kendini bırakıyor, böylece temiz bir klonda dizin var oluyor ama
+# içeriği (yedekler, loglar) asla commit'lenmiyor.
+storage/*
+!storage/.gitignore
+
+# ARCH-003 / DB-002: şema ve migration'lar YAPILANDIRMA, döküm değil. Yukarıdaki
+# *.sql kuralı bunları da yutuyordu; sonuç: temiz bir klonda kurulacak veritabanı
+# yok, ve migration'lar (bir önceki denetimin ölçülmüş çıktısı) hiçbir yere
+# ulaşmıyordu. Gerçek dökümler storage/ altında ve hâlâ ignore'lu.
+!api/database/*.sql
+!api/database/**/*.sql
 
 # env files (can opt-in for committing if needed)
 .env*

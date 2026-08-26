@@ -60,11 +60,6 @@ spl_autoload_register(function (string $class): void {
             "$base/Shared/Constants/",
             "$base/Shared/Exceptions/",
             "$base/Shared/Utilities/",
-            // Legacy (backward-compat while transitioning)
-            "$base/Controllers/",
-            "$base/Config/",
-            "$base/Middleware/",
-            "$base/Repositories/",
         ];
     }
 

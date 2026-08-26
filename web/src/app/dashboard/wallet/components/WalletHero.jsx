@@ -8,7 +8,7 @@ export default function WalletHero({ onWithdraw }) {
           <ShieldCheck className="h-3.5 w-3.5 text-violet-400" />
           <span>2026 Güvenli Finans Altyapısı</span>
         </div>
-        <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+        <h1 className="font-display text-3xl font-black tracking-tight text-white sm:text-4xl">
           Cüzdan & Finans
         </h1>
         <p className="mt-1 text-sm text-zinc-400">
