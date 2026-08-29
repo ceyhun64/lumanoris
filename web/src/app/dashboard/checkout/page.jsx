@@ -239,7 +239,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-luma-base text-zinc-100 selection:bg-fuchsia-500/30 selection:text-fuchsia-200 font-sans relative overflow-x-hidden">
+    <div className="min-h-screen bg-luma-base max-w-7xl text-zinc-100 selection:bg-fuchsia-500/30 selection:text-fuchsia-200 font-sans relative overflow-x-hidden">
       {/* Background ambient lighting effects */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-b from-fuchsia-600/10 via-violet-600/5 to-transparent blur-3xl pointer-events-none" />
 

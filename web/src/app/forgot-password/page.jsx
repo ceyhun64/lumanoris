@@ -1,4 +1,7 @@
 "use client";
+import LegalBody from "@/widgets/info/LegalBody";
+import logo from "@/images/header-logo-icon.png";
+import { ModalPortal } from "@/shared/ui/modal-portal";
 
 import React, { useState } from "react";
 import {
@@ -150,7 +153,9 @@ export default function ForgotPassword() {
       }
 
       if (result.success) {
-        toast.success("Şifreniz güncellendi. Giriş sayfasına yönlendiriliyorsunuz.");
+        toast.success(
+          "Şifreniz güncellendi. Giriş sayfasına yönlendiriliyorsunuz.",
+        );
         setTimeout(() => {
           window.location.href = "/login";
         }, 1500);
@@ -194,7 +199,11 @@ export default function ForgotPassword() {
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-violet-600 p-0.5 shadow-[0_0_30px_rgba(217,70,239,0.3)] transition-transform duration-500 group-hover:scale-105">
               <div className="w-full h-full bg-[#030305] rounded-md flex items-center justify-center">
-                <Bot className="w-5 h-5 text-fuchsia-400" />
+                <img
+                  src={logo.src}
+                  alt="Lumanoris"
+                  className="relative w-7 h-7 object-contain transition-transform group-hover:scale-110"
+                />
               </div>
             </div>
             <div>
@@ -202,14 +211,14 @@ export default function ForgotPassword() {
                 LUMANORIS
               </span>
               <span className="block text-caption tracking-widest text-fuchsia-400 font-semibold uppercase">
-                AI Architecture
+                AI Mimarisi
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.02] text-xs text-white/60">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Secure Recovery Pipeline</span>
+            <span>Güvenli Kurtarma Süreci</span>
           </div>
         </div>
 
@@ -243,13 +252,13 @@ export default function ForgotPassword() {
                 </div>
                 <div>
                   <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                    Lumanoris Auth Guard
+                    Lumanoris Yetkili Koruması
                     <span className="text-caption px-1.5 py-0.5 rounded bg-fuchsia-500/20 text-fuchsia-300 font-mono">
-                      ENCRYPTED
+                      ŞİFRELİ
                     </span>
                   </div>
                   <div className="text-caption text-white/40">
-                    Multi-factor recovery protocol
+                    Çok faktörlü koruma protokolü
                   </div>
                 </div>
               </div>
@@ -518,101 +527,41 @@ export default function ForgotPassword() {
 
       {/* Policy Modal Overlay */}
       {isPolicyOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-lg rounded-3xl border border-white/10 bg-[#0A0B10] p-8 shadow-[0_25px_80px_rgba(0,0,0,0.9)] max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
-              <h3 className="text-lg font-bold text-white">
-                {activePolicy === "terms"
-                  ? "Kullanım Koşulları"
-                  : "Gizlilik Politikası"}
-              </h3>
-              <button
-                onClick={closePolicy}
-                className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+        <ModalPortal onClose={() => setPolicyOpen(false)}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+            <div className="relative w-full max-w-lg rounded-3xl border border-white/10 bg-[#0A0B10] p-8 shadow-[0_25px_80px_rgba(0,0,0,0.9)] max-h-[85vh] overflow-y-auto">
+              <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
+                <h3 className="text-lg font-bold text-white">
+                  {activePolicy === "terms"
+                    ? "Kullanım Koşulları"
+                    : "Gizlilik Politikası"}
+                </h3>
+                <button
+                  onClick={closePolicy}
+                  className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
 
-            <div className="text-white/70 text-xs sm:text-sm leading-relaxed space-y-4">
-              {activePolicy === "terms" ? (
-                <>
-                  <h4 className="text-white font-bold text-sm">
-                    1. Kabul Şartları
-                  </h4>
-                  <p>
-                    LUMANORIS platformuna erişerek veya hizmetleri kullanarak,
-                    aşağıda belirtilen tüm kullanım koşullarını okuduğunuzu,
-                    anladığınızı ve kabul ettiğinizi beyan etmiş olursunuz.
-                  </p>
-                  <h4 className="text-white font-bold text-sm">
-                    2. Hizmet Tanımı
-                  </h4>
-                  <p>
-                    LUMANORIS; bireylerin ve kurumların kendi yapay zekâ sohbet
-                    modellerini oluşturabildiği, paylaşabildiği ve gelir elde
-                    edebildiği merkeziyetsiz bir dijital platformdur.
-                  </p>
-                  <h4 className="text-white font-bold text-sm">
-                    3. Kullanıcı Sorumlulukları
-                  </h4>
-                  <p>
-                    Kullanıcılar, platformu yürürlükteki yasalara ve genel ahlak
-                    kurallarına uygun şekilde kullanmakla yükümlüdür. Hesap
-                    bilgilerinin güvenliğinden kullanıcı sorumludur.
-                  </p>
-                  <h4 className="text-white font-bold text-sm">4. İletişim</h4>
-                  <p>
-                    E-posta:{" "}
-                    <a
-                      href="mailto:lumanoris.ai@gmail.com"
-                      className="text-fuchsia-400 hover:underline"
-                    >
-                      lumanoris.ai@gmail.com
-                    </a>
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h4 className="text-white font-bold text-sm">1. Giriş</h4>
-                  <p>
-                    Bu Gizlilik Politikası, LUMANORIS tarafından sunulan
-                    hizmetleri kullandığınızda kişisel verilerinizin nasıl
-                    toplandığını, işlendiğini ve korunduğunu açıklar.
-                  </p>
-                  <h4 className="text-white font-bold text-sm">
-                    2. Veri Güvenliği
-                  </h4>
-                  <p>
-                    KVKK ve GDPR kapsamında verilerinize erişme, düzeltme,
-                    silme, itiraz etme ve taşınabilirlik talep etme haklarına
-                    sahipsiniz. Tüm verileriniz endüstri standardı şifreleme
-                    algoritmalarıyla korunur.
-                  </p>
-                  <h4 className="text-white font-bold text-sm">3. İletişim</h4>
-                  <p>
-                    E-posta:{" "}
-                    <a
-                      href="mailto:lumanoris.ai@gmail.com"
-                      className="text-fuchsia-400 hover:underline"
-                    >
-                      lumanoris.ai@gmail.com
-                    </a>
-                  </p>
-                </>
-              )}
-            </div>
+              {/* Metin artık admin panelinden yönetiliyor:
+                  /admin/kullanimkosullari ve /admin/gizlilikpolitikasi →
+                  global_vars → /api/content/*.php. Buradaki sabit kopya
+                  güncellenmiyordu, yani admin metni değiştirdiğinde giriş
+                  ekranındaki sözleşme eski hâlinde kalıyordu. */}
+              <LegalBody doc={activePolicy === "terms" ? "terms" : "privacy"} />
 
-            <div className="mt-8 pt-4 border-t border-white/10 flex justify-end">
-              <button
-                onClick={closePolicy}
-                className="px-6 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium text-xs transition-colors"
-              >
-                Kapat
-              </button>
+              <div className="mt-8 pt-4 border-t border-white/10 flex justify-end">
+                <button
+                  onClick={closePolicy}
+                  className="px-6 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium text-xs transition-colors"
+                >
+                  Kapat
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );

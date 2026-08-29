@@ -1,4 +1,5 @@
 ﻿"use client";
+import { ModalPortal } from "@/shared/ui/modal-portal";
 
 import React, { useState, useEffect, useMemo, useContext } from "react";
 import { UserContext } from "@/shared/contexts/UserContext";
@@ -117,54 +118,56 @@ function UnfollowModal({ bot, isOpen, onClose, onConfirm }) {
   if (!isOpen || !bot) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md rounded-2xl bg-zinc-900 border border-white/10 p-6 shadow-2xl space-y-5">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 shrink-0">
-            <Trash2 className="w-5 h-5" />
+    <ModalPortal onClose={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="relative w-full max-w-md rounded-2xl bg-zinc-900 border border-white/10 p-6 shadow-2xl space-y-5 max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 shrink-0">
+              <Trash2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white">Takibi Bırak</h3>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                "{bot.isim}" asistanını takip edilenler listenizden çıkarmak
+                istiyor musunuz?
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-base font-bold text-white">Takibi Bırak</h3>
-            <p className="text-xs text-zinc-400 mt-0.5">
-              "{bot.isim}" asistanını takip edilenler listenizden çıkarmak
-              istiyor musunuz?
-            </p>
+  
+          <div className="p-3.5 rounded-xl bg-zinc-950/60 border border-white/5 flex items-center gap-3">
+            <img
+              src={resolveImg(bot.profil_fotografi, "avatar")}
+              alt=""
+              className="w-10 h-10 rounded-lg object-cover border border-white/10"
+            />
+            <div>
+              <p className="text-xs font-bold text-white">{bot.isim}</p>
+              <p className="text-caption text-zinc-500">
+                Geliştirici: {bot.gelistirici_adi || "Bilinmiyor"}
+              </p>
+            </div>
           </div>
-        </div>
-
-        <div className="p-3.5 rounded-xl bg-zinc-950/60 border border-white/5 flex items-center gap-3">
-          <img
-            src={resolveImg(bot.profil_fotografi, "avatar")}
-            alt=""
-            className="w-10 h-10 rounded-lg object-cover border border-white/10"
-          />
-          <div>
-            <p className="text-xs font-bold text-white">{bot.isim}</p>
-            <p className="text-caption text-zinc-500">
-              Geliştirici: {bot.gelistirici_adi || "Bilinmiyor"}
-            </p>
+  
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-zinc-300 hover:bg-white/5 transition cursor-pointer"
+            >
+              Vazgeç
+            </button>
+            <button
+              onClick={() => {
+                onConfirm(bot.id);
+                onClose();
+              }}
+              className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-semibold text-white transition cursor-pointer"
+            >
+              Takibi Bırak
+            </button>
           </div>
-        </div>
-
-        <div className="flex items-center gap-3 pt-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-zinc-300 hover:bg-white/5 transition cursor-pointer"
-          >
-            Vazgeç
-          </button>
-          <button
-            onClick={() => {
-              onConfirm(bot.id);
-              onClose();
-            }}
-            className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-semibold text-white transition cursor-pointer"
-          >
-            Takibi Bırak
-          </button>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
 
@@ -172,106 +175,108 @@ function BotQuickDetailModal({ bot, isOpen, onClose, router }) {
   if (!isOpen || !bot) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl rounded-2xl bg-zinc-900 border border-white/10 p-6 shadow-2xl space-y-6 overflow-hidden max-h-[90vh] overflow-y-auto">
-        {/* Glow backdrop */}
-        <div className="pointer-events-none absolute -top-20 -right-20 h-40 w-40 rounded-full bg-fuchsia-500/20 blur-3xl" />
-
-        <div className="flex items-start justify-between border-b border-white/[0.08] pb-4">
-          <div className="flex items-center gap-3">
-            <img
-              src={resolveImg(bot.profil_fotografi, "avatar")}
-              alt=""
-              className="w-12 h-12 rounded-xl object-cover border border-white/10"
-            />
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white">{bot.isim}</h3>
-                <span className="text-caption font-mono text-fuchsia-400 bg-fuchsia-500/10 px-2 py-0.5 rounded border border-fuchsia-500/20">
-                  {bot.kategori_adi || "Genel AI"}
-                </span>
+    <ModalPortal onClose={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="relative w-full max-w-xl rounded-2xl bg-zinc-900 border border-white/10 p-6 shadow-2xl space-y-6 overflow-hidden max-h-[90vh] overflow-y-auto">
+          {/* Glow backdrop */}
+          <div className="pointer-events-none absolute -top-20 -right-20 h-40 w-40 rounded-full bg-fuchsia-500/20 blur-3xl" />
+  
+          <div className="flex items-start justify-between border-b border-white/[0.08] pb-4">
+            <div className="flex items-center gap-3">
+              <img
+                src={resolveImg(bot.profil_fotografi, "avatar")}
+                alt=""
+                className="w-12 h-12 rounded-xl object-cover border border-white/10"
+              />
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-white">{bot.isim}</h3>
+                  <span className="text-caption font-mono text-fuchsia-400 bg-fuchsia-500/10 px-2 py-0.5 rounded border border-fuchsia-500/20">
+                    {bot.kategori_adi || "Genel AI"}
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Geliştirici:{" "}
+                  <span className="text-zinc-200 font-medium">
+                    {bot.gelistirici_adi}
+                  </span>
+                </p>
               </div>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Geliştirici:{" "}
-                <span className="text-zinc-200 font-medium">
-                  {bot.gelistirici_adi}
-                </span>
+            </div>
+  
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+  
+          {/* Cover Banner */}
+          <div className="relative aspect-[21/9] w-full rounded-xl overflow-hidden bg-zinc-950 border border-white/5">
+            <img
+              src={resolveImg(bot.kapak_fotografi)}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
+          </div>
+  
+          {/* Description */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-mono uppercase text-zinc-400 font-semibold tracking-wider">
+              Hakkında
+            </h4>
+            <p className="text-xs text-zinc-300 leading-relaxed bg-zinc-950/60 p-3.5 rounded-xl border border-white/5">
+              {bot.aciklama ||
+                "Bu yapay zeka asistanı, özel veri kaynakları ve gelişmiş RAG altyapısı ile donatılmıştır."}
+            </p>
+          </div>
+  
+          {/* Technical Specs */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-center">
+              <p className="text-caption text-zinc-500 uppercase font-mono">
+                Puan
+              </p>
+              <p className="text-sm font-bold text-amber-400 flex items-center justify-center gap-1 mt-0.5">
+                <Star className="w-3.5 h-3.5 fill-amber-400" />{" "}
+                {bot.puan || "4.9"}
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-center">
+              <p className="text-caption text-zinc-500 uppercase font-mono">
+                Takipçi
+              </p>
+              <p className="text-sm font-bold text-white mt-0.5">
+                {bot.takipci_sayisi || "1.2k"}
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-center">
+              <p className="text-caption text-zinc-500 uppercase font-mono">
+                Model
+              </p>
+              <p className="text-xs font-bold text-violet-300 mt-0.5">
+                GPT-4o Omnimodal
               </p>
             </div>
           </div>
-
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Cover Banner */}
-        <div className="relative aspect-[21/9] w-full rounded-xl overflow-hidden bg-zinc-950 border border-white/5">
-          <img
-            src={resolveImg(bot.kapak_fotografi)}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
-        </div>
-
-        {/* Description */}
-        <div className="space-y-2">
-          <h4 className="text-xs font-mono uppercase text-zinc-400 font-semibold tracking-wider">
-            Hakkında
-          </h4>
-          <p className="text-xs text-zinc-300 leading-relaxed bg-zinc-950/60 p-3.5 rounded-xl border border-white/5">
-            {bot.aciklama ||
-              "Bu yapay zeka asistanı, özel veri kaynakları ve gelişmiş RAG altyapısı ile donatılmıştır."}
-          </p>
-        </div>
-
-        {/* Technical Specs */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-center">
-            <p className="text-caption text-zinc-500 uppercase font-mono">
-              Puan
-            </p>
-            <p className="text-sm font-bold text-amber-400 flex items-center justify-center gap-1 mt-0.5">
-              <Star className="w-3.5 h-3.5 fill-amber-400" />{" "}
-              {bot.puan || "4.9"}
-            </p>
+  
+          {/* Actions */}
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={() =>
+                router.push("/dashboard/chat?botId=" + bot.chatbot_id)
+              }
+              className="flex-1 py-3 rounded-xl bg-gradient-btn text-xs font-bold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Sohbet Başlat</span>
+            </button>
           </div>
-          <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-center">
-            <p className="text-caption text-zinc-500 uppercase font-mono">
-              Takipçi
-            </p>
-            <p className="text-sm font-bold text-white mt-0.5">
-              {bot.takipci_sayisi || "1.2k"}
-            </p>
-          </div>
-          <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-center">
-            <p className="text-caption text-zinc-500 uppercase font-mono">
-              Model
-            </p>
-            <p className="text-xs font-bold text-violet-300 mt-0.5">
-              GPT-4o Omnimodal
-            </p>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-3 pt-2">
-          <button
-            onClick={() =>
-              router.push("/dashboard/chat?botId=" + bot.chatbot_id)
-            }
-            className="flex-1 py-3 rounded-xl bg-gradient-btn text-xs font-bold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
-          >
-            <MessageSquare className="w-4 h-4" />
-            <span>Sohbet Başlat</span>
-          </button>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
 
@@ -527,24 +532,24 @@ export default function Following() {
               <button
                 onClick={() => setViewMode("grid")}
                 className={cn(
-                  "p-2 rounded-lg transition cursor-pointer",
+                  "p-1.5 rounded-lg transition cursor-pointer",
                   viewMode === "grid"
                     ? "bg-white/10 text-white"
                     : "text-zinc-500 hover:text-zinc-300",
                 )}
               >
-                <LayoutGrid className="w-7 h-7" />
+                <LayoutGrid className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
                 className={cn(
-                  "p-2 rounded-lg transition cursor-pointer",
+                  "p-1.5 rounded-lg transition cursor-pointer",
                   viewMode === "list"
                     ? "bg-white/10 text-white"
                     : "text-zinc-500 hover:text-zinc-300",
                 )}
               >
-                <List className="w-7 h-7" />
+                <List className="w-5 h-5" />
               </button>
             </div>
           </div>

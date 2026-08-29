@@ -11,7 +11,6 @@ import ChatbotsCardGrid from "./components/ChatbotsCardGrid";
 import ChatbotCard from "./components/ChatbotCard";
 import ChatbotsHero from "./components/ChatbotsHero";
 import ChatbotsToolbar from "./components/ChatbotsToolbar";
-import CreateChatbotCard from "./components/CreateChatbotCard";
 
 export default function App() {
   const router = useRouter();
@@ -164,49 +163,49 @@ export default function App() {
         </div>
       )}
 
-      <ChatbotsCardGrid>
-        <CreateChatbotCard />
+      {filteredChatbots.length > 0 && (
+        <ChatbotsCardGrid>
+          {filteredChatbots.map((bot) => {
+            const targetCategory = categories.find(
+              (cat) => String(cat.id) === String(bot.kategori_id),
+            );
+            const categoryLabel = targetCategory
+              ? targetCategory.kategori_adi_tr
+              : "Genel";
+            const isOwn = String(bot.author_user_id) === String(userId);
+            const isPurchased =
+              !isOwn && String(bot.owner_user_id) === String(userId);
+            const statusLabel = isPurchased
+              ? "Satın Alındı"
+              : bot.is_independent
+                ? "Bağımsız"
+                : bot.seller_status === "active"
+                  ? "Aktif"
+                  : "Yayında Değil";
 
-        {filteredChatbots.map((bot) => {
-          const targetCategory = categories.find(
-            (cat) => String(cat.id) === String(bot.kategori_id),
-          );
-          const categoryLabel = targetCategory
-            ? targetCategory.kategori_adi_tr
-            : "Genel";
-          const isOwn = String(bot.author_user_id) === String(userId);
-          const isPurchased =
-            !isOwn && String(bot.owner_user_id) === String(userId);
-          const statusLabel = isPurchased
-            ? "Satın Alındı"
-            : bot.is_independent
-              ? "Bağımsız"
-              : bot.seller_status === "active"
-                ? "Aktif"
-                : "Yayında Değil";
-
-          return (
-            <ChatbotCard
-              key={bot.id}
-              id={bot.id}
-              userId={userId}
-              title={bot.isim}
-              image={bot.kapak_fotografi}
-              profileImage={bot.profil_fotografi}
-              category={categoryLabel}
-              status={statusLabel}
-              likes={bot.likes}
-              dialogs={bot.toplam_chats}
-              weeklyPrice={bot.ucret_haftalik}
-              monthlyPrice={bot.ucret_aylik}
-              isIndependent={!!bot.is_independent}
-              isOwn={isOwn}
-              onDelete={() => handleDelete(bot.id)}
-              onChanged={fetchChatbots}
-            />
-          );
-        })}
-      </ChatbotsCardGrid>
+            return (
+              <ChatbotCard
+                key={bot.id}
+                id={bot.id}
+                userId={userId}
+                title={bot.isim}
+                image={bot.kapak_fotografi}
+                profileImage={bot.profil_fotografi}
+                category={categoryLabel}
+                status={statusLabel}
+                likes={bot.likes}
+                dialogs={bot.toplam_chats}
+                weeklyPrice={bot.ucret_haftalik}
+                monthlyPrice={bot.ucret_aylik}
+                isIndependent={!!bot.is_independent}
+                isOwn={isOwn}
+                onDelete={() => handleDelete(bot.id)}
+                onChanged={fetchChatbots}
+              />
+            );
+          })}
+        </ChatbotsCardGrid>
+      )}
 
       {!loading && !error && chatbots.length === 0 && (
         <EmptyState

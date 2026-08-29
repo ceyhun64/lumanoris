@@ -1,4 +1,5 @@
 "use client";
+import { ModalPortal } from "@/shared/ui/modal-portal";
 
 import React, { useEffect, useState, useMemo, useRef, useContext } from "react";
 import { UserContext } from "@/shared/contexts/UserContext";
@@ -96,52 +97,54 @@ function DeleteConfirmModal({ isOpen, onClose, onConfirm, isDeleting }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Glass Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
-        onClick={onClose}
-      />
-
-      {/* Modal Dialog Container */}
-      <div className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/90 p-6 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 animate-in zoom-in-95 duration-200">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-400">
-            <AlertTriangle className="h-6 w-6" />
+    <ModalPortal onClose={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* Glass Backdrop */}
+        <div
+          className="fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
+          onClick={onClose}
+        />
+  
+        {/* Modal Dialog Container */}
+        <div className="relative z-10 max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-zinc-950/90 p-6 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 animate-in zoom-in-95 duration-200">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-400">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-white">Sohbeti Sil</h3>
+              <p className="mt-1 text-sm text-zinc-400 leading-relaxed">
+                Bu sohbeti silmek istediğinize emin misiniz? Bu işlem kalıcıdır ve
+                tüm mesaj geçmişiniz temizlenecektir.
+              </p>
+            </div>
           </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-white">Sohbeti Sil</h3>
-            <p className="mt-1 text-sm text-zinc-400 leading-relaxed">
-              Bu sohbeti silmek istediğinize emin misiniz? Bu işlem kalıcıdır ve
-              tüm mesaj geçmişiniz temizlenecektir.
-            </p>
+  
+          <div className="mt-6 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-white/10 bg-zinc-900/80 px-4 py-2.5 text-xs font-medium text-zinc-300 transition-all hover:bg-zinc-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-zinc-700"
+            >
+              Vazgeç
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={isDeleting}
+              className="flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-rose-600/20 transition-all hover:bg-rose-500 hover:shadow-rose-500/30 active:scale-95 disabled:opacity-50"
+            >
+              {isDeleting ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+              Evet, Sil
+            </button>
           </div>
-        </div>
-
-        <div className="mt-6 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl border border-white/10 bg-zinc-900/80 px-4 py-2.5 text-xs font-medium text-zinc-300 transition-all hover:bg-zinc-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-zinc-700"
-          >
-            Vazgeç
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={isDeleting}
-            className="flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-rose-600/20 transition-all hover:bg-rose-500 hover:shadow-rose-500/30 active:scale-95 disabled:opacity-50"
-          >
-            {isDeleting ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            ) : (
-              <Trash2 className="h-4 w-4" />
-            )}
-            Evet, Sil
-          </button>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
 
@@ -231,7 +234,7 @@ export function History() {
     {
       id: "3",
       chatbot_id: "bot_3",
-      conversation_name: "Next.js App Router Refactoring",
+      conversation_name: "Next.js App Router Yeniden Yapılandırma",
       latest_message:
         "Server Components kullanımını yaygınlaştırarak Bundle boyutunu %35 oranında düşürdük.",
       latest_sent_time: new Date(Date.now() - 86400000 * 3).toISOString(),

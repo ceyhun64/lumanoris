@@ -1,40 +1,26 @@
 "use client";
+import { ModalPortal } from "@/shared/ui/modal-portal";
 
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-  useContext,
-} from "react";
+import React, { useState, useEffect, useMemo, useRef, useContext } from "react";
 import { UserContext } from "@/shared/contexts/UserContext";
+import owlLogo from "@/images/header-logo-icon.png";
+import MarketplaceControlBar from "@/widgets/MarketplaceControlBar";
+import CategoryBadge from "@/shared/ui/category-badge";
+import { resolveCategory } from "@/shared/lib/categories";
 import {
-  Search,
   Sparkles,
-  Bot,
   MessageSquare,
-  Users,
-  Layers,
   Plus,
-  SlidersHorizontal,
-  ArrowUpDown,
-  LayoutGrid,
-  List as ListIcon,
   Heart,
   Bookmark,
-  TrendingUp,
   Star,
   ArrowUpRight,
   ChevronRight,
-  Command,
   X,
-  Check,
   Zap,
   PackageSearch,
-  Flame,
   CheckCircle2,
   Tag,
-  Grid3X3,
   Maximize2,
   Cpu,
   Activity,
@@ -42,6 +28,9 @@ import {
   Share2,
   Lock,
   ArrowRight,
+  ArrowUp,
+  ChevronDown,
+  Bot,
 } from "lucide-react";
 
 function formatCompactNumber(n) {
@@ -93,306 +82,26 @@ function resolveAvatarSrc(src) {
   return `/uploads/avatars/${src}`;
 }
 
-
-function StatCard2026({
-  icon: Icon,
-  label,
-  value,
-  subtext,
-  badgeText,
-  badgeColor = "violet",
-}) {
-  return (
-    <div className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-b from-zinc-900/60 to-zinc-950/80 p-5 backdrop-blur-2xl transition-all duration-300 hover:border-white/20 hover:shadow-2xl hover:shadow-violet-500/5">
-      {/* Subtle top border glow sweep */}
-      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-      <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-violet-600/10 blur-2xl transition-all duration-500 group-hover:bg-violet-500/20 group-hover:scale-125 pointer-events-none" />
-
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-caption font-bold uppercase tracking-wider text-zinc-400">
-          {label}
-        </span>
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-zinc-900/80 text-violet-400 shadow-inner group-hover:scale-110 group-hover:border-violet-500/40 transition-transform duration-300">
-          <Icon className="h-4 w-4" />
-        </div>
-      </div>
-
-      <div className="mt-4 flex items-baseline justify-between gap-2">
-        <div className="text-2xl font-black tracking-tight text-white sm:text-3xl font-mono">
-          {value}
-        </div>
-        {badgeText && (
-          <span
-            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-caption font-bold tracking-wide uppercase ${
-              badgeColor === "emerald"
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                : "border-violet-500/30 bg-violet-500/10 text-violet-300"
-            }`}
-          >
-            <TrendingUp className="h-2.5 w-2.5" />
-            {badgeText}
-          </span>
-        )}
-      </div>
-
-      {subtext && (
-        <p className="mt-1 text-xs text-zinc-400 font-medium">{subtext}</p>
-      )}
-    </div>
-  );
-}
-
-function SortPopover2026({ value, onChange }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  const sortOptions = [
-    { id: "onerilen", label: "Önerilen Sınıflandırma", icon: Sparkles },
-    { id: "yeni", label: "En Yeniler", icon: Flame },
-    { id: "diyalog", label: "En Çok Konuşulanlar", icon: MessageSquare },
-    { id: "favoriler", label: "En Çok Favorilenenler", icon: Heart },
-    { id: "liste", label: "En Çok Kaydedilenler", icon: Bookmark },
-    { id: "degerlendirme", label: "Popülarite Puanı", icon: Star },
-    { id: "fiyat_artan", label: "Fiyat: Düşükten Yükseğe", icon: ArrowUpDown },
-    { id: "fiyat_azalan", label: "Fiyat: Yüksekten Düşüğe", icon: ArrowUpDown },
-  ];
-
-  const currentOption =
-    sortOptions.find((o) => o.id === value) || sortOptions[0];
-
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/90 px-3.5 py-2 text-xs font-semibold text-zinc-200 backdrop-blur-2xl transition-all hover:border-white/20 hover:bg-zinc-800 hover:text-white"
-      >
-        <SlidersHorizontal className="h-3.5 w-3.5 text-violet-400" />
-        <span className="hidden sm:inline text-zinc-400 font-normal">
-          Sırala:
-        </span>
-        <span className="font-semibold text-white">{currentOption.label}</span>
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-2  rounded-2xl border border-white/15 bg-zinc-950/95 p-1.5 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 animate-in fade-in zoom-in-95 duration-150">
-          <div className="px-2.5 py-2 text-caption font-bold uppercase tracking-wider text-zinc-400">
-            Sıralama Kriteri
-          </div>
-          <div className="space-y-0.5">
-            {sortOptions.map((opt) => {
-              const Icon = opt.icon;
-              const isSelected = opt.id === value;
-              return (
-                <button
-                  key={opt.id}
-                  onClick={() => {
-                    onChange(opt.id);
-                    setIsOpen(false);
-                  }}
-                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-[13px] font-medium transition-all ${
-                    isSelected
-                      ? "bg-violet-600/20 text-violet-200 font-semibold border border-violet-500/30"
-                      : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon
-                      className={`h-3.5 w-3.5 ${isSelected ? "text-violet-400" : "text-zinc-400"}`}
-                    />
-                    <span>{opt.label}</span>
-                  </div>
-                  {isSelected && (
-                    <Check className="ms-3 h-3.5 w-3.5 text-violet-400" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function BentoBotCard({ bot, onOpenDetails }) {
-  const [isLiked, setIsLiked] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
-  const [likesCount, setLikesCount] = useState(bot.likes || 0);
-
-  const toggleLike = (e) => {
-    e.stopPropagation();
-    if (isLiked) {
-      setIsLiked(false);
-      setLikesCount((prev) => prev - 1);
-    } else {
-      setIsLiked(true);
-      setLikesCount((prev) => prev + 1);
-    }
-  };
-
-  const toggleSave = (e) => {
-    e.stopPropagation();
-    setIsSaved(!isSaved);
-  };
-
-  return (
-    <div
-      onClick={() => onOpenDetails(bot)}
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-zinc-900/50 to-zinc-950/80 backdrop-blur-2xl transition-all duration-300 ease-out hover:border-violet-500/40 hover:bg-zinc-900/90 hover:shadow-2xl hover:shadow-violet-600/10 hover:-translate-y-0.5 cursor-pointer"
-    >
-      {/* Top Border Glow Sweep */}
-      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-violet-500/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-10" />
-
-      {/* Cover Image Header */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-950">
-        <img
-          src={bot.image}
-          alt={bot.title}
-          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-          onError={(e) => {
-            e.currentTarget.src =
-              "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80";
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
-
-        {/* Top Badges overlay */}
-        <div className="absolute left-3.5 top-3.5 right-3.5 flex items-center justify-between gap-2 z-10">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-caption font-bold tracking-wide backdrop-blur-md shadow-xl border ${
-              bot.badge?.type === "sold"
-                ? "border-amber-500/30 bg-amber-500/20 text-amber-300"
-                : "border-violet-500/30 bg-violet-500/20 text-violet-200"
-            }`}
-          >
-            <Tag className="h-3 w-3" />
-            {bot.badge?.label || "Doğrulanmış"}
-          </span>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={toggleSave}
-              className={`flex h-8 w-8 items-center justify-center rounded-full border backdrop-blur-md transition-all ${
-                isSaved
-                  ? "border-violet-500/60 bg-violet-600 text-white shadow-lg shadow-violet-600/40 scale-105"
-                  : "border-white/10 bg-zinc-950/70 text-zinc-300 hover:bg-zinc-900 hover:text-white"
-              }`}
-              title="Listeme Kaydet"
-            >
-              <Bookmark
-                className="h-3.5 w-3.5"
-                fill={isSaved ? "currentColor" : "none"}
-              />
-            </button>
-            <button
-              onClick={toggleLike}
-              className={`flex h-8 w-8 items-center justify-center rounded-full border backdrop-blur-md transition-all ${
-                isLiked
-                  ? "border-rose-500/60 bg-rose-600 text-white shadow-lg shadow-rose-600/40 scale-105"
-                  : "border-white/10 bg-zinc-950/70 text-zinc-300 hover:bg-zinc-900 hover:text-white"
-              }`}
-              title="Beğen"
-            >
-              <Heart
-                className="h-3.5 w-3.5"
-                fill={isLiked ? "currentColor" : "none"}
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* Price & Rating Tag */}
-        <div className="absolute bottom-3 right-3 left-3 flex items-center justify-between">
-          <div className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-950/80 px-2 py-0.5 text-caption font-semibold text-amber-300 backdrop-blur-md">
-            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-            <span>{bot.rating || "4.9"}</span>
-          </div>
-
-          <div className="rounded-xl border border-white/15 bg-zinc-950/90 px-3 py-1 text-xs font-bold font-mono text-white backdrop-blur-md shadow-xl">
-            {bot.weeklyPrice > 0 ? (
-              <span className="text-emerald-400">
-                ₺{bot.weeklyPrice}
-                <span className="text-caption text-zinc-400 font-normal">
-                  {" "}
-                  /hafta
-                </span>
-              </span>
-            ) : (
-              <span className="text-violet-400">Ücretsiz</span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Card Body */}
-      <div className="flex flex-1 flex-col p-5">
-        {/* Author Details */}
-        <div className="flex items-center gap-2 mb-2">
-          <img
-            src={resolveAvatarSrc(bot.avatar)}
-            alt={bot.author}
-            className="h-5 w-5 rounded-full object-cover border border-white/20 shadow-sm"
-            onError={(e) => {
-              e.currentTarget.src =
-                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
-            }}
-          />
-          <span className="text-xs font-medium text-zinc-300 truncate">
-            {bot.author}
-          </span>
-          <span className="text-zinc-600">•</span>
-          <span className="text-caption text-zinc-400">{bot.time}</span>
-        </div>
-
-        {/* Title */}
-        <h3 className="text-base font-bold text-white group-hover:text-violet-300 transition-colors line-clamp-1">
-          {bot.title}
-        </h3>
-
-        {/* Description */}
-        <p className="mt-2 line-clamp-2 text-xs text-zinc-400 leading-relaxed flex-1">
-          {bot.description ||
-            "Bu yapay zeka asistanı için herhangi bir açıklama girilmedi."}
-        </p>
-
-        {/* Footer Metrics */}
-        <div className="mt-5 flex items-center justify-between border-t border-white/5 pt-3.5 text-xs font-medium text-zinc-400">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1 hover:text-zinc-200 transition-colors">
-              <MessageSquare className="h-3.5 w-3.5 text-violet-400" />
-              {formatCompactNumber(bot.dialogues)}
-            </span>
-            <span className="flex items-center gap-1 hover:text-zinc-200 transition-colors">
-              <Heart className="h-3.5 w-3.5 text-rose-400" />
-              {formatCompactNumber(likesCount)}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1 text-xs font-bold text-violet-400 group-hover:translate-x-1 transition-transform">
-            <span>Sohbet Et</span>
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+import BentoBotCard from "@/entities/chatbot/ui/BotCard.bento";
 
 function CompactBotCard({ bot, onOpenDetails }) {
+  const category = resolveCategory(bot.kategori_id);
+
   return (
     <div
       onClick={() => onOpenDetails(bot)}
-      className="group relative flex items-center justify-between gap-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/40 p-3 backdrop-blur-2xl transition-all duration-300 hover:border-violet-500/30 hover:bg-zinc-900/80 hover:shadow-xl cursor-pointer"
+      onKeyDown={(event) => {
+        if (
+          event.currentTarget !== event.target ||
+          !["Enter", " "].includes(event.key)
+        )
+          return;
+        event.preventDefault();
+        onOpenDetails(bot);
+      }}
+      role="button"
+      tabIndex={0}
+      className={`group relative flex items-center justify-between gap-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/70 p-3 shadow-xl shadow-black/10 transition-[border-color,box-shadow] duration-200 focus-visible:outline-none ${category.hoverBorder} ${category.glow} cursor-pointer`}
     >
       <div className="flex items-center gap-3 min-w-0">
         <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-zinc-950">
@@ -407,11 +116,12 @@ function CompactBotCard({ bot, onOpenDetails }) {
           />
         </div>
         <div className="min-w-0">
-          <h4 className="text-sm font-bold text-white truncate group-hover:text-violet-300 transition-colors">
-            {bot.title}
-          </h4>
-          <p className="text-xs text-zinc-400 truncate mt-0.5">
-            {bot.author} • {formatCompactNumber(bot.dialogues)} sohbet
+          <h4 className="text-sm font-bold text-white truncate">{bot.title}</h4>
+          <p className="mt-0.5 flex items-center gap-2 truncate text-xs text-zinc-400">
+            <CategoryBadge category={bot.kategori_id} size="dot" />
+            <span className="truncate">
+              {bot.author} • {formatCompactNumber(bot.dialogues)} sohbet
+            </span>
           </p>
         </div>
       </div>
@@ -422,7 +132,7 @@ function CompactBotCard({ bot, onOpenDetails }) {
             {bot.weeklyPrice > 0 ? `₺${bot.weeklyPrice}` : "Ücretsiz"}
           </div>
         </div>
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-zinc-800/80 text-zinc-300 group-hover:bg-violet-600 group-hover:text-white transition-colors">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-zinc-800/80 text-zinc-300">
           <ArrowUpRight className="h-3.5 w-3.5" />
         </div>
       </div>
@@ -431,10 +141,23 @@ function CompactBotCard({ bot, onOpenDetails }) {
 }
 
 function ListBotCard({ bot, onOpenDetails }) {
+  const category = resolveCategory(bot.kategori_id);
+
   return (
     <div
       onClick={() => onOpenDetails(bot)}
-      className="group relative flex flex-col sm:flex-row items-center justify-between gap-4 overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/40 p-4 backdrop-blur-2xl transition-all duration-300 hover:border-violet-500/30 hover:bg-zinc-900/80 hover:shadow-xl cursor-pointer"
+      onKeyDown={(event) => {
+        if (
+          event.currentTarget !== event.target ||
+          !["Enter", " "].includes(event.key)
+        )
+          return;
+        event.preventDefault();
+        onOpenDetails(bot);
+      }}
+      role="button"
+      tabIndex={0}
+      className={`group relative flex flex-col sm:flex-row items-center justify-between gap-4 overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/70 p-4 shadow-xl shadow-black/10 transition-[border-color,box-shadow] duration-200 focus-visible:outline-none ${category.hoverBorder} ${category.glow} cursor-pointer`}
     >
       <div className="flex items-center gap-4 w-full sm:w-auto flex-1 min-w-0">
         <div className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-zinc-950">
@@ -458,7 +181,7 @@ function ListBotCard({ bot, onOpenDetails }) {
             <span className="text-caption text-zinc-400">{bot.time}</span>
           </div>
 
-          <h3 className="text-base font-bold text-white group-hover:text-violet-300 transition-colors truncate">
+          <h3 className="text-base font-bold text-white truncate">
             {bot.title}
           </h3>
 
@@ -495,7 +218,7 @@ function ListBotCard({ bot, onOpenDetails }) {
               e.stopPropagation();
               onOpenDetails(bot);
             }}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-zinc-800 text-white hover:bg-violet-600 hover:border-violet-500 transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-zinc-800 text-white transition-colors hover:bg-zinc-700"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -519,137 +242,139 @@ function BotDetailModal2026({ bot, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      {/* Backdrop Glass */}
-      <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
-        onClick={onClose}
-      />
-
-      {/* Raycast Style Dialog Modal */}
-      <div className="relative z-10 w-full max-w-2xl overflow-hidden rounded-3xl border border-white/15 bg-zinc-950/95 p-6 sm:p-8 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 animate-in zoom-in-95 duration-200">
-        {/* Close Button */}
-        <button
+    <ModalPortal onClose={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        {/* Backdrop Glass */}
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
           onClick={onClose}
-          className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        />
 
-        {/* Modal Hero Banner */}
-        <div className="relative -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6 h-48 overflow-hidden bg-zinc-900">
-          <img
-            src={bot.image}
-            alt={bot.title}
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+        {/* Raycast Style Dialog Modal */}
+        <div className="relative z-10 max-h-[calc(100dvh-3rem)] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-3xl border border-white/15 bg-zinc-950/95 p-6 sm:p-8 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 animate-in zoom-in-95 duration-200">
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
 
-          <div className="absolute bottom-4 left-6 sm:left-8 right-6 flex items-end justify-between">
-            <div className="flex items-center gap-3.5">
-              <img
-                src={resolveAvatarSrc(bot.avatar)}
-                alt={bot.author}
-                className="h-12 w-12 rounded-2xl border-2 border-white/20 object-cover shadow-xl"
-              />
+          {/* Modal Hero Banner */}
+          <div className="relative -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6 h-48 overflow-hidden bg-zinc-900">
+            <img
+              src={bot.image}
+              alt={bot.title}
+              className="h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+
+            <div className="absolute bottom-4 left-6 sm:left-8 right-6 flex items-end justify-between">
+              <div className="flex items-center gap-3.5">
+                <img
+                  src={resolveAvatarSrc(bot.avatar)}
+                  alt={bot.author}
+                  className="h-12 w-12 rounded-2xl border-2 border-white/20 object-cover shadow-xl"
+                />
+                <div>
+                  <h2 className="text-xl font-extrabold text-white sm:text-2xl">
+                    {bot.title}
+                  </h2>
+                  <p className="text-xs text-zinc-300 font-medium">
+                    Geliştirici: {bot.author}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Modal Info Details */}
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  Bot Hakkında
+                </h4>
+                <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-caption font-semibold text-violet-300">
+                  <Cpu className="h-3 w-3" />
+                  {bot.model || "GPT-5 Turbo Motoru"}
+                </span>
+              </div>
+              <p className="text-sm text-zinc-300 leading-relaxed">
+                {bot.description ||
+                  "Bu bot için henüz detaylı bir açıklama belirtilmedi."}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
+                <div className="text-caption text-zinc-400 font-bold uppercase tracking-wider">
+                  Toplam Diyalog
+                </div>
+                <div className="text-lg font-bold font-mono text-white mt-1">
+                  {formatCompactNumber(bot.dialogues)}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
+                <div className="text-caption text-zinc-400 font-bold uppercase tracking-wider">
+                  Beğeni
+                </div>
+                <div className="text-lg font-bold font-mono text-white mt-1">
+                  {formatCompactNumber(bot.likes)}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
+                <div className="text-caption text-zinc-400 font-bold uppercase tracking-wider">
+                  Takipçi
+                </div>
+                <div className="text-lg font-bold font-mono text-white mt-1">
+                  {formatCompactNumber(bot.followers || 0)}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
+                <div className="text-caption text-zinc-400 font-bold uppercase tracking-wider">
+                  Haftalık Ücret
+                </div>
+                <div className="text-lg font-bold font-mono text-emerald-400 mt-1">
+                  {bot.weeklyPrice > 0 ? `₺${bot.weeklyPrice}` : "Ücretsiz"}
+                </div>
+              </div>
+            </div>
+
+            {/* Model Capabilities */}
+            <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4 flex items-start gap-3">
+              <Zap className="h-5 w-5 text-violet-400 shrink-0 mt-0.5" />
               <div>
-                <h2 className="text-xl font-extrabold text-white sm:text-2xl">
-                  {bot.title}
-                </h2>
-                <p className="text-xs text-zinc-300 font-medium">
-                  Geliştirici: {bot.author}
+                <h5 className="text-xs font-bold text-violet-200">
+                  2026 Model Desteği Aktif
+                </h5>
+                <p className="mt-0.5 text-xs text-violet-300/80 leading-relaxed">
+                  Bu asistan en son nesil yapay zeka API’leri ve anlık arama
+                  entegrasyonları ile donatılmıştır.
                 </p>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Modal Info Details */}
-        <div className="space-y-6">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                Bot Hakkında
-              </h4>
-              <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-caption font-semibold text-violet-300">
-                <Cpu className="h-3 w-3" />
-                {bot.model || "GPT-5 Turbo Engine"}
-              </span>
+            {/* Action Call-to-action */}
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={onClose}
+                className="rounded-xl border border-white/10 bg-zinc-900 px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+              >
+                Kapat
+              </button>
+              <button
+                onClick={handleStartChat}
+                className="flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-violet-600/30 transition-all hover:bg-violet-500 active:scale-95"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Sohbeti Başlat
+              </button>
             </div>
-            <p className="text-sm text-zinc-300 leading-relaxed">
-              {bot.description ||
-                "Bu bot için henüz detaylı bir açıklama belirtilmedi."}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
-              <div className="text-caption text-zinc-400 font-bold uppercase tracking-wider">
-                Toplam Diyalog
-              </div>
-              <div className="text-lg font-bold font-mono text-white mt-1">
-                {formatCompactNumber(bot.dialogues)}
-              </div>
-            </div>
-            <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
-              <div className="text-caption text-zinc-400 font-bold uppercase tracking-wider">
-                Beğeni
-              </div>
-              <div className="text-lg font-bold font-mono text-white mt-1">
-                {formatCompactNumber(bot.likes)}
-              </div>
-            </div>
-            <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
-              <div className="text-caption text-zinc-400 font-bold uppercase tracking-wider">
-                Takipçi
-              </div>
-              <div className="text-lg font-bold font-mono text-white mt-1">
-                {formatCompactNumber(bot.followers || 0)}
-              </div>
-            </div>
-            <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-3 text-center">
-              <div className="text-caption text-zinc-400 font-bold uppercase tracking-wider">
-                Haftalık Ücret
-              </div>
-              <div className="text-lg font-bold font-mono text-emerald-400 mt-1">
-                {bot.weeklyPrice > 0 ? `₺${bot.weeklyPrice}` : "Ücretsiz"}
-              </div>
-            </div>
-          </div>
-
-          {/* Model Capabilities */}
-          <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4 flex items-start gap-3">
-            <Zap className="h-5 w-5 text-violet-400 shrink-0 mt-0.5" />
-            <div>
-              <h5 className="text-xs font-bold text-violet-200">
-                2026 Model Desteği Aktif
-              </h5>
-              <p className="mt-0.5 text-xs text-violet-300/80 leading-relaxed">
-                Bu asistan en son nesil yapay zeka API’leri ve anlık arama
-                entegrasyonları ile donatılmıştır.
-              </p>
-            </div>
-          </div>
-
-          {/* Action Call-to-action */}
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button
-              onClick={onClose}
-              className="rounded-xl border border-white/10 bg-zinc-900 px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
-            >
-              Kapat
-            </button>
-            <button
-              onClick={handleStartChat}
-              className="flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-violet-600/30 transition-all hover:bg-violet-500 active:scale-95"
-            >
-              <MessageSquare className="h-4 w-4" />
-              Sohbeti Başlat
-            </button>
           </div>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
 
@@ -712,6 +437,142 @@ function EmptyState2026({ onClearFilters }) {
   );
 }
 
+/**
+ * Ana sayfanın giriş alanı: ortada Lumanoris baykuşu, altında "yeni sohbete
+ * başla" kompozitörü. Pazaryeri istatistik başlığı buradan /dashboard/explore
+ * sayfasına taşındı; anasayfa artık doğrudan sohbetle açılıyor.
+ *
+ * Gönderim, sohbet sayfasının zaten desteklediği ?prompt= parametresini
+ * kullanır: chat sayfası bu metinle yeni bir konuşma açıp ilk mesajı kendisi
+ * gönderir.
+ */
+function NewChatHero({ bot, value, onChange, onSubmit, loading, onPickBot }) {
+  const textareaRef = useRef(null);
+
+  // Tek satır yüksekliğinde başlar, içeriğe göre büyür, tavana gelince kendi
+  // içinde kayar. Eski hâli 67px'e sabitlenmişti: tek satırlık bir mesajda
+  // bile kocaman boş bir şerit duruyordu.
+  const autoGrow = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  };
+
+  const canSend = Boolean(value.trim() && bot);
+
+  return (
+    <section className="relative mb-12 flex flex-col items-center pt-8 sm:pt-14">
+      {/* Baykuş işareti + halesi */}
+      <div className="relative mb-9 flex h-24 w-24 items-center justify-center">
+        <div className="pointer-events-none absolute h-32 w-32 rounded-full bg-violet-600/25 blur-[64px]" />
+        <div className="pointer-events-none absolute h-20 w-20 rounded-full bg-fuchsia-500/35 blur-[38px]" />
+        <img
+          src={owlLogo.src}
+          alt="Lumanoris"
+          className="relative h-16 w-16 object-contain drop-shadow-[0_0_18px_rgba(217,70,239,0.55)]"
+        />
+      </div>
+
+      {/* Kompozitör: metin alanı üstte, eylemler altta kendi sırasında. Tek
+          sıraya dizildiğinde ikon/metin/düğme arasında büyük boşluklar kalıyor
+          ve kutu boş görünüyordu. */}
+      <div className="w-full max-w-3xl">
+        <div className="rounded-[26px] bg-gradient-to-br from-fuchsia-500/25 via-violet-500/15 to-white/[0.06] p-px transition-all duration-300 focus-within:from-fuchsia-400/70 focus-within:via-violet-400/40 focus-within:shadow-[0_0_45px_-10px_rgba(217,70,239,0.5)]">
+          <div className="rounded-[25px] bg-[#0a0a12] px-3.5 pb-3 pt-3">
+            {/* data-focus-managed: global.css tüm textarea'lara focus'ta
+                çerçeve + gölge dayatıyor; halka zaten sarmalayıcıda olduğu
+                için o kural burada devre dışı (çift çerçeve olmasın). */}
+            <textarea
+              ref={textareaRef}
+              value={value}
+              rows={1}
+              placeholder="Yeni sohbete başla..."
+              data-focus-managed
+              onChange={(e) => {
+                onChange(e.target.value);
+                autoGrow();
+              }}
+              onInput={autoGrow}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  onSubmit();
+                }
+              }}
+              className="block max-h-[200px] w-full resize-none border-none bg-transparent px-2 py-2 font-sans text-[15px] leading-6 text-white outline-none placeholder:text-zinc-500"
+            />
+
+            <div className="mt-1.5 flex items-center justify-between gap-3">
+              {/* Hedef bot artık kutunun altındaki cümle değil, tıklanabilir
+                  bir çip: "aşağıdan seç" demek yerine seçtiren bir düğme. */}
+              <button
+                type="button"
+                onClick={onPickBot}
+                disabled={loading}
+                title="Başka bir bot seç"
+                className="flex min-w-0 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-1 pl-1 pr-2.5 transition-colors hover:border-violet-500/40 hover:bg-white/[0.08] disabled:cursor-default disabled:opacity-60"
+              >
+                {loading ? (
+                  <>
+                    <span className="h-6 w-6 animate-pulse rounded-full bg-white/10" />
+                    <span className="text-xs text-zinc-500">
+                      Botlar yükleniyor…
+                    </span>
+                  </>
+                ) : bot ? (
+                  <>
+                    <img
+                      src={resolveAvatarSrc(bot.avatar)}
+                      alt=""
+                      className="h-6 w-6 rounded-full object-cover"
+                    />
+                    <span className="max-w-[150px] truncate text-xs font-medium text-zinc-200 sm:max-w-[260px]">
+                      {bot.title}
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+                  </>
+                ) : (
+                  <>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-zinc-400">
+                      <Bot className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="text-xs font-medium text-zinc-300">
+                      Bot seç
+                    </span>
+                  </>
+                )}
+              </button>
+
+              <div className="flex shrink-0 items-center gap-3">
+                <span className="hidden items-center gap-1.5 text-[11px] text-zinc-600 md:flex">
+                  <kbd className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-sans text-zinc-400">
+                    Enter
+                  </kbd>
+                  gönder
+                </span>
+                <button
+                  type="button"
+                  onClick={onSubmit}
+                  disabled={!canSend}
+                  aria-label="Gönder"
+                  className={`flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 ${
+                    canSend
+                      ? "bg-gradient-btn text-white shadow-glow hover:scale-105 active:scale-95"
+                      : "cursor-not-allowed bg-white/[0.06] text-zinc-600"
+                  }`}
+                >
+                  <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function MainDashboard2026() {
   const { userId } = useContext(UserContext);
 
@@ -728,6 +589,10 @@ export function MainDashboard2026() {
   const [viewMode, setViewMode] = useState("bento"); // 'bento' | 'compact' | 'list'
   const [selectedBotModal, setSelectedBotModal] = useState(null);
 
+  // Anasayfa kompozitörü
+  const [heroPrompt, setHeroPrompt] = useState("");
+  const [recentBotId, setRecentBotId] = useState(null);
+
   const searchInputRef = useRef(null);
 
   // 1. Fetch categories
@@ -737,7 +602,10 @@ export function MainDashboard2026() {
         try {
           const data = JSON.parse(await res.text());
           if (Array.isArray(data?.categories)) {
-            setCategories([{ id: "all", kategori_adi_tr: "Tümü" }, ...data.categories]);
+            setCategories([
+              { id: "all", kategori_adi_tr: "Tümü" },
+              ...data.categories,
+            ]);
           } else {
             setCategories([{ id: "all", kategori_adi_tr: "Tümü" }]);
           }
@@ -812,7 +680,7 @@ export function MainDashboard2026() {
                 label:
                   bot.durum == 1 ? "Daha Önce Satıldı" : "Doğrulanmış Üretim",
               },
-              model: "GPT-5 Engine",
+              model: "GPT-5 Motoru",
               rating: 4.9,
               userLists: Array.isArray(listsData?.lists) ? listsData.lists : [],
             }));
@@ -830,6 +698,25 @@ export function MainDashboard2026() {
       }
     };
     fetchData();
+  }, [userId]);
+
+  // Kompozitörün konuşacağı botu belirlemek için son sohbeti çek.
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    fetch(`/api/chat/gethistory.php?user_id=${userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        const latest = Array.isArray(data?.results) ? data.results[0] : null;
+        if (latest?.chatbot_id) setRecentBotId(Number(latest.chatbot_id));
+      })
+      .catch(() => {
+        /* geçmiş okunamazsa kompozitör en popüler bota düşer */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   // Command K Shortcut
@@ -903,16 +790,38 @@ export function MainDashboard2026() {
     return sorted;
   }, [allBots, selectedCategory, categories, searchQuery, sort]);
 
-  // Calculate real metrics
-  const totalDialogues = useMemo(
-    () => allBots.reduce((sum, b) => sum + (Number(b.dialogues) || 0), 0),
-    [allBots],
-  );
-  const totalFollowers = useMemo(
-    () => allBots.reduce((sum, b) => sum + (Number(b.followers) || 0), 0),
-    [allBots],
-  );
-  const categoryCount = Math.max(0, categories.length - 1);
+  // Kompozitörün hedef botu: önce kullanıcının en son konuştuğu bot, o yoksa
+  // pazaryerinin en çok diyalog almış botu. İkisi de yoksa gönderim kapalı.
+  const heroBot = useMemo(() => {
+    if (!allBots.length) return null;
+    const recent = allBots.find((b) => Number(b.id) === recentBotId);
+    if (recent) return recent;
+    return [...allBots].sort(
+      (a, b) => (Number(b.dialogues) || 0) - (Number(a.dialogues) || 0),
+    )[0];
+  }, [allBots, recentBotId]);
+
+  // Kompozitördeki bot çipi buraya bağlı: aşağıdaki pazaryeri aramasına
+  // kaydırıp odaklanır, böylece "başka bir bot için aşağıdan seç" cümlesi
+  // yerine gerçekten seçtiren bir eylem oluyor.
+  const focusBotSearch = () => {
+    const el = searchInputRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.focus({ preventScroll: true });
+  };
+
+  const startHeroChat = () => {
+    const text = heroPrompt.trim();
+    if (!text || !heroBot) return;
+    try {
+      localStorage.setItem("chatTitle", heroBot.title);
+      localStorage.setItem("chatId", heroBot.id);
+    } catch (e) {
+      console.error(e);
+    }
+    window.location.href = `/dashboard/chat/?botId=${heroBot.id}&prompt=${encodeURIComponent(text)}`;
+  };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-violet-500/30 selection:text-violet-200 antialiased font-sans">
@@ -922,156 +831,30 @@ export function MainDashboard2026() {
       </div>
 
       <main className="relative z-10 px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header Section */}
-        <header className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-3.5 py-1 text-xs font-bold text-violet-300 backdrop-blur-md mb-3 shadow-lg shadow-violet-500/5">
-              <Sparkles className="h-3.5 w-3.5 text-violet-400" />
-              <span>2026 AI Agent Marketplace</span>
-            </div>
-            <h1 className="font-display text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
-              Anasayfa
-            </h1>
-            <p className="mt-2 text-sm text-zinc-400 max-w-xl leading-relaxed">
-              En son nesil yapay zeka asistanlarını keşfedin, özel yeteneklerle
-              entegre edin veya kendi botunuzu pazarda yayınlayın.
-            </p>
-          </div>
+        {/* Pazaryeri başlığı ve istatistik kartları /dashboard/explore
+            sayfasına taşındı; anasayfa artık sohbetle açılıyor. */}
+        <NewChatHero
+          bot={heroBot}
+          value={heroPrompt}
+          onChange={setHeroPrompt}
+          onSubmit={startHeroChat}
+          loading={loading}
+          onPickBot={focusBotSearch}
+        />
 
-          <div className="flex items-center gap-3 shrink-0">
-            <a
-              href="/dashboard/chatbots/create"
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-btn px-5 py-3 text-xs font-bold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Yeni Bot Oluştur</span>
-            </a>
-          </div>
-        </header>
-
-        {/* Real Metrics Grid */}
-        <section className="mb-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard2026
-            icon={Bot}
-            label="Toplam Chatbot"
-            value={loading ? "—" : formatCompactNumber(allBots.length)}
-            subtext="Aktif pazar asistanı"
-            badgeText="+12% bu ay"
-            badgeColor="violet"
-          />
-          <StatCard2026
-            icon={MessageSquare}
-            label="Toplam Diyalog"
-            value={loading ? "—" : formatCompactNumber(totalDialogues)}
-            subtext="Geliştirici Etkileşimi"
-            badgeText="+24%"
-            badgeColor="emerald"
-          />
-          <StatCard2026
-            icon={Users}
-            label="Toplam Takipçi"
-            value={loading ? "—" : formatCompactNumber(totalFollowers)}
-            subtext="Topluluk Bağlantısı"
-          />
-          <StatCard2026
-            icon={Layers}
-            label="Kategoriler"
-            value={loading ? "—" : formatCompactNumber(categoryCount)}
-            subtext="Uzmanlık Alanları"
-          />
-        </section>
-
-        {/* Interactive Sticky Toolbar */}
-        <section className="sticky top-1 z-30 mb-8 rounded-3xl border border-white/10 bg-zinc-950/80 p-3 shadow-2xl backdrop-blur-2xl">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            {/* Search Input */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Bot, açıklama veya geliştirici ara..."
-                className="w-full rounded-2xl border border-white/5 bg-zinc-900/80 pl-10 pr-10 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-fuchsia-500/60 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 transition-all"
-              />
-              {searchQuery ? (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              ) : (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden items-center gap-1 rounded-md border border-white/10 bg-zinc-800/80 px-2 py-0.5 text-caption font-mono text-zinc-400 sm:flex">
-                  <Command className="h-3 w-3" /> K
-                </div>
-              )}
-            </div>
-
-            {/* Right Control Bar */}
-            <div className="flex items-center justify-between gap-3">
-              <SortPopover2026 value={sort} onChange={setSort} />
-
-              {/* View Mode Switcher */}
-              <div className="flex items-center gap-1 rounded-2xl border border-white/10 bg-zinc-900/80 p-1">
-                <button
-                  onClick={() => setViewMode("bento")}
-                  className={`rounded-xl p-2 transition-all ${
-                    viewMode === "bento"
-                      ? "bg-violet-600 text-white shadow-md"
-                      : "text-zinc-400 hover:text-white"
-                  }`}
-                  title="Bento Görünümü"
-                >
-                  <LayoutGrid className="h-7 w-7" />
-                </button>
-                <button
-                  onClick={() => setViewMode("compact")}
-                  className={`rounded-xl p-2 transition-all ${
-                    viewMode === "compact"
-                      ? "bg-violet-600 text-white shadow-md"
-                      : "text-zinc-400 hover:text-white"
-                  }`}
-                  title="Yoğun Görünüm"
-                >
-                  <Grid3X3 className="h-7 w-7" />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`rounded-xl p-2 transition-all ${
-                    viewMode === "list"
-                      ? "bg-violet-600 text-white shadow-md"
-                      : "text-zinc-400 hover:text-white"
-                  }`}
-                  title="Liste Görünümü"
-                >
-                  <ListIcon className="h-7 w-7" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Horizontal Category Bar */}
-          <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1 pt-2 scrollbar-none border-t border-white/5">
-            {categories.map((cat) => {
-              const isSelected = selectedCategory === cat.kategori_adi_tr;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.kategori_adi_tr)}
-                  className={`shrink-0 rounded-xl px-2 py-1.5 text-[12px] font-semibold transition-all ${
-                    isSelected
-                      ? "bg-white text-zinc-950 shadow-lg"
-                      : "border border-white/5 bg-zinc-900/50 text-zinc-400 hover:border-white/15 hover:text-zinc-200"
-                  }`}
-                >
-                  {cat.kategori_adi_tr}
-                </button>
-              );
-            })}
-          </div>
-        </section>
+        <MarketplaceControlBar
+          query={searchQuery}
+          onQueryChange={setSearchQuery}
+          sort={sort}
+          onSortChange={setSort}
+          categories={categories}
+          selected={selectedCategory}
+          onSelectCategory={setSelectedCategory}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          searchInputRef={searchInputRef}
+          className="mb-8"
+        />
 
         {error && (
           <div className="mb-6 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-300">

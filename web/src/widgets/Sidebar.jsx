@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import QuitModal from "@/features/auth/QuitModal";
+import logo from "@/images/header-logo-icon.png";
+import { Lumacoin } from "@/shared/ui/lumacoin";
 import {
   Plus,
   TrendingUp,
@@ -15,9 +17,7 @@ import {
   Wallet,
   NotebookText,
   Settings,
-  Sparkles,
   LogOut,
-  Zap,
   Command,
 } from "lucide-react";
 
@@ -84,7 +84,12 @@ const DEFAULT_ACCOUNT = {
   dailyCoinsTotal: 0,
 };
 
-export function Sidebar({ isMobileOpen = false, onNavigate, userId = null, account = DEFAULT_ACCOUNT }) {
+export function Sidebar({
+  isMobileOpen = false,
+  onNavigate,
+  userId = null,
+  account = DEFAULT_ACCOUNT,
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -162,7 +167,9 @@ export function Sidebar({ isMobileOpen = false, onNavigate, userId = null, accou
 
         {!collapsed && (
           <div className="flex items-center justify-between flex-1 min-w-0">
-            <span className="truncate text-body-sm tracking-tight">{label}</span>
+            <span className="truncate text-body-sm tracking-tight">
+              {label}
+            </span>
             {badge && (
               <span className="px-1.5 py-0.5 text-caption font-medium text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-md">
                 {badge}
@@ -216,9 +223,14 @@ export function Sidebar({ isMobileOpen = false, onNavigate, userId = null, accou
               onClick={() => handleNavigate("/dashboard")}
               className="flex items-center gap-3 group text-left focus:outline-none"
             >
-              <div className="relative flex items-center justify-center shrink-0 w-9 h-9 rounded-xl bg-gradient-to-b from-zinc-800 to-zinc-950 border border-zinc-700/50 shadow-md group-hover:border-violet-500/40 transition-colors">
-                <div className="absolute inset-0 rounded-xl bg-violet-500/10 blur-sm opacity-0 group-hover:opacity-100 transition-opacity" />
-                <Sparkles className="w-5 h-5 text-violet-400 group-hover:scale-110 transition-transform" />
+              <div className="relative flex items-center justify-center shrink-0 w-9 h-9 rounded-xl   shadow-md  transition-colors">
+                <div className="pointer-events-none absolute h-2 w-2 rounded-full bg-violet-600/25 blur-[12px]" />
+                <div className="pointer-events-none absolute h-4 w-4 rounded-full bg-fuchsia-500/35 blur-[16px]" />
+                <img
+                  src={logo.src}
+                  alt="Lumanoris"
+                  className="relative w-7 h-7 object-contain transition-transform group-hover:scale-110"
+                />
               </div>
               {!collapsed && (
                 <div className="flex flex-col min-w-0">
@@ -226,14 +238,15 @@ export function Sidebar({ isMobileOpen = false, onNavigate, userId = null, accou
                     <span className="font-semibold text-sm text-white tracking-tight truncate">
                       Lumanoris
                     </span>
-                    {account.planName && account.planName !== "Ücretsiz Plan" && (
-                      <span className="px-1.5 py-0.2 text-caption font-bold uppercase tracking-wider text-fuchsia-400 bg-fuchsia-500/10 border border-fuchsia-500/20 rounded">
-                        Pro
-                      </span>
-                    )}
+                    {account.planName &&
+                      account.planName !== "Ücretsiz Plan" && (
+                        <span className="px-1.5 py-0.2 text-caption font-bold uppercase tracking-wider text-fuchsia-400  rounded">
+                          Pro
+                        </span>
+                      )}
                   </div>
                   <span className="text-caption text-zinc-500 truncate">
-                    AI Studio & Market
+                    AI Stüdyo & Market
                   </span>
                 </div>
               )}
@@ -357,13 +370,15 @@ export function Sidebar({ isMobileOpen = false, onNavigate, userId = null, accou
             <div className="relative overflow-hidden p-3 rounded-xl bg-gradient-to-br from-violet-950/40 via-zinc-900/60 to-zinc-950 border border-violet-500/20 group">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5 text-xs font-medium text-violet-300">
-                  <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  <Lumacoin size={14} />
                   <span>{account.planName}</span>
                 </div>
-                <span className="text-caption text-zinc-400 font-mono">
+                {/* Yuzde yerine gercek sayi: veri zaten elimizde ve
+                    "%100 Token" bir para birimi gibi okunmuyordu. */}
+                <span className="text-caption font-mono text-zinc-400">
                   {account.dailyCoinsTotal > 0
-                    ? `${Math.round((account.dailyCoinsRemaining / account.dailyCoinsTotal) * 100)}% Token`
-                    : "0% Token"}
+                    ? `${account.dailyCoinsRemaining}/${account.dailyCoinsTotal} LMC`
+                    : "0 LMC"}
                 </span>
               </div>
               <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden mb-3">

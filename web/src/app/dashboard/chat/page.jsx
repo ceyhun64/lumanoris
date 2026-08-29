@@ -16,6 +16,7 @@ import ReactMarkdown from "react-markdown";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/button";
+import { Lumacoin } from "@/shared/ui/lumacoin";
 import { Lock, NotebookPen, RotateCcw } from "lucide-react";
 
 export default function Chat() {
@@ -124,7 +125,7 @@ export default function Chat() {
   }
 
   const formatImage = (img) => {
-    if (!img) return resolveAvatarSrc(null).src;
+    if (!img) return resolveAvatarSrc(null);
     return img.startsWith("data:") ? img : `data:image/jpeg;base64,${img}`;
   };
 
@@ -743,13 +744,13 @@ const handleRetryReply = (retryText) => {
   }
 
   return (
-    <div className="relative flex h-[calc(100vh-84.5px)] w-full flex-col px-4 text-white md:px-16">
+    <div className="relative flex h-[calc(100vh-84.5px)] w-full flex-col text-white">
       {bot && <ProfileCard bot={bot} comments={comments} />}
 
       {/* Sohbetin kendisi artık ekranın tamamını dolduruyor — üstteki
           başlık ile ilk mesaj arasında eskiden `justify-between`in
           zorladığı boş alan kalmıyor. */}
-      <div className="flex flex-1 flex-col overflow-y-auto pb-[150px] pt-5">
+      <div className="flex flex-1 flex-col overflow-y-auto px-4 pb-[150px] pt-5 md:pl-16 md:pr-10">
         {messages.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
             <img
@@ -766,13 +767,13 @@ const handleRetryReply = (retryText) => {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            <div className="mx-auto mb-2 w-fit rounded-full bg-luma-card px-5 py-1 text-center text-xs font-semibold text-white/60">
+            <div className="mx-auto mb-3 w-fit rounded-full border border-white/[0.06] bg-white/[0.03] px-3.5 py-1 text-center text-[11px] font-medium tracking-wide text-white/45">
               Bugün
             </div>
             {messages.map((msg, index) => (
               <React.Fragment key={index}>
                 <div className={cn(
-                  "max-w-[70%] break-words text-sm leading-relaxed",
+                  "max-w-[85%] break-words text-sm leading-relaxed sm:max-w-[75%] lg:max-w-[65%]",
                   msg.type === "received"
                     ? "flex animate-[fadeInUp_0.4s_ease-out] items-start gap-3 py-3"
                     : "flex flex-col items-end self-end",
@@ -788,7 +789,7 @@ const handleRetryReply = (retryText) => {
                       </div>
                       <div className="flex flex-col">
                         <p className="font-display text-body-sm font-semibold capitalize text-white/55">{bot?.isim}</p>
-                        <div className={cn("font-sans text-body-lg font-normal leading-relaxed", msg.error ? "text-rose-300" : "text-white")}>
+                        <div className={cn("font-sans text-[15px] font-normal leading-relaxed", msg.error ? "text-rose-300" : "text-white/90")}>
                           {msg.text ? (
                             <ReactMarkdown>{msg.text}</ReactMarkdown>
                           ) : (
@@ -826,7 +827,7 @@ const handleRetryReply = (retryText) => {
                         </div>
                       )}
                       {msg.text && (
-                        <div className="rounded-2xl rounded-tr-sm bg-gradient-to-br from-fuchsia-600/90 to-violet-600/90 px-5 py-2.5 font-sans text-body-lg font-normal leading-relaxed text-white">
+                        <div className="rounded-2xl rounded-tr-md bg-gradient-to-br from-fuchsia-600 to-violet-600 px-4 py-2.5 font-sans text-[15px] font-normal leading-relaxed text-white shadow-lg shadow-fuchsia-950/30">
                           <ReactMarkdown>{msg.text}</ReactMarkdown>
                         </div>
                       )}
@@ -873,8 +874,9 @@ const handleRetryReply = (retryText) => {
                 {retryCountdownLabel && (
                   <>
                     <br className="hidden sm:block" />
-                    <span className="text-fuchsia-300/80">
-                      Ücretsiz coinleriniz {retryCountdownLabel} sonra yenilenecek.
+                    <span className="inline-flex items-center gap-1.5 text-fuchsia-300/80">
+                      <Lumacoin size={13} />
+                      Lumacoin&apos;leriniz {retryCountdownLabel} sonra yenilenecek.
                     </span>
                   </>
                 )}
@@ -890,9 +892,12 @@ const handleRetryReply = (retryText) => {
         ) : (
           <div className="space-y-2">
             {typeof coinsRemaining === "number" && (
-              <p className="px-1 text-caption text-white/40">
-                Bugün kalan ücretsiz mesaj hakkınız: <span className="font-semibold text-fuchsia-300/80">{coinsRemaining}</span>
-              </p>
+              <div className="flex justify-center">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1 text-[11px] text-white/40">
+                  <Lumacoin size={13} />
+                  Bugün kalan Lumacoin: <span className="font-semibold tabular-nums text-fuchsia-300/90">{coinsRemaining}</span>
+                </span>
+              </div>
             )}
             <MessageInput
               onSend={handleSendMessage}

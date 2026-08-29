@@ -12,10 +12,24 @@ import coverFallback from "@/images/bot-image.png";
  * through one of these instead of a one-off `||`/`&&` at each call site, so
  * the guard can't be forgotten the next time a card/list/modal needs one.
  */
+/**
+ * Her iki yardimci da DAIMA string dondurur.
+ *
+ * Eskiden yedek deger olarak static import nesnesinin kendisi donuyordu
+ * ({src, width, height, blurDataURL}). Bu yalnizca <Image> ile calisiyor;
+ * duz bir <img src={...}> ile React nesneyi stringe cevirip
+ * src="[object Object]" yaziyor ve gorsel kirik cikiyor — checkout/sepet
+ * sayfasinda tam olarak bu oluyordu. Cagri yerlerinin bir kismi bunu
+ * ".src" ekleyerek telafi etmisti, yani tuzaga birden fazla kez dusulmus.
+ *
+ * <Image> string src'yi zaten kabul ediyor (fill ya da acik width/height
+ * ile kullaniliyorlar), bu yuzden tek tip string donmek iki tarafi da
+ * memnun ediyor.
+ */
 export function resolveAvatarSrc(value) {
-    return value || avatarFallback;
+    return value || avatarFallback.src;
 }
 
 export function resolveCoverSrc(value) {
-    return value || coverFallback;
+    return value || coverFallback.src;
 }

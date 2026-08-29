@@ -4,7 +4,7 @@ import { TooltipProvider } from '@/shared/ui/tooltip';
 import { Toaster } from '@/shared/ui/toaster';
 
 export const metadata = {
-  title: 'Lumanoris Dashboard',
+  title: 'Lumanoris | AI Stüdyo & Market',
   description: 'Yapay zeka destekli arayüz',
 };
 

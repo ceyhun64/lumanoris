@@ -58,8 +58,10 @@ function NotificationPopup({ onClose, notifications, loading, onMarkAllRead }) {
     if (isNaN(date.getTime())) return "";
     const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
     if (diffInSeconds < 60) return "Şimdi";
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} dk önce`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} saat önce`;
+    if (diffInSeconds < 3600)
+      return `${Math.floor(diffInSeconds / 60)} dk önce`;
+    if (diffInSeconds < 86400)
+      return `${Math.floor(diffInSeconds / 3600)} saat önce`;
     return date.toLocaleDateString("tr-TR");
   };
 
@@ -136,9 +138,14 @@ function NotificationPopup({ onClose, notifications, loading, onMarkAllRead }) {
   );
 }
 
-function ProfilePopup({ user, profileImage, onLogout, onClose }) {
+function ProfilePopup({ user, profileImage, onLogout, onClose, onNavigate }) {
+  const go = (href) => {
+    onClose();
+    onNavigate(href);
+  };
+
   return (
-    <div className="absolute right-0 top-full mt-3 z-50 w-120 rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-150">
+    <div className="absolute right-0 top-full mt-3 z-50 w-80 sm:w-96 rounded-2xl border border-white/10 bg-[#09090E] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-150">
       <div className="flex items-center gap-3.5 pb-3.5 border-b border-white/5">
         <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-gradient-to-tr from-violet-600 via-indigo-600 to-fuchsia-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg shadow-violet-950/50 ring-1 ring-white/20">
           {profileImage ? (
@@ -160,8 +167,8 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
               {user.fullname || user.username || "Kullanıcı"}
             </span>
             {user.planName && user.planName !== "Ücretsiz Plan" && (
-              <span className="px-1.5 py-0.2 text-caption font-extrabold uppercase tracking-widest text-fuchsia-300 bg-fuchsia-500/15 border border-fuchsia-500/30 rounded">
-                PRO
+              <span className="px-1.5 py-0.2 text-caption font-bold uppercase tracking-wider text-fuchsia-400  rounded">
+                Pro
               </span>
             )}
           </div>
@@ -171,45 +178,60 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 my-3 p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-center">
-        <div>
-          <div className="text-caption uppercase tracking-wider text-zinc-500 font-medium">
+      <div className="grid grid-cols-3 my-3 p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+        <div className="min-w-0 px-1.5">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 truncate">
             Botlar
           </div>
-          <div className="text-xs font-bold text-white mt-0.5">
+          <div className="mt-1 text-base font-bold tabular-nums text-white">
             {user.chatbotCount ?? 0}
           </div>
         </div>
-        <div className="border-x border-white/5">
-          <div className="text-caption uppercase tracking-wider text-zinc-500 font-medium">
+        <div className="min-w-0 px-1.5 border-x border-white/5">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 truncate">
             Lisans
           </div>
-          <div className="text-xs font-bold text-violet-400 mt-0.5">
+          <div className="mt-1 text-base font-bold tabular-nums text-violet-400">
             {user.purchasedCount ?? 0}
           </div>
         </div>
-        <div>
-          <div className="text-caption uppercase tracking-wider text-zinc-500 font-medium">
+        <div className="min-w-0 px-1.5">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 truncate">
             Diyalog
           </div>
-          <div className="text-xs font-bold text-fuchsia-400 mt-0.5">
+          <div className="mt-1 text-base font-bold tabular-nums text-fuchsia-400">
             {user.sharedDialogueCount ?? 0}
           </div>
         </div>
       </div>
 
       <div className="space-y-1">
-        <button className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-zinc-300 rounded-lg hover:bg-white/5 hover:text-white transition-all">
-          <User className="w-3.5 h-3.5 text-zinc-400" /> Profil Detayları
+        <button
+          type="button"
+          onClick={() => go("/dashboard/settings?tab=user")}
+          className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-zinc-300 rounded-lg hover:bg-white/5 hover:text-white transition-all"
+        >
+          <User className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
+          <span className="truncate">Profil Detayları</span>
         </button>
-        <button className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-zinc-300 rounded-lg hover:bg-white/5 hover:text-white transition-all">
-          <Wallet className="w-3.5 h-3.5 text-emerald-400" /> Bakiye & Ödemeler
-          <span className="ml-auto text-caption font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+        <button
+          type="button"
+          onClick={() => go("/dashboard/wallet")}
+          className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-zinc-300 rounded-lg hover:bg-white/5 hover:text-white transition-all"
+        >
+          <Wallet className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+          <span className="truncate">Bakiye &amp; Ödemeler</span>
+          <span className="ml-auto shrink-0 text-caption font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
             {formatCurrency(user.balance ?? 0)}
           </span>
         </button>
-        <button className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-zinc-300 rounded-lg hover:bg-white/5 hover:text-white transition-all">
-          <Settings className="w-3.5 h-3.5 text-zinc-400" /> Sistem Ayarları
+        <button
+          type="button"
+          onClick={() => go("/dashboard/settings")}
+          className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-zinc-300 rounded-lg hover:bg-white/5 hover:text-white transition-all"
+        >
+          <Settings className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
+          <span className="truncate">Sistem Ayarları</span>
         </button>
       </div>
 
@@ -226,7 +248,6 @@ function ProfilePopup({ user, profileImage, onLogout, onClose }) {
   );
 }
 
-
 const DEFAULT_ACCOUNT = {
   id: null,
   username: "",
@@ -237,7 +258,11 @@ const DEFAULT_ACCOUNT = {
   balance: 0,
 };
 
-export default function Header({ userId = null, onNavigate, account = DEFAULT_ACCOUNT }) {
+export default function Header({
+  userId = null,
+  onNavigate,
+  account = DEFAULT_ACCOUNT,
+}) {
   const router = useRouter();
   const navigate = onNavigate || ((href) => router.push(href));
   const [showProfile, setShowProfile] = useState(false);
@@ -306,7 +331,9 @@ export default function Header({ userId = null, onNavigate, account = DEFAULT_AC
     return () => clearInterval(interval);
   }, [userId, fetchNotifications]);
 
-  const unreadNotificationCount = notifications.filter((n) => !n.is_read).length;
+  const unreadNotificationCount = notifications.filter(
+    (n) => !n.is_read,
+  ).length;
 
   const markAllNotificationsRead = () => {
     const unread = notifications.filter((n) => !n.is_read);
@@ -360,7 +387,10 @@ export default function Header({ userId = null, onNavigate, account = DEFAULT_AC
   useEffect(() => {
     if (!showProfile) return;
     function handleClickOutside(e) {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(e.target)
+      ) {
         setShowProfile(false);
       }
     }
@@ -420,7 +450,6 @@ export default function Header({ userId = null, onNavigate, account = DEFAULT_AC
       <header className="sticky top-0 z-40 flex h-20 shrink-0 items-center justify-between gap-6 px-4 md:px-8 bg-[#050508]/85 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
         {/* Brand Logo / Studio Indicator & Command Bar */}
         <div className="flex flex-1 min-w-0 items-center max-w-[580px] gap-4">
-        
           <div className="group relative flex h-11 w-full items-center gap-3 rounded-2xl bg-white/[0.03] px-4 ring-1 ring-inset ring-white/[0.08] transition-all duration-300 focus-within:bg-gradient-to-r focus-within:from-fuchsia-500/[0.05] focus-within:to-violet-500/[0.05] focus-within:ring-fuchsia-500/50 focus-within:shadow-[0_0_25px_rgba(217,70,239,0.15)]">
             <button
               type="button"
@@ -533,6 +562,7 @@ export default function Header({ userId = null, onNavigate, account = DEFAULT_AC
                 profileImage={profileImage}
                 onLogout={handleLogout}
                 onClose={closeProfile}
+                onNavigate={navigate}
               />
             )}
           </div>
@@ -548,5 +578,3 @@ export default function Header({ userId = null, onNavigate, account = DEFAULT_AC
     </>
   );
 }
-
-

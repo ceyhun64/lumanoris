@@ -163,5 +163,20 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    /* `scrollbar-none` JSX'te kullanılıyordu ama hiçbir yerde tanımlı
+       değildi — global.css'teki `*::-webkit-scrollbar` kuralı yüzünden
+       yatay şeritlerde çubuk görünür kalıyordu. Sınıf seçicisi `*`den daha
+       özgül olduğu için bu blok onu bastırır. */
+    ({ addUtilities }) => {
+      addUtilities({
+        ".scrollbar-none": {
+          "scrollbar-width": "none",
+          "-ms-overflow-style": "none",
+          "&::-webkit-scrollbar": { display: "none" },
+        },
+      });
+    },
+  ],
 };

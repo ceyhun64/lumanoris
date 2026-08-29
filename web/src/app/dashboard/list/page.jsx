@@ -1,4 +1,5 @@
 "use client";
+import { ModalPortal } from "@/shared/ui/modal-portal";
 
 import React, { useState, useEffect, useMemo, useContext } from "react";
 import { UserContext } from "@/shared/contexts/UserContext";
@@ -53,46 +54,48 @@ function DeleteConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-zinc-800 bg-[#0A0A10] p-6 shadow-2xl">
-        <div className="absolute top-0 right-0 p-4">
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 mb-4">
-          <Trash2 className="w-7 h-7" />
-        </div>
-
-        <h3 className="text-base font-semibold text-white tracking-tight">
-          Listeyi Sil
-        </h3>
-        <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
-          <strong className="text-zinc-200">"{listTitle}"</strong> koleksiyonunu
-          silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
-        </p>
-
-        <div className="mt-6 flex items-center justify-end gap-2.5">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-xs font-medium text-zinc-300 rounded-xl hover:bg-zinc-800/80 transition-colors"
-          >
-            İptal
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={loading}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-red-600 to-rose-600 rounded-xl shadow-lg shadow-red-950/40 hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
-          >
-            {loading ? "Siliniyor..." : "Evet, Sil"}
-          </button>
+    <ModalPortal onClose={onClose}>
+      <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-zinc-800 bg-[#0A0A10] p-6 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
+          <div className="absolute top-0 right-0 p-4">
+            <button
+              onClick={onClose}
+              className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+  
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 mb-4">
+            <Trash2 className="w-7 h-7" />
+          </div>
+  
+          <h3 className="text-base font-semibold text-white tracking-tight">
+            Listeyi Sil
+          </h3>
+          <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
+            <strong className="text-zinc-200">"{listTitle}"</strong> koleksiyonunu
+            silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+          </p>
+  
+          <div className="mt-6 flex items-center justify-end gap-2.5">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-medium text-zinc-300 rounded-xl hover:bg-zinc-800/80 transition-colors"
+            >
+              İptal
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={loading}
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-red-600 to-rose-600 rounded-xl shadow-lg shadow-red-950/40 hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
+            >
+              {loading ? "Siliniyor..." : "Evet, Sil"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
 
@@ -123,94 +126,96 @@ function AddToListModalEmpty({ isOpen, onClose, onCreate, loading }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-zinc-800 bg-luma-base p-6 shadow-2xl">
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400">
-              <FolderPlus className="w-5 h-5" />
+    <ModalPortal onClose={onClose}>
+      <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-zinc-800 bg-luma-base p-6 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
+          <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400">
+                <FolderPlus className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white tracking-tight">
+                  Yeni Liste Oluştur
+                </h3>
+                <p className="text-caption text-zinc-400">
+                  Chatbotlarınızı gruplamak için özel liste adı girin
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-base font-bold text-white tracking-tight">
-                Yeni Liste Oluştur
-              </h3>
-              <p className="text-caption text-zinc-400">
-                Chatbotlarınızı gruplamak için özel liste adı girin
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-xl p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
-              Liste Adı *
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Örn: Favori Kod Asistanlarım"
-              required
-              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-800 px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
-              Açıklama (Opsiyonel)
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Listeye dair kısa bir özet veya not ekleyin..."
-              rows={3}
-              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-800 px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 transition-all resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-2">
-              Renk Vurgusu
-            </label>
-            <div className="flex items-center gap-3">
-              {colors.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setSelectedColor(c.id)}
-                  className={`h-7 w-7 rounded-full bg-gradient-to-r ${c.class} transition-all ${selectedColor === c.id ? "ring-2 ring-white ring-offset-2 ring-offset-[#09090F] scale-110" : "opacity-60 hover:opacity-100"}`}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-zinc-800 flex items-center justify-end gap-2.5">
             <button
-              type="button"
               onClick={onClose}
-              className="px-4 py-2.5 text-xs font-medium text-zinc-300 rounded-xl hover:bg-zinc-800/80 transition-colors"
+              className="rounded-xl p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
             >
-              İptal
-            </button>
-            <button
-              type="submit"
-              disabled={loading || !name.trim()}
-              className="flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-gradient-btn rounded-xl shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{loading ? "Kaydediliyor..." : "Koleksiyon Oluştur"}</span>
+              <X className="w-4 h-4" />
             </button>
           </div>
-        </form>
+  
+          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                Liste Adı *
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Örn: Favori Kod Asistanlarım"
+                required
+                className="w-full rounded-xl bg-zinc-900/80 border border-zinc-800 px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 transition-all"
+              />
+            </div>
+  
+            <div>
+              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                Açıklama (Opsiyonel)
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Listeye dair kısa bir özet veya not ekleyin..."
+                rows={3}
+                className="w-full rounded-xl bg-zinc-900/80 border border-zinc-800 px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 transition-all resize-none"
+              />
+            </div>
+  
+            <div>
+              <label className="block text-xs font-semibold text-zinc-300 mb-2">
+                Renk Vurgusu
+              </label>
+              <div className="flex items-center gap-3">
+                {colors.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setSelectedColor(c.id)}
+                    className={`h-7 w-7 rounded-full bg-gradient-to-r ${c.class} transition-all ${selectedColor === c.id ? "ring-2 ring-white ring-offset-2 ring-offset-[#09090F] scale-110" : "opacity-60 hover:opacity-100"}`}
+                  />
+                ))}
+              </div>
+            </div>
+  
+            <div className="mt-6 pt-4 border-t border-zinc-800 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 text-xs font-medium text-zinc-300 rounded-xl hover:bg-zinc-800/80 transition-colors"
+              >
+                İptal
+              </button>
+              <button
+                type="submit"
+                disabled={loading || !name.trim()}
+                className="flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-gradient-btn rounded-xl shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{loading ? "Kaydediliyor..." : "Koleksiyon Oluştur"}</span>
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
 
@@ -218,109 +223,149 @@ function ListDetailModal({ isOpen, onClose, list, onRemoveBot }) {
   if (!isOpen || !list) return null;
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-zinc-800 bg-luma-base p-6 shadow-2xl">
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600/20 to-fuchsia-600/20 border border-violet-500/30 text-violet-300 font-bold">
-              <Folder className="w-5 h-5" />
+    <ModalPortal onClose={onClose}>
+      <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="relative max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-3xl border border-zinc-800 bg-luma-base p-6 shadow-2xl">
+          <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600/20 to-fuchsia-600/20 border border-violet-500/30 text-violet-300 font-bold">
+                <Folder className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white tracking-tight">
+                  {list.title}
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  {list.summary} • {list.dialog}
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-base font-bold text-white tracking-tight">
-                {list.title}
-              </h3>
-              <p className="text-xs text-zinc-400">
-                {list.summary} • {list.dialog}
-              </p>
-            </div>
+            <button
+              onClick={onClose}
+              className="rounded-xl p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-xl p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* List Content */}
-        <div className="mt-5 space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-          {!list.bots || list.bots.length === 0 ? (
-            <div className="py-12 text-center text-zinc-500 space-y-2">
-              <Bot className="w-10 h-10 mx-auto opacity-40 text-violet-400" />
-              <p className="text-xs">
-                Bu listede henüz ekli chatbot bulunmuyor.
-              </p>
-            </div>
-          ) : (
-            list.bots.map((bot, idx) => (
-              <div
-                key={bot.id || idx}
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 hover:border-zinc-700 transition-all"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <img
-                    src={resolveAvatarSrc(
-                      bot.profil_fotografi || bot.avatar || bot.image,
-                    )}
-                    alt=""
-                    className="w-10 h-10 rounded-xl object-cover border border-white/10 shrink-0"
-                  />
-                  <div className="min-w-0">
-                    <h5 className="text-xs font-bold text-white truncate">
-                      {bot.isim || bot.title || `Chatbot #${bot.id || idx + 1}`}
-                    </h5>
-                    <p className="text-caption text-zinc-400 truncate">
-                      {bot.aciklama ||
-                        bot.description ||
-                        "Lumanoris AI Asistanı"}
-                    </p>
+  
+          {/* List Content */}
+          <div className="mt-5 space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+            {!list.bots || list.bots.length === 0 ? (
+              <div className="py-12 text-center text-zinc-500 space-y-2">
+                <Bot className="w-10 h-10 mx-auto opacity-40 text-violet-400" />
+                <p className="text-xs">
+                  Bu listede henüz ekli chatbot bulunmuyor.
+                </p>
+              </div>
+            ) : (
+              list.bots.map((bot, idx) => (
+                <div
+                  key={bot.id || idx}
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 hover:border-zinc-700 transition-all"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img
+                      src={resolveAvatarSrc(
+                        bot.profil_fotografi || bot.avatar || bot.image,
+                      )}
+                      alt=""
+                      className="w-10 h-10 rounded-xl object-cover border border-white/10 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <h5 className="text-xs font-bold text-white truncate">
+                        {bot.isim || bot.title || `Chatbot #${bot.id || idx + 1}`}
+                      </h5>
+                      <p className="text-caption text-zinc-400 truncate">
+                        {bot.aciklama ||
+                          bot.description ||
+                          "Lumanoris AI Asistanı"}
+                      </p>
+                    </div>
+                  </div>
+  
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-caption text-violet-400 font-mono bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-md hidden sm:inline-block">
+                      {bot.toplam_chats || bot.dialogues || 0} diyalog
+                    </span>
+                    <button
+                      onClick={() => onRemoveBot && onRemoveBot(list.id, bot.id)}
+                      className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                      title="Listeden Çıkar"
+                    >
+                      <Trash2 className="w-6 h-6" />
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-caption text-violet-400 font-mono bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-md hidden sm:inline-block">
-                    {bot.toplam_chats || bot.dialogues || 0} diyalog
-                  </span>
-                  <button
-                    onClick={() => onRemoveBot && onRemoveBot(list.id, bot.id)}
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                    title="Listeden Çıkar"
-                  >
-                    <Trash2 className="w-6 h-6" />
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        <div className="mt-6 pt-4 border-t border-zinc-800 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-white bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
-          >
-            Kapat
-          </button>
+              ))
+            )}
+          </div>
+  
+          <div className="mt-6 pt-4 border-t border-zinc-800 flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-semibold text-white bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
+            >
+              Kapat
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
 
+/**
+ * Renk vurgusu. Tailwind sinif adlarini kaynakta LITERAL olarak taramak
+ * zorunda, bu yuzden `from-${x}-600` gibi birlestirilmis sinif uretilemez —
+ * tam sinif adlarini burada sabit yaziyoruz.
+ */
+const LIST_ACCENTS = {
+  violet: {
+    icon: "from-violet-600/20 to-indigo-600/20 border-violet-500/30 text-violet-300",
+    bar: "from-violet-500 to-indigo-500",
+    hover: "hover:border-violet-500/40 hover:shadow-violet-950/20",
+    title: "group-hover:text-violet-300",
+  },
+  fuchsia: {
+    icon: "from-fuchsia-600/20 to-pink-600/20 border-fuchsia-500/30 text-fuchsia-300",
+    bar: "from-fuchsia-500 to-pink-500",
+    hover: "hover:border-fuchsia-500/40 hover:shadow-fuchsia-950/20",
+    title: "group-hover:text-fuchsia-300",
+  },
+  emerald: {
+    icon: "from-emerald-600/20 to-teal-600/20 border-emerald-500/30 text-emerald-300",
+    bar: "from-emerald-500 to-teal-500",
+    hover: "hover:border-emerald-500/40 hover:shadow-emerald-950/20",
+    title: "group-hover:text-emerald-300",
+  },
+  amber: {
+    icon: "from-amber-600/20 to-orange-600/20 border-amber-500/30 text-amber-300",
+    bar: "from-amber-500 to-orange-500",
+    hover: "hover:border-amber-500/40 hover:shadow-amber-950/20",
+    title: "group-hover:text-amber-300",
+  },
+};
+
 function ListCardItem({ list, onDelete, onViewDetail }) {
   const bots = list.bots || [];
+  const accent = LIST_ACCENTS[list.color] || LIST_ACCENTS.violet;
 
   return (
-    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-zinc-800/80 bg-luma-base p-5 transition-all duration-300 ease-out hover:border-violet-500/40 hover:bg-[#0B0B14] hover:shadow-2xl hover:shadow-violet-950/20 hover:-translate-y-0.5">
+    <div
+      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-zinc-800/80 bg-luma-base p-5 transition-all duration-300 ease-out hover:bg-[#0B0B14] hover:shadow-2xl hover:-translate-y-0.5 ${accent.hover}`}
+    >
+      {/* Renk vurgusu — kartin ust kenarindaki serit */}
+      <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${accent.bar}`} />
+
       {/* Top Header */}
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600/20 to-fuchsia-600/20 border border-violet-500/30 text-violet-300 shadow-inner group-hover:scale-105 transition-transform">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-2xl border bg-gradient-to-br shadow-inner transition-transform group-hover:scale-105 ${accent.icon}`}>
               <ListChecks className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white tracking-tight group-hover:text-violet-300 transition-colors">
+              <h4 className={`text-sm font-bold tracking-tight text-white transition-colors ${accent.title}`}>
                 {list.title}
               </h4>
               <span className="text-caption text-zinc-400 block font-mono">
@@ -429,6 +474,8 @@ export default function List() {
                 summary: `${botData.count || 0} Bot İçeriyor`,
                 dialog: `${botData.total_chats || 0} Diyalog`,
                 bots: botData.bots || [],
+                color: list.color || "violet",
+                description: list.description || "",
                 createdAt: new Date().toISOString(),
               };
             } catch (err) {
@@ -439,6 +486,8 @@ export default function List() {
                 summary: "Bot bilgisi alınamadı",
                 dialog: "0 Diyalog",
                 bots: [],
+                color: list.color || "violet",
+                description: list.description || "",
                 createdAt: new Date().toISOString(),
               };
             }
@@ -473,9 +522,20 @@ export default function List() {
         : listDataPayload.name;
     setCreateLoading(true);
 
+    // Modal renk ve aciklama da topluyordu ama ikisi de burada dusuruluyordu:
+    // istege hic konmuyor, yerel state'e de yazilmiyordu. Secilen renk bu
+    // yuzden hicbir yerde gorunmuyordu.
     const payload = {
       user_id: userId || 1,
       name: listName,
+      color:
+        typeof listDataPayload === "string"
+          ? "violet"
+          : listDataPayload.color || "violet",
+      description:
+        typeof listDataPayload === "string"
+          ? ""
+          : listDataPayload.description || "",
     };
 
     const formData = new FormData();
@@ -504,6 +564,8 @@ export default function List() {
           summary: "0 Bot İçeriyor",
           dialog: `0 Diyalog`,
           bots: [],
+          color: payload.color,
+          description: payload.description,
           createdAt: new Date().toISOString(),
         };
 

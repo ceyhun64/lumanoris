@@ -1,9 +1,17 @@
 ﻿"use client";
+import { ModalPortal } from "@/shared/ui/modal-portal";
 
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { UserContext } from "@/shared/contexts/UserContext";
 import { useRouter } from "next/navigation";
 import useSellerStatus from "@/shared/hooks/useSellerStatus";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/shared/ui/select";
 import SellerOnboardingWizard from "@/features/seller/SellerOnboardingWizard";
 import {
   Lock,
@@ -37,6 +45,11 @@ import {
   Copy,
   ExternalLink,
   Code,
+  ImagePlus,
+  Trash2,
+  Link2,
+  Loader2,
+  CheckCircle2,
 } from "lucide-react";
 
 // Deny-by-default limits used whenever the server's real limits cannot be
@@ -163,96 +176,171 @@ function BuyProducerAccountModal({ isOpen, onClose, userId, onPurchased }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full  rounded-2xl bg-zinc-900 border border-fuchsia-500/30 p-6 shadow-2xl shadow-fuchsia-950/50 space-y-6 overflow-hidden">
-        {/* Glow ambient */}
-        <div className="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-fuchsia-500/20 blur-3xl" />
-
-        <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20">
-              <Crown className="w-5 h-5" />
+    <ModalPortal onClose={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="relative w-full  rounded-2xl bg-zinc-900 border border-fuchsia-500/30 p-6 shadow-2xl shadow-fuchsia-950/50 space-y-6 overflow-hidden max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
+          {/* Glow ambient */}
+          <div className="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-fuchsia-500/20 blur-3xl" />
+  
+          <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20">
+                <Crown className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">
+                  Üretici Hesabı Satın Al
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Sınırsız AI kapasitesi ve pazaryeri satıcı hakları
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-white">
-                Üretici Hesabı Satın Al
-              </h3>
-              <p className="text-xs text-zinc-400">
-                Sınırsız AI kapasitesi ve pazaryeri satıcı hakları
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+  
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-zinc-950/60 border border-white/5 space-y-3">
+              <div className="flex items-baseline justify-between">
+                <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider">
+                  Tek Seferlik Lisans
+                </span>
+                <span className="text-2xl font-black text-white">750 ₺</span>
+              </div>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Bu lisans ile hesabınıza kalıcı üretici hakları tanımlanır. Ek
+                olarak yeni yayın hakları kazanırsınız.
               </p>
             </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-zinc-950/60 border border-white/5 space-y-3">
-            <div className="flex items-baseline justify-between">
-              <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider">
-                Tek Seferlik Lisans
-              </span>
-              <span className="text-2xl font-black text-white">750 ₺</span>
-            </div>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Bu lisans ile hesabınıza kalıcı üretici hakları tanımlanır. Ek
-              olarak yeni yayın hakları kazanırsınız.
-            </p>
-          </div>
-
-          <div className="space-y-2.5">
-            {[
-              "5 Adet Herkese Açık Pazaryeri Botu Yayınlama Hakkı",
-              "2 Adet Bağımsız (Özel) Bot Oluşturma Hakkı",
-              "%80 Kazanç Payı ile Doğrudan Banka Hesabınıza Transfer",
-              "Öncelikli Vektör Veritabanı ve GPT-4o İşlem Gücü",
-            ].map((feat, idx) => (
-              <div
-                key={idx}
-                className="flex items-center gap-2.5 text-xs text-zinc-300"
-              >
-                <div className="p-0.5 rounded-full bg-emerald-500/20 text-emerald-400">
-                  <Check className="w-3.5 h-3.5" />
+  
+            <div className="space-y-2.5">
+              {[
+                "5 Adet Herkese Açık Pazaryeri Botu Yayınlama Hakkı",
+                "2 Adet Bağımsız (Özel) Bot Oluşturma Hakkı",
+                "%80 Kazanç Payı ile Doğrudan Banka Hesabınıza Transfer",
+                "Öncelikli Vektör Veritabanı ve GPT-4o İşlem Gücü",
+              ].map((feat, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-2.5 text-xs text-zinc-300"
+                >
+                  <div className="p-0.5 rounded-full bg-emerald-500/20 text-emerald-400">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span>{feat}</span>
                 </div>
-                <span>{feat}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-
-        {error && (
-          <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3">
-            {error}
-          </p>
-        )}
-
-        <div className="flex items-center gap-3 pt-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 rounded-xl border border-white/10 text-xs font-semibold text-zinc-300 hover:bg-white/5 transition cursor-pointer"
-          >
-            Vazgeç
-          </button>
-          <button
-            onClick={handleBuy}
-            disabled={loading}
-            className="flex-1 py-3 rounded-xl bg-gradient-btn text-xs font-semibold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <CreditCard className="w-4 h-4" />
-                <span>Ödemeyi Tamamla (750 ₺)</span>
-              </>
-            )}
-          </button>
+  
+          {error && (
+            <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3">
+              {error}
+            </p>
+          )}
+  
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 rounded-xl border border-white/10 text-xs font-semibold text-zinc-300 hover:bg-white/5 transition cursor-pointer"
+            >
+              Vazgeç
+            </button>
+            <button
+              onClick={handleBuy}
+              disabled={loading}
+              className="flex-1 py-3 rounded-xl bg-gradient-btn text-xs font-semibold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <CreditCard className="w-4 h-4" />
+                  <span>Ödemeyi Tamamla (750 ₺)</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
+    </ModalPortal>
+  );
+}
+
+/** Sunucu `assets/kapak_fotografi/x.png` gibi goreli yol donuyor. */
+function assetUrl(path) {
+  if (!path) return "";
+  if (path.startsWith("http") || path.startsWith("data:")) return path;
+  return "/" + String(path).replace(/^\/+/, "");
+}
+
+function ImagePicker({
+  label,
+  hint,
+  preview,
+  inputRef,
+  aspect,
+  onPick,
+  onClear,
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 block font-mono text-xs text-zinc-300">
+        {label}
+      </label>
+      <div
+        className={cn(
+          "group relative w-full overflow-hidden rounded-xl border border-dashed border-white/10 bg-zinc-900/60 transition-colors hover:border-violet-500/40",
+          aspect,
+        )}
+      >
+        {preview ? (
+          <>
+            <img src={preview} alt="" className="h-full w-full object-cover" />
+            <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="rounded-lg bg-white/15 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/25"
+              >
+                Değiştir
+              </button>
+              <button
+                type="button"
+                onClick={onClear}
+                aria-label="Görseli kaldır"
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="flex h-full w-full flex-col items-center justify-center gap-1.5 px-3 text-center"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-500/10 text-violet-400">
+              <ImagePlus className="h-4 w-4" />
+            </span>
+            <span className="text-xs font-medium text-white">Görsel Seç</span>
+            <span className="text-caption text-zinc-500">{hint}</span>
+          </button>
+        )}
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => onPick(e.target.files?.[0])}
+      />
     </div>
   );
 }
@@ -261,9 +349,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
   const router = useRouter();
   const { refetchAccount } = useContext(UserContext);
   const [botName, setBotName] = useState(bot?.chatbot?.isim || "");
-  const [description, setDescription] = useState(
-    bot?.chatbot?.aciklama || "",
-  );
+  const [description, setDescription] = useState(bot?.chatbot?.aciklama || "");
   const [systemPrompt, setSystemPrompt] = useState(
     bot?.chatbot?.style_prompt ||
       "Sen yardımsever, profesyonel ve sorulara hızlı cevap veren bir yapay zeka asistanısın.",
@@ -281,6 +367,191 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
+  // Kimlik & Genel: kategori + gorseller. Backend (savechatbot/updatechatbot)
+  // kategori_id'yi zaten beyaz listede tutuyor ve gorselleri coverImage_file /
+  // profileImage_file multipart alanlarindan aliyordu; form bunlari hic
+  // gondermiyordu.
+  const [categories, setCategories] = useState([]);
+  const [categoryId, setCategoryId] = useState(
+    bot?.chatbot?.kategori_id ? String(bot.chatbot.kategori_id) : "",
+  );
+  const [coverFile, setCoverFile] = useState(null);
+  const [profileFile, setProfileFile] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(
+    bot?.chatbot?.kapak_fotografi ? assetUrl(bot.chatbot.kapak_fotografi) : "",
+  );
+  const [profilePreview, setProfilePreview] = useState(
+    bot?.chatbot?.profil_fotografi
+      ? assetUrl(bot.chatbot.profil_fotografi)
+      : "",
+  );
+  const coverInputRef = useRef(null);
+  const profileInputRef = useRef(null);
+
+  useEffect(() => {
+    fetch("/api/content/getcategories.php")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data?.categories)) setCategories(data.categories);
+      })
+      .catch(() => setCategories([]));
+  }, []);
+
+  // Secilen dosyayi dogrula ve onizlemesini uret. Sunucu tarafi da ayni
+  // kontrolleri yapiyor (MIME + 5MB); burasi kullaniciya aninda geri bildirim.
+  // --- Bilgi Bankasi (RAG) -------------------------------------------
+  // Backend zaten hazirdi ve hic cagrilmiyordu:
+  //   POST /api/training/readpdf.php            -> PDF metni cikarir
+  //   POST /api/training/readurl.php            -> sayfa metni cikarir (yeni)
+  //   POST /api/training/update_training_chunk.php -> training_prompt'a ekler
+  const [kbSources, setKbSources] = useState([]);
+  const [kbUrl, setKbUrl] = useState("");
+  const [kbBusy, setKbBusy] = useState("");
+  const [kbError, setKbError] = useState(null);
+  const [corpusLength, setCorpusLength] = useState(null);
+  const kbFileRef = useRef(null);
+
+  const refreshCorpus = async () => {
+    if (!botId) return;
+    try {
+      const res = await fetch(
+        `/api/training/get_training_chunks.php?botId=${botId}&offset=0`,
+        {
+          credentials: "include",
+        },
+      );
+      const data = await res.json();
+      if (data?.success) setCorpusLength(Number(data.totalLength) || 0);
+    } catch {
+      /* sayac kritik degil */
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "knowledge") refreshCorpus();
+  }, [activeTab, botId]);
+
+  // Metni parcalara bolup training_prompt'un sonuna ekler. Tek bir dev POST
+  // yerine parcali: LONGTEXT sinirsiz ama istek boyutu degil.
+  const appendToCorpus = async (text, label, kind) => {
+    const clean = String(text || "").trim();
+    if (!clean) {
+      setKbError("Bu kaynaktan okunabilir metin çıkmadı.");
+      return;
+    }
+
+    const header = `\n\n### Kaynak: ${label}\n`;
+    const payload = header + clean;
+    const CHUNK = 8000;
+
+    for (let i = 0; i < payload.length; i += CHUNK) {
+      const body = new FormData();
+      body.append(
+        "data",
+        JSON.stringify({
+          id: botId,
+          textChunk: payload.slice(i, i + CHUNK),
+          isFirst: false,
+        }),
+      );
+      const res = await fetch("/api/training/update_training_chunk.php", {
+        method: "POST",
+        body,
+        credentials: "include",
+      });
+      const result = await res.json();
+      if (!result?.success) {
+        throw new Error(result?.message || "Bilgi bankasına yazılamadı.");
+      }
+    }
+
+    setKbSources((prev) => [...prev, { kind, label, chars: clean.length }]);
+    await refreshCorpus();
+  };
+
+  const handleKbPdf = async (file) => {
+    if (!file) return;
+    setKbError(null);
+    if (file.type !== "application/pdf") {
+      setKbError("Yalnızca PDF dosyası yükleyebilirsiniz.");
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      setKbError("PDF çok büyük (maks. 15 MB).");
+      return;
+    }
+
+    setKbBusy("PDF okunuyor...");
+    try {
+      const base64Data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const res = await fetch("/api/training/readpdf.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ base64Data }),
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!data?.success)
+        throw new Error(data?.message || "PDF ayrıştırılamadı.");
+
+      setKbBusy("Bilgi bankasına ekleniyor...");
+      await appendToCorpus(data.text, file.name, "pdf");
+    } catch (err) {
+      setKbError(err.message || "PDF eklenemedi.");
+    } finally {
+      setKbBusy("");
+      if (kbFileRef.current) kbFileRef.current.value = "";
+    }
+  };
+
+  const handleKbUrl = async () => {
+    const url = kbUrl.trim();
+    if (!url) return;
+    setKbError(null);
+    setKbBusy("Sayfa taranıyor...");
+    try {
+      const res = await fetch("/api/training/readurl.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!data?.success) throw new Error(data?.message || "Sayfa okunamadı.");
+
+      setKbBusy("Bilgi bankasına ekleniyor...");
+      await appendToCorpus(data.text, url, "url");
+      setKbUrl("");
+    } catch (err) {
+      setKbError(err.message || "URL eklenemedi.");
+    } finally {
+      setKbBusy("");
+    }
+  };
+
+  const pickImage = (file, setFile, setPreview) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setSubmitError("Yalnızca görsel dosyası yükleyebilirsiniz.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setSubmitError("Görsel boyutu 5 MB'ı aşamaz.");
+      return;
+    }
+    setSubmitError(null);
+    setFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setPreview(String(reader.result || ""));
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async () => {
     if (!botName.trim()) {
       setSubmitError("Sohbet botu ismi zorunludur.");
@@ -296,11 +567,15 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
         style_prompt: systemPrompt,
         sohbet_basi_mesaj: "",
       };
+      if (categoryId) chatbotData.kategori_id = Number(categoryId);
       if (!bot) {
         chatbotData.is_independent = independentMode ? 1 : 0;
       }
       const formData = new FormData();
       formData.append("data", JSON.stringify(chatbotData));
+      // Sunucunun handleImageUploads() fonksiyonunun bekledigi alan adlari.
+      if (coverFile) formData.append("coverImage_file", coverFile);
+      if (profileFile) formData.append("profileImage_file", profileFile);
       const res = await fetch(
         bot ? "/api/chatbot/updatechatbot.php" : "/api/chatbot/savechatbot.php",
         { method: "POST", body: formData, credentials: "include" },
@@ -405,7 +680,8 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
           try {
             const frame = JSON.parse(line.slice(6).trim());
             if (frame.error) continue;
-            const chunk = frame.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            const chunk =
+              frame.candidates?.[0]?.content?.parts?.[0]?.text || "";
             if (!chunk) continue;
             fullText += chunk;
             setSimulatedChat((prev) => {
@@ -453,7 +729,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
             { id: "brain", label: "2. Prompt & Zeka", icon: Cpu },
             {
               id: "knowledge",
-              label: "3. Bilgi Bankası (RAG)",
+              label: "3. Bilgi Bankası",
               icon: Database,
             },
             { id: "publish", label: "4. Yayın & Fiyat", icon: Rocket },
@@ -486,6 +762,36 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
         {/* Tab 1: General Info */}
         {activeTab === "general" && (
           <div className="space-y-4 animate-in fade-in duration-200">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <ImagePicker
+                label="Kapak Görseli"
+                hint="16:10 önerilir · maks. 5 MB"
+                preview={coverPreview}
+                inputRef={coverInputRef}
+                aspect="aspect-[16/10]"
+                onPick={(f) => pickImage(f, setCoverFile, setCoverPreview)}
+                onClear={() => {
+                  setCoverFile(null);
+                  setCoverPreview("");
+                  if (coverInputRef.current) coverInputRef.current.value = "";
+                }}
+              />
+              <ImagePicker
+                label="Profil Görseli"
+                hint="Kare · maks. 5 MB"
+                preview={profilePreview}
+                inputRef={profileInputRef}
+                aspect="aspect-square"
+                onPick={(f) => pickImage(f, setProfileFile, setProfilePreview)}
+                onClear={() => {
+                  setProfileFile(null);
+                  setProfilePreview("");
+                  if (profileInputRef.current)
+                    profileInputRef.current.value = "";
+                }}
+              />
+            </div>
+
             <div>
               <label className="block text-xs font-mono text-zinc-300 mb-1.5">
                 Sohbet Botu İsmi
@@ -510,6 +816,30 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
                 placeholder="Müşterilere sipariş durumunu aktarır, ürün tavsiye eder..."
                 className="w-full rounded-xl bg-zinc-900 border border-white/10 px-4 py-3 text-xs text-white placeholder:text-zinc-600 focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20 focus:outline-none resize-none"
               />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block font-mono text-xs text-zinc-300">
+                Kategori
+              </label>
+              <Select
+                value={categoryId}
+                onValueChange={(v) => setCategoryId(v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Kategori seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>
+                      {cat.kategori_adi_tr}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1.5 text-caption text-zinc-500">
+                Pazaryerinde hangi kategoride listeleneceğini belirler.
+              </p>
             </div>
 
             <div className="pt-2">
@@ -564,10 +894,10 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-mono text-zinc-300">
-                  Sistem Talimatı (System Prompt)
+                  Sistem Talimatı
                 </label>
                 <span className="text-caption font-mono text-violet-400">
-                  GPT-4o Omnimodal Active
+                  GPT-4o Omnimodal Aktif
                 </span>
               </div>
               <textarea
@@ -592,37 +922,148 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
         {/* Tab 3: RAG Knowledge */}
         {activeTab === "knowledge" && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            <div className="p-8 rounded-2xl border-2 border-dashed border-white/10 hover:border-violet-500/40 bg-zinc-900/40 text-center space-y-3 transition cursor-pointer">
-              <div className="w-10 h-10 rounded-full bg-violet-500/10 text-violet-400 mx-auto flex items-center justify-center">
-                <FileText className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-white">
-                  Doküman veya PDF Yükleyin
+            {!botId ? (
+              /* training_prompt bir bot satirina yazilir; kaydedilmemis botun
+                 id'si yok. Eskiden bu alan her durumda tiklanabilir gorunuyordu
+                 ama hicbir sey yapmiyordu. */
+              <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                <p className="text-xs leading-relaxed text-amber-200/80">
+                  Bilgi bankasına kaynak eklemek için önce botu kaydedin.
+                  <span className="text-amber-200/50">
+                    {" "}
+                    “4. Yayın &amp; Fiyat” sekmesinden oluşturduktan sonra bu
+                    alan aktifleşir.
+                  </span>
                 </p>
-                <p className="text-caption text-zinc-500 mt-0.5">
-                  Sıkça sorulan sorular, kataloglar veya şirket içi kılavuzlar
-                  (Max 50MB)
-                </p>
               </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Globe2 className="w-4 h-4 text-cyan-400" />
-                <div>
-                  <p className="text-xs font-semibold text-white">
-                    Web Sitesi URL Tarama
-                  </p>
-                  <p className="text-caption text-zinc-500">
-                    Domain altındaki tüm sayfalar otomatik indekslenir
-                  </p>
+            ) : (
+              <>
+                <div className="flex items-center justify-between rounded-xl border border-white/10 bg-zinc-900/60 px-4 py-3">
+                  <div className="flex items-center gap-2.5">
+                    <Database className="h-4 w-4 text-violet-400" />
+                    <span className="text-xs text-zinc-400">
+                      Bilgi bankası boyutu
+                    </span>
+                  </div>
+                  <span className="font-mono text-xs font-semibold text-white">
+                    {corpusLength === null
+                      ? "—"
+                      : `${corpusLength.toLocaleString("tr-TR")} karakter`}
+                  </span>
                 </div>
-              </div>
-              <button className="px-3 py-1.5 rounded-lg bg-white/10 text-xs font-medium text-white hover:bg-white/20 transition cursor-pointer">
-                URL Ekle
-              </button>
-            </div>
+
+                {/* PDF */}
+                <button
+                  type="button"
+                  onClick={() => kbFileRef.current?.click()}
+                  disabled={Boolean(kbBusy)}
+                  className="w-full space-y-3 rounded-2xl border-2 border-dashed border-white/10 bg-zinc-900/40 p-8 text-center transition hover:border-violet-500/40 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-violet-500/10 text-violet-400">
+                    <FileText className="h-5 w-5" />
+                  </span>
+                  <span className="block text-xs font-semibold text-white">
+                    Doküman veya PDF Yükleyin
+                  </span>
+                  <span className="block text-caption text-zinc-500">
+                    Sıkça sorulan sorular, kataloglar veya şirket içi kılavuzlar
+                    (maks. 15 MB)
+                  </span>
+                </button>
+                <input
+                  ref={kbFileRef}
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  onChange={(e) => handleKbPdf(e.target.files?.[0])}
+                />
+
+                {/* URL */}
+                <div className="rounded-xl border border-white/10 bg-zinc-900 p-4">
+                  <div className="mb-3 flex items-center gap-3">
+                    <Globe2 className="h-4 w-4 shrink-0 text-cyan-400" />
+                    <div>
+                      <p className="text-xs font-semibold text-white">
+                        Web Sitesi URL Tarama
+                      </p>
+                      <p className="text-caption text-zinc-500">
+                        Sayfanın metni çıkarılıp bilgi bankasına eklenir
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-950 p-1.5 pl-3.5 transition-colors focus-within:border-fuchsia-500/50">
+                    <Link2 className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+                    <input
+                      type="url"
+                      value={kbUrl}
+                      data-focus-managed
+                      onChange={(e) => setKbUrl(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleKbUrl();
+                        }
+                      }}
+                      placeholder="https://ornek.com/sss"
+                      className="min-w-0 flex-1 border-none bg-transparent text-xs text-white outline-none placeholder:text-zinc-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleKbUrl}
+                      disabled={!kbUrl.trim() || Boolean(kbBusy)}
+                      className={cn(
+                        "h-8 shrink-0 rounded-lg px-3 text-xs font-semibold transition-all",
+                        kbUrl.trim() && !kbBusy
+                          ? "bg-gradient-btn text-white hover:brightness-110"
+                          : "cursor-not-allowed bg-white/[0.06] text-zinc-600",
+                      )}
+                    >
+                      URL Ekle
+                    </button>
+                  </div>
+                </div>
+
+                {kbBusy && (
+                  <p className="flex items-center gap-2 text-xs text-violet-300">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    {kbBusy}
+                  </p>
+                )}
+                {kbError && (
+                  <p className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-xs text-rose-400">
+                    {kbError}
+                  </p>
+                )}
+
+                {kbSources.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-caption font-semibold uppercase tracking-wider text-zinc-500">
+                      Bu oturumda eklenenler
+                    </p>
+                    {kbSources.map((src, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2.5 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.05] px-3.5 py-2.5"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                        {src.kind === "url" ? (
+                          <Globe2 className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
+                        ) : (
+                          <FileText className="h-3.5 w-3.5 shrink-0 text-violet-400" />
+                        )}
+                        <span className="min-w-0 flex-1 truncate text-xs text-white/80">
+                          {src.label}
+                        </span>
+                        <span className="shrink-0 font-mono text-caption text-zinc-500">
+                          {src.chars.toLocaleString("tr-TR")} krk
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
@@ -692,12 +1133,16 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
                   {isSavedBot ? (
                     <>
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-emerald-400">Gerçek yanıt · mesaj hakkınızdan düşer</span>
+                      <span className="text-emerald-400">
+                        Gerçek yanıt · mesaj hakkınızdan düşer
+                      </span>
                     </>
                   ) : (
                     <>
                       <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                      <span className="text-amber-400">Önizleme için botu kaydedin</span>
+                      <span className="text-amber-400">
+                        Önizleme için botu kaydedin
+                      </span>
                     </>
                   )}
                 </p>
@@ -751,7 +1196,9 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
               type="text"
               value={inputMsg}
               onChange={(e) => setInputMsg(e.target.value)}
-              placeholder={isSavedBot ? "Test mesajı yazın..." : "Önce botu kaydedin..."}
+              placeholder={
+                isSavedBot ? "Test mesajı yazın..." : "Önce botu kaydedin..."
+              }
               className="flex-1 bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/20"
             />
             <button
@@ -847,7 +1294,9 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
              backend that is merely unreachable. */
           <div className="rounded-2xl border border-amber-400/25 bg-amber-400/[0.07] px-5 py-4">
             <p className="text-body-sm leading-relaxed text-amber-200/90">
-              <span className="font-semibold">Chatbot limitleriniz okunamadı.</span>{" "}
+              <span className="font-semibold">
+                Chatbot limitleriniz okunamadı.
+              </span>{" "}
               Sunucuya ulaşılamadığı için oluşturma geçici olarak kapalı.
               <button
                 type="button"
@@ -991,17 +1440,14 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               {
-                icon: Sparkles,
                 title: "1. Kişiliğini Tanımla",
                 desc: "Botun ismini, konuşma üslubunu ve sistem yönergelerini belirle.",
               },
               {
-                icon: FileText,
                 title: "2. Veri Kaynağını Bağla",
                 desc: "PDF, Notion dokümanı veya web URL'si ekleyerek botu eğit.",
               },
               {
-                icon: Rocket,
                 title: "3. Yayına Al",
                 desc: "Bağımsız özel bot olarak kullan veya Pazaryerinde satışa aç.",
               },
@@ -1010,7 +1456,6 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                 key={i}
                 className="p-4 rounded-xl bg-zinc-900/50 border border-white/5 space-y-2"
               >
-                <st.icon className="w-5 h-5 text-violet-400" />
                 <h5 className="text-xs font-bold text-white">{st.title}</h5>
                 <p className="text-caption text-zinc-400 leading-relaxed">
                   {st.desc}

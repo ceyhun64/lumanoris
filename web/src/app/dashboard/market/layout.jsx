@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Market | Lumanoris",
+    title: "Pazaryeri | Lumanoris",
 };
 
 export default function DashboardMarket({ children }) {

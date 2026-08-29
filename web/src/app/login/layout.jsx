@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Login | Lumanoris",
+    title: "Giriş Yap | Lumanoris",
 };
 
 export default function AuthLayout({ children }) {

@@ -187,15 +187,40 @@ class SocialController {
 
     // ── Lists ─────────────────────────────────────────────────────────────────
 
+    /** "Yeni Liste Olustur" modalindaki renk secenekleriyle ayni kume. */
+    private const LIST_COLORS = ['violet', 'fuchsia', 'emerald', 'amber'];
+
     public static function addUserList(): void {
         require_method('POST');
         $userId = AuthMiddleware::requireAuth();
         $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
-        $data['user_id'] = $userId;
-        $id = Database::getInstance()->insert('user_lists', $data);
-        JsonResponse::success(['message' => 'Liste eklendi!', 'listId' => $id]);
+        // Istemcinin gonderdigi anahtarlar dogrudan INSERT'e gidiyordu; tablo
+        // disi bir alan SQL hatasi uretiyordu. Alanlar artik beyaz listede.
+        $name = trim((string) ($data['name'] ?? ''));
+        if ($name === '') {
+            JsonResponse::error('Liste adi gereklidir.', 400, AppConfig::ERR_VALIDATION);
+        }
+
+        $color = (string) ($data['color'] ?? 'violet');
+        if (!in_array($color, self::LIST_COLORS, true)) {
+            $color = 'violet';
+        }
+
+        $row = [
+            'user_id'     => $userId,
+            'name'        => mb_substr($name, 0, 255),
+            'color'       => $color,
+            'description' => mb_substr(trim((string) ($data['description'] ?? '')), 0, 500),
+        ];
+
+        $id = Database::getInstance()->insert('user_lists', $row);
+        JsonResponse::success([
+            'message' => 'Liste eklendi!',
+            'listId'  => $id,
+            'list'    => ['id' => $id] + $row,
+        ]);
     }
 
     public static function addBotToList(): void {
@@ -240,7 +265,7 @@ class SocialController {
     public static function getUserLists(): void {
         $userId = AuthMiddleware::requireAuth();
 
-        $lists = Database::getInstance()->selectMulti('id, name FROM user_lists WHERE user_id = ?', [$userId]);
+        $lists = Database::getInstance()->selectMulti('id, name, color, description FROM user_lists WHERE user_id = ?', [$userId]);
         JsonResponse::success(['lists' => $lists]);
     }
 

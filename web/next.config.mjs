@@ -6,6 +6,14 @@ const isStaticExport = process.env.NEXT_EXPORT === '1';
 const nextConfig = {
   ...(isStaticExport && { output: 'export' }),
 
+  // Doğrulama amaçlı bir `next build`, çalışan dev sunucusunun `.next`
+  // klasörünü production çıktısıyla ezerse dev sunucu ayakta kalır ama
+  // aradığı dev chunk'ları (main-app.js, app-pages-internals.js…) artık
+  // yoktur: tarayıcıda 404 + "MIME type ('text/plain') is not executable".
+  // NEXT_DIST_DIR ile böyle bir build ayrı bir klasöre yazılabilir.
+  // Değişken tanımsızken davranış birebir eskisi gibi (.next).
+  distDir: process.env.NEXT_DIST_DIR || '.next',
+
   // Statik export'ta route uyumu için (custom server'da gereksiz ama zararsız)
   trailingSlash: true,
 
@@ -52,7 +60,13 @@ const nextConfig = {
         "object-src 'none'",
         "base-uri 'self'",
         "form-action 'self'",
-        "upgrade-insecure-requests",
+        // HSTS ile ayni gerekce: bu direktif tarayiciya TUM http:// alt
+        // istekleri https://'e yukselttiriyor. Yerelde uygulama duz http
+        // uzerinden calisiyor; localhost disinda bir adresle (LAN IP,
+        // makine adi, tunel) acildiginda istekler TLS servis etmeyen bir
+        // porta https ile gidiyor ve ERR_SSL_PROTOCOL_ERROR aliniyor.
+        // Production'da HTTPS zorunlu oldugu icin orada aciik kaliyor.
+        ...(isDev ? [] : ["upgrade-insecure-requests"]),
       ].join('; ');
 
       const securityHeaders = [
@@ -60,7 +74,11 @@ const nextConfig = {
         { key: 'X-Frame-Options', value: 'DENY' },
         { key: 'X-Content-Type-Options', value: 'nosniff' },
         { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-        { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
+        // MIC-001 — 'microphone=()' mikrofonu HER kaynak icin kapatiyordu,
+        // kendi sayfamiz dahil. Sohbetteki sesli mesaj dugmesi bu yuzden izin
+        // istemeden dogrudan NotAllowedError aliyordu. 'self' ile yalnizca
+        // kendi originimiz kullanabilir; ucuncu taraf iframe'lere kapali kalir.
+        { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(), payment=()' },
         { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
       ];
 

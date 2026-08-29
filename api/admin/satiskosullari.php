@@ -67,7 +67,10 @@
             e.preventDefault();
             const editorData = editorInstance.getData();
             const formData = new FormData(this);
-            formData.set('hakkinda', editorData);
+            // Kopyala-yapistir hatasi: satis kosullari editoru icerigi 'hakkinda'
+            // anahtariyla gonderiliyordu. Sonuc: satis kosullari HIC
+            // kaydedilmiyor, ustelik her kayit 'Hakkimizda' metnini eziyordu.
+            formData.set('satis_kosullari', editorData);
             try {
                 const res = await fetch('/admin/ajax/updategv.php', {
                     method: 'POST',

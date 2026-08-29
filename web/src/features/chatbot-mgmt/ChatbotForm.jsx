@@ -509,7 +509,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
         <div className="flex min-w-[160px] flex-col items-center justify-center">
             <div className="mb-4 flex h-[100px] w-[100px] items-center justify-center overflow-hidden rounded-xl bg-fuchsia-500/5">
                 {coverImage ? (
-                    <img src={coverImage} alt="cover preview" className="h-full w-full object-cover" />
+                    <img src={coverImage} alt="Kapak önizlemesi" className="h-full w-full object-cover" />
                 ) : (
                     <svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path opacity="0.5" d="M20.3712 43.7501H29.6295C36.1316 43.7501 39.3837 43.7501 41.7191 42.2188C42.727 41.5587 43.595 40.7064 44.2732 39.7105C45.8337 37.4188 45.8337 34.2251 45.8337 27.8418C45.8337 21.4584 45.8337 18.2647 44.2732 15.973C43.595 14.9772 42.727 14.1248 41.7191 13.4647C40.2191 12.4793 38.3399 12.1272 35.4628 12.0022C34.0899 12.0022 32.9087 10.9813 32.6399 9.65843C32.4345 8.68941 31.9009 7.82101 31.1292 7.19999C30.3575 6.57898 29.395 6.24345 28.4045 6.2501H21.5962C19.5378 6.2501 17.7649 7.67718 17.3607 9.65843C17.092 10.9813 15.9107 12.0022 14.5378 12.0022C11.6628 12.1272 9.78366 12.4813 8.28158 13.4647C7.27436 14.125 6.40715 14.9774 5.72949 15.973C4.16699 18.2647 4.16699 21.4563 4.16699 27.8418C4.16699 34.2272 4.16699 37.4168 5.72741 39.7105C6.40241 40.7022 7.26908 41.5543 8.28158 42.2188C10.617 43.7501 13.8691 43.7501 20.3712 43.7501Z" fill="#E879F9" />
@@ -635,7 +635,7 @@ function ChatbotForm({bot, botId, userId, independentMode = false}) {
                     name="stylePrompt"
                     value={formData.stylePrompt}
                     onChange={handleChange}
-                    placeholder="Style Prompt*"
+                    placeholder="Karakter Talimatı*"
                     className={cn(
                         textareaClass(showErrors && errors.stylePrompt),
                         promptGenerationStatus === 'processing' && "border-fuchsia-400/50",

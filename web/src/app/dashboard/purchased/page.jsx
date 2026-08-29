@@ -380,24 +380,24 @@ export default function SatinAldiklarim() {
               <button
                 onClick={() => setViewMode("grid")}
                 className={cn(
-                  "p-2 rounded-lg transition cursor-pointer",
+                  "p-1.5 rounded-lg transition cursor-pointer",
                   viewMode === "grid"
                     ? "bg-white/10 text-white"
                     : "text-zinc-500 hover:text-zinc-300",
                 )}
               >
-                <LayoutGrid className="w-7 h-7" />
+                <LayoutGrid className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
                 className={cn(
-                  "p-2 rounded-lg transition cursor-pointer",
+                  "p-1.5 rounded-lg transition cursor-pointer",
                   viewMode === "list"
                     ? "bg-white/10 text-white"
                     : "text-zinc-500 hover:text-zinc-300",
                 )}
               >
-                <List className="w-7 h-7" />
+                <List className="w-5 h-5" />
               </button>
             </div>
           </div>

@@ -15,7 +15,7 @@ const initialPlanData = [
     monthly_price: "₺0",
     description: "LUMANORIS'in gücünü hiçbir ücret ödemeden keşfedin.",
     features: [
-      "Günlük mesaj hakkı",
+      "Günlük Lumacoin",
       "Temel chatbot oluşturma",
       "Pazaryerinde gezinme",
     ],
@@ -27,9 +27,9 @@ const initialPlanData = [
     title: "Gümüş",
     monthly_price: "₺149,00",
     description:
-      "Daha fazla mesaj hakkı ve gelişmiş özelliklerle bir üst seviyeye taşıyın.",
+      "Daha fazla Lumacoin ve gelişmiş özelliklerle bir üst seviyeye taşıyın.",
     features: [
-      "Artırılmış günlük mesaj hakkı",
+      "Artırılmış günlük Lumacoin",
       "Daha fazla chatbot oluşturma limiti",
       "Öncelikli destek",
     ],
@@ -43,7 +43,7 @@ const initialPlanData = [
     description:
       "Yoğun kullanıcılar için genişletilmiş limitler ve öncelikli destek.",
     features: [
-      "Yüksek günlük mesaj hakkı",
+      "Yüksek günlük Lumacoin",
       "Genişletilmiş chatbot limiti",
       "Öncelikli destek",
       "Gelişmiş istatistikler",
@@ -57,7 +57,7 @@ const initialPlanData = [
     monthly_price: "₺599,00",
     description: "Sınırsız imkanlar ve VIP destekle maksimum verim alın.",
     features: [
-      "Sınırsız mesaj hakkı",
+      "Sınırsız Lumacoin",
       "Sınırsız chatbot oluşturma",
       "7/24 VIP destek",
       "Gelişmiş istatistikler",

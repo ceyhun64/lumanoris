@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Forgot Password | Lumanoris",
+    title: "Şifremi Unuttum | Lumanoris",
 };
 
 export default function ForgotPasswordLayout({ children }) {

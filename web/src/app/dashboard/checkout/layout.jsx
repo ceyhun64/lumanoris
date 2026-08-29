@@ -1,13 +1,11 @@
 export const metadata = {
-    title: "Checkout | Lumanoris",
+  title: "Ödeme | Lumanoris",
 };
 
 export default function DashboardCheckout({ children }) {
-    return (
-        <>
-            <div className="dashboard-inner-layout">
-                {children}
-            </div>
-        </>
-    );
+  return (
+    <>
+      <div className="dashboard-inner-layout">{children}</div>
+    </>
+  );
 }

@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Register | Lumanoris",
+    title: "Kayıt Ol | Lumanoris",
 };
 
 export default function RegisterLayout({ children }) {

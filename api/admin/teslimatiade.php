@@ -68,6 +68,9 @@ $teslimat_iade_metini = $database->getGlobalVars('teslimat_iade_sartlari')['tesl
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             const formData = new FormData(this);
+            // CKEditor orijinal <textarea>'yi kendi DOM'uyla degistirdigi icin
+            // form icerigi bos gidiyordu; editor verisi acikca eklenmeli.
+            formData.set('teslimat_iade_sartlari', editorInstance.getData());
             try {
                 const res = await fetch('/admin/ajax/updategv.php', {
                     method: 'POST',

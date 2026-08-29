@@ -6,7 +6,8 @@ import { Button } from '@/shared/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
 import { calculateMessageAllowance } from '@/shared/lib/pricing';
-import { Percent, Coins, Gift } from 'lucide-react';
+import { Percent, Gift } from 'lucide-react';
+import { Lumacoin } from '@/shared/ui/lumacoin';
 
 const WEEKS_TO_DURATION = { 1: '1_week', 2: '2_weeks', 3: '3_weeks', 4: '1_month' };
 
@@ -168,15 +169,15 @@ export default function BuyModal({ isOpen, onClose, botData, userId, initialDura
                         {selectedDuration === '1_month' ? 'Bir aylık satış fiyatı: ' : 'Seçilen süreye göre satış fiyatı: '}
                         <b className="text-body-sm text-white">{price}{priceType === 'TL' ? '₺' : priceType}</b>
                     </span>
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fuchsia-500/15 text-fuchsia-300">
-                        <Coins className="h-4 w-4" />
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-400/10 ring-1 ring-amber-400/25">
+                        <Lumacoin size={18} />
                     </span>
                 </div>
 
                 {messageAllowance > 0 && (
                     <div className="mt-1.5 flex items-start gap-2 text-body-sm text-white/85">
                         <Gift className="mt-0.5 h-4 w-4 shrink-0 text-fuchsia-300" strokeWidth={1.75} />
-                        <span>Bu chatbotu satın alırsan <b>{messageAllowance} mesaj hakkı</b> kazanırsın (sadece bu chatbotta geçerli).</span>
+                        <span>Bu chatbotu satın alırsan <b>{messageAllowance} Lumacoin</b> kazanırsın (sadece bu chatbotta geçerli).</span>
                     </div>
                 )}
 

@@ -220,7 +220,7 @@ class MarketplaceController {
         $db   = Database::getInstance();
         $conn = $db->getConnection();
 
-        // (3) Taban koruma: dakikada 5 checkout denemesi.
+        // (3) Taban : dakikada 5 checkout denemesi.
         checkRateLimit($db, 'checkout:' . $userId, 5, 60);
 
         // (2) Idempotency anahtarı. İstemci göndermezse sepet içeriğinden

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useContext } from "react";
 import { UserContext } from "@/shared/contexts/UserContext";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Crown,
   User,
@@ -65,22 +66,100 @@ function ProfileImageEdit({ userId }) {
       if (result.success) {
         setPreview(avatar || null);
         window.dispatchEvent(new Event("profileUpdated"));
+        toast({
+          variant: "success",
+          title: avatar ? "Profil fotoğrafı güncellendi" : "Profil fotoğrafı kaldırıldı",
+        });
       } else {
-        console.error("Photo save failed:", result.message);
+        // Hata yalnizca console'a yaziliyordu: kullanici tikliyor, hicbir sey
+        // olmuyor, neden oldugunu goremiyordu.
+        toast({
+          variant: "destructive",
+          title: "Fotoğraf kaydedilemedi",
+          description: result.message || "Bilinmeyen bir hata oluştu.",
+        });
       }
     } catch (err) {
       console.error("Photo save error:", err);
+      toast({
+        variant: "destructive",
+        title: "Bağlantı hatası",
+        description: "Sunucuya ulaşılamadı.",
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleFileChange = (e) => {
+  /**
+   * Sunucu avatari data-URI olarak sakliyor ve 512 KB tavani var
+   * (UserController::MAX_AVATAR_DATA_URI_BYTES). Base64 ham dosyayi ~1.37x
+   * buyuttugu icin ~370 KB ustundeki her fotograf reddediliyordu — yani
+   * pratikte telefondan cekilmis her fotograf. Yuklemeden once tarayicida
+   * olcekleyip sikistiriyoruz; boylece dosya sinira takilmadan geciyor.
+   */
+  const compressToDataUri = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Dosya okunamadı."));
+      reader.onload = () => {
+        const img = new window.Image();
+        img.onerror = () => reject(new Error("Görsel çözümlenemedi."));
+        img.onload = () => {
+          const MAX_EDGE = 512;
+          const scale = Math.min(1, MAX_EDGE / Math.max(img.width, img.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(img.width * scale));
+          canvas.height = Math.max(1, Math.round(img.height * scale));
+
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          // Sunucudaki 512 KB tavanina rahat sigacak sekilde kaliteyi dusur.
+          const LIMIT = 400 * 1024;
+          let quality = 0.9;
+          let out = canvas.toDataURL("image/jpeg", quality);
+          while (out.length > LIMIT && quality > 0.35) {
+            quality -= 0.1;
+            out = canvas.toDataURL("image/jpeg", quality);
+          }
+          if (out.length > LIMIT) {
+            reject(new Error("Görsel çok büyük, daha küçük bir fotoğraf deneyin."));
+            return;
+          }
+          resolve(out);
+        };
+        img.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
+    e.target.value = ""; // ayni dosya tekrar secilebilsin
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => saveAvatar(reader.result);
-    reader.readAsDataURL(file);
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        variant: "destructive",
+        title: "Geçersiz dosya",
+        description: "Yalnızca görsel dosyası yükleyebilirsiniz.",
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const dataUri = await compressToDataUri(file);
+      await saveAvatar(dataUri);
+    } catch (err) {
+      setSaving(false);
+      toast({
+        variant: "destructive",
+        title: "Fotoğraf hazırlanamadı",
+        description: err.message || "Görsel işlenemedi.",
+      });
+    }
   };
 
   return (
@@ -89,7 +168,7 @@ function ProfileImageEdit({ userId }) {
         {preview ? (
           <img
             src={preview}
-            alt="Profile"
+            alt="Profil fotoğrafı"
             className="h-full w-full object-cover"
           />
         ) : (
@@ -596,9 +675,32 @@ function ContactForm() {
   );
 }
 
+const TABS = [
+  { key: "user", label: "Kullanıcı Profili", icon: User },
+  { key: "security", label: "Ödeme Bilgileri", icon: CreditCard },
+  { key: "email", label: "E-posta Adresi", icon: Mail },
+  { key: "phone", label: "Telefon Numarası", icon: Phone },
+  { key: "privacy", label: "Gizlilik Politikası", icon: ShieldCheck },
+  { key: "terms", label: "Kullanım Koşulları", icon: FileText },
+  { key: "contact", label: "Destek ve İletişim", icon: MessageSquare },
+];
+const TAB_KEYS = TABS.map((t) => t.key);
+
 export default function App() {
   const { userId, account } = useContext(UserContext);
-  const [activeTab, setActiveTab] = useState("user");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(
+    TAB_KEYS.includes(requestedTab) ? requestedTab : "user",
+  );
+
+  // URL değişirse (ör. menüden başka bir sekmeye derin bağlantı) sekmeyi izle.
+  useEffect(() => {
+    if (requestedTab && TAB_KEYS.includes(requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+  }, [requestedTab]);
   const [userInfo, setUserInfo] = useState({
     ad: "",
     soyad: "",
@@ -656,17 +758,6 @@ export default function App() {
       return { error: "Sunucuya bağlanılamadı." };
     }
   };
-
-  const tabs = [
-    { key: "user", label: "Kullanıcı Profili", icon: User },
-    { key: "security", label: "Ödeme Bilgileri", icon: CreditCard },
-    { key: "email", label: "E-posta Adresi", icon: Mail },
-    { key: "phone", label: "Telefon Numarası", icon: Phone },
-    { key: "language", label: "Dil ve Bölge", icon: Globe },
-    { key: "privacy", label: "Gizlilik Politikası", icon: ShieldCheck },
-    { key: "terms", label: "Kullanım Koşulları", icon: FileText },
-    { key: "contact", label: "Destek ve İletişim", icon: MessageSquare },
-  ];
 
   return (
     <PageLayout className="min-h-screen bg-luma-base text-white selection:bg-fuchsia-500/30 selection:text-fuchsia-200">
@@ -730,9 +821,7 @@ export default function App() {
           </div>
 
           <Button
-            onClick={() =>
-              toast.info("Abonelik yükseltme sayfasına yönlendiriliyorsunuz.")
-            }
+            onClick={() => router.push("/dashboard/upgrade")}
             className="group shrink-0"
           >
             <span>Abonelik Seçeneklerini İncele</span>
@@ -753,7 +842,7 @@ export default function App() {
                 Navigasyon
               </div>
               <TabsList className="flex flex-col w-full h-auto bg-transparent p-0 space-y-1">
-                {tabs.map((tab) => {
+                {TABS.map((tab) => {
                   const IconComponent = tab.icon;
                   return (
                     <TabsTrigger
@@ -864,20 +953,7 @@ export default function App() {
                   <PhoneEditor userId={userId} />
                 </TabsContent>
 
-                <TabsContent
-                  value="language"
-                  className="mt-0 space-y-6"
-                >
-                  <div className="border-b border-white/[0.06] pb-6">
-                    <h3 className="text-lg font-bold text-white tracking-tight">
-                      Dil ve Bölge
-                    </h3>
-                    <p className="text-xs text-white/50 mt-0.5">
-                      Arayüz dilinizi ve bölgesel tercihlerinizi seçin.
-                    </p>
-                  </div>
-                  <LanguageSelector />
-                </TabsContent>
+             
 
                 <TabsContent
                   value="privacy"

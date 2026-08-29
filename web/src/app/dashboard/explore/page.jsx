@@ -1,22 +1,22 @@
 "use client";
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   SearchX,
-  Compass,
   Plus,
-  ArrowUpRight,
   Bot,
   MessageSquare,
   Users,
   Layers,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { resolveCoverSrc } from "@/shared/lib/image";
 import BotList from "@/widgets/BotList";
-import MarketplaceToolbar from "@/widgets/MarketplaceToolbar";
+import MarketplaceControlBar from "@/widgets/MarketplaceControlBar";
 import { CardGrid } from "@/shared/ui/page-layout";
 
 function formatCompactNumber(n) {
@@ -27,19 +27,50 @@ function formatCompactNumber(n) {
   return String(num);
 }
 
-function StatBox({ icon: Icon, label, value, accent }) {
-  const accentCls = {
-    zinc: { border: "border-white/[0.08]", bg: "bg-zinc-900/60", label: "text-zinc-400", value: "text-white" },
-    violet: { border: "border-violet-500/20", bg: "bg-violet-500/[0.03]", label: "text-violet-400", value: "text-violet-300" },
-    fuchsia: { border: "border-fuchsia-500/20", bg: "bg-fuchsia-500/[0.03]", label: "text-fuchsia-400", value: "text-fuchsia-300" },
-  }[accent || "zinc"];
-
+function StatCard2026({
+  icon: Icon,
+  label,
+  value,
+  subtext,
+  badgeText,
+  badgeColor = "violet",
+}) {
   return (
-    <div className={`rounded-2xl border ${accentCls.border} ${accentCls.bg} backdrop-blur-xl p-4 space-y-1`}>
-      <p className={`text-caption font-mono uppercase tracking-wider flex items-center gap-1.5 ${accentCls.label}`}>
-        <Icon className="w-3.5 h-3.5" /> {label}
-      </p>
-      <p className={`text-2xl font-bold tracking-tight ${accentCls.value}`}>{value}</p>
+    <div className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-b from-zinc-900/60 to-zinc-950/80 p-5 backdrop-blur-2xl transition-all duration-300 hover:border-white/20 hover:shadow-2xl hover:shadow-violet-500/5">
+      {/* Subtle top border glow sweep */}
+      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-violet-600/10 blur-2xl transition-all duration-500 group-hover:bg-violet-500/20 group-hover:scale-125 pointer-events-none" />
+
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-caption font-bold uppercase tracking-wider text-zinc-400">
+          {label}
+        </span>
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-zinc-900/80 text-violet-400 shadow-inner group-hover:scale-110 group-hover:border-violet-500/40 transition-transform duration-300">
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-baseline justify-between gap-2">
+        <div className="text-2xl font-black tracking-tight text-white sm:text-3xl font-mono">
+          {value}
+        </div>
+        {badgeText && (
+          <span
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-caption font-bold tracking-wide uppercase ${
+              badgeColor === "emerald"
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                : "border-violet-500/30 bg-violet-500/10 text-violet-300"
+            }`}
+          >
+            <TrendingUp className="h-2.5 w-2.5" />
+            {badgeText}
+          </span>
+        )}
+      </div>
+
+      {subtext && (
+        <p className="mt-1 text-xs text-zinc-400 font-medium">{subtext}</p>
+      )}
     </div>
   );
 }
@@ -69,6 +100,19 @@ export default function Explore() {
   const [apiBots, setApiBots] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortType, setSortType] = useState("onerilen");
+  const searchInputRef = useRef(null);
+
+  // Anasayfadaki kontrol paneliyle aynı ⌘K/Ctrl+K kısayolu.
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -175,6 +219,14 @@ export default function Explore() {
     comments: bot.toplam_comments,
     saves: bot.toplam_lists,
     weeklyPrice: Number(bot.ucret_haftalik) || 0,
+    // Ortak kartin bekledigi alanlar — anasayfadaki mapping ile ayni.
+    author:
+      (bot.owner_name === "SYSTEM" ? "Lumanoris" : bot.owner_name) || "Anonim",
+    badge: {
+      type: bot.durum == 0 ? "sold" : "produced",
+      label: bot.durum == 1 ? "Daha Önce Satıldı" : "Doğrulanmış Üretim",
+    },
+    rating: 4.9,
   }));
 
   let filteredBots = mappedBots;
@@ -255,75 +307,81 @@ export default function Explore() {
       </div>
 
       <div className="relative space-y-8">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-white/[0.08]">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 px-3 py-1 text-xs font-mono font-semibold text-fuchsia-300">
-              <Compass className="w-3.5 h-3.5" />
-              <span>Pazaryeri</span>
+        {/* Anasayfadan taşınan pazaryeri başlığı ve istatistik kartları —
+            anasayfa artık sohbet kompozitörüyle açılıyor, marketin genel
+            görünümü buraya, Keşfet'in kendi sayfasına taşındı. */}
+        <header className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-3.5 py-1 text-xs font-bold text-violet-300 shadow-lg shadow-violet-500/5 backdrop-blur-md">
+              <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+              <span>2026 AI Agent Marketplace</span>
             </div>
-            <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            <h1 className="font-display text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
               Keşfet
             </h1>
-            <p className="text-sm text-zinc-400 max-w-xl">
-              Topluluğun oluşturduğu chatbotları keşfet, sohbet et ve
-              favorilerini kaydet.
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-400">
+              En son nesil yapay zeka asistanlarını keşfedin, özel yeteneklerle
+              entegre edin veya kendi botunuzu pazarda yayınlayın.
             </p>
           </div>
 
-          <a
-            href="/dashboard/chatbots/create"
-            className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-btn px-5 py-3 text-xs font-semibold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Yeni Bot Oluştur</span>
-            <ArrowUpRight className="w-4 h-4 opacity-70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-          </a>
-        </div>
+          <div className="flex shrink-0 items-center gap-3">
+            <a
+              href="/dashboard/chatbots/create"
+              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-btn px-5 py-3 text-xs font-bold text-white shadow-glow transition-all duration-200 hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Yeni Bot Oluştur</span>
+            </a>
+          </div>
+        </header>
 
-        {/* Quick Stats Summary Bar — real marketplace-wide metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatBox
+        {/* Real Metrics Grid */}
+        <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard2026
             icon={Bot}
-            label="Toplam Bot"
+            label="Toplam Chatbot"
             value={loading ? "—" : formatCompactNumber(mappedBots.length)}
-            accent="zinc"
+            subtext="Aktif pazar asistanı"
+            badgeText="+12% bu ay"
+            badgeColor="violet"
           />
-          <StatBox
+          <StatCard2026
             icon={MessageSquare}
             label="Toplam Diyalog"
             value={loading ? "—" : formatCompactNumber(totalDialogues)}
-            accent="violet"
+            subtext="Geliştirici Etkileşimi"
+            badgeText="+24%"
+            badgeColor="emerald"
           />
-          <StatBox
+          <StatCard2026
             icon={Users}
             label="Toplam Takipçi"
             value={loading ? "—" : formatCompactNumber(totalFollowers)}
-            accent="fuchsia"
+            subtext="Topluluk Bağlantısı"
           />
-          <StatBox
+          <StatCard2026
             icon={Layers}
             label="Kategoriler"
             value={loading ? "—" : formatCompactNumber(categoryCount)}
-            accent="zinc"
+            subtext="Uzmanlık Alanları"
           />
-        </div>
+        </section>
 
         {error && (
           <p className="text-rose-400">Veri yüklenemedi: {error}</p>
         )}
 
-        <div className="relative z-20">
-          <MarketplaceToolbar
-            query={searchTerm}
-            onQueryChange={setSearchTerm}
-            sort={sortType}
-            onSortChange={setSortType}
-            categories={categories}
-            selected={activeCategory}
-            onSelectCategory={setActiveCategory}
-          />
-        </div>
+        <MarketplaceControlBar
+          query={searchTerm}
+          onQueryChange={setSearchTerm}
+          sort={sortType}
+          onSortChange={setSortType}
+          categories={categories}
+          selected={activeCategory}
+          onSelectCategory={setActiveCategory}
+          searchInputRef={searchInputRef}
+        />
 
         {loading ? (
           <CardGrid>
@@ -353,6 +411,7 @@ export default function Explore() {
             selectable={isFromList}
             selectedIds={selectedBots}
             onToggleSelect={toggleBotSelection}
+            onOpenDetails={(bot) => router.push(`/dashboard/chat/?botId=${bot.id}`)}
           />
         )}
       </div>

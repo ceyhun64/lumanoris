@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ThumbsUp, Check, ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import CategoryBadge from '@/shared/ui/category-badge';
 import { Card } from '@/shared/ui/card';
 
 function formatCompact(n) {
@@ -17,7 +18,7 @@ export default function MarketplaceListCard({ bot, selectable = false, selected 
     const router = useRouter();
     const {
         id, image, avatar, title, description, dialogues, time,
-        followers = 0, likes = 0, weeklyPrice,
+        followers = 0, likes = 0, weeklyPrice, kategori_id,
     } = bot;
 
     const handleActivate = () => {
@@ -58,6 +59,12 @@ export default function MarketplaceListCard({ bot, selectable = false, selected 
                 {/* Fuchsia wash that appears on hover — the "premium reveal" */}
                 <div className="absolute inset-0 bg-gradient-to-t from-fuchsia-600/25 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
+                {/* Kategori rozeti — botun hangi alan icin yapildigini
+                    aciklamayi okumadan gosterir. */}
+                <CategoryBadge
+                    category={kategori_id}
+                    className="absolute left-2.5 top-2.5 bg-black/55"
+                />
                 {weeklyPrice > 0 && (
                     <span className="absolute right-2.5 top-2.5 rounded-full bg-gradient-btn px-2.5 py-1 text-caption font-bold text-white shadow-[0_2px_10px_rgba(192,38,211,0.5)]">
                         {weeklyPrice}₺<span className="font-medium opacity-80">/hf</span>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Bot, MessageSquare, Heart, Trash2, Rocket, ExternalLink } from "lucide-react";
+import CategoryBadge from "@/shared/ui/category-badge";
 
 // Only loaded once a card's publish/price/delete modal is actually opened —
 // these are bundled once per page (not per card) but are rarely needed at all.
@@ -44,9 +45,7 @@ export default function ChatbotCard({
             <Bot className="h-12 w-12 opacity-50" />
           </div>
         )}
-        <div className="absolute top-3 left-3 rounded-full bg-black/60 px-3 py-1 text-caption font-medium text-white/90 backdrop-blur-md border border-white/10">
-          {category}
-        </div>
+        <CategoryBadge category={category} className="absolute left-3 top-3 bg-black/55" />
         <div className="absolute top-3 right-3 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 text-caption font-semibold backdrop-blur-md">
           {status}
         </div>

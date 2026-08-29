@@ -3,13 +3,11 @@ import dynamic from 'next/dynamic';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
 import { useRouter } from 'next/navigation';
 import {
-    DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
-    DropdownMenuSeparator, DropdownMenuLabel,
-} from '@/shared/ui/dropdown-menu';
-import {
     Bell, BellOff, ThumbsUp, ThumbsDown, Share2, MessageCircle, ListPlus,
-    MoreHorizontal, ShoppingCart, EyeOff, Flag, ArrowRight, ChevronRight,
+    ShoppingCart, EyeOff, Flag, ArrowRight, ChevronRight, Check,
 } from 'lucide-react';
+import { formatCurrency } from '@/shared/lib/format';
+import CategoryBadge from '@/shared/ui/category-badge';
 import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
 import { requireLogin } from '@/shared/lib/auth-guard';
@@ -31,6 +29,40 @@ function formatCompact(n) {
     const num = Number(n) || 0;
     if (num >= 1000) return (num / 1000).toFixed(num % 1000 === 0 ? 0 : 1).replace('.', ',') + ' B';
     return String(num);
+}
+
+/**
+ * Eylem çubuğundaki tek düğme. Eskiden bu eylemlerin tamamı "…" menüsünün
+ * içinde saklıydı: kullanıcı beğeni/yorum sayılarını görmek için bile menüyü
+ * açmak zorundaydı. Artık hepsi sayaçlarıyla birlikte açıkta.
+ */
+function ActionPill({ icon: Icon, label, count, active, activeTone = 'fuchsia', tone = 'default', disabled, onClick, className }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            disabled={disabled}
+            aria-pressed={typeof active === 'boolean' ? active : undefined}
+            className={cn(
+                'flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 font-display text-label font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                active
+                    ? activeTone === 'rose'
+                        ? 'border-rose-400/40 bg-rose-500/[0.12] text-rose-200'
+                        : 'border-fuchsia-400/40 bg-fuchsia-500/[0.12] text-fuchsia-200'
+                    : tone === 'muted'
+                        ? 'border-transparent text-white/35 hover:bg-white/[0.05] hover:text-white/70'
+                        : 'border-white/[0.08] bg-white/[0.03] text-white/70 hover:border-white/15 hover:bg-white/[0.07] hover:text-white',
+                disabled && 'cursor-default opacity-50 hover:border-white/[0.08] hover:bg-white/[0.03]',
+                className,
+            )}
+        >
+            <Icon className="h-3.5 w-3.5 shrink-0" />
+            <span className="whitespace-nowrap">{label}</span>
+            {typeof count === 'number' && (
+                <span className="tabular-nums text-current opacity-55">{formatCompact(count)}</span>
+            )}
+        </button>
+    );
 }
 
 export default function ProfileCard({bot, comments}) {
@@ -69,6 +101,27 @@ export default function ProfileCard({bot, comments}) {
         follows: 0,
         commentCount: 0,
     });
+    // Bot verisi geldiğinde/değiştiğinde profile'ı doldur. Bu eşleme eksikti:
+    // profile.id null kaldığı için followchatbot/likechatbot/addcomment/
+    // addtocart/list çağrılarının tümü chatbot_id=null ile gidiyordu ve
+    // başlıkta bot adı hiç görünmüyordu.
+    useEffect(() => {
+        if (!bot?.id) return;
+        setProfile({
+            id: bot.id,
+            title: bot.isim || "",
+            author: bot.author_username || "",
+            seller: bot.owner_username || "",
+            description: bot.aciklama || "",
+            image: bot.profil_fotografi ? formatImage(bot.profil_fotografi) : "",
+            price: Number(bot.ucret_haftalik) || 0,
+            priceType: "TL",
+            duration: "1",
+            follows: Number(bot.follows) || 0,
+            commentCount: Array.isArray(comments) ? comments.length : 0,
+        });
+    }, [bot, comments]);
+
     const formatImage = (img) => {
         if (!img) return "";
         return img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
@@ -295,7 +348,7 @@ export default function ProfileCard({bot, comments}) {
         }
     };
 
-    const avatarSrc = profile.image || resolveAvatarSrc(null).src;
+    const avatarSrc = profile.image || resolveAvatarSrc(null);
     const isPaidAndUnowned = Number(bot.ucret_haftalik) > 0 && !isInCart;
 
     const followToggle = async () => {
@@ -381,99 +434,90 @@ export default function ProfileCard({bot, comments}) {
                 tüm pazaryeri paneli (açıklama, yorumlar, beğeni, paylaş vb.)
                 artık burada değil; kullanıcının dikkati sohbette kalsın diye
                 isme tıklanınca açılan bir diyaloğa taşındı. */}
-            <div className="sticky top-0 z-10 -mx-4 flex items-center justify-between gap-3 border-b border-white/[0.06] bg-luma-base/85 px-4 py-3 backdrop-blur-md md:-mx-16 md:px-16">
-                <button
-                    onClick={() => setInfoOpen(true)}
-                    className="group -m-1.5 flex min-w-0 items-center gap-3 rounded-lg p-1.5 text-left transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-1 ring-fuchsia-400/25">
-                        <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
-                    </div>
-                    <div className="min-w-0">
-                        <p className="flex items-center gap-1 truncate font-display text-body font-bold text-white">
-                            {profile.title}
-                            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-white/30 transition-transform group-hover:translate-x-0.5" />
-                        </p>
-                        <p className="truncate text-label text-white/45">
-                            {formatCompact(profile.follows)} takipçi · {formatCompact(bot.toplam_chats)} diyalog
-                        </p>
-                    </div>
-                </button>
-
-                <div className="flex shrink-0 items-center gap-2">
-                    {isPaidAndUnowned && (
-                        <button
-                            className="hidden h-9 shrink-0 items-center justify-center rounded-full bg-gradient-btn px-4 font-display text-label font-semibold text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex"
-                            onClick={handleBuy}
-                        >
-                            Satın Al · {bot.ucret_haftalik}₺
-                        </button>
-                    )}
-
+            {/* Sohbetin üstünde duran başlık. İki sıra: üstte kimlik +
+                birincil eylemler, altta eskiden "…" menüsünde saklı duran
+                eylemlerin tamamı açıkta. Dar ekranda alt sıra yatay kayar. */}
+            <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-luma-base/85 backdrop-blur-xl">
+                <div className="flex items-center justify-between gap-3 px-4 pt-3 md:px-16">
                     <button
-                        onClick={followToggle}
-                        className={cn(
-                            "flex h-9 shrink-0 items-center justify-center rounded-lg border-[1.5px] border-transparent px-3.5 font-display text-label font-bold text-white transition-all duration-200 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            isFollowing
-                                ? "bg-origin-border [background-clip:padding-box,border-box] [background-image:linear-gradient(#18171F,#18171F),linear-gradient(150deg,#D946EF,#E879F9)]"
-                                : "bg-white/[0.04] hover:bg-white/[0.08]",
-                        )}
+                        onClick={() => setInfoOpen(true)}
+                        className="group -m-1.5 flex min-w-0 items-center gap-3 rounded-xl p-1.5 text-left transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                        {isFollowing ? "Takipte" : "Takip Et"}
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-1 ring-fuchsia-400/25">
+                            <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="flex items-center gap-1 truncate font-display text-body font-bold text-white">
+                                {profile.title || bot.isim || "Chatbot"}
+                                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-white/30 transition-transform group-hover:translate-x-0.5" />
+                            </p>
+                            <p className="flex items-center gap-2 truncate text-label text-white/45">
+                                <CategoryBadge category={bot.kategori_id} />
+                                <span className="truncate">
+                                    {formatCompact(profile.follows)} takipçi · {formatCompact(bot.toplam_chats)} diyalog
+                                </span>
+                            </p>
+                        </div>
                     </button>
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                    <div className="flex shrink-0 items-center gap-2">
+                        {isPaidAndUnowned && (
                             <button
-                                className="flex h-9 w-9 items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                aria-label="Daha fazla seçenek"
+                                className="hidden h-9 shrink-0 items-center justify-center rounded-full bg-gradient-btn px-4 font-display text-label font-semibold text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex"
+                                onClick={handleBuy}
                             >
-                                <MoreHorizontal className="h-[18px] w-[18px]" />
+                                Satın Al · {formatCurrency(bot.ucret_haftalik)}
                             </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="min-w-[200px]">
-                            <DropdownMenuItem onClick={toggleLike} className={cn(liked && "text-fuchsia-300")}>
-                                <ThumbsUp className="h-4 w-4" /> Beğen · {formatCompact(likeCount)}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={toggleDislike} className={cn(disliked && "text-rose-300")}>
-                                <ThumbsDown className="h-4 w-4" /> Beğenme · {formatCompact(dislikeCount)}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setCommentOpen(true)}>
-                                <MessageCircle className="h-4 w-4" /> Yorumlar · {commentCount}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setShareOpen(true)}>
-                                <Share2 className="h-4 w-4" /> Paylaş
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setModalVisible(true)}>
-                                <ListPlus className="h-4 w-4" /> Listeye Ekle
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={handleAddToCart}
-                                className={cn(isInCart && "pointer-events-none opacity-50")}
-                            >
-                                <ShoppingCart className="h-4 w-4" /> {isInCart ? "Sepette" : "Sepete Ekle"}
-                            </DropdownMenuItem>
-                            {isPaidAndUnowned && (
-                                <DropdownMenuItem onClick={handleBuy} className="sm:hidden">
-                                    <ShoppingCart className="h-4 w-4" /> Satın Al · {bot.ucret_haftalik}₺
-                                </DropdownMenuItem>
+                        )}
+
+                        <button
+                            onClick={followToggle}
+                            className={cn(
+                                "flex h-9 shrink-0 items-center gap-1.5 rounded-full border-[1.5px] border-transparent px-4 font-display text-label font-bold text-white transition-all duration-200 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                isFollowing
+                                    ? "bg-origin-border [background-clip:padding-box,border-box] [background-image:linear-gradient(#18171F,#18171F),linear-gradient(150deg,#D946EF,#E879F9)]"
+                                    : "bg-white/[0.04] hover:bg-white/[0.08]",
                             )}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Bildirimler</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => setNotificationsEnabled(!notificationsEnabled)}>
-                                {notificationsEnabled
-                                    ? <><BellOff className="h-4 w-4" /> Bildirimleri Kapat</>
-                                    : <><Bell className="h-4 w-4" /> Bildirimleri Aç</>}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={handleNotInterested}>
-                                <EyeOff className="h-4 w-4 text-fuchsia-400" /> İlgilenmiyorum
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setReportOpen(true)}>
-                                <Flag className="h-4 w-4 text-fuchsia-400" /> Bildir
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                        >
+                            {isFollowing && <Check className="h-3.5 w-3.5" />}
+                            {isFollowing ? "Takipte" : "Takip Et"}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Eskiden "…" menüsünün içindekilerin tamamı */}
+                <div className="scrollbar-none flex items-center gap-1.5 overflow-x-auto px-4 pb-2.5 pt-2.5 md:px-16">
+                    {isPaidAndUnowned && (
+                        <ActionPill
+                            icon={ShoppingCart}
+                            label={`Satın Al · ${formatCurrency(bot.ucret_haftalik)}`}
+                            onClick={handleBuy}
+                            className="border-fuchsia-400/40 bg-fuchsia-500/[0.12] text-fuchsia-200 sm:hidden"
+                        />
+                    )}
+                    <ActionPill icon={ThumbsUp} label="Beğen" count={likeCount} active={liked} onClick={toggleLike} />
+                    <ActionPill icon={ThumbsDown} label="Beğenme" count={dislikeCount} active={disliked} activeTone="rose" onClick={toggleDislike} />
+                    <ActionPill icon={MessageCircle} label="Yorumlar" count={commentCount} onClick={() => setCommentOpen(true)} />
+                    <ActionPill icon={Share2} label="Paylaş" onClick={() => setShareOpen(true)} />
+                    <ActionPill icon={ListPlus} label="Listeye Ekle" onClick={() => setModalVisible(true)} />
+                    <ActionPill
+                        icon={ShoppingCart}
+                        label={isInCart ? "Sepette" : "Sepete Ekle"}
+                        active={isInCart}
+                        disabled={isInCart}
+                        onClick={handleAddToCart}
+                    />
+                    <ActionPill
+                        icon={notificationsEnabled ? Bell : BellOff}
+                        label={notificationsEnabled ? "Bildirimler Açık" : "Bildirimler Kapalı"}
+                        active={notificationsEnabled}
+                        onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+                    />
+
+                    <span className="mx-1 h-5 w-px shrink-0 bg-white/10" />
+
+                    <ActionPill icon={EyeOff} label="İlgilenmiyorum" tone="muted" onClick={handleNotInterested} />
+                    <ActionPill icon={Flag} label="Bildir" tone="muted" onClick={() => setReportOpen(true)} />
                 </div>
             </div>
 
@@ -523,7 +567,7 @@ export default function ProfileCard({bot, comments}) {
                             className="flex h-11 w-full items-center justify-center rounded-xl bg-gradient-btn font-display text-body-sm font-semibold text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             onClick={() => { setInfoOpen(false); handleBuy(); }}
                         >
-                            Satın Al · {bot.ucret_haftalik}₺
+                            Satın Al · {formatCurrency(bot.ucret_haftalik)}
                         </button>
                     )}
                 </DialogContent>

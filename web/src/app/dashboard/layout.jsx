@@ -84,7 +84,12 @@ export default function DashboardLayout({ children }) {
                         )}
 
                         <main className="flex flex-col flex-1 min-h-0">
-                            <Header userId={userId} account={account} />
+                            {/* Ödeme akışı dikkat dağıtmayan tek odaklı bir ekran:
+                                kenar çubuğu ve mobil navbar zaten hideNav ile
+                                gizleniyordu, üst başlık ise koşulun dışında
+                                kalmıştı. Sayfa kendi "Sepete Dön" düğmesini ve
+                                TLS rozetini taşıyor. */}
+                            {!hideNav && <Header userId={userId} account={account} />}
                             <div id="main-content" className="flex-1 w-full max-w-[1600px] mx-auto">
                                 {children}
                             </div>

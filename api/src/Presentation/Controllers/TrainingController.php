@@ -79,6 +79,128 @@ class TrainingController {
         }
     }
 
+    // Bir web sayfasindan metin cikarma tavanlari.
+    private const MAX_URL_BYTES   = 3 * 1024 * 1024;
+    private const URL_TIMEOUT_SEC = 12;
+
+    /**
+     * "Bilgi Bankasi > URL Ekle" icin sunucu tarafi sayfa cekimi.
+     *
+     * Tarayicidan dogrudan cekmek mumkun degil: hem CORS hem de
+     * next.config.mjs'teki CSP (connect-src 'self') engelliyor. Sunucudan
+     * cekmek ise SSRF acar — istemcinin verdigi adres ic aga bakabilir
+     * (127.0.0.1, 169.254.169.254 metadata servisi, 10.x, 192.168.x ...).
+     * Bu yuzden:
+     *   1. Yalnizca http/https semasi,
+     *   2. Host DNS ile cozulur ve TUM cozulen IP'ler ozel/loopback/
+     *      link-local araliklara karsi kontrol edilir,
+     *   3. Yonlendirme kapali (redirect ile ic aga sicramasin),
+     *   4. Boyut ve sure tavani, kullanici basina hiz siniri.
+     */
+    public static function readUrl(): void {
+        require_method('POST');
+        $userId = AuthMiddleware::requireAuth();
+        checkRateLimit(Database::getInstance(), 'readurl:' . $userId, 15, 300);
+
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $url   = trim((string) ($input['url'] ?? ''));
+
+        if ($url === '') {
+            JsonResponse::error('URL gerekli.', 400, AppConfig::ERR_VALIDATION);
+        }
+
+        $parts = parse_url($url);
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        $host   = (string) ($parts['host'] ?? '');
+
+        if (!in_array($scheme, ['http', 'https'], true) || $host === '') {
+            JsonResponse::error('Yalnizca http/https adresleri desteklenir.', 400, AppConfig::ERR_VALIDATION);
+        }
+        if (!self::hostIsPublic($host)) {
+            JsonResponse::error('Bu adres taranamaz (ic ag adresleri engellidir).', 400, AppConfig::ERR_VALIDATION);
+        }
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_TIMEOUT        => self::URL_TIMEOUT_SEC,
+            CURLOPT_CONNECTTIMEOUT => 6,
+            CURLOPT_MAXFILESIZE    => self::MAX_URL_BYTES,
+            CURLOPT_USERAGENT      => 'LumanorisBot/1.0 (+knowledge-base fetch)',
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_PROTOCOLS      => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+        ]);
+        $body   = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        $ctype  = (string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+        $err    = curl_error($ch);
+        curl_close($ch);
+
+        if ($body === false) {
+            error_log('[readurl] curl: ' . $err);
+            JsonResponse::error('Sayfaya ulasilamadi.', 502, AppConfig::ERR_SERVER);
+        }
+        if ($status >= 400) {
+            JsonResponse::error('Sayfa ' . $status . ' dondurdu.', 502, AppConfig::ERR_SERVER);
+        }
+        if ($ctype !== '' && stripos($ctype, 'html') === false && stripos($ctype, 'text/plain') === false) {
+            JsonResponse::error('Bu adres bir web sayfasi degil (' . $ctype . ').', 400, AppConfig::ERR_VALIDATION);
+        }
+        if (strlen($body) > self::MAX_URL_BYTES) {
+            JsonResponse::error('Sayfa cok buyuk (maks. 3MB).', 413, AppConfig::ERR_VALIDATION);
+        }
+
+        JsonResponse::success(['text' => self::htmlToText($body), 'url' => $url]);
+    }
+
+    /** Host, DNS cozumlemesi dahil, halka acik bir adrese mi isaret ediyor? */
+    private static function hostIsPublic(string $host): bool {
+        $ips = [];
+
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            $ips[] = $host;
+        } else {
+            $records = @dns_get_record($host, DNS_A | DNS_AAAA) ?: [];
+            foreach ($records as $r) {
+                if (!empty($r['ip']))   $ips[] = $r['ip'];
+                if (!empty($r['ipv6'])) $ips[] = $r['ipv6'];
+            }
+            if ($ips === []) {
+                $resolved = gethostbyname($host);
+                if ($resolved !== $host) $ips[] = $resolved;
+            }
+        }
+
+        if ($ips === []) {
+            return false; // cozulemeyen host: fail-closed
+        }
+
+        foreach ($ips as $ip) {
+            $ok = filter_var(
+                $ip,
+                FILTER_VALIDATE_IP,
+                FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+            );
+            if ($ok === false) {
+                return false; // tek bir ozel IP bile yeterli sebep
+            }
+        }
+        return true;
+    }
+
+    /** Kaba ama yeterli HTML -> duz metin. */
+    private static function htmlToText(string $html): string {
+        $html = preg_replace('#<(script|style|noscript|svg|head)\b[^>]*>.*?</\1>#is', ' ', $html) ?? $html;
+        $text = strip_tags($html);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/[ \t\x{00A0}]+/u', ' ', $text) ?? $text;
+        $text = preg_replace('/\s*\n\s*/u', "\n", $text) ?? $text;
+        $text = preg_replace('/\n{3,}/u', "\n\n", $text) ?? $text;
+        return trim($text);
+    }
+
     // Cap on the decoded PDF size this endpoint will parse. Was previously
     // reachable with no session and no size limit at all — anyone on the
     // internet could submit arbitrarily large/malformed PDFs and burn server

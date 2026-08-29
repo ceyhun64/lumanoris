@@ -1,9 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
-import { Checkbox } from '@/shared/ui/checkbox';
-import { Button } from '@/shared/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, ListPlus, Check, ListX } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function AddToListModal({ userId, botId, isOpen, onClose, header = "Listeye Ekle", onCreateList }) {
     const [newListName, setNewListName] = useState('');
@@ -114,66 +113,132 @@ export default function AddToListModal({ userId, botId, isOpen, onClose, header 
         }
     };
 
+    const changedCount =
+        selectedListIds.filter((id) => !initialListIds.includes(id)).length +
+        initialListIds.filter((id) => !selectedListIds.includes(id)).length;
+
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-[450px] bg-luma-card border-transparent p-6 text-center">
-                {showFeedback && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-glow">
-                        Değişiklikler kaydedildi ✅
+            <DialogContent className="max-w-[440px] border-white/10 bg-[#0c0c14] p-0">
+                <div className="flex items-center gap-3 border-b border-white/[0.06] px-5 py-4">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-400">
+                        <ListPlus className="h-[18px] w-[18px]" />
+                    </span>
+                    <div className="min-w-0 text-left">
+                        <DialogTitle className="text-base font-semibold text-white">{header}</DialogTitle>
+                        <DialogDescription className="mt-0.5 text-xs text-white/45">
+                            Botu listelerine ekle ya da çıkar.
+                        </DialogDescription>
                     </div>
-                )}
-                <DialogTitle className="mb-1 text-title-sm">{header}</DialogTitle>
-                <DialogDescription className="mb-5 text-left font-sans text-body font-normal leading-6 text-white">
-                    Bu botu bir veya daha fazla listeye ekleyebilir veya listelerden çıkarabilirsiniz.
-                </DialogDescription>
-
-                <div className="mb-6 flex w-full items-center justify-center gap-2 rounded-xl bg-luma-input px-5 py-4">
-                    <input
-                        type="text"
-                        placeholder="Yeni Liste Adı"
-                        value={newListName}
-                        onChange={(e) => setNewListName(e.target.value)}
-                        className="flex-1 bg-transparent font-display text-body-lg text-white placeholder:text-white/40 focus:outline-none"
-                    />
-                    <button
-                        onClick={handleAddNewList}
-                        className="flex items-center justify-center rounded-lg p-1 text-fuchsia-400 transition-colors hover:bg-fuchsia-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        aria-label="Yeni liste ekle"
-                    >
-                        <Plus className="h-5 w-5" />
-                    </button>
                 </div>
 
-                <div className="mb-6 flex w-full flex-col items-start gap-3">
-                    {allLists.map((list) => (
-                        <label
-                            key={list.id}
-                            className="flex w-full cursor-pointer items-center gap-3 rounded-xl p-2 font-sans text-sm text-white transition-colors duration-200 hover:bg-white/5"
+                <div className="px-5 pb-5 pt-4">
+                    {/* Yeni liste — Enter ile de eklenebiliyor, eskiden yalnizca
+                        kucuk arti dugmesi vardi ve gorulmuyordu. */}
+                    <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-1.5 pl-3.5 transition-colors focus-within:border-fuchsia-400/40">
+                        <input
+                            type="text"
+                            placeholder="Yeni liste oluştur..."
+                            value={newListName}
+                            data-focus-managed
+                            onChange={(e) => setNewListName(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddNewList();
+                                }
+                            }}
+                            className="min-w-0 flex-1 border-none bg-transparent text-sm text-white outline-none placeholder:text-white/35"
+                        />
+                        <button
+                            type="button"
+                            onClick={handleAddNewList}
+                            disabled={!newListName.trim()}
+                            aria-label="Yeni liste ekle"
+                            className={cn(
+                                'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                                newListName.trim()
+                                    ? 'bg-gradient-btn text-white hover:brightness-110'
+                                    : 'cursor-not-allowed bg-white/[0.06] text-white/25',
+                            )}
                         >
-                            <Checkbox
-                                checked={selectedListIds.includes(Number(list.id))}
-                                onCheckedChange={() => handleCheckboxChange(Number(list.id))}
-                            />
-                            {list.name}
-                        </label>
-                    ))}
-                </div>
+                            <Plus className="h-4 w-4" />
+                        </button>
+                    </div>
 
-                <div className="flex justify-between gap-6">
-                    <Button
-                        onClick={onClose}
-                        variant="secondary"
-                        className="h-auto min-w-[120px] flex-1 border border-transparent bg-white/[0.06] py-3 text-title-sm hover:bg-white/10"
-                    >
-                        İptal
-                    </Button>
-                    <Button
-                        onClick={handleSave}
-                        disabled={loading}
-                        className="h-auto min-w-[120px] flex-1 py-3 text-title-sm"
-                    >
-                        {loading ? "Kaydediliyor..." : "Kaydet"}
-                    </Button>
+                    <div className="mt-4 max-h-[280px] space-y-1 overflow-y-auto overscroll-contain pr-1">
+                        {allLists.length === 0 ? (
+                            <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-white/10 px-4 py-8 text-center">
+                                <ListX className="h-6 w-6 text-white/25" />
+                                <p className="text-xs text-white/40">
+                                    Henüz listen yok. Yukarıdan ilk listeni oluştur.
+                                </p>
+                            </div>
+                        ) : (
+                            allLists.map((list) => {
+                                const checked = selectedListIds.includes(Number(list.id));
+                                return (
+                                    <button
+                                        key={list.id}
+                                        type="button"
+                                        onClick={() => handleCheckboxChange(Number(list.id))}
+                                        aria-pressed={checked}
+                                        className={cn(
+                                            'flex w-full items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                                            checked
+                                                ? 'border-fuchsia-400/35 bg-fuchsia-500/[0.1] text-white'
+                                                : 'border-transparent bg-white/[0.02] text-white/70 hover:bg-white/[0.06] hover:text-white',
+                                        )}
+                                    >
+                                        <span className="truncate text-sm font-medium">{list.name}</span>
+                                        <span
+                                            className={cn(
+                                                'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all duration-200',
+                                                checked
+                                                    ? 'border-transparent bg-gradient-btn text-white'
+                                                    : 'border-white/15 bg-transparent',
+                                            )}
+                                        >
+                                            {checked && <Check className="h-3 w-3" strokeWidth={3} />}
+                                        </span>
+                                    </button>
+                                );
+                            })
+                        )}
+                    </div>
+
+                    <div className="mt-5 flex items-center justify-between gap-3">
+                        <span className="text-[11px] text-white/35">
+                            {showFeedback
+                                ? 'Kaydedildi'
+                                : changedCount > 0
+                                    ? `${changedCount} değişiklik`
+                                    : 'Değişiklik yok'}
+                        </span>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="h-9 rounded-xl bg-white/[0.06] px-4 text-xs font-semibold text-white/80 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                                İptal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSave}
+                                disabled={loading || changedCount === 0}
+                                className={cn(
+                                    'flex h-9 items-center gap-1.5 rounded-xl px-4 text-xs font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                                    loading || changedCount === 0
+                                        ? 'cursor-not-allowed bg-white/[0.06] text-white/25'
+                                        : 'bg-gradient-btn text-white shadow-glow hover:brightness-110',
+                                )}
+                            >
+                                {showFeedback && <Check className="h-3.5 w-3.5" />}
+                                {loading ? 'Kaydediliyor...' : showFeedback ? 'Kaydedildi' : 'Kaydet'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>

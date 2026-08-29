@@ -25,6 +25,8 @@ coverage/
 
 # next.js
 .next/
+# NEXT_DIST_DIR ile alınan doğrulama build'leri (dev sunucusunun .next'ini ezmesin)
+.next-verify/
 out/
 
 # production

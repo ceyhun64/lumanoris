@@ -21,13 +21,29 @@ const DialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+/**
+ * TASMA KURALLARI — her iki içerik varyantı da bunları taşır:
+ *
+ *   • Genişlik: `w-full` viewport'un tamamını kaplıyordu, yani dar ekranda
+ *     kutu iki kenara da yapışıyordu. `calc(100vw-2rem)` her iki yanda
+ *     1rem pay bırakır; `max-w-*` ile birlikte çalışır.
+ *   • Yükseklik: hiçbir tavan yoktu. Uzun içerik (sözleşme metinleri, uzun
+ *     form, uzun liste) viewport'u aşıyor ve kaydırılamıyordu — üst/alt
+ *     kısımlara hiç ulaşılamıyordu. Artık `calc(100dvh-2rem)` tavanı ve
+ *     kendi içinde dikey kaydırma var.
+ *   • `overscroll-contain`: modalın sonuna gelince kaydırma arkadaki
+ *     sayfaya sıçramasın.
+ *
+ * Kendi `max-h`/`overflow` sınıfını veren çağrı yerleri (ör. sözleşme
+ * popup'ları) tailwind-merge sayesinde bunları geçersiz kılmaya devam eder.
+ */
 const DialogContent = React.forwardRef(({ className, children, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-transparent bg-luma-elevated p-6 shadow-modal duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+        "fixed left-[50%] top-[50%] z-50 grid w-[calc(100vw-2rem)] max-w-lg max-h-[calc(100dvh-2rem)] translate-x-[-50%] translate-y-[-50%] overflow-y-auto overscroll-contain gap-4 rounded-2xl border border-transparent bg-luma-elevated p-6 shadow-modal duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
         className
       )}
       {...props}
@@ -41,6 +57,36 @@ const DialogContent = React.forwardRef(({ className, children, ...props }, ref) 
   </DialogPortal>
 ));
 DialogContent.displayName = DialogPrimitive.Content.displayName;
+
+/**
+ * Kendi kutusunu ve kapatma düğmesini getiren modaller için gövdesiz varyant:
+ * yalnızca portal + overlay + ortalama sağlar, görsel kabuk çağırana ait.
+ *
+ * Neden gerekli: elle yazılmış `fixed inset-0` bir overlay, sayfa ağacının
+ * içinde kaldığı için üstündeki her stacking context'e ve scroll kutusuna
+ * bağımlı — tam sayfayı kapladığı garanti değil. Portal ile overlay her zaman
+ * document.body'ye çıkar; ayrıca Esc, dışarı tıklama, odak tuzağı ve arka plan
+ * kaydırma kilidi bedava gelir.
+ */
+const DialogContentBare = React.forwardRef(
+  ({ className, overlayClassName, children, ...props }, ref) => (
+    <DialogPortal>
+      <DialogOverlay className={cn("bg-black/80 backdrop-blur-md", overlayClassName)} />
+      <DialogPrimitive.Content
+        ref={ref}
+        className={cn(
+          "fixed left-[50%] top-[50%] z-50 max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] translate-x-[-50%] translate-y-[-50%] overflow-y-auto overscroll-contain focus:outline-none",
+          "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  ),
+);
+DialogContentBare.displayName = "DialogContentBare";
 
 const DialogHeader = ({ className, ...props }) => (
   <div className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)} {...props} />
@@ -72,5 +118,5 @@ DialogDescription.displayName = DialogPrimitive.Description.displayName;
 
 export {
   Dialog, DialogPortal, DialogOverlay, DialogClose, DialogTrigger,
-  DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription,
+  DialogContent, DialogContentBare, DialogHeader, DialogFooter, DialogTitle, DialogDescription,
 };

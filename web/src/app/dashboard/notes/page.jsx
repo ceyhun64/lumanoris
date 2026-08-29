@@ -5,6 +5,12 @@ import dynamic from "next/dynamic";
 import { UserContext } from "@/shared/contexts/UserContext";
 import CategoryFilter from "@/widgets/CategoryFilter";
 import {
+  Dialog,
+  DialogContentBare,
+  DialogTitle,
+  DialogDescription,
+} from "@/shared/ui/dialog";
+import {
   ChevronDown,
   Check,
   MoreVertical,
@@ -42,24 +48,22 @@ function DialogueModal({ isOpen, onClose, selectedHistory }) {
   if (!isOpen || !selectedHistory) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-[fadeIn_0.2s_ease-out]">
-      <div
-        className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-3xl border border-white/10 bg-[#0c0c14]/95 shadow-2xl shadow-fuchsia-950/30 overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContentBare className="w-[calc(100vw-2rem)] max-w-2xl">
+        <div className="relative flex max-h-[85vh] w-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0c0c14]/95 shadow-2xl shadow-fuchsia-950/30">
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10 bg-white/[0.02]">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400">
               <MessageSquare className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-white tracking-tight">
+              <DialogTitle className="text-base font-semibold tracking-tight text-white">
                 {selectedHistory.title || "Diyalog Detayı"}
-              </h3>
-              <p className="text-xs text-white/40">
+              </DialogTitle>
+              <DialogDescription className="text-xs text-white/40">
                 {selectedHistory.chatbot_isim} •{" "}
                 {selectedHistory.owner_kullanici_adi}
-              </p>
+              </DialogDescription>
             </div>
           </div>
           <button
@@ -84,7 +88,7 @@ function DialogueModal({ isOpen, onClose, selectedHistory }) {
             <span className="text-caption font-medium uppercase tracking-wider text-purple-400">
               Asistan Yanıtı
             </span>
-            <div className="rounded-2xl bg-fuchsia-950/20 border border-fuchsia-500/15 p-4 text-sm text-white/90 leading-relaxed">
+            <div className="max-h-[300px] overflow-y-auto overscroll-contain rounded-2xl bg-fuchsia-950/20 border border-fuchsia-500/15 p-4 text-sm text-white/90 leading-relaxed">
               {selectedHistory.output_message || "Yanıt bekleniyor..."}
             </div>
           </div>
@@ -98,8 +102,9 @@ function DialogueModal({ isOpen, onClose, selectedHistory }) {
             Kapat
           </button>
         </div>
-      </div>
-    </div>
+        </div>
+      </DialogContentBare>
+    </Dialog>
   );
 }
 
@@ -116,20 +121,21 @@ function ShareModal({ isOpen, urlId, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-[fadeIn_0.2s_ease-out]">
-      <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-[#0c0c14]/95 p-6 shadow-2xl shadow-fuchsia-950/30">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContentBare className="w-[calc(100vw-2rem)] max-w-md">
+        <div className="relative w-full rounded-3xl border border-white/10 bg-[#0c0c14]/95 p-6 shadow-2xl shadow-fuchsia-950/30">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2.5 text-white font-semibold">
+          <DialogTitle className="flex items-center gap-2.5 text-base text-white font-semibold">
             <Share2 className="h-5 w-5 text-fuchsia-400" />
             <span>Diyaloğu Paylaş</span>
-          </div>
+          </DialogTitle>
           <button onClick={onClose} className="text-white/40 hover:text-white">
             <X className="h-4 w-4" />
           </button>
         </div>
-        <p className="text-xs text-white/50 mb-4">
+        <DialogDescription className="text-xs text-white/50 mb-4">
           Bu diyaloğu bağlantı yoluyla başkalarıyla güvenle paylaşabilirsiniz.
-        </p>
+        </DialogDescription>
         <div className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 p-2 mb-4">
           <input
             type="text"
@@ -144,8 +150,9 @@ function ShareModal({ isOpen, urlId, onClose }) {
             {copied ? "Kopyalandı!" : "Kopyala"}
           </button>
         </div>
-      </div>
-    </div>
+        </div>
+      </DialogContentBare>
+    </Dialog>
   );
 }
 
@@ -160,13 +167,14 @@ function DeleteConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-[fadeIn_0.2s_ease-out]">
-      <div className="relative w-full max-w-sm rounded-3xl border border-white/10 bg-[#0c0c14]/95 p-6 shadow-2xl text-center">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContentBare className="w-[calc(100vw-2rem)] max-w-sm">
+        <div className="relative w-full rounded-3xl border border-white/10 bg-[#0c0c14]/95 p-6 shadow-2xl text-center">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 mb-4">
           <AlertCircle className="h-6 w-6" />
         </div>
-        <h3 className="text-base font-semibold text-white mb-1">{title}</h3>
-        <p className="text-xs text-white/50 mb-6">{description}</p>
+        <DialogTitle className="mb-1 text-base font-semibold text-white">{title}</DialogTitle>
+        <DialogDescription className="mb-6 text-xs text-white/50">{description}</DialogDescription>
         <div className="flex gap-3">
           <button
             onClick={onClose}
@@ -181,8 +189,9 @@ function DeleteConfirmModal({
             {confirmLabel}
           </button>
         </div>
-      </div>
-    </div>
+        </div>
+      </DialogContentBare>
+    </Dialog>
   );
 }
 
