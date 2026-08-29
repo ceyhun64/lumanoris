@@ -6,6 +6,9 @@ import { Toaster } from '@/shared/ui/toaster';
 export const metadata = {
   title: 'Lumanoris | AI Stüdyo & Market',
   description: 'Yapay zeka destekli arayüz',
+  // Sekme ikonu app/icon.png'den geliyor (App Router dosya konvansiyonu).
+  // Next linki otomatik enjekte ediyor; elle <link rel="icon"> eklemek
+  // gereksiz — zaten HTML'e cikmiyorlardi.
 };
 
 
@@ -13,8 +16,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="tr">
       <head>
-        <link rel="icon" href="/favicon-dark.png" media="(prefers-color-scheme: light)" />
-        <link rel="icon" href="/favicon-white.png" media="(prefers-color-scheme: dark)" />
         <style>{`
         .rdp-root {
     --rdp-accent-color: #FF66C4;
