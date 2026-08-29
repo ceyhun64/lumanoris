@@ -9,24 +9,10 @@ import {
   User,
   LogOut,
   X,
-  Sparkles,
-  CheckCircle2,
   Command,
   Settings,
-  ShieldCheck,
   ChevronDown,
-  ExternalLink,
   Wallet,
-  Sliders,
-  HelpCircle,
-  Trash2,
-  Plus,
-  MessageSquare,
-  Bot,
-  ShoppingBag,
-  ArrowRight,
-  TrendingUp,
-  Check,
 } from "lucide-react";
 
 const ICON_BTN_FOCUS =
@@ -147,7 +133,7 @@ function ProfilePopup({ user, profileImage, onLogout, onClose, onNavigate }) {
   return (
     <div className="absolute right-0 top-full mt-3 z-50 w-80 sm:w-96 rounded-2xl border border-white/10 bg-[#09090E] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-150">
       <div className="flex items-center gap-3.5 pb-3.5 border-b border-white/5">
-        <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-gradient-to-tr from-violet-600 via-indigo-600 to-fuchsia-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg shadow-violet-950/50 ring-1 ring-white/20">
+        <div className="relative w-11 h-11 rounded-full overflow-hidden bg-gradient-to-tr from-violet-600 via-indigo-600 to-fuchsia-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg shadow-violet-950/50 ring-1 ring-white/20">
           {profileImage ? (
             <img
               src={profileImage}
@@ -538,7 +524,7 @@ export default function Header({
               onClick={() => setShowProfile((prev) => !prev)}
               className={`flex items-center gap-2.5 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] transition-all duration-200 hover:border-violet-500/40 hover:bg-white/[0.06] hover:shadow-[0_0_20px_rgba(139,92,246,0.15)] ${ICON_BTN_FOCUS}`}
             >
-              <div className="relative h-8 w-8 overflow-hidden rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0 ring-1 ring-white/20">
+              <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0 ring-1 ring-white/20">
                 {profileImage ? (
                   <img
                     src={profileImage}

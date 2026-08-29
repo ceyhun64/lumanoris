@@ -410,7 +410,7 @@ export function Sidebar({
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-semibold shrink-0 shadow-sm">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-semibold shrink-0 shadow-sm">
                   {avatarLetter}
                 </div>
                 {!collapsed && (

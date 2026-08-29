@@ -197,7 +197,7 @@ export default function ForgotPassword() {
             className="flex items-center gap-3 group cursor-pointer"
             onClick={() => (window.location.href = "/")}
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-violet-600 p-0.5 shadow-[0_0_30px_rgba(217,70,239,0.3)] transition-transform duration-500 group-hover:scale-105">
+            <div className="w-10 h-10 rounded-xl  p-0.5 shadow-[0_0_30px_rgba(217,70,239,0.3)] transition-transform duration-500 group-hover:scale-105">
               <div className="w-full h-full bg-[#030305] rounded-md flex items-center justify-center">
                 <img
                   src={logo.src}

@@ -12,23 +12,15 @@ import {
   MessageSquare,
   Plus,
   Heart,
-  Bookmark,
-  Star,
   ArrowUpRight,
   ChevronRight,
   X,
   Zap,
   PackageSearch,
-  CheckCircle2,
-  Tag,
-  Maximize2,
   Cpu,
-  Activity,
-  Sliders,
-  Share2,
-  Lock,
-  ArrowRight,
   ArrowUp,
+  Mic,
+  Square,
   ChevronDown,
   Bot,
 } from "lucide-react";
@@ -448,6 +440,9 @@ function EmptyState2026({ onClearFilters }) {
  */
 function NewChatHero({ bot, value, onChange, onSubmit, loading, onPickBot }) {
   const textareaRef = useRef(null);
+  const speechRecognitionRef = useRef(null);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceError, setVoiceError] = useState("");
 
   // Tek satır yüksekliğinde başlar, içeriğe göre büyür, tavana gelince kendi
   // içinde kayar. Eski hâli 67px'e sabitlenmişti: tek satırlık bir mesajda
@@ -460,6 +455,59 @@ function NewChatHero({ bot, value, onChange, onSubmit, loading, onPickBot }) {
   };
 
   const canSend = Boolean(value.trim() && bot);
+
+  const toggleVoiceInput = () => {
+    if (isListening) {
+      speechRecognitionRef.current?.stop();
+      return;
+    }
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setVoiceError("Sesle yazma bu tarayıcıda desteklenmiyor.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    const initialValue = value.trim();
+    recognition.lang = "tr-TR";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+      setVoiceError("");
+      setIsListening(true);
+    };
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0].transcript)
+        .join("")
+        .trim();
+      onChange([initialValue, transcript].filter(Boolean).join(" "));
+      requestAnimationFrame(autoGrow);
+    };
+    recognition.onerror = (event) => {
+      if (event.error !== "aborted" && event.error !== "no-speech") {
+        setVoiceError("Ses algılanamadı. Lütfen tekrar deneyin.");
+      }
+    };
+    recognition.onend = () => {
+      speechRecognitionRef.current = null;
+      setIsListening(false);
+    };
+
+    speechRecognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  useEffect(
+    () => () => {
+      speechRecognitionRef.current?.abort();
+    },
+    [],
+  );
 
   return (
     <section className="relative mb-12 flex flex-col items-center pt-8 sm:pt-14">
@@ -483,27 +531,59 @@ function NewChatHero({ bot, value, onChange, onSubmit, loading, onPickBot }) {
             {/* data-focus-managed: global.css tüm textarea'lara focus'ta
                 çerçeve + gölge dayatıyor; halka zaten sarmalayıcıda olduğu
                 için o kural burada devre dışı (çift çerçeve olmasın). */}
-            <textarea
-              ref={textareaRef}
-              value={value}
-              rows={1}
-              placeholder="Yeni sohbete başla..."
-              data-focus-managed
-              onChange={(e) => {
-                onChange(e.target.value);
-                autoGrow();
-              }}
-              onInput={autoGrow}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  onSubmit();
-                }
-              }}
-              className="block max-h-[200px] w-full resize-none border-none bg-transparent px-2 py-2 font-sans text-[15px] leading-6 text-white outline-none placeholder:text-zinc-500"
-            />
+            <div className="relative">
+              <textarea
+                ref={textareaRef}
+                value={value}
+                rows={1}
+                placeholder="Yeni sohbete başla..."
+                data-focus-managed
+                onChange={(e) => {
+                  onChange(e.target.value);
+                  autoGrow();
+                }}
+                onInput={autoGrow}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    onSubmit();
+                  }
+                }}
+                className="block max-h-[200px] w-full resize-none border-none bg-transparent px-2 py-2 pr-24 font-sans text-[15px] leading-6 text-white outline-none placeholder:text-zinc-500"
+              />
 
-            <div className="mt-1.5 flex items-center justify-between gap-3">
+              <div className="absolute right-0 top-0 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleVoiceInput}
+                  aria-label={isListening ? "Sesle yazmayı durdur" : "Sesle yaz"}
+                  aria-pressed={isListening}
+                  title={isListening ? "Dinleniyor — durdurmak için tıklayın" : "Sesle yaz"}
+                  className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
+                    isListening
+                      ? "border-rose-400/60 bg-rose-500/15 text-rose-300 animate-pulse"
+                      : "border-white/10 bg-white/[0.04] text-zinc-400 hover:border-fuchsia-400/50 hover:text-fuchsia-300"
+                  }`}
+                >
+                  {isListening ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-4 w-4" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={onSubmit}
+                  disabled={!canSend}
+                  aria-label="Gönder"
+                  className={`flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 ${
+                    canSend
+                      ? "bg-gradient-btn text-white shadow-glow hover:scale-105 active:scale-95"
+                      : "cursor-not-allowed bg-white/[0.06] text-zinc-600"
+                  }`}
+                >
+                  <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-1.5 flex items-center gap-3">
               {/* Hedef bot artık kutunun altındaki cümle değil, tıklanabilir
                   bir çip: "aşağıdan seç" demek yerine seçtiren bir düğme. */}
               <button
@@ -544,28 +624,8 @@ function NewChatHero({ bot, value, onChange, onSubmit, loading, onPickBot }) {
                 )}
               </button>
 
-              <div className="flex shrink-0 items-center gap-3">
-                <span className="hidden items-center gap-1.5 text-[11px] text-zinc-600 md:flex">
-                  <kbd className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-sans text-zinc-400">
-                    Enter
-                  </kbd>
-                  gönder
-                </span>
-                <button
-                  type="button"
-                  onClick={onSubmit}
-                  disabled={!canSend}
-                  aria-label="Gönder"
-                  className={`flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 ${
-                    canSend
-                      ? "bg-gradient-btn text-white shadow-glow hover:scale-105 active:scale-95"
-                      : "cursor-not-allowed bg-white/[0.06] text-zinc-600"
-                  }`}
-                >
-                  <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.5} />
-                </button>
-              </div>
             </div>
+            {voiceError && <p className="mt-2 px-2 text-xs text-rose-300">{voiceError}</p>}
           </div>
         </div>
       </div>

@@ -12,7 +12,6 @@ import {
   Zap,
   ArrowRight,
   CheckCircle2,
-  Bot,
   MessageSquareCode,
   Lock,
   Mail,
@@ -25,7 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/shared/hooks/use-toast";
 import { BirthdatePicker } from "@/shared/ui/birthdate-picker";
-
+import logo from "@/images/header-logo-icon.png";
 
 const CHAT_DEMO_MESSAGES = [
   {
@@ -286,7 +285,9 @@ export default function AuthPage() {
       return;
     }
     if (!googleReady) {
-      toast.error("Google girişi hazırlanıyor, birkaç saniye sonra tekrar deneyin.");
+      toast.error(
+        "Google girişi hazırlanıyor, birkaç saniye sonra tekrar deneyin.",
+      );
       return;
     }
     googleButtonSlotRef.current?.querySelector('div[role="button"]')?.click();
@@ -420,9 +421,13 @@ export default function AuthPage() {
         {/* Top Brand Header */}
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-violet-600 p-0.5 shadow-[0_0_30px_rgba(217,70,239,0.3)] transition-transform duration-500 group-hover:scale-105">
+            <div className="w-10 h-10 rounded-xl p-0.5 shadow-[0_0_30px_rgba(217,70,239,0.3)] transition-transform duration-500 group-hover:scale-105">
               <div className="w-full h-full bg-[#030305] rounded-md flex items-center justify-center">
-                <Bot className="w-5 h-5 text-fuchsia-400" />
+                <img
+                  src={logo.src}
+                  alt="Lumanoris"
+                  className="relative w-7 h-7 object-contain transition-transform group-hover:scale-110"
+                />
               </div>
             </div>
             <div>
@@ -430,7 +435,7 @@ export default function AuthPage() {
                 LUMANORIS
               </span>
               <span className="block text-caption tracking-widest text-fuchsia-400 font-semibold uppercase">
-                AI Architecture
+                Yapay Zekâ Mimarisi
               </span>
             </div>
           </div>
@@ -475,11 +480,11 @@ export default function AuthPage() {
                   <div className="text-sm font-bold text-white flex items-center gap-1.5">
                     Nexus Neural v4.5
                     <span className="text-caption px-1.5 py-0.5 rounded bg-fuchsia-500/20 text-fuchsia-300 font-mono">
-                      PRO
+                      Profesyonel
                     </span>
                   </div>
                   <div className="text-caption text-white/40">
-                    Real-time LLM inference stream
+                    Gerçek zamanlı LLM yanıt akışı
                   </div>
                 </div>
               </div>
@@ -527,9 +532,13 @@ export default function AuthPage() {
         <div className="w-full max-w-[420px] relative z-10">
           {/* Mobile Brand Header */}
           <div className="flex flex-col items-center mb-8 lg:hidden">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-600 p-0.5 shadow-[0_0_25px_rgba(217,70,239,0.4)] mb-3">
+            <div className="group w-12 h-12 rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-600 p-0.5 shadow-[0_0_25px_rgba(217,70,239,0.4)] mb-3">
               <div className="w-full h-full bg-[#030305] rounded-[14px] flex items-center justify-center">
-                <Bot className="w-6 h-6 text-fuchsia-400" />
+                <img
+                  src={logo.src}
+                  alt="Lumanoris"
+                  className="relative w-7 h-7 object-contain transition-transform group-hover:scale-110"
+                />
               </div>
             </div>
             <span className="font-extrabold text-xl tracking-wider text-white">
@@ -633,7 +642,9 @@ export default function AuthPage() {
                     />
                     <button
                       type="button"
-                      aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                      aria-label={
+                        showPassword ? "Şifreyi gizle" : "Şifreyi göster"
+                      }
                       onClick={() => setShowPassword(!showPassword)}
                       className={eyeToggleCls}
                     >
@@ -750,7 +761,10 @@ export default function AuthPage() {
                     <BirthdatePicker
                       value={registerData.dogum_tarihi}
                       onChange={(iso) =>
-                        setRegisterData((prev) => ({ ...prev, dogum_tarihi: iso }))
+                        setRegisterData((prev) => ({
+                          ...prev,
+                          dogum_tarihi: iso,
+                        }))
                       }
                       inputCls={inputCls}
                       inputWrapperCls={inputWrapperCls}
@@ -794,11 +808,21 @@ export default function AuthPage() {
                     />
                     <button
                       type="button"
-                      aria-label={showRegisterPassword ? "Şifreyi gizle" : "Şifreyi göster"}
-                      onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                      aria-label={
+                        showRegisterPassword
+                          ? "Şifreyi gizle"
+                          : "Şifreyi göster"
+                      }
+                      onClick={() =>
+                        setShowRegisterPassword(!showRegisterPassword)
+                      }
                       className={eyeToggleCls}
                     >
-                      {showRegisterPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      {showRegisterPassword ? (
+                        <EyeOff size={16} />
+                      ) : (
+                        <Eye size={16} />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -892,14 +916,14 @@ export default function AuthPage() {
                   <X className="w-4 h-4" />
                 </button>
               </div>
-  
+
               {/* Metin artık admin panelinden yönetiliyor:
                   /admin/kullanimkosullari ve /admin/gizlilikpolitikasi →
                   global_vars → /api/content/*.php. Buradaki sabit kopya
                   güncellenmiyordu, yani admin metni değiştirdiğinde giriş
                   ekranındaki sözleşme eski hâlinde kalıyordu. */}
               <LegalBody doc={activePolicy === "terms" ? "terms" : "privacy"} />
-  
+
               <div className="mt-8 pt-4 border-t border-white/10 flex justify-end">
                 <button
                   onClick={closePolicy}
