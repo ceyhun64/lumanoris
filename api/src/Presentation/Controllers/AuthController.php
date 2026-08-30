@@ -118,11 +118,34 @@ class AuthController {
             JsonResponse::error('Token sağlanmadı.', 400, AppConfig::ERR_VALIDATION);
         }
 
-        $client = new Google_Client(['client_id' => AppConfig::googleClientId()]);
-        $payload = $client->verifyIdToken($idToken);
+        $clientId = AppConfig::googleClientId();
+        if ($clientId === '') {
+            error_log('[login-google] GOOGLE_CLIENT_ID tanımlı değil.');
+            JsonResponse::error(
+                'Google ile giriş şu anda yapılandırılmamış.',
+                503,
+                AppConfig::ERR_UNAVAILABLE
+            );
+        }
+
+        // verifyIdToken() bozuk/süresi dolmuş token'da false DÖNMÜYOR, exception
+        // fırlatıyor (firebase/php-jwt: "Wrong number of segments", "Expired
+        // token" vb.). Yalnızca !$payload kontrol edildiği için bu durumlar
+        // yakalanmadan 500'e dönüşüyordu; kullanıcı "Sunucu hatası" görüyordu.
+        try {
+            $client  = new Google_Client(['client_id' => $clientId]);
+            $payload = $client->verifyIdToken($idToken);
+        } catch (Throwable $e) {
+            error_log('[login-google] token doğrulanamadı: ' . $e->getMessage());
+            $payload = false;
+        }
 
         if (!$payload) {
-            JsonResponse::error('Geçersiz Google token.', 401, AppConfig::ERR_AUTH_REQUIRED);
+            JsonResponse::error(
+                'Google oturumu doğrulanamadı. Lütfen tekrar deneyin.',
+                401,
+                AppConfig::ERR_AUTH_REQUIRED
+            );
         }
 
         // SEC-004 🟠 — hesap ele geçirme.

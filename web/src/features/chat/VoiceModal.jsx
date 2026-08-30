@@ -3,21 +3,34 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Button } from '@/shared/ui/button';
-import { toast } from '@/shared/hooks/use-toast';
+
+/** "Tekrar Gosterme" tercihi — MessageInput da ayni anahtari okur. */
+export const SKIP_VOICE_PROMPT_KEY = "lumanoris:skipVoicePrompt";
 
 export default function VoiceModal({ isOpen, onClose, onConfirm }) {
     const [doNotShowAgain, setDoNotShowAgain] = useState(false);
 
-    const handleConfirm = async () => {
-        try {
-            await navigator.mediaDevices.getUserMedia({ audio: true });
-            onConfirm(); // sadece izin verildiğini bildir
-            onClose();
-        } catch (error) {
-            toast({ variant: "destructive", title: "Mikrofon izni reddedildi." });
-            console.error(error);
-            onClose();
+    const handleConfirm = () => {
+        // Burada ARTIK getUserMedia cagrilmiyor.
+        //
+        // Eskiden izni "test etmek" icin bir akis aliniyor ama o akisin
+        // track'leri HIC durdurulmuyordu. Sonuc: mikrofon acik kaliyor ve
+        // hemen ardindan startRecording() ikinci bir getUserMedia yapiyordu.
+        // Cihaz ilk akis tarafindan tutuldugu icin bu ikinci cagri bazi
+        // tarayicilarda NotReadableError ile dusuyordu — ses kaydinin
+        // calismamasinin sebebi buydu.
+        //
+        // Izin zaten startRecording() icinde isteniyor ve orada hata turune
+        // gore ayrintili mesaj veriliyor; burada tek is niyeti onaylamak.
+        if (doNotShowAgain) {
+            try {
+                localStorage.setItem(SKIP_VOICE_PROMPT_KEY, "1");
+            } catch {
+                /* private mode: onemli degil, sadece hatirlanmaz */
+            }
         }
+        onConfirm();
+        onClose();
     };
 
     return (

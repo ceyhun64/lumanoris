@@ -30,6 +30,23 @@ import { Card } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
 
+/**
+ * Sekme başlığı. Aynı blok sekiz sekmede birebir kopyalanmıştı; tek yerden
+ * yönetilince başlık/alt başlık hiyerarşisi de tutarlı kalıyor.
+ */
+function SectionHeader({ title, description }) {
+  return (
+    <div className="mb-6 border-b border-white/[0.06] pb-5">
+      <h3 className="font-display text-lg font-bold tracking-tight text-white">
+        {title}
+      </h3>
+      {description && (
+        <p className="mt-1 text-xs leading-relaxed text-white/45">{description}</p>
+      )}
+    </div>
+  );
+}
+
 function PageLayout({ children, className = "" }) {
   return <div className={`min-h-screen ${className}`}>{children}</div>;
 }
@@ -163,7 +180,7 @@ function ProfileImageEdit({ userId }) {
   };
 
   return (
-    <div className="flex items-center gap-6 p-4 rounded-2xl bg-white/[0.02] border border-white/10">
+    <div className="flex items-center gap-5">
       <div className="relative h-20 w-20 shrink-0 rounded-full overflow-hidden bg-fuchsia-950/40 border-2 border-fuchsia-500/30 flex items-center justify-center">
         {preview ? (
           <img
@@ -238,7 +255,7 @@ function EditableField({ fields, onSubmit }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 p-4 rounded-2xl bg-white/[0.02] border border-white/10"
+      className="space-y-4"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {fields.map((field) => (
@@ -317,7 +334,7 @@ function BankInfo({ userId }) {
   };
 
   return (
-    <div className="space-y-4 p-4 rounded-2xl bg-white/[0.02] border border-white/10">
+    <div className="space-y-4">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400">
           <Building className="h-5 w-5" />
@@ -374,7 +391,7 @@ function EmailEditor({ userId }) {
   };
 
   return (
-    <div className="space-y-4 p-4 rounded-2xl bg-white/[0.02] border border-white/10">
+    <div className="space-y-4">
       <EditableField
         fields={[
           { name: "email", value: email, placeholder: "E-posta Adresi" },
@@ -417,7 +434,7 @@ function PhoneEditor({ userId }) {
   };
 
   return (
-    <div className="space-y-4 p-4 rounded-2xl bg-white/[0.02] border border-white/10">
+    <div className="space-y-4">
       <EditableField
         fields={[
           { name: "phone", value: phone, placeholder: "Telefon Numarası" },
@@ -431,7 +448,7 @@ function PhoneEditor({ userId }) {
 function LanguageSelector() {
   const [lang, setLang] = useState("tr");
   return (
-    <div className="space-y-4 p-4 rounded-2xl bg-white/[0.02] border border-white/10">
+    <div className="space-y-4">
       <h4 className="text-sm font-semibold text-white">Arayüz Dili</h4>
       <div className="flex gap-3">
         {[
@@ -501,9 +518,7 @@ function LegalDocument({ title, endpoint, contentKey }) {
   }, [endpoint, contentKey]);
 
   return (
-    <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-xs leading-relaxed text-white/70">
-      <h4 className="text-sm font-semibold text-white">{title}</h4>
-
+    <div className="space-y-4 text-xs leading-relaxed text-white/70">
       {state === "loading" && <p className="text-white/40">Yükleniyor…</p>}
 
       {state === "error" && (
@@ -592,7 +607,7 @@ function ContactForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 p-4 rounded-2xl bg-white/[0.02] border border-white/10"
+      className="space-y-4"
     >
       <h4 className="text-sm font-semibold text-white">
         Destek ve Geri Bildirim Talebi
@@ -837,18 +852,18 @@ export default function App() {
             className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
           >
             {/* Sidebar Navigation */}
-            <div className="lg:col-span-3 space-y-1 bg-white/[0.02] border border-white/[0.08] p-3 rounded-3xl backdrop-blur-xl">
-              <div className="px-3 py-2 text-caption font-bold uppercase tracking-wider text-luma-muted">
+            <div className="lg:col-span-3 space-y-0.5 lg:sticky lg:top-6">
+              <div className="px-1 pb-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/30">
                 Navigasyon
               </div>
-              <TabsList className="flex flex-col w-full h-auto bg-transparent p-0 space-y-1">
+              <TabsList className="h-auto w-full flex-col gap-1 rounded-2xl border-white/[0.06] bg-white/[0.02] p-2">
                 {TABS.map((tab) => {
                   const IconComponent = tab.icon;
                   return (
                     <TabsTrigger
                       key={tab.key}
                       value={tab.key}
-                      className="w-full justify-start gap-3 px-4 py-3 rounded-2xl [&_svg]:text-white/50 [&[data-state=active]_svg]:text-white"
+                      className="w-full justify-start gap-3 rounded-xl px-3.5 py-2.5 data-[state=inactive]:text-white data-[state=inactive]:hover:text-white [&_svg]:text-white/70 [&[data-state=active]_svg]:text-white"
                     >
                       <IconComponent className="h-4 w-4 shrink-0" />
                       <span className="truncate">{tab.label}</span>
@@ -860,20 +875,15 @@ export default function App() {
 
             {/* Content Canvas */}
             <div className="lg:col-span-9">
-              <Card className="rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-2xl">
+              <Card className="rounded-3xl border-white/[0.07] bg-white/[0.02] p-6 sm:p-8">
                 <TabsContent
                   value="user"
                   className="mt-0 space-y-8"
                 >
-                  <div className="border-b border-white/[0.06] pb-6">
-                    <h3 className="text-lg font-bold text-white tracking-tight">
-                      Kullanıcı Bilgileri
-                    </h3>
-                    <p className="text-xs text-white/50 mt-0.5">
-                      Profil fotoğrafınızı ve temel hesap detaylarınızı
-                      düzenleyin.
-                    </p>
-                  </div>
+                  <SectionHeader
+                    title="Kullanıcı Bilgileri"
+                    description="Profil fotoğrafınızı ve temel hesap detaylarınızı düzenleyin."
+                  />
 
                   <ProfileImageEdit userId={userId} />
 
@@ -911,14 +921,10 @@ export default function App() {
                   value="security"
                   className="mt-0 space-y-6"
                 >
-                  <div className="border-b border-white/[0.06] pb-6">
-                    <h3 className="text-lg font-bold text-white tracking-tight">
-                      Ödeme ve Finans
-                    </h3>
-                    <p className="text-xs text-white/50 mt-0.5">
-                      Banka bilgilerinizi ve faturalandırma geçmişinizi yönetin.
-                    </p>
-                  </div>
+                  <SectionHeader
+                    title="Ödeme ve Finans"
+                    description="Banka bilgilerinizi ve faturalandırma geçmişinizi yönetin."
+                  />
                   <BankInfo userId={userId} />
                 </TabsContent>
 
@@ -926,14 +932,10 @@ export default function App() {
                   value="email"
                   className="mt-0 space-y-6"
                 >
-                  <div className="border-b border-white/[0.06] pb-6">
-                    <h3 className="text-lg font-bold text-white tracking-tight">
-                      E-posta Adresi
-                    </h3>
-                    <p className="text-xs text-white/50 mt-0.5">
-                      Hesabınıza bağlı e-posta adresini güncelleyin.
-                    </p>
-                  </div>
+                  <SectionHeader
+                    title="E-posta Adresi"
+                    description="Hesabınıza bağlı e-posta adresini güncelleyin."
+                  />
                   <EmailEditor userId={userId} />
                 </TabsContent>
 
@@ -941,15 +943,10 @@ export default function App() {
                   value="phone"
                   className="mt-0 space-y-6"
                 >
-                  <div className="border-b border-white/[0.06] pb-6">
-                    <h3 className="text-lg font-bold text-white tracking-tight">
-                      Telefon Numarası
-                    </h3>
-                    <p className="text-xs text-white/50 mt-0.5">
-                      SMS doğrulaması ve iletişim için telefon numaranızı
-                      yönetin.
-                    </p>
-                  </div>
+                  <SectionHeader
+                    title="Telefon Numarası"
+                    description="SMS doğrulaması ve iletişim için telefon numaranızı yönetin."
+                  />
                   <PhoneEditor userId={userId} />
                 </TabsContent>
 
@@ -959,15 +956,10 @@ export default function App() {
                   value="privacy"
                   className="mt-0 space-y-6"
                 >
-                  <div className="border-b border-white/[0.06] pb-6">
-                    <h3 className="text-lg font-bold text-white tracking-tight">
-                      Gizlilik Politikası
-                    </h3>
-                    <p className="text-xs text-white/50 mt-0.5">
-                      Verilerinizin nasıl işlendiği ve korunduğu hakkında bilgi
-                      edinin.
-                    </p>
-                  </div>
+                  <SectionHeader
+                    title="Gizlilik Politikası"
+                    description="Verilerinizin nasıl işlendiği ve korunduğu hakkında bilgi edinin."
+                  />
                   <PrivacyPolicy2 />
                 </TabsContent>
 
@@ -975,14 +967,10 @@ export default function App() {
                   value="terms"
                   className="mt-0 space-y-6"
                 >
-                  <div className="border-b border-white/[0.06] pb-6">
-                    <h3 className="text-lg font-bold text-white tracking-tight">
-                      Kullanım Koşulları
-                    </h3>
-                    <p className="text-xs text-white/50 mt-0.5">
-                      Hizmet şartlarımızı ve yasal sözleşmeleri inceleyin.
-                    </p>
-                  </div>
+                  <SectionHeader
+                    title="Kullanım Koşulları"
+                    description="Hizmet şartlarımızı ve yasal sözleşmeleri inceleyin."
+                  />
                   <TermsOfUse />
                 </TabsContent>
 
@@ -990,14 +978,10 @@ export default function App() {
                   value="contact"
                   className="mt-0 space-y-6"
                 >
-                  <div className="border-b border-white/[0.06] pb-6">
-                    <h3 className="text-lg font-bold text-white tracking-tight">
-                      Destek ve İletişim
-                    </h3>
-                    <p className="text-xs text-white/50 mt-0.5">
-                      Ekibimizle iletişime geçin ve geri bildirimde bulunun.
-                    </p>
-                  </div>
+                  <SectionHeader
+                    title="Destek ve İletişim"
+                    description="Ekibimizle iletişime geçin ve geri bildirimde bulunun."
+                  />
                   <ContactForm />
                 </TabsContent>
               </Card>

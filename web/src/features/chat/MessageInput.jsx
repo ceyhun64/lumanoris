@@ -1,6 +1,6 @@
 'use client';
-import { useRef, useState } from 'react';
-import VoiceModal from '@/features/chat/VoiceModal';
+import { useEffect, useRef, useState } from 'react';
+import VoiceModal, { SKIP_VOICE_PROMPT_KEY } from '@/features/chat/VoiceModal';
 import { X, Plus, ArrowUp, Mic, Square, RotateCcw, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
@@ -20,6 +20,10 @@ export default function MessageInput({ onSend, onResetChat }) {
     const mediaRecorderRef = useRef(null);
     const recognitionRef = useRef(null);
     const audioChunksRef = useRef([]);
+    // Mikrofon akisi: track'ler acikca durdurulmazsa kayit bittikten sonra da
+    // mikrofon acik kalir (sekmede kayit gostergesi soner gibi gorunmez) ve
+    // sonraki kayit denemesi cihazi mesgul bulur.
+    const streamRef = useRef(null);
     const textareaRef = useRef(null);
 
     // Mesaj gönderildiğinde veya silindiğinde yüksekliği sıfırla
@@ -64,6 +68,11 @@ export default function MessageInput({ onSend, onResetChat }) {
         }
     };
 
+    const releaseMic = () => {
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+    };
+
     const startRecording = async () => {
         if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
             toast({
@@ -76,6 +85,7 @@ export default function MessageInput({ onSend, onResetChat }) {
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            streamRef.current = stream;
 
             // 1. Ses Kaydı Ayarları (Blob/Audio dosyası için)
             const mediaRecorder = new MediaRecorder(stream);
@@ -150,6 +160,7 @@ export default function MessageInput({ onSend, onResetChat }) {
 
             toast({ variant: "destructive", title, description });
             console.error("getUserMedia:", error?.name, error);
+            releaseMic();
             setIsRecording(false);
         }
     };
@@ -160,8 +171,17 @@ export default function MessageInput({ onSend, onResetChat }) {
         }
         if (recognitionRef.current) {
             recognitionRef.current.stop();
+            recognitionRef.current = null;
         }
+        releaseMic();
     };
+
+    // Kayit surerken sayfadan cikilirsa mikrofon acik kalmasin.
+    useEffect(() => () => {
+        if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
+        recognitionRef.current?.stop();
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+    }, []);
 
     return (
         <>
@@ -252,7 +272,16 @@ export default function MessageInput({ onSend, onResetChat }) {
                                     </button>
                                 ) : (
                                     <button
-                                        onClick={() => setVoiceModalOpen(true)}
+                                        onClick={() => {
+                                            let skip = false;
+                                            try {
+                                                skip = localStorage.getItem(SKIP_VOICE_PROMPT_KEY) === "1";
+                                            } catch {
+                                                /* yok say */
+                                            }
+                                            if (skip) startRecording();
+                                            else setVoiceModalOpen(true);
+                                        }}
                                         disabled={!!selectedFileName}
                                         className="flex h-8 w-8 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/[0.07] hover:text-fuchsia-300 disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                         aria-label="Sesli mesaj"

@@ -79,7 +79,13 @@ const nextConfig = {
         // istemeden dogrudan NotAllowedError aliyordu. 'self' ile yalnizca
         // kendi originimiz kullanabilir; ucuncu taraf iframe'lere kapali kalir.
         { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(), payment=()' },
-        { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+        // 'same-origin' acilan pop-up ile window.opener bagini koparir.
+        // Google ile giris pop-up'i kimlik bilgisini opener'a geri gonderiyor;
+        // bag kopunca pencere acilip bos kaliyordu. 'same-origin-allow-popups'
+        // dokumani belgede onerilen deger: sayfa yine cross-origin sayfalarca
+        // acilmaya karsi korunur, yalnizca KENDI actigi pop-up'lar opener
+        // baglantisini korur.
+        { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
       ];
 
       // HSTS yalnızca production'da: yerel HTTP geliştirmede tarayıcıyı
