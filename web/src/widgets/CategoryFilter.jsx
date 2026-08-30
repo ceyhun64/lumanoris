@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { resolveCategory } from "@/shared/lib/categories";
 
 export default function CategoryFilter({
   categories,
@@ -33,17 +34,28 @@ export default function CategoryFilter({
       >
         {categories.map((cat, index) => {
           const isActive = selected === cat.kategori_adi_tr;
+          // "Tümü" gerçek bir kategori değil — ikonsuz kalsın.
+          const meta = cat.id === "all" ? null : resolveCategory(cat.id);
+          const Icon = meta?.icon;
           return (
             <button
               key={`${cat.kategori_adi_tr}-${index}`}
               onClick={() => handleClick(cat)}
               className={cn(
-                "shrink-0 rounded-xl px-4 py-2 text-body-sm font-sans font-semibold whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 py-1.5 text-[12px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 isActive
-                  ? "bg-gradient-btn text-white shadow-[0_4px_16px_rgba(192,38,211,0.4)]"
-                  : "bg-transparent text-white/50 border border-transparent hover:bg-white/5 hover:text-white/85",
+                  ? "bg-white text-zinc-950 shadow-lg"
+                  : "border border-white/5 bg-zinc-900/50 text-zinc-400 hover:border-white/15 hover:text-zinc-200",
               )}
             >
+              {Icon && (
+                <Icon
+                  className={cn(
+                    "h-3.5 w-3.5 shrink-0",
+                    isActive ? "text-zinc-700" : meta.icon_cls,
+                  )}
+                />
+              )}
               {cat.kategori_adi_tr}
             </button>
           );

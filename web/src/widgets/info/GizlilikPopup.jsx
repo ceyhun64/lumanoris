@@ -154,7 +154,7 @@ export default function PrivacyPopup({ onClose }) {
             type: 'list',
             items: [
                 'E-posta: lumanoris.ai@gmail.com',
-                'İletişim Formu: www.lumanoris.com/iletisim'
+                'İletişim Formu: www.lumanoris.net/iletisim'
             ]
         },
     ];
