@@ -122,12 +122,38 @@ const nextConfig = {
   // modda atlanıyor.
   ...(!isStaticExport && {
     async rewrites() {
-      const phpTarget = process.env.PHP_TARGET;
-      if (!phpTarget) return [];
+      const phpTarget = process.env.PHP_TARGET?.trim();
+
+      // Eksik PHP_TARGET eskiden sessizce boş liste döndürüyordu ve sonucu
+      // teşhis edilmesi çok zor bir production arızasıydı:
+      //   /api/auth/login.php isteği yönlendirilmeyip Vercel'in kendisinde
+      //   kalıyor → Vercel WAF `.php` uzantısını saldırı taraması sanıp
+      //   `403 Forbidden` (X-Vercel-Mitigated: deny) dönüyor → istemci JSON
+      //   bekliyor, "Forbidden" metnini alıyor ve
+      //   `SyntaxError: Unexpected token 'F'` ile düşüyor.
+      // Yani giriş dahil TÜM API çağrıları kırılıyor ama build yeşil geçiyor.
+      //
+      // shared/config/site.js NEXT_PUBLIC_SITE_URL için aynı deseni zaten
+      // uyguluyor: production build'de sessiz yanlış davranış yerine açık hata.
+      if (!phpTarget) {
+        if (process.env.NODE_ENV === 'production') {
+          throw new Error(
+            'PHP_TARGET tanımlı değil. Bu değişken olmadan /api, /admin ve /assets ' +
+            'istekleri PHP backend\'e yönlendirilmez ve tarayıcı 403 alır. ' +
+            'Vercel proje ayarlarına PHP_TARGET=https://api.lumanoris.com ekleyin ' +
+            '(yerel geliştirme için web/.env dosyasına).'
+          );
+        }
+        console.warn('[next.config] PHP_TARGET tanımsız — /api proxy\'si devre dışı.');
+        return [];
+      }
+
+      // Sondaki eğik çizgi çift slash üretirdi (".../api//auth/login.php").
+      const base = phpTarget.replace(/\/+$/, '');
       return [
-        { source: '/api/:path*', destination: `${phpTarget}/api/:path*` },
-        { source: '/admin/:path*', destination: `${phpTarget}/admin/:path*` },
-        { source: '/assets/:path*', destination: `${phpTarget}/assets/:path*` },
+        { source: '/api/:path*', destination: `${base}/api/:path*` },
+        { source: '/admin/:path*', destination: `${base}/admin/:path*` },
+        { source: '/assets/:path*', destination: `${base}/assets/:path*` },
       ];
     },
   }),
