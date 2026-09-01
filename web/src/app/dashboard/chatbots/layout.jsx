@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Chatbotlarım | Lumanoris",
+    title: "Chatbotlarım",
 };
 
 export default function DashboardChatbotlarim({ children }) {

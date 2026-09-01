@@ -314,6 +314,13 @@ class MarketplaceController {
         $itemRows        = [];
         $totalAmount     = 0.0;
 
+        // Transaction'ın İÇİNDE atanıyorlar ama catch bloğunun da okuması
+        // gerekiyor: tahsilat başarılı olup ardından bir şey patlarsa
+        // müşterinin parasını iade edebilmek için elimizde sağlayıcı
+        // kimliği olmak zorunda.
+        $orderId        = '';
+        $gatewayPayment = '';
+
         // Anchor expiry math to the DB server's clock, not PHP's — the app
         // server and DB server can run in different timezones (seen locally:
         // PHP=UTC, MySQL=UTC+3), and computing "+N days" from PHP's time()
@@ -340,7 +347,7 @@ class MarketplaceController {
             // zero amount, and the buyer still got a status=1 subscription plus
             // a "paid" payment row (observed: order ORD-2041EEC4, 0,00 TL).
             $bot = $db->selectSingle(
-                "c.author_user_id, c.ucret_haftalik, c.ucret_aylik, c.is_independent,
+                "c.author_user_id, c.isim, c.ucret_haftalik, c.ucret_aylik, c.is_independent,
                  pms.status AS seller_status
                  FROM chatbotlar c
                  LEFT JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id
@@ -392,6 +399,7 @@ class MarketplaceController {
             ];
             $itemRows[] = [
                 'chatbot_id'     => $chatbotId,
+                'name'           => (string) $bot['isim'],
                 'duration_weeks' => $durationWeeks,
                 'billing_period' => $isMonthly ? 'monthly' : 'weekly',
                 'unit_price'     => InputSanitizer::price($isMonthly ? (float) $bot['ucret_aylik'] : (float) $bot['ucret_haftalik']),
@@ -417,40 +425,53 @@ class MarketplaceController {
         // charged) only now that the real amount is known — a failure here
         // rolls back every subscription/credit/cart-delete above, so no
         // access is ever granted without a valid card.
+        // order_id, tahsilattan ÖNCE üretiliyor. iyzico'ya `conversationId`
+        // olarak gidiyor ve mutabakat (reconcilePayments) belirsiz kalmış bir
+        // tahsilatı sağlayıcıda YALNIZCA bu kimlikle bulabiliyor. Sonradan
+        // üretilseydi, zaman aşımına uğrayan bir tahsilat için elimizde
+        // sağlayıcıya sorulabilecek hiçbir referans olmazdı — yani para
+        // çekilmiş olup olmadığını asla öğrenemezdik.
+        $orderId = 'ORD-' . strtoupper(InputSanitizer::randomToken(4));
+
+        // iyzico buyer bloğu zorunlu ve boş alan kabul etmiyor; kullanıcının
+        // kendi hesap bilgisinden dolduruluyor.
+        $buyerRow = $db->selectSingle(
+            'id, ad_soyad, kullanici_adi, eposta, telefon FROM kullanicilar WHERE id = ?',
+            [$userId]
+        ) ?: ['id' => $userId];
+
         $card         = is_array($data['card'] ?? null) ? $data['card'] : [];
-        $chargeResult = chargeCard($card, $totalAmount);
+        $chargeResult = chargeCard($card, $totalAmount, [
+            'order_id'      => $orderId,
+            'user'          => $buyerRow,
+            'user_id'       => $userId,
+            'ip'            => clientIp(),
+            'payment_group' => 'PRODUCT',
+            'items'         => array_map(static function (array $row): array {
+                return [
+                    'id'       => $row['chatbot_id'],
+                    'name'     => $row['name'],
+                    'category' => 'Chatbot Aboneliği',
+                    'price'    => $row['line_total'],
+                ];
+            }, $itemRows),
+        ]);
         if (!$chargeResult['success']) {
             $conn->rollBack();
             JsonResponse::error($chargeResult['message'] ?? 'Ödeme başarısız.', 402, AppConfig::ERR_PAYMENT);
         }
 
-        // PAY-001 🔴 — sahte tahsilat gerçek ledger satırına dönüşmemeli.
-        //
-        // chargeCard() bir stub olduğunu 'simulated' ile bildiriyor. O
-        // durumda ödeme satırı 'paid' değil, şemanın zaten varsayılan olarak
-        // öngördüğü 'pending_approval' ile yazılıyor; satıcı payı da
-        // 'approved' değil 'pending_approval'. Böylece:
-        //   • hiçbir sahte kart çekilebilir bakiye üretemiyor (DB-003 ile
-        //     birlikte: bakiye sorgusu artık p.status'u da okuyor),
-        //   • şemanın iki fazlı settlement tasarımı gerçekten kullanılıyor,
-        //   • gerçek entegrasyon geldiğinde tek bir bayrak değişimiyle
-        //     'paid'/'approved' geri geliyor.
-        $simulatedCharge = !empty($chargeResult['simulated']);
-        $paymentStatus   = $simulatedCharge ? 'pending_approval' : 'paid';
-        $detailStatus    = $simulatedCharge ? 'pending_approval' : 'approved';
-
-        if ($simulatedCharge) {
-            error_log(sprintf(
-                '[createSubscription] SİMÜLE ödeme — ledger pending_approval yazıldı. user_id=%d amount=%s',
-                $userId,
-                (string) $totalAmount
-            ));
-        }
+        // Tahsilat GERÇEKTEN yapıldı — ledger artık gerçek durumu yazıyor.
+        // Eskiden buradaki `simulated` bayrağı her siparişi 'pending_approval'
+        // olarak yazıyordu (sahte kartın çekilebilir bakiye üretmesini
+        // engellemek için); gerçek entegrasyonla birlikte o koruma gereksiz.
+        $paymentStatus  = 'paid';
+        $detailStatus   = 'approved';
+        $gatewayPayment = (string) ($chargeResult['payment_id'] ?? '');
 
         // Real param_marketplace_payments columns are user_id/amount, not
         // buyer_user_id/total_amount (confirmed via live DESCRIBE) — the
         // original names here were guessed without DB access and never worked.
-        $orderId    = 'ORD-' . strtoupper(InputSanitizer::randomToken(4));
         $paymentRow = [
             'order_id' => $orderId,
             'user_id'  => $userId,
@@ -460,19 +481,35 @@ class MarketplaceController {
 
         // The payment row recorded a single total and nothing else, so neither
         // reconciliation nor a refund could tell what was bought or who was owed
-        // what — ten columns of this table were never written at all. These
-        // three are derivable from data already in hand, so record them.
+        // what — ten columns of this table were never written at all.
         //
-        // The param_* gateway columns are deliberately left untouched:
-        // chargeCard() is still a stub, and writing transaction ids or a
-        // net_amount would put fabricated gateway data into the ledger.
-        // service_fee is left alone too — SERVICE_FEE_PERCENT exists as a
-        // constant but no service fee is charged anywhere today, and filling it
-        // in would imply a fee model nobody has decided on yet.
+        // param_response_json artık ZORUNLU bir kayıt, süs değil: iyzico
+        // iadeyi kalem başına üretilen `paymentTransactionId` üzerinden
+        // yapıyor ve o kimlikler yalnızca burada saklanıyor. Yazılmazsa bu
+        // sipariş bir daha otomatik iade EDİLEMEZ (processRefund bunu açıkça
+        // kontrol ediyor).
+        //
+        // service_fee hâlâ boş bırakılıyor — SERVICE_FEE_PERCENT bir sabit
+        // olarak duruyor ama hiçbir yerde hizmet bedeli alınmıyor; doldurmak
+        // henüz kimsenin karar vermediği bir ücret modelini ima ederdi.
         $optionalColumns = [
-            'product_amount'     => InputSanitizer::price($totalAmount),
-            'items_json'         => json_encode($itemRows, JSON_UNESCAPED_UNICODE),
-            'seller_splits_json' => json_encode($detailRows, JSON_UNESCAPED_UNICODE),
+            'product_amount'       => InputSanitizer::price($totalAmount),
+            'items_json'           => json_encode($itemRows, JSON_UNESCAPED_UNICODE),
+            'seller_splits_json'   => json_encode($detailRows, JSON_UNESCAPED_UNICODE),
+            'param_transaction_id' => $gatewayPayment !== '' ? $gatewayPayment : null,
+            'param_receipt_id'     => $orderId,
+            'param_net_amount'     => $chargeResult['net_amount'] ?? null,
+            // array_merge sırası önemli: normalize edilmiş itemTransactions
+            // ham yanıttakinin ÜZERİNE yazmalı. `+` operatörü tersini yapar
+            // (soldaki kazanır) ve processRefund'ın okuduğu alan sağlayıcının
+            // biçim değişikliklerine açık kalırdı.
+            'param_response_json'  => json_encode(
+                array_merge(
+                    $chargeResult['raw'] ?? [],
+                    ['itemTransactions' => $chargeResult['item_transactions'] ?? []]
+                ),
+                JSON_UNESCAPED_UNICODE
+            ),
         ];
         foreach ($optionalColumns as $column => $value) {
             if (self::paymentsColumnExists($db, $column)) {
@@ -507,8 +544,20 @@ class MarketplaceController {
         }
 
         $conn->commit();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             if ($conn->inTransaction()) $conn->rollBack();
+
+            // Gerçek tahsilatın getirdiği YENİ hata sınıfı: para çekildi ama
+            // sipariş yazılamadı. Rollback yalnızca veritabanını geri alır —
+            // kartta çekilen tutarı geri almaz. Telafi edilmezse müşteri
+            // ödeme yapmış, hiçbir şey almamış olur.
+            //
+            // Aynı gün tam iptal (`/payment/cancel`) bunun doğru aracı.
+            // Başarısız olursa cancelCharge() operatöre "ELLE İADE GEREKİYOR"
+            // diye loglar; sessizce yutmuyoruz.
+            if ($gatewayPayment !== '') {
+                cancelCharge($gatewayPayment, clientIp(), $orderId);
+            }
 
             // PAY-008: sipariş başarısız oldu — idempotency rezervasyonunu
             // bırak ki kullanıcı düzeltip tekrar deneyebilsin. Bırakılmazsa

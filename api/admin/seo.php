@@ -2,9 +2,42 @@
     <!-- Başlık (Admin Yönetimi sayfasındaki stile uygun hale getirildi) -->
     <section class="text-center mb-10">
         <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">SEO Ayarları</h2>
-        <p class="text-gray-500 mt-1">Bu sayfada sitenizin bütün SEO ayarlarını tek bir yerden yönetebilirsiniz.</p>
+        <p class="text-gray-500 mt-1">Bu sayfadaki ayarların kapsamı için aşağıdaki nota bakın.</p>
     </section>
-    
+
+    <!--
+        SEO-002 — İki paralel SEO sistemi vardı ve biri hiç yayına çıkmıyordu.
+        Bu sayfadaki title/description/keywords ve OG/Twitter alanları
+        `global_vars` tablosuna yazıyor, ama frontend (Next.js) bu anahtarların
+        HİÇBİRİNİ okumuyor: denetimde `web/src/` altında site_baslik, og_title,
+        twitter_card vb. için tek bir eşleşme çıkmadı. Yani buraya girilen
+        değerler yıllardır yayındaki sayfalara ulaşmıyordu.
+        Karar: tek authoritative kaynak Next.js App Router. Alanlar veri
+        kaybı olmasın diye silinmedi, ama ne oldukları açıkça yazılıyor.
+    -->
+    <section class="mb-8">
+        <div class="rounded-xl border border-amber-300 bg-amber-50 p-5 shadow-sm">
+            <p class="font-bold text-amber-900 mb-2">Bu sayfa şu an yayındaki SEO etiketlerini DEĞİŞTİRMİYOR</p>
+            <p class="text-sm text-amber-800 leading-relaxed">
+                Sitenin başlık, açıklama, canonical, Open Graph ve Twitter etiketleri
+                frontend kodundan üretiliyor. Tek kaynak:
+                <code class="font-mono text-xs bg-white/60 px-1 rounded">web/src/app/layout.js</code>,
+                <code class="font-mono text-xs bg-white/60 px-1 rounded">web/src/shared/config/site.js</code> ve
+                <code class="font-mono text-xs bg-white/60 px-1 rounded">web/src/shared/lib/metadata.js</code>.
+                Aşağıdaki alanlar veritabanına kaydediliyor ama yayındaki sayfalara
+                <strong>ulaşmıyor</strong> — bu her zaman böyleydi, artık gizlenmiyor.
+            </p>
+            <p class="text-sm text-amber-800 leading-relaxed mt-3">
+                <strong>Sözleşme metinleri farklı:</strong> Hakkımızda, Gizlilik Politikası,
+                Kullanım Koşulları, Teslimat ve İade, Mesafeli Satış Sözleşmesi ilgili
+                admin sayfalarından yönetilmeye devam ediyor ve artık kendi public
+                adreslerinde yayınlanıyor (ör. /hakkimizda). Bir metni yazdığınızda
+                sayfası ve sitemap kaydı kendiliğinden oluşur; metin boşken sayfa
+                bilerek 404 döner.
+            </p>
+        </div>
+    </section>
+
     <!-- Ana Grid (Kart stili eklendi, gap-6 yapıldı) -->
     <section>
         <div class="grid grid-cols-1 lg:grid-cols-[300px_auto] gap-6">

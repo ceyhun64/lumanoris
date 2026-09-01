@@ -360,13 +360,31 @@ class Database {
         return $seo_data;
     }
 
+    /**
+     * CNT-001 — bu fonksiyon YALNIZCA UPDATE yapıyordu; satır yoksa hiçbir şey
+     * yazmıyor ama yine de "başarılı" dönüyordu.
+     *
+     * Somut sonucu: `global_vars` içinde `satis_kosullari` satırı hiç yoktu,
+     * dolayısıyla /admin/satiskosullari sayfasından mesafeli satış sözleşmesi
+     * KAYDEDİLEMİYORDU — panel "İçerikler başarıyla güncellendi!" diyor, metin
+     * hiçbir yere yazılmıyordu. Aynı sessiz kayıp, henüz satırı olmayan her
+     * yeni anahtar için geçerliydi (iletişim bilgileri, sosyal linkler,
+     * anasayfa görselleri — hepsinin satırı eksik).
+     *
+     * Eski gövdedeki `if ($affected === 0 && count > 0) continue;` bloğu hiçbir
+     * şey yapmıyordu: sadece döngünün zaten yapacağı şeyi yapıyordu.
+     *
+     * `var_key` üzerinde UNIQUE indeks var, o yüzden INSERT ... ON DUPLICATE
+     * KEY UPDATE tek ifadede hem oluşturuyor hem güncelliyor.
+     */
     public function updateGlobalVars(array $data) {
         try {
             foreach ($data as $var_key => $var_value) {
-                $affected = $this->update("global_vars", ['var_value' => $var_value], 'var_key = ?', [$var_key]);
-                if ($affected === 0 && $this->count("global_vars", "var_key = ?", [$var_key]) > 0) {
-                    continue;
-                }
+                $this->insert(
+                    "global_vars",
+                    ['var_key' => $var_key, 'var_value' => $var_value],
+                    true
+                );
             }
             return "Güncelleme işlemi başarılı!";
         } catch (Exception $e) {

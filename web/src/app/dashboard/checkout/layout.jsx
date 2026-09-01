@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Ödeme | Lumanoris",
+  title: "Ödeme",
 };
 
 export default function DashboardCheckout({ children }) {

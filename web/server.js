@@ -51,6 +51,13 @@ app.prepare().then(() => {
   server.use(createProxyMiddleware({
     target: PHP_TARGET,
     changeOrigin: true,
+    // X-Forwarded-For/-Proto/-Host başlıklarını ekler. Bu olmadan PHP her
+    // isteği 127.0.0.1'den geliyor sanıyor — iyzico'ya gönderdiğimiz
+    // `buyer.ip` alanı da her siparişte aynı olur ve sağlayıcının
+    // dolandırıcılık skorlaması işlevsiz kalır. (api/functions/
+    // checkout_payments.php içindeki clientIp() bu başlığı yalnızca
+    // doğrudan bağlantı yerel bir adresten geldiğinde dikkate alıyor.)
+    xfwd: true,
     pathFilter: ['/admin', '/api', '/assets'],
     on: {
       // Default on error is a plain-text page ("Error occurred while trying

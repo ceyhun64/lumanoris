@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Kayıt Ol | Lumanoris",
+    title: "Kayıt Ol",
 };
 
 export default function RegisterLayout({ children }) {

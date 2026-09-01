@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Takip Edilenler | Lumanoris",
+    title: "Takip Edilenler",
 };
 
 export default function DashboardFollowing({ children }) {

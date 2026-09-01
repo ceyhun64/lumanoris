@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Keşfet | Lumanoris",
+    title: "Keşfet",
 };
 
 export default function DashboardExplore({ children }) {

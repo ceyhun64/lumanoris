@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Ayarlar | Lumanoris",
+    title: "Ayarlar",
 };
 
 export default function DashboardSettings({ children }) {

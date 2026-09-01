@@ -2,10 +2,44 @@ export const dynamic = 'force-static';
 import '../app/css/global.css';
 import { TooltipProvider } from '@/shared/ui/tooltip';
 import { Toaster } from '@/shared/ui/toaster';
+import { OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/shared/config/site';
 
 export const metadata = {
-  title: 'Lumanoris | AI Stüdyo & Market',
-  description: 'Yapay zeka destekli arayüz',
+  // SEO-002: `metadataBase` olmadan Next göreli OG/canonical URL'lerini mutlak
+  // hâle getiremiyor ve geliştirmede sessizce localhost'a düşüyor. Tek kaynak
+  // NEXT_PUBLIC_SITE_URL; production build'de tanımsızsa shared/config/site.js
+  // build'i açık hatayla durduruyor.
+  metadataBase: new URL(SITE_URL),
+
+  // `template` sayesinde alt sayfalar yalnızca kendi adlarını veriyor
+  // ("Giriş Yap"), marka eki tek yerden geliyor. Önceden 15 layout'ta
+  // "… | Lumanoris" elle tekrarlanıyordu.
+  title: {
+    default: 'Lumanoris | AI Stüdyo & Market',
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+
+  // Bunlar yalnızca VARSAYILAN: sayfaya özgü metadata (shared/lib/metadata.js)
+  // canonical'ı ve sayfaya ait OG başlığını üstüne yazıyor. Canonical bilerek
+  // burada TANIMLI DEĞİL — kökte tanımlanırsa her sayfa kendini ana sayfaya
+  // canonical'lar ve tüm site tek URL'e çöker.
+  openGraph: {
+    type: 'website',
+    locale: 'tr_TR',
+    siteName: SITE_NAME,
+    title: 'Lumanoris | AI Stüdyo & Market',
+    description: SITE_DESCRIPTION,
+    images: [OG_IMAGE],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Lumanoris | AI Stüdyo & Market',
+    description: SITE_DESCRIPTION,
+    images: [OG_IMAGE.url],
+  },
+
   // Sekme ikonu app/icon.png'den geliyor (App Router dosya konvansiyonu).
   // Next linki otomatik enjekte ediyor; elle <link rel="icon"> eklemek
   // gereksiz — zaten HTML'e cikmiyorlardi.

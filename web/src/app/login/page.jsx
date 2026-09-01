@@ -890,21 +890,32 @@ export default function AuthPage() {
           {/* Terms Footer */}
           <p className="text-center mt-6 text-caption text-white/40 leading-relaxed px-4">
             Devam ederek{" "}
-            <button
-              type="button"
-              onClick={() => openPolicy("terms")}
-              className="text-fuchsia-400 hover:underline font-medium"
+            {/* SEO-002: bunlar <button> idi. Metin artık kendi public
+                sayfasında da yayınlanıyor; <a href> vermek Googlebot'a gerçek
+                bir bağlantı sunuyor (JS click handler'ı SEO linki sayılmaz) ve
+                "yeni sekmede aç" çalışıyor. Görünüm ve modal davranışı aynı:
+                tıklama preventDefault ile sayfada kalıyor. */}
+            <a
+              href="/kullanim-kosullari/"
+              onClick={(e) => {
+                e.preventDefault();
+                openPolicy("terms");
+              }}
+              className="text-fuchsia-400 hover:underline font-medium cursor-pointer"
             >
               Kullanım Koşulları
-            </button>{" "}
+            </a>{" "}
             ve{" "}
-            <button
-              type="button"
-              onClick={() => openPolicy("privacy")}
-              className="text-fuchsia-400 hover:underline font-medium"
+            <a
+              href="/gizlilik-politikasi/"
+              onClick={(e) => {
+                e.preventDefault();
+                openPolicy("privacy");
+              }}
+              className="text-fuchsia-400 hover:underline font-medium cursor-pointer"
             >
               Gizlilik Politikası
-            </button>
+            </a>
             'nı kabul etmiş olursunuz.
           </p>
         </div>

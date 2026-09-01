@@ -505,21 +505,28 @@ export default function ForgotPassword() {
 
           <p className="text-center mt-6 text-caption text-white/40 leading-relaxed px-4">
             Devam ederek Lumanoris'in{" "}
-            <button
-              type="button"
-              onClick={() => openPolicy("terms")}
-              className="text-fuchsia-400 hover:underline font-medium"
+            {/* SEO-002: bkz. app/login/page.jsx — aynı gerekçe. */}
+            <a
+              href="/kullanim-kosullari/"
+              onClick={(e) => {
+                e.preventDefault();
+                openPolicy("terms");
+              }}
+              className="text-fuchsia-400 hover:underline font-medium cursor-pointer"
             >
               Kullanım Koşulları
-            </button>{" "}
+            </a>{" "}
             ve{" "}
-            <button
-              type="button"
-              onClick={() => openPolicy("privacy")}
-              className="text-fuchsia-400 hover:underline font-medium"
+            <a
+              href="/gizlilik-politikasi/"
+              onClick={(e) => {
+                e.preventDefault();
+                openPolicy("privacy");
+              }}
+              className="text-fuchsia-400 hover:underline font-medium cursor-pointer"
             >
               Gizlilik Politikası
-            </button>
+            </a>
             'nı kabul etmiş olursunuz.
           </p>
         </div>

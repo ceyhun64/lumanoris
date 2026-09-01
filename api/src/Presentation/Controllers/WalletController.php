@@ -360,18 +360,21 @@ class WalletController {
      * satırına hiç bakmıyor, herkese ücretsiz limitleri veriyor. Yani ödeme
      * alınmış olsaydı bile kullanıcı hiçbir şey satın almamış olacaktı.
      *
-     * Ödeme entegrasyonu (DEP-001 🔴, PAY-001 🔴) tamamlanana ve planlar
-     * gerçekten limit üretene kadar doğru davranış **fail-closed**: sahte bir
-     * başarı yerine açık bir "kullanılamıyor" yanıtı. Sahte başarı üretmek
-     * ücretli kullanıcının bir şey aldığına inanmasına yol açıyordu.
+     * Bunu tekrar açmak için gereken üç şeyin ÜÇÜ DE tamamlandı:
+     *   1. `chargeCard()` artık gerçek iyzico tahsilatı yapıyor (PAY-001),
+     *   2. plan adı VE FİYATI sunucudaki `plans` kataloğundan okunuyor —
+     *      istemci ne plan adı uyduruyor ne de tutar gönderiyor,
+     *   3. `functions/plans.php` üzerinden `chatbot_limits.php` ve
+     *      `coin_engine.php` bu satırı gerçekten okuyor (BIZ-002).
      *
-     * Bunu tekrar açmak için gereken üç şey:
-     *   1. `chargeCard()`'ın gerçek Param POS tahsilatı yapması (PAY-001),
-     *   2. plan adının sunucudaki fiyat kataloğuna karşı doğrulanması,
-     *   3. `chatbot_limits.php` + `coin_engine.php`'nin bu satırı okuması (BIZ-002).
+     * Yani ödeme artık karşılıksız değil: yazılan `user_plan_selection`
+     * satırı doğrudan bot ve mesaj kotasına dönüşüyor.
      */
     public static function upgradePlan(): void {
         require_method('POST');
+        require_once __DIR__ . '/../../../functions/checkout_payments.php';
+        require_once __DIR__ . '/../../../functions/plans.php';
+
         $userId   = AuthMiddleware::requireAuth();
         $data     = json_decode($_POST['data'] ?? '', true) ?? null;
         $planName = InputSanitizer::string($data['plan_name'] ?? '', 30);
@@ -380,25 +383,135 @@ class WalletController {
             JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
         }
 
-        // Plan adı, sunucudaki kataloğa karşı doğrulanır — istemci serbest
-        // metin gönderemez. (Ödeme açıldığında da bu kontrol gerekli.)
-        $known = ['Ücretsiz', 'Gümüş', 'Altın', 'Elmas'];
-        if (!in_array($planName, $known, true)) {
+        $db = Database::getInstance();
+        checkRateLimit($db, 'upgradeplan:' . $userId, 5, 60);
+
+        // Katalog hazır değilse (migration 007 uygulanmamış) plan satırı
+        // hiçbir limit üretmez — o durumda para almak karşılıksız tahsilat
+        // olurdu. Fail-closed.
+        if (!plansTableReady($db)) {
+            error_log('[upgradePlan] plans kataloğu hazır değil (migration 007 uygulanmamış) — yükseltme reddedildi.');
+            JsonResponse::error(
+                'Paket kataloğu şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.',
+                503,
+                AppConfig::ERR_UNAVAILABLE
+            );
+        }
+
+        // Plan adı VE fiyatı sunucudan geliyor. İstemcinin gönderdiği tek
+        // şey plan adı; tutarı asla istemci belirlemiyor.
+        $plan = $db->selectSingle('id, name_tr, monthly_price FROM plans WHERE name_tr = ?', [$planName]);
+        if (!$plan) {
             JsonResponse::error('Geçersiz paket.', 400, AppConfig::ERR_VALIDATION);
         }
 
-        error_log(sprintf(
-            '[upgradePlan] ödeme entegrasyonu yok — reddedildi. user_id=%d plan=%s',
-            $userId,
-            $planName
-        ));
+        $price = round((float) $plan['monthly_price'], 2);
 
-        JsonResponse::error(
-            'Ücretli paket yükseltmeleri şu anda kullanılamıyor. Ödeme altyapısı '
-            . 'devreye alındığında bu sayfadan yükseltme yapabileceksiniz.',
-            503,
-            AppConfig::ERR_UNAVAILABLE
-        );
+        // Ücretsiz plan (ya da fiyatı tanımlanmamış plan) için tahsilat yok —
+        // ama ücretli bir planın fiyatı NULL kalmışsa bu bir yapılandırma
+        // hatası; sessizce bedava vermek yerine reddediyoruz.
+        if ($price <= 0) {
+            // selectSingle() satır yoksa false döner; doğrudan ['id'] yazmak
+            // PHP 8'de "array offset on bool" uyarısı üretir.
+            $defaultPlan   = $db->selectSingle('id FROM plans WHERE is_default = 1 ORDER BY sort_order LIMIT 1');
+            $defaultPlanId = $defaultPlan ? (int) $defaultPlan['id'] : 0;
+
+            if ((int) $plan['id'] !== $defaultPlanId) {
+                error_log('[upgradePlan] ücretli plan için fiyat tanımsız: ' . $planName);
+                JsonResponse::error('Bu paket için geçerli bir fiyat tanımlanmamış.', 422, AppConfig::ERR_VALIDATION);
+            }
+            $db->insert('user_plan_selection', [
+                'user_id'     => $userId,
+                'plan_name'   => $plan['name_tr'],
+                'selected_at' => date('Y-m-d H:i:s'),
+            ], true);
+            JsonResponse::success(['message' => 'Üyelik paketiniz güncellendi.', 'plan_name' => $plan['name_tr']]);
+        }
+
+        $card = is_array($data['card'] ?? null) ? $data['card'] : [];
+        if (!$card) {
+            JsonResponse::error('Ödeme için kart bilgisi gerekli.', 400, AppConfig::ERR_VALIDATION);
+        }
+
+        // order_id tahsilattan önce üretiliyor — checkout ile aynı gerekçe:
+        // mutabakat belirsiz kalan bir tahsilatı ancak bu kimlikle bulabilir.
+        $orderId  = 'PLN-' . strtoupper(InputSanitizer::randomToken(4));
+        $buyerRow = $db->selectSingle(
+            'id, ad_soyad, kullanici_adi, eposta, telefon FROM kullanicilar WHERE id = ?',
+            [$userId]
+        ) ?: ['id' => $userId];
+
+        $chargeResult = chargeCard($card, $price, [
+            'order_id'      => $orderId,
+            'user'          => $buyerRow,
+            'user_id'       => $userId,
+            'ip'            => clientIp(),
+            'payment_group' => 'SUBSCRIPTION',
+            'items'         => [[
+                'id'       => 'PLAN-' . $plan['id'],
+                'name'     => $plan['name_tr'] . ' Üyelik Paketi',
+                'category' => 'Üyelik',
+                'price'    => $price,
+            ]],
+        ]);
+
+        if (!$chargeResult['success']) {
+            JsonResponse::error($chargeResult['message'] ?? 'Ödeme başarısız.', 402, AppConfig::ERR_PAYMENT);
+        }
+
+        $gatewayPayment = (string) ($chargeResult['payment_id'] ?? '');
+
+        // Tahsilat alındı; buradan sonraki her hata "para çekildi ama paket
+        // verilmedi" demek — o yüzden telafi (aynı gün tam iptal) şart.
+        try {
+            $db->insert('param_marketplace_payments', [
+                'order_id'             => $orderId,
+                'user_id'              => $userId,
+                'amount'               => $price,
+                'product_amount'       => $price,
+                'status'               => 'paid',
+                'param_transaction_id' => $gatewayPayment !== '' ? $gatewayPayment : null,
+                'param_receipt_id'     => $orderId,
+                'param_net_amount'     => $chargeResult['net_amount'] ?? null,
+                'items_json'           => json_encode([[
+                    'plan_id'   => (int) $plan['id'],
+                    'plan_name' => $plan['name_tr'],
+                    'price'     => $price,
+                ]], JSON_UNESCAPED_UNICODE),
+                // Sıra önemli — bkz. MarketplaceController'daki aynı satır.
+                'param_response_json'  => json_encode(
+                    array_merge(
+                        $chargeResult['raw'] ?? [],
+                        ['itemTransactions' => $chargeResult['item_transactions'] ?? []]
+                    ),
+                    JSON_UNESCAPED_UNICODE
+                ),
+            ]);
+
+            // user_plan_selection'ın PK'sı user_id — upsert doğru davranış:
+            // kullanıcının tek bir etkin planı var.
+            $db->insert('user_plan_selection', [
+                'user_id'     => $userId,
+                'plan_name'   => $plan['name_tr'],
+                'selected_at' => date('Y-m-d H:i:s'),
+            ], true);
+        } catch (Throwable $e) {
+            error_log('[upgradePlan] tahsilat sonrası kayıt başarısız: ' . $e->getMessage());
+            cancelCharge($gatewayPayment, clientIp(), $orderId);
+            JsonResponse::error(
+                'Ödemeniz alındı ancak paket tanımlanamadı; tutar iade edildi. Lütfen tekrar deneyin.',
+                500,
+                AppConfig::ERR_SERVER
+            );
+        }
+
+        error_log(sprintf('[upgradePlan] paket satın alındı user_id=%d plan=%s order=%s', $userId, $plan['name_tr'], $orderId));
+
+        JsonResponse::success([
+            'message'   => 'Üyelik paketiniz güncellendi.',
+            'plan_name' => $plan['name_tr'],
+            'order_id'  => $orderId,
+        ]);
     }
 
     public static function getSubscription(): void {

@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Kimlik Doğrulama | Lumanoris",
+    title: "Kimlik Doğrulama",
 };
 
 export default function AuthLayout({ children }) {

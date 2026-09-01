@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Yeni Chatbot | Lumanoris",
+    title: "Yeni Chatbot",
 };
 
 

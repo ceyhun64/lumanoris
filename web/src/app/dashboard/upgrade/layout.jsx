@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Yükselt | Lumanoris",
+    title: "Yükselt",
 };
 
 export default function DashboardUpgrade({ children }) {

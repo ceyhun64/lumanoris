@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Geçmiş | Lumanoris",
+    title: "Geçmiş",
 };
 
 export default function DashboardHistory({ children }) {

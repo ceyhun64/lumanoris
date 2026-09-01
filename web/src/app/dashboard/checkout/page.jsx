@@ -7,6 +7,10 @@ import { formatCurrency } from "@/shared/lib/format";
 import { toast } from "@/shared/hooks/use-toast";
 import dynamic from "next/dynamic";
 import DeleteConfirmModal from "@/shared/ui/DeleteConfirmModal";
+// Kart doğrulaması ve form alanları üyelik paketi ekranıyla ORTAK — iki
+// ödeme ekranının kuralları ayrışmasın diye tek kaynağa taşındı.
+import CardFields from "@/features/payment/CardFields";
+import { validateCard, toCardPayload, EMPTY_CARD } from "@/shared/lib/card";
 
 // Loaded on demand, like the other modals in this codebase.
 const MesafeliSatisPopup = dynamic(() => import("@/widgets/info/MesafeliSatisPopup"), { ssr: false });
@@ -25,50 +29,6 @@ import {
   Zap,
 } from "lucide-react";
 
-function luhnCheck(digits) {
-  let sum = 0;
-  let shouldDouble = false;
-  for (let i = digits.length - 1; i >= 0; i -= 1) {
-    let digit = parseInt(digits[i], 10);
-    if (shouldDouble) {
-      digit *= 2;
-      if (digit > 9) digit -= 9;
-    }
-    sum += digit;
-    shouldDouble = !shouldDouble;
-  }
-  return sum % 10 === 0;
-}
-
-function validateCard(card) {
-  const errors = {};
-  const number = (card.number || "").replace(/\D/g, "");
-  const [month, year] = (card.expiry || "").split("/").map((v) => parseInt(v, 10));
-  const cvv = (card.cvv || "").replace(/\D/g, "");
-  const holderName = (card.holderName || "").trim();
-
-  if (!holderName) errors.holderName = "Kart sahibinin adı gereklidir.";
-
-  if (number.length < 13 || number.length > 19 || !luhnCheck(number)) {
-    errors.number = "Kart numarası geçersiz.";
-  }
-
-  if (!month || !year || month < 1 || month > 12) {
-    errors.expiry = "Son kullanma tarihi geçersiz.";
-  } else {
-    const now = new Date();
-    const currentYear = now.getFullYear() % 100;
-    const currentMonth = now.getMonth() + 1;
-    if (year < currentYear || (year === currentYear && month < currentMonth)) {
-      errors.expiry = "Bu kartın süresi dolmuş.";
-    }
-  }
-
-  if (!/^\d{3,4}$/.test(cvv)) errors.cvv = "CVV geçersiz.";
-
-  return errors;
-}
-
 export default function Checkout() {
   const router = useRouter();
   const { userId } = useContext(UserContext);
@@ -76,7 +36,7 @@ export default function Checkout() {
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
   const [confirmedItems, setConfirmedItems] = useState([]);
-  const [cardInfo, setCardInfo] = useState({ number: "", expiry: "", cvv: "", holderName: "" });
+  const [cardInfo, setCardInfo] = useState(EMPTY_CARD);
   const [cardErrors, setCardErrors] = useState({});
   const [paying, setPaying] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
@@ -164,13 +124,7 @@ export default function Checkout() {
           chatbot_id: item.chatbot_id,
           duration_weeks: item.duration_weeks || 4,
         })),
-        card: {
-          number: cardInfo.number.replace(/\s/g, ""),
-          expiry: cardInfo.expiry,
-          cvv: cardInfo.cvv,
-          holder_name: cardInfo.holderName.trim(),
-        },
-        use_3d: false,
+        card: toCardPayload(cardInfo),
       };
       const formData = new FormData();
       formData.append("data", JSON.stringify(payload));
@@ -188,7 +142,7 @@ export default function Checkout() {
         });
         setCartItems([]);
         setConfirmedItems([]);
-        setCardInfo({ number: "", expiry: "", cvv: "", holderName: "" });
+        setCardInfo(EMPTY_CARD);
         setStep(1);
         setTimeout(() => router.push("/dashboard"), 1500);
       } else {
@@ -514,103 +468,18 @@ export default function Checkout() {
                   </label>
                 </div>
 
-                {/* Card details */}
-                <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="sm:col-span-2">
-                    <input
-                      type="text"
-                      name="cardHolderName"
-                      aria-label="Kart Sahibinin Adı"
-                      aria-invalid={!!cardErrors.holderName}
-                      placeholder="Kart Sahibinin Adı"
-                      value={cardInfo.holderName}
-                      autoComplete="cc-name"
-                      onChange={(e) => {
-                        setCardInfo((prev) => ({ ...prev, holderName: e.target.value }));
-                        setCardErrors((prev) => ({ ...prev, holderName: undefined }));
-                      }}
-                      className={`w-full bg-zinc-950/60 border rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors ${cardErrors.holderName ? "border-rose-500/60 focus:border-rose-500/60" : "border-zinc-800 focus:border-fuchsia-500/60"}`}
-                    />
-                    {cardErrors.holderName && (
-                      <p className="mt-1.5 text-caption text-rose-400">{cardErrors.holderName}</p>
-                    )}
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <input
-                      type="text"
-                      name="cardNumber"
-                      aria-label="Kart Numarası"
-                      aria-invalid={!!cardErrors.number}
-                      placeholder="Kart Numarası"
-                      inputMode="numeric"
-                      autoComplete="cc-number"
-                      value={cardInfo.number}
-                      onChange={(e) => {
-                        setCardInfo((prev) => ({
-                          ...prev,
-                          number: e.target.value
-                            .replace(/\D/g, "")
-                            .replace(/(.{4})/g, "$1 ")
-                            .trim(),
-                        }));
-                        setCardErrors((prev) => ({ ...prev, number: undefined }));
-                      }}
-                      className={`w-full bg-zinc-950/60 border rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors ${cardErrors.number ? "border-rose-500/60 focus:border-rose-500/60" : "border-zinc-800 focus:border-fuchsia-500/60"}`}
-                    />
-                    {cardErrors.number && (
-                      <p className="mt-1.5 text-caption text-rose-400">{cardErrors.number}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <input
-                      type="text"
-                      name="cardExpiry"
-                      aria-label="Son Kullanma Tarihi (AA/YY)"
-                      aria-invalid={!!cardErrors.expiry}
-                      placeholder="AA/YY"
-                      maxLength={5}
-                      autoComplete="cc-exp"
-                      value={cardInfo.expiry}
-                      onChange={(e) => {
-                        const digits = e.target.value.replace(/\D/g, "").slice(0, 4);
-                        const formatted =
-                          digits.length >= 3 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
-                        setCardInfo((prev) => ({ ...prev, expiry: formatted }));
-                        setCardErrors((prev) => ({ ...prev, expiry: undefined }));
-                      }}
-                      className={`w-full bg-zinc-950/60 border rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors ${cardErrors.expiry ? "border-rose-500/60 focus:border-rose-500/60" : "border-zinc-800 focus:border-fuchsia-500/60"}`}
-                    />
-                    {cardErrors.expiry && (
-                      <p className="mt-1.5 text-caption text-rose-400">{cardErrors.expiry}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <input
-                      type="text"
-                      name="cardCvv"
-                      aria-label="CVV"
-                      aria-invalid={!!cardErrors.cvv}
-                      placeholder="CVV"
-                      maxLength={4}
-                      inputMode="numeric"
-                      autoComplete="cc-csc"
-                      value={cardInfo.cvv}
-                      onChange={(e) => {
-                        setCardInfo((prev) => ({
-                          ...prev,
-                          cvv: e.target.value.replace(/\D/g, ""),
-                        }));
-                        setCardErrors((prev) => ({ ...prev, cvv: undefined }));
-                      }}
-                      className={`w-full bg-zinc-950/60 border rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors ${cardErrors.cvv ? "border-rose-500/60 focus:border-rose-500/60" : "border-zinc-800 focus:border-fuchsia-500/60"}`}
-                    />
-                    {cardErrors.cvv && (
-                      <p className="mt-1.5 text-caption text-rose-400">{cardErrors.cvv}</p>
-                    )}
-                  </div>
+                {/* Card details — alanlar ve doğrulama üyelik paketi
+                    ekranıyla ortak (features/payment/CardFields). */}
+                <div className="mt-5">
+                  <CardFields
+                    card={cardInfo}
+                    errors={cardErrors}
+                    onChange={(next) => {
+                      setCardInfo(next);
+                      setCardErrors({});
+                    }}
+                    disabled={paying}
+                  />
                 </div>
 
                 <div className="mt-6 pt-6 border-t border-zinc-800/80">
@@ -663,6 +532,19 @@ export default function Checkout() {
 
             {/* Final Summary Card */}
             <div className="lg:col-span-5 sticky top-6">
+              {/* iyzico rozeti kartın DIŞINDA, üstünde duruyor. Logonun
+                  beyaz varyantı kullanıldığı için koyu zemin üzerinde
+                  ayrıca bir plakaya gerek yok. */}
+              <div className="mb-4 flex items-center justify-center">
+                <img
+                  src="/iyzico_ile_ode_horizontal_white.png"
+                  alt="iyzico ile Öde"
+                  width={1050}
+                  height={155}
+                  className="h-7 w-auto"
+                />
+              </div>
+
               <div className="rounded-3xl border border-zinc-800/80 bg-zinc-900/60 p-6 backdrop-blur-xl shadow-2xl">
                 <h3 className="text-sm font-semibold text-white mb-4">
                   Ödeme Dökümü

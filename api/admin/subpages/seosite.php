@@ -3,10 +3,9 @@ $seo_data = [];
 
 // Sadece veri çekme mantığı kaldı
 try {
-    $seo_data = $database->getGlobalVars('site_baslik', 'site_aciklama', 'site_keywords', 'robots_txt', 'google_analytics', 'google_search');
-    $file_path = '../robots.txt';
-    // robots_txt içeriğini veritabanından değil, dosyadan çekme
-    $seo_data['robots_txt'] = file_exists($file_path) ? file_get_contents($file_path) : ''; 
+    // SEO-002: 'robots_txt' artık okunmuyor — alan kaldırıldı, tek
+    // authoritative kaynak web/src/app/robots.js.
+    $seo_data = $database->getGlobalVars('site_baslik', 'site_aciklama', 'site_keywords', 'google_analytics', 'google_search');
 } catch (Exception $e) {
     echo '<script>alert("Veriler alınırken bir hata oluştu: ' . $e->getMessage() . '");</script>';
 }
@@ -45,11 +44,22 @@ $faviconExists = file_exists($faviconPath) ? $faviconPath : 'https://via.placeho
                    value="<?= htmlspecialchars($seo_data['site_keywords'] ?? '') ?>" required>
         </div>
 
-        <!-- Robots.txt -->
-        <div>
-            <label for="robots_txt" class="block font-semibold text-sm text-gray-700 mb-2">Robots.txt</label>
-            <textarea id="robots_txt" name="robots_txt" rows="8"
-                      class="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition shadow-sm"><?= htmlspecialchars($seo_data['robots_txt'] ?? '') ?></textarea>
+        <!-- Robots.txt — SEO-002: bu alan kaldırıldı.
+             Buradaki metin file_put_contents('../../robots.txt') ile CWD'ye
+             göre çözülen bir yola yazıyordu ve yayında servis edilen dosyaya
+             hiçbir senaryoda ulaşmıyordu. Artık tek authoritative kaynak
+             web/src/app/robots.js. -->
+        <div class="rounded-lg border border-amber-300 bg-amber-50 p-4">
+            <p class="font-semibold text-sm text-amber-900 mb-1">Robots.txt ve Sitemap.xml artık burada yönetilmiyor</p>
+            <p class="text-sm text-amber-800 leading-relaxed">
+                İkisi de frontend tarafından üretiliyor:
+                <code class="font-mono text-xs">web/src/app/robots.js</code> ve
+                <code class="font-mono text-xs">web/src/app/sitemap.js</code>.
+                Yayındaki hâlleri <a href="/robots.txt" target="_blank" class="underline font-medium">/robots.txt</a>
+                ve <a href="/sitemap.xml" target="_blank" class="underline font-medium">/sitemap.xml</a> adreslerinden görülebilir.
+                Sitemap, sözleşme metinlerinden hangilerinin yazıldığını her istekte
+                kontrol edip listeye kendisi ekliyor — elle üretmek gerekmiyor.
+            </p>
         </div>
 
         <!-- Google Analytics Kodu -->
@@ -68,18 +78,12 @@ $faviconExists = file_exists($faviconPath) ? $faviconPath : 'https://via.placeho
                    value="<?= htmlspecialchars($seo_data['google_search'] ?? '') ?>">
         </div>
 
-        <!-- Sitemap ve Favicon Bölümü -->
+        <!-- Favicon Bölümü
+             SEO-002: "Sitemap Oluştur ve İndir" butonu kaldırıldı. Ürettiği
+             dosya api/sitemap.xml'e yazılıyordu; server.js yalnızca /api,
+             /admin ve /assets'i PHP'ye proxy'lediği için o yol site kökünden
+             erişilemiyordu (/sitemap.xml ölçümde 404 dönüyordu). -->
         <div class="space-y-4 pt-2">
-            <!-- Sitemap Oluştur Butonu -->
-            <div>
-                <label for="sitemap" class="block font-semibold text-sm text-gray-700 mb-2">Sitemap.xml</label>
-                <!-- Sitemap butonu stili güncellendi -->
-                <button type="button" id="sitemap"
-                        class="w-full bg-indigo-500 text-white font-semibold px-4 py-2.5 rounded-lg hover:bg-indigo-600 active:bg-indigo-700 active:scale-95 transition duration-150 shadow-md">
-                    Sitemap Oluştur ve İndir
-                </button>
-            </div>
-
             <!-- Favicon Yükleme -->
             <div class="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 sm:space-x-4 border p-4 rounded-lg bg-gray-50">
                 <!-- Görsel Önizleme -->
@@ -119,40 +123,9 @@ $faviconExists = file_exists($faviconPath) ? $faviconPath : 'https://via.placeho
         reader.readAsDataURL(input.files[0]);
     }
 
-    // Sitemap AJAX mantığı korundu
-    document.querySelector("#sitemap").addEventListener("click", async function() {
-        try {
-            // URL, ana admin dizinine göre ayarlanmalıdır. Varsayım: ajax/sitemap.php doğru yolda.
-            const response = await fetch("/admin/ajax/sitemap.php"); 
-            if (!response.ok) throw new Error("İstek başarısız oldu! (Durum: " + response.status + ")");
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-
-            a.style.display = "none";
-            a.href = url;
-            a.download = "sitemap.xml";
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-
-            // Varsayılan Notification objeniz ile bildirim gönder
-            new Notification({
-                text: "Sitemap başarıyla oluşturuldu ve indirildi!",
-                type: "success",
-                position: "top-right",
-                autoClose: 3000,
-                showProgress: true
-            });
-        } catch (error) {
-            new Notification({
-                text: `Sitemap hatası: ${error.message}`,
-                type: "error",
-                position: "top-right"
-            });
-        }
-    });
+    // SEO-002: sitemap indirme mantığı kaldırıldı — butonu da kaldırdık.
+    // querySelector("#sitemap") artık null döneceği için burada bırakılsaydı
+    // script bu satırda patlar ve aşağıdaki form gönderimi hiç bağlanmazdı.
 
     // Form Gönderimini AJAX'a dönüştürme
     document.addEventListener('DOMContentLoaded', () => {

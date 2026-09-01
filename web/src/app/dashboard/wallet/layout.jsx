@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Bakiyem | Lumanoris",
+    title: "Bakiyem",
 };
 
 export default function DashboardWallet({ children }) {

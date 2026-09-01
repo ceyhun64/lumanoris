@@ -8,6 +8,8 @@ import BillingCycleToggle from "./components/BillingCycleToggle";
 import PricingCard from "./components/PricingCard";
 import EnterpriseContactFooter from "./components/EnterpriseContactFooter";
 import StatusBanner from "./components/StatusBanner";
+import PlanPaymentModal from "@/features/payment/PlanPaymentModal";
+import { toCardPayload } from "@/shared/lib/card";
 
 const initialPlanData = [
   {
@@ -79,6 +81,9 @@ export default function PricingPlans() {
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [salesContactSending, setSalesContactSending] = useState(false);
   const [salesContactSent, setSalesContactSent] = useState(false);
+  // Ücretli bir paket seçildiğinde ödeme penceresi açılır; ücretsiz paket
+  // doğrudan uygulanır (bkz. handleChoosePlan).
+  const [pendingPlan, setPendingPlan] = useState(null);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -105,27 +110,58 @@ export default function PricingPlans() {
     fetchPlans();
   }, []);
 
-  const handleChoosePlan = async (planTitle, index) => {
+  /**
+   * "₺1.299,00" → 1299. Katalog fiyatı sunucudan biçimlendirilmiş metin
+   * olarak geliyor; buradaki ayrıştırma YALNIZCA "ödeme penceresi açılsın
+   * mı" kararı için. Tahsil edilecek tutarı sunucu `plans` tablosundan
+   * kendisi okuyor — istemci tutar göndermiyor.
+   */
+  const planAmount = (plan) => {
+    const raw = String(plan?.monthly_price ?? "")
+      .replace(/[^\d,.-]/g, "")
+      .replace(/\./g, "")
+      .replace(",", ".");
+    const n = parseFloat(raw);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const handleChoosePlan = (plan, index) => {
     if (!userId) {
       toast.warning("Paket seçebilmek için giriş yapmalısınız.");
       return;
     }
+    // Ücretsiz plan için tahsilat yok — kart istemek anlamsız olurdu.
+    if (planAmount(plan) <= 0) {
+      submitPlan(plan.title, null, index);
+      return;
+    }
+    setPendingPlan({ title: plan.title, priceLabel: plan.monthly_price, index });
+  };
+
+  const submitPlan = async (planTitle, card, index) => {
     setSelectedPlan(index);
     setUpgrading(index);
     try {
+      // user_id BİLİNÇLİ olarak gönderilmiyor: ödeme uç noktası kullanıcıyı
+      // oturumdan belirliyor. İstemciden gelen bir user_id, başka bir
+      // hesabın paketini satın almaya çalışmanın açık kapısı olurdu.
+      const payload = { plan_name: planTitle };
+      if (card) payload.card = toCardPayload(card);
+
       const formData = new FormData();
-      formData.append(
-        "data",
-        JSON.stringify({ user_id: userId, plan_name: planTitle }),
-      );
+      formData.append("data", JSON.stringify(payload));
       const res = await fetch("/api/wallet/upgradeplan.php", {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
       const result = await res.json();
       if (result.success) {
-        setUpgradedPlan(planTitle);
+        setPendingPlan(null);
+        setUpgradedPlan(result.plan_name || planTitle);
       } else {
+        // Sağlayıcının mesajı ("Kart limiti yetersiz" gibi) kullanıcıya
+        // aynen gösteriliyor; genel bir hata metninden çok daha yararlı.
         toast.error(result.message || "Paket seçimi başarısız oldu.");
       }
     } catch (err) {
@@ -212,7 +248,7 @@ export default function PricingPlans() {
                 isSelected={selectedPlan === index}
                 isUpgrading={upgrading === index}
                 billingCycle={billingCycle}
-                onChoose={() => handleChoosePlan(plan.title, index)}
+                onChoose={() => handleChoosePlan(plan, index)}
               />
             ))}
           </div>
@@ -224,6 +260,15 @@ export default function PricingPlans() {
           />
         </div>
       </div>
+
+      <PlanPaymentModal
+        open={!!pendingPlan}
+        planTitle={pendingPlan?.title ?? ""}
+        priceLabel={pendingPlan?.priceLabel ?? ""}
+        submitting={upgrading !== null}
+        onClose={() => setPendingPlan(null)}
+        onSubmit={(card) => submitPlan(pendingPlan.title, card, pendingPlan.index)}
+      />
     </div>
   );
 }

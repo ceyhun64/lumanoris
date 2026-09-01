@@ -1,31 +1,46 @@
 <?php
 /**
- * Param POS payment processing stubs.
- * Production server has the real reconciliation and callback logic.
- * These stubs allow endpoints to load without fatal errors in dev.
+ * Ödeme işleme — iyzico (iyzipay) entegrasyonu.
  *
- * ensureParamMarketplaceTables() — creates required DB tables if missing.
- * reconcilePayments()           — syncs payment status from Param API to DB.
- * processRefund()               — handles a refund request via Param API.
- * handleParamCallback()         — processes a Param POS async callback POST.
- * chargeCard()                  — validates + (in prod) charges a card before
- *                                  a subscription/payment row is ever written.
+ * DEP-001 / PAY-001 / PAY-012 — bu dosya baştan sona stub'dı. `chargeCard()`
+ * yalnızca kartın BİÇİMİNİ doğruluyor ve `['success' => true, 'simulated' =>
+ * true]` dönüyordu; `reconcilePayments()` / `processRefund()` ise 503 ile
+ * fail-closed reddediyordu. Artık üçü de gerçek sağlayıcıya gidiyor.
+ *
+ * Sağlayıcı Param POS değil **iyzico**. Şemadaki `param_*` adlar korunuyor
+ * (içlerinde canlı veri var); anlamları IyzicoClient sınıf yorumunda.
+ *
+ * Fonksiyonlar:
+ *   chargeCard()                  — kartı doğrular ve GERÇEKTEN tahsil eder.
+ *   cancelCharge()                — tahsilat sonrası bizim tarafta bir şey
+ *                                   patlarsa telafi (aynı gün tam iptal).
+ *   reconcilePayments()           — belirsiz kalan ödemeleri sağlayıcıdan sorar.
+ *   processRefund()               — iade.
+ *   handleParamCallback()         — kullanılmıyor (iyzico 3DS'siz akışta
+ *                                   asenkron bildirim göndermez).
+ *   ensureParamMarketplaceTables()— tablolar migration ile oluşuyor.
  */
 
+require_once __DIR__ . '/env.php';
+
 /**
- * Root-cause gate for the "no card was ever validated" bug: previously
- * createSubscription() never looked at $data['card'] at all, so any
- * chatbot_id/duration_weeks pair succeeded with no card data whatsoever.
- * This dev stub can't call a real gateway (no Param credentials/API access
- * in this environment — see class comment on ParamPosMarketplace), but it
- * does the one thing fully verifiable without one: reject anything that
- * isn't even a well-formed card (missing fields, failed Luhn check, bad
- * CVV, expired date) *before* any DB row is written. Mirrors the same
- * Luhn/expiry rules CartConfirm.jsx already enforces client-side, so the
- * two layers agree instead of the backend silently trusting less than the
- * frontend already checks.
+ * Kart bilgisini doğrular ve tutarı iyzico üzerinden tahsil eder.
+ *
+ * Biçim doğrulaması (Luhn, CVV, son kullanma) sağlayıcıya gitmeden ÖNCE
+ * yapılıyor: `CartConfirm`/checkout sayfasının istemci tarafında uyguladığı
+ * kuralların aynısı, böylece iki katman birbiriyle çelişmiyor ve bariz
+ * hatalı kartlar için gereksiz ağ turu atılmıyor.
+ *
+ * @param array $card    number, expiry (MM/YY), cvv, holder_name
+ * @param float $amount  Tahsil edilecek toplam (TRY)
+ * @param array $context order_id, user, items, ip, payment_group
+ *
+ * @return array{
+ *   success:bool, message:string, payment_id?:string, conversation_id?:string,
+ *   net_amount?:float, item_transactions?:array, error_code?:string, raw?:array
+ * }
  */
-function chargeCard(array $card, float $amount): array {
+function chargeCard(array $card, float $amount, array $context = []): array {
     $number = preg_replace('/\D/', '', (string) ($card['number'] ?? ''));
     $expiry = trim((string) ($card['expiry'] ?? ''));
     $cvv    = preg_replace('/\D/', '', (string) ($card['cvv'] ?? ''));
@@ -40,7 +55,7 @@ function chargeCard(array $card, float $amount): array {
     if (!preg_match('/^\d{3,4}$/', $cvv)) {
         return ['success' => false, 'message' => 'CVV geçersiz.'];
     }
-    if (!preg_match('/^(\d{2})\/(\d{2})$/', $expiry, $m)) {
+    if (!preg_match('#^(\d{2})\s*/\s*(\d{2})$#', $expiry, $m)) {
         return ['success' => false, 'message' => 'Son kullanma tarihi geçersiz.'];
     }
     $month = (int) $m[1];
@@ -54,20 +69,281 @@ function chargeCard(array $card, float $amount): array {
         return ['success' => false, 'message' => 'Kartın son kullanma tarihi geçmiş.'];
     }
 
-    // PAY-001 🔴 — Dev stub. Production calls the real Param POS charge here.
-    //
-    // Buradaki 'success' GERÇEK BİR TAHSİLAT DEĞİL. Eskiden yalnızca
-    // ['success' => true] dönüyordu ve çağıran taraf bunu gerçek ödeme gibi
-    // işliyordu: status='paid' ödeme satırı, status='approved' satıcı payı ve
-    // withdraw() üzerinden ÇEKİLEBİLİR bakiye. Luhn-geçerli sahte bir kartla
-    // satıcı hesabında gerçek para oluşturulabiliyordu.
-    //
-    // 'simulated' bayrağı bu bilgiyi çağırana taşıyor: MarketplaceController
-    // bunu görünce ledger satırlarını şemanın zaten öngördüğü
-    // 'pending_approval' durumuyla yazıyor, yani çekilebilir bakiye zinciri
-    // kesiliyor. Gerçek entegrasyon geldiğinde bu bayrağı KALDIRMAK yeterli.
-    error_log('[checkout_payments-stub] chargeCard: simulated charge of ' . $amount . ' for card ending ' . substr($number, -4));
-    return ['success' => true, 'simulated' => true];
+    // Sıfır ya da negatif tutar tahsil edilmez. Daha önce (float) null === 0.0
+    // yoluyla 0,00 TL'lik "başarılı" satışlar yazılmıştı; sağlayıcı da bunu
+    // reddeder, ama buraya kadar gelmesine hiç gerek yok.
+    $amount = round($amount, 2);
+    if ($amount <= 0) {
+        return ['success' => false, 'message' => 'Geçersiz ödeme tutarı.'];
+    }
+
+    $client = new IyzicoClient();
+    if (!$client->isConfigured()) {
+        // Anahtar yoksa FAIL-CLOSED. Eski stub burada `success => true`
+        // dönüyordu; sahte başarı, ödenmemiş bir siparişin "ödendi" olarak
+        // yazılması demekti. Yapılandırma eksikliği kullanıcıya değil,
+        // operatöre ait bir sorun — o yüzden loga tam sebep düşüyor.
+        error_log('[iyzico] IYZICO_API_KEY / IYZICO_SECRET_KEY tanımlı değil — tahsilat reddedildi. api/.env dosyasına ekleyin (bkz. api/.env.example).');
+        return [
+            'success'    => false,
+            'message'    => 'Ödeme altyapısı şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.',
+            'error_code' => 'CONFIG_MISSING',
+        ];
+    }
+
+    $orderId  = (string) ($context['order_id'] ?? ('ORD-' . strtoupper(bin2hex(random_bytes(4)))));
+    $payload  = buildIyzicoPaymentPayload($card, $amount, $orderId, $context);
+    $response = $client->createPayment($payload);
+
+    if (($response['status'] ?? '') !== 'success') {
+        // errorMessage sağlayıcıdan gelen Türkçe metin ("Kart limiti
+        // yetersiz", "Geçersiz kart bilgisi"...) — kullanıcıya bunu
+        // göstermek genel bir "ödeme başarısız"dan çok daha yararlı.
+        error_log(sprintf(
+            '[iyzico] tahsilat başarısız order=%s code=%s msg=%s',
+            $orderId,
+            (string) ($response['errorCode'] ?? '-'),
+            (string) ($response['errorMessage'] ?? '-')
+        ));
+        return [
+            'success'    => false,
+            'message'    => (string) ($response['errorMessage'] ?? 'Ödeme işlemi tamamlanamadı.'),
+            'error_code' => (string) ($response['errorCode'] ?? 'PAYMENT_FAILED'),
+            'raw'        => IyzicoClient::redact($response),
+        ];
+    }
+
+    // Sepet kalemi başına üretilen paymentTransactionId'ler İADE İÇİN
+    // zorunlu: iyzico iadeyi ödemenin tamamı üzerinden değil kalem bazında
+    // yapıyor. Saklamazsak sonradan iade edilemez hale gelir.
+    $itemTransactions = [];
+    foreach (($response['itemTransactions'] ?? []) as $tx) {
+        $itemTransactions[] = [
+            'itemId'               => (string) ($tx['itemId'] ?? ''),
+            'paymentTransactionId' => (string) ($tx['paymentTransactionId'] ?? ''),
+            'price'                => (float) ($tx['price'] ?? 0),
+            'paidPrice'            => (float) ($tx['paidPrice'] ?? 0),
+            'merchantPayoutAmount' => (float) ($tx['merchantPayoutAmount'] ?? 0),
+        ];
+    }
+
+    error_log(sprintf(
+        '[iyzico] tahsilat başarılı order=%s paymentId=%s tutar=%s kart=****%s',
+        $orderId,
+        (string) ($response['paymentId'] ?? '-'),
+        IyzicoClient::money($amount),
+        substr($number, -4)
+    ));
+
+    return [
+        'success'           => true,
+        'message'           => 'Ödeme alındı.',
+        'payment_id'        => (string) ($response['paymentId'] ?? ''),
+        'conversation_id'   => $orderId,
+        'net_amount'        => isset($response['iyziCommissionRateAmount'])
+            ? round($amount - (float) ($response['iyziCommissionRateAmount'] ?? 0) - (float) ($response['iyziCommissionFee'] ?? 0), 2)
+            : null,
+        'item_transactions' => $itemTransactions,
+        'raw'               => IyzicoClient::redact($response),
+    ];
+}
+
+/**
+ * iyzico `/payment/auth` gövdesini kurar.
+ *
+ * İki nokta kritik:
+ *   1. `price` ile sepet kalemlerinin toplamı BİREBİR eşit olmak zorunda —
+ *      `IyzicoClient::balanceBasket()` yuvarlama farkını son kaleme yazarak
+ *      bunu garanti ediyor.
+ *   2. buyer'ın `registrationAddress`, `city`, `country`, `email`,
+ *      `identityNumber`, `ip` alanları zorunlu; boş gönderilirse istek
+ *      doğrulamadan döner. Dijital ürün sattığımız için gerçek bir teslimat
+ *      adresi yok — sağlayıcının şeması gerektirdiği için kullanıcının
+ *      hesabından türetilen tutarlı bir yer tutucu kullanılıyor.
+ */
+function buildIyzicoPaymentPayload(array $card, float $amount, string $orderId, array $context): array {
+    $user = is_array($context['user'] ?? null) ? $context['user'] : [];
+
+    $fullName = trim((string) ($user['ad_soyad'] ?? '')) ?: trim((string) ($user['kullanici_adi'] ?? '')) ?: 'Lumanoris Kullanıcısı';
+    $parts    = preg_split('/\s+/', $fullName, -1, PREG_SPLIT_NO_EMPTY) ?: ['Lumanoris'];
+    $surname  = count($parts) > 1 ? array_pop($parts) : 'Kullanıcı';
+    $name     = implode(' ', $parts);
+
+    // TCKN toplanmıyor. iyzico alanı zorunlu tutuyor ve dijital ürün
+    // satışında doğrulamıyor; sabit yer tutucu sağlayıcının kendi
+    // dokümantasyonundaki örnek değer.
+    $identity = preg_replace('/\D/', '', (string) ($context['identity_number'] ?? '')) ?: '11111111111';
+
+    $city    = trim((string) ($context['city'] ?? '')) ?: 'İstanbul';
+    $country = trim((string) ($context['country'] ?? '')) ?: 'Türkiye';
+    $address = trim((string) ($context['address'] ?? '')) ?: 'Dijital teslimat - fiziksel adres yok';
+    $zip     = trim((string) ($context['zip_code'] ?? '')) ?: '34000';
+
+    $buyer = [
+        'id'                  => (string) ($user['id'] ?? ($context['user_id'] ?? '0')),
+        'name'                => $name,
+        'surname'             => $surname,
+        'identityNumber'      => $identity,
+        'email'               => (string) ($user['eposta'] ?? ($context['email'] ?? 'noreply@lumanoris.com')),
+        'registrationAddress' => $address,
+        'registrationDate'    => IyzicoClient::date($context['registration_date'] ?? null),
+        'lastLoginDate'       => IyzicoClient::date(null),
+        'city'                => $city,
+        'country'             => $country,
+        'zipCode'             => $zip,
+        'ip'                  => (string) ($context['ip'] ?? '127.0.0.1'),
+    ];
+
+    // gsmNumber zorunlu değil; ancak GEÇERSİZ bir değer isteği tümden
+    // reddettirir. Bu yüzden yalnızca +90XXXXXXXXXX biçimine
+    // normalize edilebiliyorsa ekleniyor.
+    $gsm = normalizeTurkishGsm((string) ($user['telefon'] ?? ''));
+    if ($gsm !== null) {
+        $buyer['gsmNumber'] = $gsm;
+    }
+
+    $addressBlock = [
+        'contactName' => $fullName,
+        'city'        => $city,
+        'country'     => $country,
+        'address'     => $address,
+        'zipCode'     => $zip,
+    ];
+
+    $items = [];
+    foreach (($context['items'] ?? []) as $item) {
+        $items[] = [
+            'id'        => (string) ($item['id'] ?? '0'),
+            'name'      => mb_substr(trim((string) ($item['name'] ?? 'Ürün')) ?: 'Ürün', 0, 100),
+            'category1' => mb_substr(trim((string) ($item['category'] ?? 'Dijital')) ?: 'Dijital', 0, 100),
+            // Chatbot aboneliği ve üyelik paketi fiziksel ürün değil.
+            'itemType'  => 'VIRTUAL',
+            'price'     => (float) ($item['price'] ?? 0),
+        ];
+    }
+    // Kalem listesi hiç gelmediyse tek kalemlik bir sepet kur — iyzico boş
+    // basketItems kabul etmiyor.
+    if (empty($items)) {
+        $items[] = [
+            'id'        => $orderId,
+            'name'      => (string) ($context['description'] ?? 'Lumanoris Siparişi'),
+            'category1' => 'Dijital',
+            'itemType'  => 'VIRTUAL',
+            'price'     => $amount,
+        ];
+    }
+
+    return [
+        'locale'         => 'tr',
+        'conversationId' => $orderId,
+        'price'          => IyzicoClient::money($amount),
+        'paidPrice'      => IyzicoClient::money($amount),
+        'currency'       => 'TRY',
+        // Taksit yok: dijital abonelik tek çekim.
+        'installment'    => 1,
+        'basketId'       => $orderId,
+        'paymentChannel' => 'WEB',
+        'paymentGroup'   => (string) ($context['payment_group'] ?? 'PRODUCT'),
+        'paymentCard'    => [
+            'cardHolderName' => trim((string) $card['holder_name']),
+            'cardNumber'     => preg_replace('/\D/', '', (string) $card['number']),
+            'expireMonth'    => substr(preg_replace('/\D/', '', (string) $card['expiry']), 0, 2),
+            // iyzico 4 haneli yıl bekliyor; form MM/YY topluyor.
+            'expireYear'     => '20' . substr(preg_replace('/\D/', '', (string) $card['expiry']), 2, 2),
+            'cvc'            => preg_replace('/\D/', '', (string) $card['cvv']),
+            'registerCard'   => 0,
+        ],
+        'buyer'           => $buyer,
+        'shippingAddress' => $addressBlock,
+        'billingAddress'  => $addressBlock,
+        'basketItems'     => IyzicoClient::balanceBasket($items, $amount),
+    ];
+}
+
+/**
+ * Alıcının gerçek IP'si — iyzico `buyer.ip` alanı için (dolandırıcılık
+ * skorlamasında kullanıyor).
+ *
+ * Bu kurulumda PHP'ye istekler HER ZAMAN Node proxy'si (web/server.js)
+ * üzerinden geliyor, yani `REMOTE_ADDR` daima 127.0.0.1. Ham `REMOTE_ADDR`
+ * kullanmak her siparişi aynı IP'den gelmiş gibi göstererek sağlayıcının
+ * fraud kontrolünü işlevsiz bırakırdı.
+ *
+ * X-Forwarded-For istemci tarafından uydurulabilir, bu yüzden YALNIZCA
+ * doğrudan bağlantı yerel/özel bir adresten geliyorsa — yani gerçekten kendi
+ * proxy'mizin arkasındaysak — dikkate alınıyor. İnternete doğrudan açık bir
+ * kurulumda başlık yok sayılıp REMOTE_ADDR kullanılıyor.
+ */
+function clientIp(): string {
+    $remote = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    $isBehindLocalProxy = $remote === '' || filter_var(
+        $remote,
+        FILTER_VALIDATE_IP,
+        FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+    ) === false;
+
+    if ($isBehindLocalProxy && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        // İlk giriş, zincirin en uzaktaki (gerçek istemci) adresi.
+        $first = trim(explode(',', (string) $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
+        if (filter_var($first, FILTER_VALIDATE_IP) !== false) {
+            return $first;
+        }
+    }
+
+    return filter_var($remote, FILTER_VALIDATE_IP) !== false ? $remote : '127.0.0.1';
+}
+
+/**
+ * `+90XXXXXXXXXX` biçimine çevirir, çeviremezse null döner.
+ * Geçersiz bir gsmNumber tüm ödemeyi reddettirdiği için "emin değilsen
+ * gönderme" doğru davranış.
+ */
+function normalizeTurkishGsm(string $raw): ?string {
+    $digits = preg_replace('/\D/', '', $raw);
+    if ($digits === '') {
+        return null;
+    }
+    $digits = ltrim($digits, '0');
+    if (str_starts_with($digits, '90')) {
+        $digits = substr($digits, 2);
+    }
+    // Türkiye cep numarası: 5 ile başlayan 10 hane.
+    return preg_match('/^5\d{9}$/', $digits) ? '+90' . $digits : null;
+}
+
+/**
+ * Tahsilat başarılı olduktan SONRA bizim tarafımızda bir şey patlarsa
+ * (commit hatası, sonraki insert'in düşmesi) müşterinin parası çekilmiş ama
+ * hiçbir şey teslim edilmemiş olur. Bu, o durumun telafisi.
+ *
+ * İptal başarısız olursa BİLİNÇLİ olarak sessiz kalmıyoruz: satır loga
+ * düşüyor ki operatör elle iade edebilsin. Sessiz bir başarısızlık,
+ * müşterinin parasının kaybolması demek.
+ */
+function cancelCharge(string $paymentId, string $ip, string $orderId = ''): bool {
+    if ($paymentId === '') {
+        return false;
+    }
+    $client = new IyzicoClient();
+    if (!$client->isConfigured()) {
+        return false;
+    }
+
+    $res = $client->cancelPayment($paymentId, $ip !== '' ? $ip : '127.0.0.1', $orderId);
+    if (($res['status'] ?? '') === 'success') {
+        error_log('[iyzico] tahsilat iptal edildi (telafi) paymentId=' . $paymentId . ' order=' . $orderId);
+        return true;
+    }
+
+    error_log(sprintf(
+        '[iyzico] KRİTİK: tahsilat iptal EDİLEMEDİ — müşteriden para çekildi, sipariş yazılamadı. '
+        . 'ELLE İADE GEREKİYOR. paymentId=%s order=%s code=%s msg=%s',
+        $paymentId,
+        $orderId,
+        (string) ($res['errorCode'] ?? '-'),
+        (string) ($res['errorMessage'] ?? '-')
+    ));
+    return false;
 }
 
 function luhnCheck(string $digits): bool {
@@ -86,44 +362,266 @@ function luhnCheck(string $digits): bool {
 }
 
 function ensureParamMarketplaceTables(PDO $conn): void {
-    // Dev stub — tables assumed to exist (created via migration on prod).
-    error_log('[checkout_payments-stub] ensureParamMarketplaceTables called');
+    // Tablolar database/schema.sql + migrations ile oluşuyor; burada DDL
+    // çalıştırmak MySQL'de örtük COMMIT tetikler (PAY-004) — o yüzden
+    // bilinçli olarak boş.
 }
 
 /**
- * PAY-012 🟡 — bu üç stub **fail-open**'dı: hiçbir şey yapmadan
- * `JsonResponse::success(...)` dönüyorlardı. Admin "İade tamamlandı" ya da
- * "Mutabakat tamamlandı" görüyordu; hiçbir para hareket etmemişti, hiçbir
- * ledger satırı değişmemişti. Bir müşteri iade talebi kapatılmış sayılıp
- * gerçekte hiç iade almayabilirdi.
+ * Mutabakat — sağlayıcıdaki gerçek duruma göre yerel kayıtları düzeltir.
  *
- * Fail-closed stub zararsızdır; fail-open stub gerçek sonuç üretir. Üçü de
- * artık 503 ile açıkça "bu ortamda yapılamıyor" diyor.
+ * PAY-012: bu fonksiyon eskiden 503 dönüyordu (öncesinde de fail-open bir
+ * stub'dı). Asıl ihtiyacı doğuran senaryo şu: `chargeCard()` zaman aşımına
+ * uğrarsa tahsilatın yapılıp yapılmadığını BİLEMEYİZ; ödeme satırı
+ * `failed`/`pending` kalır ama para çekilmiş olabilir. iyzico'ya
+ * `conversationId` ile sorarak gerçeği öğrenip kaydı düzeltiyoruz.
  */
 function reconcilePayments(Database $db, PDO $conn): void {
-    error_log('[checkout_payments-stub] reconcilePayments çağrıldı — entegrasyon yok, reddedildi.');
-    JsonResponse::error(
-        'Mutabakat şu anda yapılamıyor: Param POS entegrasyonu devreye alınmadı.',
-        503,
-        AppConfig::ERR_UNAVAILABLE
+    $client = new IyzicoClient();
+    if (!$client->isConfigured()) {
+        error_log('[iyzico] mutabakat: sağlayıcı yapılandırılmamış.');
+        JsonResponse::error(
+            'Mutabakat yapılamıyor: ödeme sağlayıcısı yapılandırılmamış.',
+            503,
+            AppConfig::ERR_UNAVAILABLE
+        );
+    }
+
+    // Son 7 gün ve henüz kesinleşmemiş kayıtlar. Kesinleşmiş (`paid`,
+    // `refunded`) satırlara dokunulmuyor — mutabakatın işi belirsizliği
+    // çözmek, geçmişi yeniden yazmak değil.
+    $rows = $db->selectMulti(
+        "id, order_id, status, amount, param_transaction_id
+         FROM param_marketplace_payments
+         WHERE status IN ('pending', 'payment_started', 'failed', 'unknown')
+           AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+         ORDER BY id ASC
+         LIMIT 200"
     );
+
+    $checked = 0;
+    $fixed   = 0;
+    $errors  = 0;
+
+    foreach ($rows as $row) {
+        $checked++;
+        $paymentId = (string) ($row['param_transaction_id'] ?? '');
+
+        // paymentId yoksa (zaman aşımı senaryosu) conversationId ile sor.
+        $query = $paymentId !== ''
+            ? ['locale' => 'tr', 'conversationId' => $row['order_id'], 'paymentId' => $paymentId]
+            : ['locale' => 'tr', 'conversationId' => $row['order_id'], 'paymentConversationId' => $row['order_id']];
+
+        $res = $client->request('/payment/detail', $query);
+
+        if (($res['status'] ?? '') !== 'success') {
+            // "Ödeme bulunamadı" = gerçekten tahsil edilmemiş; kaydı
+            // `failed` olarak kesinleştir. Diğer hatalar geçici olabilir,
+            // satıra dokunma.
+            $code = (string) ($res['errorCode'] ?? '');
+            if (in_array($code, ['5088', '1000'], true) || str_contains(mb_strtolower((string) ($res['errorMessage'] ?? '')), 'bulunamadı')) {
+                if ($row['status'] !== 'failed') {
+                    $db->update('param_marketplace_payments', ['status' => 'failed'], 'id = ?', [$row['id']]);
+                    $fixed++;
+                }
+            } else {
+                $errors++;
+                error_log('[iyzico] mutabakat sorgusu başarısız order=' . $row['order_id'] . ' code=' . $code);
+            }
+            continue;
+        }
+
+        $providerStatus = (string) ($res['paymentStatus'] ?? '');
+        $newStatus = match ($providerStatus) {
+            'SUCCESS'  => 'paid',
+            'FAILURE'  => 'failed',
+            'INIT_THREEDS', 'CALLBACK_THREEDS', 'BKM_POS_SELECTED' => 'payment_started',
+            default    => null,
+        };
+
+        if ($newStatus === null || $newStatus === $row['status']) {
+            continue;
+        }
+
+        $update = [
+            'status'              => $newStatus,
+            'param_response_json' => json_encode(IyzicoClient::redact($res), JSON_UNESCAPED_UNICODE),
+        ];
+        if (($res['paymentId'] ?? '') !== '') {
+            $update['param_transaction_id'] = (string) $res['paymentId'];
+        }
+        $db->update('param_marketplace_payments', $update, 'id = ?', [$row['id']]);
+
+        // Ödeme gerçekten alınmışsa satıcı payları da onaylanmalı; aksi
+        // halde satıcının parası süresiz `pending_approval`da kalırdı.
+        $db->update(
+            'param_marketplace_details',
+            ['status' => $newStatus === 'paid' ? 'approved' : 'cancelled'],
+            'payment_id = ? AND status = ?',
+            [$row['id'], 'pending_approval']
+        );
+
+        $fixed++;
+        error_log(sprintf('[iyzico] mutabakat düzeltti order=%s %s -> %s', $row['order_id'], $row['status'], $newStatus));
+    }
+
+    JsonResponse::success([
+        'message'   => 'Mutabakat tamamlandı.',
+        'checked'   => $checked,
+        'updated'   => $fixed,
+        'errors'    => $errors,
+    ]);
 }
 
+/**
+ * İade — iyzico `/payment/refund`.
+ *
+ * DİKKAT: iyzico iadeyi ödemenin tamamı üzerinden değil, sepet kalemi başına
+ * üretilen `paymentTransactionId` üzerinden yapıyor. `chargeCard()` bu
+ * kimlikleri `param_response_json` içine yazıyor; buradaki döngü onları
+ * kullanıyor. Kimlikler yoksa iade EDİLEMEZ ve bunu sessizce "başarılı"
+ * saymıyoruz (PAY-012'nin asıl şikâyeti buydu).
+ *
+ * @param array $data payment_id (yerel satır id'si) veya order_id
+ */
 function processRefund(Database $db, PDO $conn, array $data): void {
-    error_log('[checkout_payments-stub] processRefund çağrıldı — entegrasyon yok, reddedildi. data=' . json_encode(array_intersect_key($data, array_flip(['order_id', 'payment_id', 'amount']))));
-    JsonResponse::error(
-        'İade şu anda işlenemiyor: Param POS entegrasyonu devreye alınmadı. '
-        . 'İade kaydı oluşturulmadı, müşteriye bilgi vermeyin.',
-        503,
-        AppConfig::ERR_UNAVAILABLE
+    $client = new IyzicoClient();
+    if (!$client->isConfigured()) {
+        JsonResponse::error(
+            'İade işlenemiyor: ödeme sağlayıcısı yapılandırılmamış. İade kaydı oluşturulmadı.',
+            503,
+            AppConfig::ERR_UNAVAILABLE
+        );
+    }
+
+    $paymentRowId = (int) ($data['payment_id'] ?? 0);
+    $orderId      = trim((string) ($data['order_id'] ?? ''));
+    $reason       = mb_substr(trim((string) ($data['reason'] ?? '')), 0, 500);
+
+    if (!$paymentRowId && $orderId === '') {
+        JsonResponse::error('payment_id veya order_id gerekli.', 400, AppConfig::ERR_VALIDATION);
+    }
+
+    $payment = $paymentRowId
+        ? $db->selectSingle('* FROM param_marketplace_payments WHERE id = ?', [$paymentRowId])
+        : $db->selectSingle('* FROM param_marketplace_payments WHERE order_id = ?', [$orderId]);
+
+    if (!$payment) {
+        JsonResponse::error('Ödeme kaydı bulunamadı.', 404, AppConfig::ERR_NOT_FOUND);
+    }
+    if ($payment['status'] === 'refunded') {
+        JsonResponse::error('Bu ödeme zaten iade edilmiş.', 409, AppConfig::ERR_DUPLICATE);
+    }
+    if ($payment['status'] !== 'paid') {
+        JsonResponse::error(
+            'Yalnızca tahsil edilmiş ödemeler iade edilebilir. Mevcut durum: ' . $payment['status'],
+            422,
+            AppConfig::ERR_VALIDATION
+        );
+    }
+
+    $raw          = json_decode((string) ($payment['param_response_json'] ?? ''), true);
+    $transactions = is_array($raw['itemTransactions'] ?? null) ? $raw['itemTransactions'] : [];
+
+    if (empty($transactions)) {
+        error_log('[iyzico] iade edilemiyor: itemTransactions kaydı yok. order=' . $payment['order_id']);
+        JsonResponse::error(
+            'Bu ödeme için sağlayıcı işlem kimlikleri kayıtlı değil, otomatik iade yapılamıyor. '
+            . 'İade iyzico panelinden elle yapılmalı.',
+            422,
+            AppConfig::ERR_VALIDATION
+        );
+    }
+
+    $ip       = clientIp();
+    $refunded = 0.0;
+    $failures = [];
+
+    // İade satırının bağlanacağı detay satırı. Döngünün İÇİNDE sorgulamak
+    // her kalem için aynı sorguyu tekrarlardı; ayrıca selectSingle() satır
+    // yoksa false döner, doğrudan ['id'] yazmak PHP 8'de uyarı üretir.
+    $firstDetail   = $db->selectSingle(
+        'id FROM param_marketplace_details WHERE payment_id = ? ORDER BY id LIMIT 1',
+        [$payment['id']]
     );
+    $firstDetailId = $firstDetail ? (int) $firstDetail['id'] : 0;
+
+    foreach ($transactions as $tx) {
+        $txId  = (string) ($tx['paymentTransactionId'] ?? '');
+        $price = (float) ($tx['paidPrice'] ?? $tx['price'] ?? 0);
+        if ($txId === '' || $price <= 0) {
+            continue;
+        }
+
+        $res = $client->refund($txId, $price, $ip, 'TRY', $payment['order_id']);
+        $ok  = ($res['status'] ?? '') === 'success';
+
+        $db->insert('param_marketplace_refunds', [
+            'payment_id'           => (int) $payment['id'],
+            // Kalem bazlı iadeyi ilgili detay satırına bağla; eşleşme yoksa 0.
+            'detail_id'            => $firstDetailId,
+            'amount'               => $price,
+            'reason'               => $reason,
+            'requested_by_user_id' => (int) ($_SESSION['user_id'] ?? 0) ?: null,
+            'status'               => $ok ? 'completed' : 'failed',
+            'param_response_json'  => json_encode(IyzicoClient::redact($res), JSON_UNESCAPED_UNICODE),
+        ]);
+
+        if ($ok) {
+            $refunded = round($refunded + $price, 2);
+        } else {
+            $failures[] = sprintf('%s: %s', $txId, (string) ($res['errorMessage'] ?? 'bilinmeyen hata'));
+            error_log('[iyzico] kalem iadesi başarısız tx=' . $txId . ' msg=' . (string) ($res['errorMessage'] ?? '-'));
+        }
+    }
+
+    if ($refunded <= 0) {
+        JsonResponse::error(
+            'İade yapılamadı: ' . implode(' | ', $failures),
+            422,
+            AppConfig::ERR_PAYMENT
+        );
+    }
+
+    $total       = (float) $payment['amount'];
+    $fullyRefund = $refunded >= round($total, 2) - 0.01;
+
+    $db->update(
+        'param_marketplace_payments',
+        ['status' => $fullyRefund ? 'refunded' : 'partial_refund'],
+        'id = ?',
+        [$payment['id']]
+    );
+
+    // İade edilen bir satışın satıcı payı ödenebilir kalmamalı.
+    if ($fullyRefund) {
+        $db->update(
+            'param_marketplace_details',
+            ['status' => 'refunded', 'refunded_at' => date('Y-m-d H:i:s')],
+            'payment_id = ?',
+            [$payment['id']]
+        );
+    }
+
+    error_log(sprintf('[iyzico] iade tamamlandı order=%s tutar=%s tam=%s', $payment['order_id'], (string) $refunded, $fullyRefund ? 'evet' : 'hayır'));
+
+    JsonResponse::success([
+        'message'         => $fullyRefund ? 'İade tamamlandı.' : 'Kısmi iade tamamlandı.',
+        'refunded_amount' => $refunded,
+        'full_refund'     => $fullyRefund,
+        'failures'        => $failures,
+    ]);
 }
 
+/**
+ * Param POS'un asenkron bildirim uç noktası. iyzico'nun 3DS'siz akışında
+ * asenkron bildirim YOK — tahsilat `/payment/auth` yanıtıyla senkron olarak
+ * kesinleşiyor. Uç nokta (SellerController::paramposCallback) hâlâ
+ * yönlendirilebilir durumda olduğu için fonksiyon duruyor ama bilinçli
+ * olarak hiçbir şey işlemiyor: sahte bir "ödendi" satırı üretmiyor.
+ */
 function handleParamCallback(Database $db, PDO $conn, array $post): void {
-    // Bu stub bilinçli olarak 200/OK dönüyor: gerçek gateway 200 almadığında
-    // bildirimi saatlerce yeniden dener. Ama HİÇBİR ŞEY işlemiyor ve bunu
-    // logluyor — sahte bir "ödendi" ledger satırı üretmiyor.
-    error_log('[checkout_payments-stub] handleParamCallback çağrıldı — entegrasyon yok, bildirim işlenmedi.');
+    error_log('[iyzico] paramposCallback çağrıldı — sağlayıcı iyzico, asenkron bildirim kullanılmıyor. Yok sayıldı.');
     http_response_code(200);
     echo 'OK';
     exit;

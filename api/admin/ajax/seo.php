@@ -167,29 +167,25 @@ switch ($seo_type) {
         break;
         
     case 'general':
-        $fields = ['site_baslik', 'site_aciklama', 'site_keywords', 'robots_txt', 'google_analytics', 'google_search'];
+        // SEO-002: 'robots_txt' bu listeden çıkarıldı ve dosya yazma adımı
+        // tamamen kaldırıldı.
+        //
+        // Eski kod `file_put_contents('../../robots.txt', ...)` çağırıyordu.
+        // Bu göreli yol, dosyanın konumuna değil, PHP sürecinin ÇALIŞMA
+        // DİZİNİNE göre çözülüyordu: `php -S` altında proje dışına, Apache
+        // altında api/robots.txt'e düşüyordu. Yayında /robots.txt'i servis
+        // eden dosya ise ikisi de değildi. Yani bu alan hiçbir zaman
+        // çalışmadı; sessizce yanlış yere yazıyordu.
+        //
+        // Tek authoritative kaynak artık web/src/app/robots.js.
+        $fields = ['site_baslik', 'site_aciklama', 'site_keywords', 'google_analytics', 'google_search'];
         $db_queries_temp = [];
-        
-        // 1. Metin Alanlarını Topla (DB ve Dosya için)
+
         foreach ($fields as $field) {
-            $value = isset($_POST[$field]) ? trim($_POST[$field]) : '';
-            if ($field !== 'robots_txt') {
-                $db_queries_temp[$field] = $value;
-            }
+            $db_queries_temp[$field] = isset($_POST[$field]) ? trim($_POST[$field]) : '';
         }
 
-        // 2. Robots.txt Dosya İşlemi
-        $robots_txt_content = $_POST['robots_txt'] ?? '';
-        if (!empty($robots_txt_content)) {
-            $file_path = '../../robots.txt'; 
-            if (file_put_contents($file_path, $robots_txt_content) === false) {
-                $error_message = "Robots.txt dosyası yazılamadı.";
-                echo json_encode(["status" => "error", "message" => $error_message]); exit;
-            }
-            $successMessages[] = "Robots.txt güncellendi.";
-        }
-
-        // 3. Favicon Yükleme İşlemi
+        // Favicon Yükleme İşlemi
         $favicon_path = handleFileUpload(
             'site_favicon', 
             '../../assets/', 

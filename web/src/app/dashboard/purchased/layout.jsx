@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Satın Aldıklarım | Lumanoris",
+    title: "Satın Aldıklarım",
 };
 
 export default function DashboardPurchased({ children }) {

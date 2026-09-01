@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Sohbet | Lumanoris",
+    title: "Sohbet",
 };
 
 export default function DashboardChat({ children }) {
