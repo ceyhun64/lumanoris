@@ -1,6 +1,6 @@
 ================================================================
 PROJE MİMARİSİ VE DOSYA YAPISI
-Oluşturulma Tarihi: 01.09.2026 14:45:44
+Oluşturulma Tarihi: 02.09.2026 14:19:17
 Kapsam: Tam Proje Haritası
 ================================================================
 
@@ -218,11 +218,6 @@ Kapsam: Tam Proje Haritası
 │   └── settings.json
 ├── api/
 │   ├── .env
-│   ├── .env.bak-20260828-160830
-│   ├── .env.bak-domain-20260830-162731
-│   ├── .env.bak-domain-20260830-162737
-│   ├── .env.bak-prod-20260829-150719
-│   ├── .env.bak-smtp-20260830-093231
 │   ├── .env.example
 │   ├── .htaccess
 │   ├── admin/
@@ -469,6 +464,7 @@ Kapsam: Tam Proje Haritası
 │   │   │   ├── gettermsofsale.php
 │   │   │   └── getusage.php
 │   │   ├── index.php
+│   │   ├── lumanoris-dashboard - Kısayol.lnk
 │   │   ├── marketplace/
 │   │   │   ├── addtocart.php
 │   │   │   ├── buychatbot.php
@@ -37601,10 +37597,23 @@ Kapsam: Tam Proje Haritası
 │   │                   └── ValueError.php
 │   └── _restoretest.php
 ├── autostart.bat
+├── BLOCKERS.md
 ├── chatbot_table.txt
+├── CLAUDE.md
 ├── customserver.txt
+├── docs/
+│   └── prompts/
+│       ├── FAZ 3a — Ölü ağırlık (erken, düşük risk).md
+│       ├── FAZ 3b — Riskli temizlik (testler kurulduktan sonra).md
+│       ├── FAZ 4 — Regresyon test ağı.md
+│       ├── FAZ 5 — Düzeltme döngüsü (bütçeli).md
+│       ├── FAZ 6 — Stub'lar (her biri ayrı oturum).md
+│       ├── FAZ 7 — Build, deploy, observability.md
+│       ├── FAZ 8 — Release gate.md
+│       ├── faz1-audit.md
+│       ├── faz1.5-review.md
+│       └── faz2-security.md
 ├── google.txt
-├── landing/
 ├── package.json
 ├── project_tree.txt
 ├── README.md
@@ -37644,14 +37653,11 @@ Kapsam: Tam Proje Haritası
     │   ├── docs/
     │   │   ├── Gizlilik Politikası.docx
     │   │   ├── Hakkımızda Metni.docx
-    │   │   ├── iyzico-logo-pack (2).zip
     │   │   ├── Kullanım Koşulları.docx
     │   │   ├── MESAFELİ SATIŞ SÖZLEŞMESİ.docx
     │   │   └── TESLİMAT VE İADE ŞARTLARI.docx
     │   ├── favicon-dark.png
     │   ├── favicon-white.png
-    │   ├── file.svg
-    │   ├── globe.svg
     │   ├── images/
     │   │   ├── blok1.png
     │   │   ├── blok2.png
@@ -37676,12 +37682,11 @@ Kapsam: Tam Proje Haritası
     │   │   ├── modelolusturmasureci.png
     │   │   ├── register-bg-2.jpg
     │   │   └── yorumlar.png
-    │   ├── next.svg
+    │   ├── iyzico_ile_ode_horizontal_white.png
+    │   ├── logo_band_white@1X.png
     │   ├── og-image.png
-    │   ├── vercel.svg
-    │   ├── video/
-    │   │   └── promo.mp4
-    │   └── window.svg
+    │   └── video/
+    │       └── promo.mp4
     ├── scripts/
     │   └── phpify.js
     ├── server.js

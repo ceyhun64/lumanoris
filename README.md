@@ -18,11 +18,16 @@ request handler and proxies `/api`, `/admin` and `/assets` to the PHP backend, s
 answer on a single origin (`http://localhost:3000` by default in development).
 
 > [!IMPORTANT]
-> Three backend subsystems are still explicitly labelled **development stubs** in their own source
-> files: the Param POS marketplace client, payment charging/reconciliation/refunds, and
-> producer-plan purchase. See [Development stubs](#development-stubs) before assuming any payment or
-> seller-onboarding behaviour works end to end. Transactional email and plan-based chatbot limits
-> were previously stubs and are now real implementations.
+> **Card charging is real.** The payment provider is **iyzico**, implemented in
+> `api/src/Infrastructure/Payment/IyzicoClient.php` and `api/functions/checkout_payments.php`. With
+> live keys in `api/.env`, checkout moves real money. `IYZICO_BASE_URL` defaults to the **sandbox**
+> host, and with no keys at all every payment path fails closed. See [Payments](#payments).
+>
+> Two subsystems are still explicitly labelled **development stubs** in their own source files: the
+> Param POS marketplace client (seller KYC / sub-merchant registration) and producer-plan purchase.
+> See [Development stubs](#development-stubs) before assuming seller onboarding works end to end.
+> Payment charging, transactional email and plan-based chatbot limits were previously stubs and are
+> now real implementations.
 
 ## Features
 
@@ -45,10 +50,13 @@ Each item below is backed by routes and endpoints that exist in this repository.
   comment, report, hide, "not interested", and user-defined bot lists.
 - **Cart, checkout and subscriptions** — cart endpoints plus
   `/api/marketplace/createsubscription.php`, which runs inside a DB transaction guarded by an
-  idempotency key: it validates/charges the card, creates `user_subscriptions` rows, grants purchase
-  credits, clears the cart, and writes payment rows. Any failure rolls the whole thing back.
+  idempotency key: it charges the card through iyzico, creates `user_subscriptions` rows, grants
+  purchase credits, clears the cart, and writes payment rows. Any failure rolls the whole thing
+  back, and a failure *after* a successful charge triggers a compensating cancellation. See
+  [Payments](#payments).
 - **Wallet and seller onboarding** — balance, payment history, subscriptions, IBAN/bank details,
-  withdrawal requests, and a Param POS sub-merchant registration wizard.
+  withdrawal requests, and a sub-merchant registration wizard (the sub-merchant client itself is
+  still a stub — see [Development stubs](#development-stubs)).
 - **Notes / dialogue books** — saving and sharing conversation excerpts, with likes and comments.
 - **Admin panel** — a separate server-rendered PHP UI at `/admin` for users, chatbots, categories,
   SEO, SMTP, API keys, withdrawals, and content pages.
@@ -186,8 +194,9 @@ lumanoris-dashboard/
     │   ├── schema.sql        #   50 tables, utf8mb4_general_ci throughout
     │   ├── migrations/       #   001–009 (incl. 002b), applied in filename order
     │   ├── migrate.php       #   runner: dry-run by default, records schema_migrations
+    │   ├── iyzico_selftest.php #  payment integration self-test (offline + sandbox)
     │   └── seed_contracts.*  #   seeds legal contract texts into global_vars
-    ├── functions/            # bootstrap, env, logging, db, rate limit, mailer, SMTP, coin engine, plans, stubs
+    ├── functions/            # bootstrap, env, logging, db, rate limit, mailer, SMTP, coin engine, plans, payments
     ├── src/                  # Presentation / Application / Domain / Infrastructure / Shared
     └── admin/                # server-rendered admin panel (own composer.json + .env + .htaccess)
 ```
@@ -306,7 +315,12 @@ vars are never overwritten by a stale `.env`.
 | `CONTACT_EMAIL` | No | `AppConfig::contactEmail()` | Recipient for contact-form mail. Falls back to a hard-coded address. |
 | `NOREPLY_EMAIL` | No | `AppConfig::noreplyEmail()` | Sender for password-reset mail. Falls back to a hard-coded address. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_NAME`, `SMTP_ENCRYPTION` | No | `functions/phpmailer.php` | SMTP transport. When unset, the equivalent `global_vars` rows written by the admin panel's SMTP page are used instead. |
-| `PARAM_CALLBACK_SECRET` | For callbacks | `SellerController::paramposCallback()` | Shared secret for the payment-gateway callback. Fails closed: without it no notification is accepted. |
+| `IYZICO_API_KEY`, `IYZICO_SECRET_KEY` | **For any payment** | `IyzicoClient` | Provider credentials from the iyzico merchant panel (Ayarlar → API anahtarları). With either missing, `isConfigured()` is false and charge / refund / reconcile all fail closed — no silent success. |
+| `IYZICO_BASE_URL` | No | `IyzicoClient` | `https://sandbox-api.iyzipay.com` (default, test cards) or `https://api.iyzipay.com` (**real money**). The default is deliberately sandbox. |
+| `ADMIN_USERNAME` | No | `admin_env_account()` | When set, the admin panel account is read from `.env` and the `adminler` table is **not consulted at all**. Unset → legacy DB-table behaviour. See [Admins](#admins). |
+| `ADMIN_PASSWORD` | With `ADMIN_USERNAME` | `admin_env_account()` | Plain-text admin password, compared with `hash_equals`. Simplest option; anyone who can read `.env` can read the password. |
+| `ADMIN_PASSWORD_HASH` | Optional alternative | `admin_env_account()` | `password_hash()` output. Takes precedence over `ADMIN_PASSWORD` when set. A hash pasted into `ADMIN_PASSWORD` is detected and treated as a hash, not double-hashed. |
+| `PARAM_CALLBACK_SECRET` | For callbacks | `SellerController::paramposCallback()` | Shared secret for the payment-gateway callback. Fails closed: without it no notification is accepted. The callback itself is now inert — iyzico's non-3DS flow sends no async notification. |
 | `PARAM_RECONCILE_SECRET` | For reconcile | `SellerController::reconcile()` | Shared secret required via `?secret=`, POST `secret`, or `X-Reconcile-Secret`. If unset, the endpoint always rejects. |
 | `DB_BACKUP_DIR` | No | `Database::backupDir()` | Where `mysqldump` output is written. Defaults to `storage/db_backup`. A path resolving inside `api/` is refused. |
 | `APP_LOG_FILE` | No | `functions/logging.php` | PHP error-log destination. Defaults to `storage/logs/php-error.log`. |
@@ -316,9 +330,9 @@ vars are never overwritten by a stale `.env`.
 > `api/.env.example` also defines `PARAM_CLIENT_CODE`, `PARAM_CLIENT_USERNAME`,
 > `PARAM_CLIENT_PASSWORD`, `PARAM_GUID`, `PARAM_MARKETPLACE_GUID`, `PARAM_PAYMENT_WSDL`,
 > `PARAM_MARKETPLACE_WSDL`, `PARAM_PAYMENT_SECURITY_TYPE`, `PARAM_REF_URL`, `PARAM_SUCCESS_URL` and
-> `PARAM_FAIL_URL`. A search of the whole repository finds **no code that reads any of them** —
-> consistent with `ParamPosMarketplace.php` being a stub. They belong to the production Param POS
-> implementation, which is not in this repository.
+> `PARAM_FAIL_URL`. A search of the whole repository finds **no code that reads any of them** — the
+> provider is iyzico now, and `ParamPosMarketplace.php` (which those keys belonged to) is still a
+> stub. They are kept in the example file only as a marker; nothing breaks if you delete them.
 
 ### `api/admin/.env` — loaded by `vlucas/phpdotenv` in `admin/api.php`
 
@@ -506,8 +520,9 @@ be verified from the repository.
   but still emit the `success` key.
 - Status codes observed: `401` with `AUTH_REQUIRED` for a protected endpoint without a session,
   `405 {"success":false,"message":"Method not allowed"}` for a wrong verb, `429` from the rate
-  limiter, `500` from the global exception/fatal handlers, `503` with `FEATURE_UNAVAILABLE` from the
-  fail-closed payment stubs, and `404` for any unmatched `/api/**` path (`api/api/index.php`).
+  limiter, `500` from the global exception/fatal handlers, `402` with `ERR_PAYMENT` when the
+  provider declines a card, `503` with `FEATURE_UNAVAILABLE` when a payment path is asked to run
+  without iyzico keys, and `404` for any unmatched `/api/**` path (`api/api/index.php`).
 - `/api/chat/generatereply.php` is the one non-JSON endpoint: it sets
   `Content-Type: text/event-stream` and streams Gemini's SSE response through.
 
@@ -770,6 +785,93 @@ Additional tables referenced directly in SQL: `chatbot_kategoriler`, `chatbot_hi
 > column identifiers in `insert()`/`update()`. Those admin endpoints remain the riskiest surface in
 > the codebase; treat the whitelist as load-bearing.
 
+## Payments
+
+The provider is **iyzico** (iyzipay). Two files carry the whole integration:
+
+| File | Responsibility |
+| --- | --- |
+| `api/src/Infrastructure/Payment/IyzicoClient.php` | Transport: IYZWSv2 request signing, cURL, response redaction, amount/basket formatting |
+| `api/functions/checkout_payments.php` | Domain: `chargeCard()`, `cancelCharge()`, `reconcilePayments()`, `processRefund()` |
+
+The official `iyzipay` composer package is **not** installed. It emits deprecations on PHP 8.1 and
+all that is actually needed is an HMAC signature plus a JSON POST, so `IyzicoClient` speaks HTTP
+directly and the project keeps one fewer dependency.
+
+### Signing
+
+```
+payload    = randomKey + uriPath + requestBody
+signature  = hex(hmac_sha256(payload, IYZICO_SECRET_KEY))
+authString = "apiKey:{key}&randomKey:{rnd}&signature:{sig}"
+Authorization: IYZWSv2 <base64(authString)>
+x-iyzi-rnd:    <the same randomKey>
+```
+
+The `x-iyzi-rnd` header must equal the `randomKey` used in the signature; a mismatch is rejected by
+the provider with a signature error rather than a useful message.
+
+### Charge flow — `/api/marketplace/createsubscription.php`
+
+1. **Local validation first** — required fields, Luhn, CVV shape, expiry. Identical to the rules
+   `CartConfirm`/checkout applies in the browser, so the two layers cannot contradict each other and
+   an obviously bad card never costs a network round-trip.
+2. **Configuration gate** — `IyzicoClient::isConfigured()`. With no keys, `chargeCard()` returns
+   `CONFIG_MISSING` and checkout answers "ödeme altyapısı kullanılamıyor". It never reports a
+   success that did not happen.
+3. **`POST /payment/auth`** — a direct, non-3DS charge in TRY. `price` and the sum of `basketItems`
+   must match **to the kuruş**; `IyzicoClient::balanceBasket()` pushes any rounding remainder into
+   the last item, because a mismatch is the single most common cause of a rejected request
+   (`errorCode 5`).
+4. **Decline** → the provider's own Turkish message ("Kart limiti yetersiz", …) is surfaced to the
+   user with `402` / `ERR_PAYMENT`, and the surrounding DB transaction rolls back.
+5. **Success** → ledger rows are written as `paid` / `approved`. The per-item
+   `paymentTransactionId` values returned by iyzico are stored in `param_response_json`; **refunds
+   are per basket item**, so a payment saved without them can never be refunded automatically.
+6. **Failure after a successful charge** → `cancelCharge()` issues a same-day full cancellation, so
+   the buyer is not left charged for a subscription that was rolled back.
+
+The buyer object iyzico requires (`registrationAddress`, `city`, `country`, `email`,
+`identityNumber`, `ip`) has no natural value for a digital product; a consistent placeholder derived
+from the user's account is sent because the provider's schema rejects empty fields.
+
+### Refund and reconciliation
+
+| Operation | Endpoint | Notes |
+| --- | --- | --- |
+| Refund | `/api/seller/marketplace_refund.php` (admin) | Only a `paid` row can be refunded; `refunded` returns `409`, any other status `422`. Without stored `itemTransactions` it refuses and tells the operator to refund from the iyzico panel. |
+| Reconcile | `/api/seller/marketplace_reconcile.php` (`PARAM_RECONCILE_SECRET`) | Asks the provider about rows left `pending` / `payment_started` / `failed` / `unknown` in the last 7 days, max 200. Settled rows (`paid`, `refunded`) are never touched — reconciliation resolves uncertainty, it does not rewrite history. |
+| Callback | `/api/seller/parampos_callback.php` | **Inert.** iyzico's non-3DS flow sends no async notification; the handler logs and returns `200`. Kept so a stale gateway configuration cannot retry for hours. |
+
+Both refund and reconcile fail closed with `503` / `FEATURE_UNAVAILABLE` when the keys are missing.
+
+### Schema naming
+
+Table and column names still say `param_*` (`param_marketplace_payments`, `param_transaction_id`,
+`param_receipt_id`, `param_net_amount`, `param_response_json`). This is deliberate — they hold live
+data, and renaming means a migration plus every read path. The meanings are provider-independent:
+
+| Column | Holds |
+| --- | --- |
+| `param_transaction_id` | iyzico `paymentId` |
+| `param_receipt_id` | iyzico `conversationId` — our `order_id` |
+| `param_net_amount` | net payout after provider commission |
+| `param_response_json` | the redacted raw provider response, including `itemTransactions` |
+
+### Self-test
+
+```bash
+php api/database/iyzico_selftest.php
+```
+
+Part A runs offline and needs no keys: it proves the signature scheme, the amount formatting and the
+basket-total equality rule. Part B runs only when `IYZICO_API_KEY`/`IYZICO_SECRET_KEY` are present —
+it charges a sandbox test card and then cancels it. No real money moves on the sandbox host.
+
+> [!WARNING]
+> `IYZICO_BASE_URL=https://api.iyzipay.com` charges real cards. The default is the sandbox host
+> precisely so that a misconfiguration lands in test rather than on someone's card.
+
 ## Authentication
 
 ### End users
@@ -825,14 +927,31 @@ live `user_subscriptions` row for it. Ownership checks are also inlined in contr
 
 ### Admins
 
-Admins are a separate identity in the `adminler` table, reusing the same PHP session as end users.
-Both admin login paths (`admin/ajax/giris.php` and the no-JS `admin/partials/_login.php`) go through
-one function, `admin/functions/admin_login.php`, which verifies a bcrypt hash, regenerates the
-session id before privilege escalation, and applies the two-tier rate limit described above. Every
+Admins are a separate identity reusing the same PHP session as end users. Both admin login paths
+(`admin/ajax/giris.php` and the no-JS `admin/partials/_login.php`) go through one function,
+`admin_login_attempt()` in `admin/functions/admin_login.php`, which regenerates the session id
+before privilege escalation and applies the two-tier rate limit described above. Every
 admin AJAX endpoint includes `admin/ajax/_guard.php`, which rejects non-admins with `403` and
 requires a CSRF token (`csrf_token` field or `X-CSRF-Token` header) on every non-`GET` request.
 `AuthMiddleware::requireAdmin()` reads the same `$_SESSION['admin']` flag for the JSON API and
 returns `403` with `PERMISSION_DENIED` when absent.
+
+**Where the account comes from** is decided by `ADMIN_USERNAME` in `api/.env`:
+
+| `ADMIN_USERNAME` | Credential source | `adminler` table | `/admin/adminler` page |
+| --- | --- | --- | --- |
+| set | `.env` (`ADMIN_PASSWORD` plain, or `ADMIN_PASSWORD_HASH`) | never queried on login | read-only; `admin/ajax/adminler.php` answers `409` to every write |
+| unset | `adminler` row, bcrypt-verified | authoritative | full CRUD |
+
+The env path is deliberately exclusive rather than a fallback chain: if a leftover `adminler` row
+could still log in, moving the account into `.env` would buy nothing. It also means the most
+privileged account cannot be created by anything that can write to the database. The session records
+which path was used in `$_SESSION['admin_source']` (`env` / `db`).
+
+Username comparison is case-insensitive in both modes, matching MySQL's default collation so the
+behaviour does not change when you switch. A configured `ADMIN_USERNAME` with no password set is a
+configuration error: login returns `500` with an explicit message and does **not** quietly fall back
+to the table.
 
 ## Security
 
@@ -873,7 +992,9 @@ origin.
 | --- | --- | --- |
 | DB credentials | `api/.env` (`DB_*`) | All four required; `db.php` fails loudly if any is missing, and carries no fallback credentials. |
 | Gemini API key | `api/admin/.env` | Managed by the admin panel; read server-side only, never sent to the client. |
-| Param POS credentials | `api/.env` (`PARAM_*`) | Present in `.env.example` but read by no code in this repository. |
+| iyzico API keys | `api/.env` (`IYZICO_API_KEY`, `IYZICO_SECRET_KEY`) | The only credentials that can move money. Never leave the server; requests are signed with HMAC-SHA256 and provider responses are redacted before being logged or stored (`IyzicoClient::redact()`). |
+| Admin panel password | `api/.env` (`ADMIN_PASSWORD` or `ADMIN_PASSWORD_HASH`) | Only when `ADMIN_USERNAME` is set. Plain text is supported and is readable by anyone who can read the file; use `ADMIN_PASSWORD_HASH` if that matters. |
+| Param POS credentials | `api/.env` (`PARAM_*`) | Present in `.env.example` but read by no code in this repository — superseded by iyzico. |
 | SMTP | `global_vars` table, or `SMTP_*` in `api/.env` | Environment wins when set. |
 | Callback / reconcile secrets | `api/.env` | `PARAM_CALLBACK_SECRET`, `PARAM_RECONCILE_SECRET`. Both fail closed when unset. |
 
@@ -943,14 +1064,14 @@ Each one says so in its own header comment.
 
 | File | Stubbed behaviour |
 | --- | --- |
-| `api/functions/ParamPosMarketplace.php` | Every sub-merchant and province/district method returns a failure or an empty list. This is fail-closed by design, but the practical consequence is that on a clean install **nobody can become a seller**, so no bot can be published. Personal data in call logs is redacted. |
-| `api/functions/checkout_payments.php` | `chargeCard()` performs full local card validation (required fields, Luhn, CVV format, expiry) and then **simulates** a successful charge — no gateway is contacted. It returns a `simulated` flag, which makes `MarketplaceController` write ledger rows as `pending_approval` so no withdrawable balance is created. `reconcilePayments()` and `processRefund()` reject with `503` / `FEATURE_UNAVAILABLE`; `handleParamCallback()` returns `200 OK` without processing (so a real gateway would not retry for hours) and `ensureParamMarketplaceTables()` does nothing. |
-| `api/functions/producer_plan.php` | `buyProducerAccount()` always fails; `getProducerPlanStatus()` always reports no plan. |
+| `api/functions/ParamPosMarketplace.php` | Every sub-merchant and province/district method returns a failure or an empty list. This is fail-closed by design, but the practical consequence is that on a clean install **nobody can become a seller**, so no bot can be published. Personal data in call logs is redacted. Note this is *seller KYC only* — buyer-side charging does not go through this class. |
+| `api/functions/producer_plan.php` | `buyProducerAccount()` always fails; `getProducerPlanStatus()` always reports no plan. **The blocker is no longer payment.** Charging works, but nothing reads the `producer_plans` row: bot limits come only from `user_plan_selection` + `plans` via `functions/plans.php`, and `AppConfig::PRODUCER_*_LIMIT` is read by no code. Enabling the charge today would take 750 ₺ and grant nothing. The file header lists the three changes needed to open it. |
 
 > [!NOTE]
-> `api/functions/phpmailer.php` and `api/functions/chatbot_limits.php` were previously stubs and are
-> now real implementations — SMTP delivery via `functions/smtp_client.php`, and plan-driven limits via
-> `functions/plans.php`.
+> `api/functions/checkout_payments.php`, `api/functions/phpmailer.php` and
+> `api/functions/chatbot_limits.php` were previously stubs and are now real implementations — iyzico
+> charging (see [Payments](#payments)), SMTP delivery via `functions/smtp_client.php`, and
+> plan-driven limits via `functions/plans.php`.
 
 ## Troubleshooting
 
@@ -983,11 +1104,27 @@ the code was sent. The code is **not** written to the error log.
 
 **Seller registration always fails / no bot can be published**
 Expected on a clean install: `ParamPosMarketplace.php` is a fail-closed stub, so sub-merchant
-creation cannot succeed without the real Param POS integration.
+creation cannot succeed without the real KYC integration. This is unrelated to buyer-side charging,
+which works.
 
-**Refunds or reconciliation return 503**
-Also expected — those two stubs reject explicitly rather than reporting a success that never
-happened.
+**Checkout says `Ödeme altyapısı şu anda kullanılamıyor` / refunds and reconciliation return 503**
+`IYZICO_API_KEY` or `IYZICO_SECRET_KEY` is missing from `api/.env`. Every payment path fails closed
+rather than reporting a success that never happened. Run `php api/database/iyzico_selftest.php` —
+part A passes without keys, part B is skipped when they are absent.
+
+**A card is declined with a message you did not write**
+Decline text comes straight from iyzico ("Kart limiti yetersiz", "Geçersiz kart bilgisi"). The
+request itself succeeded. If instead every charge fails with a signature or `errorCode 5` error, the
+keys do not match the `IYZICO_BASE_URL` host (sandbox keys against production, or vice versa), or a
+basket total drifted from `price`.
+
+**Admin login says `Admin girişi yapılandırılmamış`**
+`ADMIN_USERNAME` is set in `api/.env` but neither `ADMIN_PASSWORD` nor `ADMIN_PASSWORD_HASH` is.
+Add one, or remove `ADMIN_USERNAME` to go back to the `adminler` table.
+
+**Admin password stopped working after setting `ADMIN_USERNAME`**
+Expected. The `.env` account fully replaces the table — the old `adminler` row can no longer log in.
+Comment out the two `ADMIN_*` lines to revert.
 
 **Every 500 says `Sunucu hatası oluştu.` with no detail**
 By design. Set `APP_DEBUG=true` in `api/.env` for local debugging; the real message is always written

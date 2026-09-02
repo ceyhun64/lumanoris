@@ -1,13 +1,46 @@
 <?php
-$adminler = $database->selectMulti("id, kullanici_adi FROM adminler");
+require_once __DIR__ . '/functions/admin_login.php';
+
+// Admin hesabı api/.env'den okunuyorsa (ADMIN_USERNAME) giriş artık `adminler`
+// tablosuna hiç bakmıyor. O yüzden burada tabloyu da göstermiyoruz: listede
+// duran ama giriş yapamayan satırlar yanlış bir güven verirdi.
+$envAdmin = admin_env_account();
+
+$adminler = $envAdmin === null
+    ? $database->selectMulti("id, kullanici_adi FROM adminler")
+    : [['id' => 0, 'kullanici_adi' => $envAdmin['kullanici_adi']]];
 ?>
 <main class="p-6 max-w-screen-xl mx-auto">
   <!-- Başlık -->
   <section class="text-center mb-8">
     <!-- Başlık stili güncellendi -->
     <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">Admin Yönetimi</h2>
-    <p class="text-gray-500 mt-1">Mevcut admin hesaplarını düzenleyebilir veya yeni admin ekleyebilirsiniz.</p>
+    <p class="text-gray-500 mt-1">
+      <?= $envAdmin === null
+            ? 'Mevcut admin hesaplarını düzenleyebilir veya yeni admin ekleyebilirsiniz.'
+            : 'Admin hesabı sunucudaki api/.env dosyasından yönetiliyor.' ?>
+    </p>
   </section>
+
+  <?php if ($envAdmin !== null): ?>
+    <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+      <p class="font-semibold flex items-center gap-2">
+        <i class="bi bi-shield-lock-fill"></i> Admin hesabı .env dosyasından okunuyor
+      </p>
+      <p class="mt-1">
+        Giriş <code class="font-mono">api/.env</code> içindeki
+        <code class="font-mono">ADMIN_USERNAME</code> ve
+        <code class="font-mono">ADMIN_PASSWORD_HASH</code> ile yapılıyor;
+        <code class="font-mono">adminler</code> tablosu kullanılmıyor. Bu ekrandan
+        değişiklik yapılamaz — kullanıcı adını veya şifreyi değiştirmek için
+        <code class="font-mono">api/.env</code> dosyasını güncelleyin.
+      </p>
+      <p class="mt-2">
+        Yeni şifre hash'i üretmek için:
+        <code class="font-mono block mt-1 bg-amber-100 rounded px-2 py-1 overflow-x-auto">php -r "echo password_hash('yeni-parola', PASSWORD_BCRYPT, ['cost'=&gt;12]);"</code>
+      </p>
+    </div>
+  <?php endif; ?>
 
   <!-- Grid: Liste + Form -->
   <div class="grid grid-cols-1 lg:grid-cols-[300px_auto] gap-6">
@@ -33,6 +66,9 @@ $adminler = $database->selectMulti("id, kullanici_adi FROM adminler");
       <form id="adminForm" class="space-y-4">
         <input type="hidden" name="id" id="id" value="0">
         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']; ?>">
+        <!-- .env modunda alanlar salt-okunur: sunucu tarafı da 409 döndürüyor
+             (admin/ajax/adminler.php), bu yalnızca görünür karşılığı. -->
+        <fieldset class="space-y-4 border-0 p-0 m-0 disabled:opacity-60"<?= $envAdmin !== null ? ' disabled' : '' ?>>
 
         <div>
           <label for="kullanici_adi" class="block font-semibold text-sm text-gray-700 mb-1">Kullanıcı Adı</label>
@@ -68,12 +104,18 @@ $adminler = $database->selectMulti("id, kullanici_adi FROM adminler");
           <button type="button" id="delete"
                   class="flex-1 hidden bg-red-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-700 active:bg-red-800 active:scale-95 transition duration-150 shadow-md shadow-red-500/30">Sil</button>
         </div>
+        </fieldset>
       </form>
     </section>
   </div>
 </main>
 <script>
     document.addEventListener("DOMContentLoaded", () => {
+  // .env modunda bu ekran salt-okunur: hiçbir dinleyici bağlamıyoruz, aksi
+  // halde tıklamalar sunucudan 409 dönen isteklere gider ve kullanıcıya
+  // sebepsiz hata gösterirdi. Yetki kararı yine sunucuda.
+  if (<?= $envAdmin !== null ? 'true' : 'false' ?>) return;
+
   const form = document.getElementById("adminForm");
   const saveOrUpdateBtn = document.getElementById("saveOrUpdate");
   const newBtn = document.getElementById("new");

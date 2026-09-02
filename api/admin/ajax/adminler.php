@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/_guard.php';
 require '../../functions/db.php';
+require_once __DIR__ . '/../functions/admin_login.php';
 $database = Database::getInstance();
 $conn = $database->getConnection();
 
@@ -9,6 +10,20 @@ header('Content-Type: application/json');
 if (empty($_SESSION['admin'])) {
     http_response_code(403);
     echo json_encode(["status" => "error", "message" => "Yetkisiz erişim."]);
+    exit;
+}
+
+// Admin hesabı api/.env'den okunuyorsa `adminler` tablosu artık girişte hiç
+// kullanılmıyor. Bu ekrandan yazmaya izin vermek, hiçbir işe yaramayan ama
+// "admin eklendi" diyen bir kayıt üretirdi — üstelik env yapılandırması geri
+// alınırsa o kayıt aniden geçerli bir giriş hesabına dönerdi. Fail-closed.
+if (admin_env_account() !== null) {
+    http_response_code(409);
+    echo json_encode([
+        "status"  => "error",
+        "message" => "Admin hesabı api/.env dosyasından yönetiliyor (ADMIN_USERNAME). "
+                   . "Değiştirmek için .env dosyasını güncelleyin.",
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 

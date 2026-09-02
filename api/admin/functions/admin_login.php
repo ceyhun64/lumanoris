@@ -11,7 +11,17 @@
  * korunan hesap en yetkili olan).
  *
  * Her ikisi de artık bu fonksiyonu çağırıyor; düzeltme tek yerde yaşıyor.
+ *
+ * ── Admin hesabının kaynağı ─────────────────────────────────────────────
+ * api/.env içinde ADMIN_USERNAME tanımlıysa admin hesabı ORADAN okunur ve
+ * `adminler` tablosuna hiç bakılmaz. Böylece en yetkili hesap DB'ye yazabilen
+ * hiçbir yoldan (admin panelindeki CRUD, bir SQL injection, elle atılan bir
+ * INSERT) oluşturulamaz; parola hash'i sunucudaki dosyada, versiyon
+ * kontrolünün dışında durur.
+ *
+ * ADMIN_USERNAME tanımlı değilse eski davranış aynen sürer: `adminler` tablosu.
  */
+require_once __DIR__ . '/../../functions/env.php';
 require_once __DIR__ . '/../../functions/db.php';
 require_once __DIR__ . '/../../functions/rate_limit.php';
 require_once __DIR__ . '/session.php';
@@ -25,6 +35,77 @@ if (!function_exists('admin_login_client_ip')) {
         // sağlıyor.
         return (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
     }
+}
+
+/**
+ * Değer bir password_hash() çıktısı mı? (bcrypt / argon2)
+ */
+function admin_password_looks_hashed(string $value): bool
+{
+    return (bool) preg_match('/^\$(2[aby]?|argon2(id|i|d))\$/', $value);
+}
+
+/**
+ * api/.env dosyasında tanımlı admin hesabı.
+ *
+ * @return array{kullanici_adi: string, plain: ?string, hash: ?string}|null
+ *   null → ADMIN_USERNAME tanımlı değil; env modu kapalı, DB kullanılacak.
+ *   plain ve hash ikisi de null ise ADMIN_USERNAME var ama parola
+ *   tanımlanmamış (yapılandırma hatası): giriş kapalıdır, sessizce DB'ye
+ *   DÜŞMEZ.
+ *
+ * Parola iki şekilde verilebilir — ikisi de geçerli, hangisi tanımlıysa o
+ * kullanılır:
+ *   ADMIN_PASSWORD      → düz metin. En basit yol; hash üretmeye gerek yok,
+ *                         .env dosyasına doğrudan yazılır.
+ *   ADMIN_PASSWORD_HASH → password_hash() çıktısı. .env dosyasını okuyabilen
+ *                         birinin parolayı da öğrenmesini istemiyorsanız.
+ *
+ * ADMIN_PASSWORD'e yanlışlıkla bir hash yapıştırılırsa hash olarak algılanır,
+ * düz metin sanılıp karşılaştırılmaz.
+ */
+function admin_env_account(): ?array
+{
+    static $resolved = false;
+    static $account  = null;
+
+    if ($resolved) {
+        return $account;
+    }
+    $resolved = true;
+
+    // db.php da çağırıyor; bu fonksiyon DB'siz de kullanılabilsin diye burada
+    // da yüklüyoruz. env_load() idempotent ve gerçek ortam değişkenlerini
+    // asla ezmiyor.
+    env_load();
+
+    $username = env_get('ADMIN_USERNAME');
+    if ($username === null || trim($username) === '') {
+        return $account = null;
+    }
+
+    $plain = null;
+    $hash  = null;
+
+    $configuredHash = env_get('ADMIN_PASSWORD_HASH');
+    if ($configuredHash !== null && trim($configuredHash) !== '') {
+        $hash = trim($configuredHash);
+    } else {
+        $configuredPlain = env_get('ADMIN_PASSWORD');
+        if ($configuredPlain !== null && $configuredPlain !== '') {
+            if (admin_password_looks_hashed($configuredPlain)) {
+                $hash = $configuredPlain;
+            } else {
+                $plain = $configuredPlain;
+            }
+        }
+    }
+
+    return $account = [
+        'kullanici_adi' => trim($username),
+        'plain'         => $plain,
+        'hash'          => $hash,
+    ];
 }
 
 /**
@@ -55,15 +136,61 @@ function admin_login_attempt(Database $database, string $username, string $passw
         ];
     }
 
-    $admin = $database->selectSingle('* FROM adminler WHERE kullanici_adi = ?', [$username]);
-
-    // Kullanıcı bulunamadığında da bir hash doğrulaması yapıyoruz: aksi halde
+    // Hesap bulunamadığında da bir hash doğrulaması yapıyoruz: aksi halde
     // yanıt süresi "bu kullanıcı adı var mı?" sorusunu cevaplardı.
-    $hash = $admin['sifre'] ?? '$2y$12$rb8SqYq0O1BIRIxGhSZ2oO4fLIHZO2eKr9IUxqHTlyBsbsif0x.OC';
-    $valid = password_verify($password, $hash) && $admin !== false && $admin !== null;
+    $dummyHash = '$2y$12$rb8SqYq0O1BIRIxGhSZ2oO4fLIHZO2eKr9IUxqHTlyBsbsif0x.OC';
+
+    $envAccount = admin_env_account();
+
+    if ($envAccount !== null) {
+        // ── .env modu ───────────────────────────────────────────────────
+        // `adminler` tablosu HİÇ okunmuyor: tabloda kalmış eski (ya da
+        // sonradan eklenmiş) bir satırın giriş yapabilmesi, hesabı env'e
+        // taşımanın bütün anlamını yok ederdi.
+        if ($envAccount['plain'] === null && $envAccount['hash'] === null) {
+            error_log('[admin_login] ADMIN_USERNAME tanımlı ama ADMIN_PASSWORD/ADMIN_PASSWORD_HASH yok');
+            return [
+                'ok'      => false,
+                'status'  => 500,
+                'message' => 'Admin girişi yapılandırılmamış: api/.env dosyasına ADMIN_PASSWORD ekleyin.',
+            ];
+        }
+
+        // MySQL'in varsayılan karşılaştırması büyük/küçük harfe duyarsızdı;
+        // env moduna geçerken bu davranışı değiştirmiyoruz.
+        $nameOk = hash_equals(
+            strtolower($envAccount['kullanici_adi']),
+            strtolower($username)
+        );
+
+        if ($envAccount['plain'] !== null) {
+            // Düz metin parola: hiç hash'lemiyoruz. hash_equals sabit zamanda
+            // karşılaştırır — `===` uzunluk/ilk-fark üzerinden sızdırabilirdi.
+            $passOk = hash_equals($envAccount['plain'], $password);
+        } else {
+            // Kullanıcı adı tutmasa da bir doğrulama koşturuyoruz (zamanlama).
+            $passOk = password_verify($password, $nameOk ? $envAccount['hash'] : $dummyHash);
+        }
+
+        $valid = $nameOk && $passOk;
+
+        $adminName   = $envAccount['kullanici_adi'];
+        $adminId     = null;
+        $adminSource = 'env';
+    } else {
+        // ── Geriye dönük uyumluluk: `adminler` tablosu ──────────────────
+        $admin = $database->selectSingle('* FROM adminler WHERE kullanici_adi = ?', [$username]);
+
+        $hash  = $admin['sifre'] ?? $dummyHash;
+        $valid = password_verify($password, $hash) && $admin !== false && $admin !== null;
+
+        $adminName   = $admin['kullanici_adi'] ?? $username;
+        $adminId     = $admin['id'] ?? null;
+        $adminSource = 'db';
+    }
 
     if (!$valid) {
-        error_log(sprintf('[admin_login] failed user=%s ip=%s', $username, $ip));
+        error_log(sprintf('[admin_login] failed user=%s ip=%s source=%s', $username, $ip, $adminSource));
         return ['ok' => false, 'status' => 401, 'message' => 'Geçersiz kullanıcı adı veya şifre'];
     }
 
@@ -75,8 +202,9 @@ function admin_login_attempt(Database $database, string $username, string $passw
         session_regenerate_id(true);
     }
 
-    $_SESSION['admin']            = $admin['kullanici_adi'];
-    $_SESSION['admin_id']         = $admin['id'] ?? null;
+    $_SESSION['admin']            = $adminName;
+    $_SESSION['admin_id']         = $adminId;
+    $_SESSION['admin_source']     = $adminSource;
     $_SESSION['admin_login_at']   = time();
     // Oturum sabitleme + oturum çalma karşısında ikinci bir bağ.
     $_SESSION['admin_login_ip']   = $ip;
