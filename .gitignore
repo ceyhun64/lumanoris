@@ -77,3 +77,5 @@ storage/*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.history/
+.DS_Store
