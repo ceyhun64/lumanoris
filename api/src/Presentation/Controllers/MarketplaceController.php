@@ -326,6 +326,37 @@ class MarketplaceController {
      * KESİN bir cevaptır (kart reddi vb.), yani para çekilmemiştir.
      * Yapılandırma eksikse istek hiç gönderilmemiştir.
      */
+    /**
+     * D-04 — `pending` ödeme satırının sonucunu yazar.
+     *
+     * Yalnızca kurulumda GERÇEKTEN VAR OLAN sütunlar yazılıyor
+     * (`paymentsColumnExists`): `createSubscription`'ın başarı yolu aynı
+     * korumayı kullanıyor, bu yol da kullanmazsa opsiyonel sütunu olmayan
+     * bir kurulumda hata dalı SQL hatası verirdi — yani asıl hatanın
+     * üstüne ikinci bir hata binerdi.
+     *
+     * Hiçbir istisna dışarı sızmıyor: bu her zaman bir hata yolundan
+     * çağrılıyor ve buradaki bir sorun asıl hatayı gölgelememeli.
+     */
+    private static function finalizePendingPayment(Database $db, int $paymentId, array $columns): void {
+        if ($paymentId <= 0) {
+            return;
+        }
+        try {
+            $row = [];
+            foreach ($columns as $column => $value) {
+                if (in_array($column, ['status', 'amount'], true) || self::paymentsColumnExists($db, $column)) {
+                    $row[$column] = $value;
+                }
+            }
+            if ($row !== []) {
+                $db->update('param_marketplace_payments', $row, 'id = ?', [$paymentId]);
+            }
+        } catch (Throwable $e) {
+            error_log('[checkout] pending ödeme satırı güncellenemedi id=' . $paymentId . ': ' . $e->getMessage());
+        }
+    }
+
     private static function chargeOutcomeIsIndeterminate(array $chargeResult): bool {
         return in_array(
             (string) ($chargeResult['error_code'] ?? ''),
@@ -513,6 +544,46 @@ class MarketplaceController {
         // transaction — a failure partway through (e.g. item 3 of 5) used to
         // leave prior items fully purchased/removed from cart while later
         // ones silently never happened, with no way to retry cleanly.
+        // D-04 — ödeme satırı tahsilattan ÖNCE, transaction'ın DIŞINDA
+        // yazılıyor.
+        //
+        // Eskiden satır yalnızca tahsilat başarılı olduktan SONRA
+        // yazılıyordu. Zaman aşımında `$conn->rollBack()` çalışıyor ve
+        // HİÇBİR `param_marketplace_payments` satırı kalmıyordu —
+        // `reconcilePayments()` ise yalnızca o tabloyu tarıyor. Yani
+        // "belirsiz kalmış tahsilat" tam olarak mutabakatın bulamayacağı
+        // yerde kayboluyordu; kodun kendi yorumu (order_id'nin tahsilattan
+        // önce üretilme gerekçesi) davranışıyla çelişiyordu.
+        //
+        // Satır transaction'dan ÖNCE açıldığı için rollback onu silmiyor.
+        // `status` ve `amount` sütunlarının şemadaki varsayılanları
+        // ('pending', 0.00) zaten bu akış için tasarlanmış.
+        $orderId   = 'ORD-' . strtoupper(InputSanitizer::randomToken(4));
+        $paymentId = (int) $db->insert('param_marketplace_payments', [
+            'order_id' => $orderId,
+            'user_id'  => $userId,
+            'status'   => 'pending',
+            'amount'   => 0,
+        ]);
+
+        /**
+         * D-04 — transaction içindeki doğrulama hatalarının ortak çıkışı.
+         *
+         * Bu dallar `rollBack()` + `JsonResponse::error()` (exit) yapıyordu;
+         * artık ödeme satırı tahsilattan ÖNCE yazıldığı için geride
+         * `pending` bir satır kalırdı ve mutabakat onu boşuna sağlayıcıya
+         * sorardı. Tahsilat hiç denenmediğinden doğru durum doğrudan
+         * `failed`.
+         */
+        $failCheckout = static function (string $message, string $errorCode) use ($conn, $db, &$paymentId, $releaseLock): void {
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
+            self::finalizePendingPayment($db, $paymentId, ['status' => 'failed']);
+            $releaseLock();
+            JsonResponse::error($message, 422, $errorCode);
+        };
+
         $conn->beginTransaction();
         try {
         foreach ($data['items'] as $item) {
@@ -538,13 +609,11 @@ class MarketplaceController {
             if (!$bot) continue;
 
             if ((int) $bot['is_independent'] === 1) {
-                $conn->rollBack();
-                JsonResponse::error('Bu chatbot pazaryerinde satışa açık değil.', 422, AppConfig::ERR_VALIDATION);
+                $failCheckout('Bu chatbot pazaryerinde satışa açık değil.', AppConfig::ERR_VALIDATION);
             }
 
             if (($bot['seller_status'] ?? '') !== 'active') {
-                $conn->rollBack();
-                JsonResponse::error('Bu chatbot şu anda satışa kapalı. Satıcısı henüz pazaryeri kaydını tamamlamamış.', 422, AppConfig::ERR_SELLER_INACTIVE);
+                $failCheckout('Bu chatbot şu anda satışa kapalı. Satıcısı henüz pazaryeri kaydını tamamlamamış.', AppConfig::ERR_SELLER_INACTIVE);
             }
 
             // COMP-005 — kendi botunu satın alma yasağının İKİNCİ kapısı.
@@ -559,8 +628,7 @@ class MarketplaceController {
             // `assertNotOwnBot()` çağrılmıyor: `$bot` zaten `author_user_id`
             // taşıyor, ikinci bir sorgu gereksiz olurdu. Kural aynı kural.
             if ((int) $bot['author_user_id'] === $userId) {
-                $conn->rollBack();
-                JsonResponse::error('Kendi oluşturduğunuz bir botu satın alamazsınız.', 422, AppConfig::ERR_VALIDATION);
+                $failCheckout('Kendi oluşturduğunuz bir botu satın alamazsınız.', AppConfig::ERR_VALIDATION);
             }
 
             $isMonthly = $durationWeeks >= 4;
@@ -573,8 +641,7 @@ class MarketplaceController {
             // An absent price is an unpriced bot, not a free one — refuse it
             // rather than recording a 0,00 TL sale.
             if ($price <= 0) {
-                $conn->rollBack();
-                JsonResponse::error('Bu chatbot için geçerli bir fiyat tanımlanmamış.', 422, AppConfig::ERR_VALIDATION);
+                $failCheckout('Bu chatbot için geçerli bir fiyat tanımlanmamış.', AppConfig::ERR_VALIDATION);
             }
 
             $days       = $isMonthly ? AppConfig::SUBSCRIPTION_MONTHLY : $durationWeeks * AppConfig::SUBSCRIPTION_WEEKLY;
@@ -612,8 +679,7 @@ class MarketplaceController {
         }
 
         if (empty($subscriptionIds)) {
-            $conn->rollBack();
-            JsonResponse::error('Geçerli ürün bulunamadı.', 400, AppConfig::ERR_VALIDATION);
+            $failCheckout('Geçerli ürün bulunamadı.', AppConfig::ERR_VALIDATION);
         }
 
         // Root-cause fix: this used to never look at $data['card'] at all —
@@ -628,7 +694,9 @@ class MarketplaceController {
         // üretilseydi, zaman aşımına uğrayan bir tahsilat için elimizde
         // sağlayıcıya sorulabilecek hiçbir referans olmazdı — yani para
         // çekilmiş olup olmadığını asla öğrenemezdik.
-        $orderId = 'ORD-' . strtoupper(InputSanitizer::randomToken(4));
+        //
+        // D-04: artık yalnızca kimlik değil, o kimliği taşıyan `pending`
+        // ödeme SATIRI da tahsilattan önce yazılmış durumda (bkz. yukarısı).
 
         // iyzico buyer bloğu zorunlu ve boş alan kabul etmiyor; kullanıcının
         // kendi hesap bilgisinden dolduruluyor.
@@ -670,6 +738,22 @@ class MarketplaceController {
             // sorup durumu kesinleştirince rezervasyon serbest bırakılır.
             $keepReservation = self::chargeOutcomeIsIndeterminate($chargeResult);
 
+            // D-04 — rollback transaction'ı bitirdi, bundan sonraki yazmalar
+            // autocommit. `pending` ödeme satırı ayakta; sonucu ona yazıyoruz.
+            //   • BELİRSİZ  → `pending` KALIYOR ki `reconcilePayments()` bu
+            //     order_id ile sağlayıcıya sorup gerçeği öğrenebilsin.
+            //   • KESİN RET → `failed`; mutabakatın uğraşmasına gerek yok.
+            self::finalizePendingPayment($db, $paymentId, [
+                'status'              => $keepReservation ? 'pending' : 'failed',
+                'amount'              => InputSanitizer::price($totalAmount),
+                'product_amount'      => InputSanitizer::price($totalAmount),
+                'param_response_json' => json_encode([
+                    'error_code'    => (string) ($chargeResult['error_code'] ?? ''),
+                    'error_message' => (string) ($chargeResult['message'] ?? ''),
+                    'indeterminate' => $keepReservation,
+                ], JSON_UNESCAPED_UNICODE),
+            ]);
+
             if ($keepReservation) {
                 error_log(sprintf(
                     '[checkout] tahsilat sonucu BELİRSİZ, idempotency tutuluyor order=%s user=%d code=%s',
@@ -686,6 +770,7 @@ class MarketplaceController {
                 );
             }
 
+            $releaseLock();
             JsonResponse::error($chargeResult['message'] ?? 'Ödeme başarısız.', 402, AppConfig::ERR_PAYMENT);
         }
 
@@ -700,9 +785,10 @@ class MarketplaceController {
         // Real param_marketplace_payments columns are user_id/amount, not
         // buyer_user_id/total_amount (confirmed via live DESCRIBE) — the
         // original names here were guessed without DB access and never worked.
+        //
+        // D-04: satır zaten var (`pending` olarak, tahsilattan önce yazıldı);
+        // burada INSERT değil GÜNCELLEME yapılıyor.
         $paymentRow = [
-            'order_id' => $orderId,
-            'user_id'  => $userId,
             'amount'   => InputSanitizer::price($totalAmount),
             'status'   => $paymentStatus,
         ];
@@ -745,7 +831,7 @@ class MarketplaceController {
             }
         }
 
-        $paymentId = $db->insert('param_marketplace_payments', $paymentRow);
+        $db->update('param_marketplace_payments', $paymentRow, 'id = ?', [$paymentId]);
 
         // PAY-004 🟠 — burada bir `ALTER TABLE` vardı ve ödeme transaction'ının
         // İÇİNDEYDİ. MySQL'de DDL örtük COMMIT tetikler: ALTER'a ulaşan ilk
@@ -813,6 +899,21 @@ class MarketplaceController {
                     $gatewayPayment
                 ));
             }
+
+            // D-04: `pending` ödeme satırı hâlâ ayakta. Telafi başarılıysa
+            // tahsilat geri alındı → `failed`. Başarısızsa para hareket etti
+            // ama siparişimiz yok → `unknown`; mutabakat ve operatör bu
+            // satırı görsün diye bilerek KESİNLEŞTİRİLMİYOR.
+            self::finalizePendingPayment($db, $paymentId, [
+                'status'               => $compensated ? 'failed' : 'unknown',
+                'amount'               => InputSanitizer::price($totalAmount),
+                'param_transaction_id' => $gatewayPayment !== '' ? $gatewayPayment : null,
+                'param_response_json'  => json_encode([
+                    'error'       => $e->getMessage(),
+                    'compensated' => $compensated,
+                ], JSON_UNESCAPED_UNICODE),
+            ]);
+
             $releaseLock();
             throw $e;
         }
