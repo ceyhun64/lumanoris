@@ -509,12 +509,53 @@ function processRefund(Database $db, PDO $conn, array $data): void {
     if (!$payment) {
         JsonResponse::error('Ödeme kaydı bulunamadı.', 404, AppConfig::ERR_NOT_FOUND);
     }
-    if ($payment['status'] === 'refunded') {
-        JsonResponse::error('Bu ödeme zaten iade edilmiş.', 409, AppConfig::ERR_DUPLICATE);
-    }
-    if ($payment['status'] !== 'paid') {
+    $paymentRowId = (int) $payment['id'];
+
+    /**
+     * I-02 — bu fonksiyon transaction, kilit ve idempotency OLMADAN
+     * çalışıyordu; `PDO $conn` parametresini alıp gövdesinde hiç
+     * kullanmıyordu. İki admin (ya da bir çift tıklama) aynı ödemeyi aynı
+     * anda iade ettiğinde ikisi de `status = 'paid'` görüp sağlayıcıya
+     * AYNI `paymentTransactionId` için iki iade isteği gönderiyordu.
+     *
+     * `createSubscription()` ile aynı adlandırılmış kilit deseni. Kilit
+     * ödeme satırı BAZINDA: farklı siparişlerin iadesi birbirini
+     * beklemesin.
+     */
+    $lockName = 'refund_payment_' . $paymentRowId;
+    $lockStmt = $conn->prepare('SELECT GET_LOCK(?, 10) AS locked');
+    $lockStmt->execute([$lockName]);
+    if ((int) ($lockStmt->fetch()['locked'] ?? 0) !== 1) {
         JsonResponse::error(
-            'Yalnızca tahsil edilmiş ödemeler iade edilebilir. Mevcut durum: ' . $payment['status'],
+            'Bu ödeme için başka bir iade işlemi sürüyor. Lütfen birkaç saniye sonra tekrar deneyin.',
+            409,
+            AppConfig::ERR_VALIDATION
+        );
+    }
+    $releaseLock = static function () use ($conn, $lockName): void {
+        try { $conn->prepare('SELECT RELEASE_LOCK(?)')->execute([$lockName]); } catch (Throwable $e) {}
+    };
+
+    // Kilit ALINDIKTAN SONRA yeniden oku: yarışı kaybeden istek, ilkinin
+    // yazdığı güncel durumu görür. Yukarıdaki okuma yalnızca satırı
+    // bulmak içindi.
+    $payment       = $db->selectSingle('* FROM param_marketplace_payments WHERE id = ?', [$paymentRowId]);
+    $statusBefore  = (string) ($payment['status'] ?? '');
+
+    /** Denetim izi + kilidi bırakarak hata döndürmek için ortak çıkış. */
+    $refundAbort = static function (string $message, int $http, string $code) use ($releaseLock): void {
+        $releaseLock();
+        JsonResponse::error($message, $http, $code);
+    };
+
+    if ($statusBefore === 'refunded') {
+        refundAudit($payment, 'reddedildi', $statusBefore, $statusBefore, 'zaten iade edilmiş');
+        $refundAbort('Bu ödeme zaten iade edilmiş.', 409, AppConfig::ERR_DUPLICATE);
+    }
+    if ($statusBefore !== 'paid' && $statusBefore !== 'partial_refund') {
+        refundAudit($payment, 'reddedildi', $statusBefore, $statusBefore, 'tahsil edilmemiş ödeme');
+        $refundAbort(
+            'Yalnızca tahsil edilmiş ödemeler iade edilebilir. Mevcut durum: ' . $statusBefore,
             422,
             AppConfig::ERR_VALIDATION
         );
@@ -525,7 +566,8 @@ function processRefund(Database $db, PDO $conn, array $data): void {
 
     if (empty($transactions)) {
         error_log('[iyzico] iade edilemiyor: itemTransactions kaydı yok. order=' . $payment['order_id']);
-        JsonResponse::error(
+        refundAudit($payment, 'reddedildi', $statusBefore, $statusBefore, 'itemTransactions kaydı yok');
+        $refundAbort(
             'Bu ödeme için sağlayıcı işlem kimlikleri kayıtlı değil, otomatik iade yapılamıyor. '
             . 'İade iyzico panelinden elle yapılmalı.',
             422,
@@ -536,6 +578,24 @@ function processRefund(Database $db, PDO $conn, array $data): void {
     $ip       = clientIp();
     $refunded = 0.0;
     $failures = [];
+    $skipped  = 0;
+
+    // I-02 — ZATEN İADE EDİLMİŞ kalemlerin kümesi (idempotency).
+    //
+    // Eskiden böyle bir kontrol yoktu: aynı ödemeye ikinci kez iade
+    // çalıştırmak sağlayıcıya AYNI kalemler için ikinci bir iade isteği
+    // gönderiyordu. Kısmi bir hatadan sonra admin'in tekrar denemesi
+    // gereken durum tam olarak budur, yani nadir de değil.
+    //
+    // Anahtar `detail_id`: D-08 sonrası her kalem tek bir detay satırına
+    // eşleniyor, dolayısıyla (payment_id, detail_id) kalem kimliğidir.
+    $alreadyRefunded = [];
+    foreach ($db->selectMulti(
+        "detail_id FROM param_marketplace_refunds WHERE payment_id = ? AND status = 'completed'",
+        [$paymentRowId]
+    ) as $r) {
+        $alreadyRefunded[(int) $r['detail_id']] = true;
+    }
 
     // İade satırının bağlanacağı detay satırı. Döngünün İÇİNDE sorgulamak
     // her kalem için aynı sorguyu tekrarlardı; ayrıca selectSingle() satır
@@ -553,30 +613,59 @@ function processRefund(Database $db, PDO $conn, array $data): void {
             continue;
         }
 
+        $detailId = $firstDetailId;
+
+        if ($detailId > 0 && isset($alreadyRefunded[$detailId])) {
+            // Bu kalem daha önce başarıyla iade edilmiş — sağlayıcıya
+            // ikinci kez gitme. Tutarı toplama DAHİL EDİYORUZ ki "tam iade
+            // oldu mu" kararı doğru çıksın.
+            $skipped++;
+            $refunded = round($refunded + $price, 2);
+            continue;
+        }
+
         $res = $client->refund($txId, $price, $ip, 'TRY', $payment['order_id']);
         $ok  = ($res['status'] ?? '') === 'success';
 
+        // Bu satır BİLEREK transaction dışında ve hemen yazılıyor: para
+        // sağlayıcıda gerçekten hareket etti, kaydı hiçbir rollback
+        // silmemeli. Aksi hâlde iade edilmiş bir tutarın izi kaybolur ve
+        // ikinci denemede tekrar iade edilir.
         $db->insert('param_marketplace_refunds', [
-            'payment_id'           => (int) $payment['id'],
-            // Kalem bazlı iadeyi ilgili detay satırına bağla; eşleşme yoksa 0.
-            'detail_id'            => $firstDetailId,
+            'payment_id'           => $paymentRowId,
+            'detail_id'            => $detailId,
             'amount'               => $price,
             'reason'               => $reason,
+            // NOT: sütunun FK'sı `kullanicilar`'a; admin ise `adminler`
+            // tablosunda. Admin kimliği bu yüzden JSON'a yazılıyor.
             'requested_by_user_id' => (int) ($_SESSION['user_id'] ?? 0) ?: null,
             'status'               => $ok ? 'completed' : 'failed',
-            'param_response_json'  => json_encode(IyzicoClient::redact($res), JSON_UNESCAPED_UNICODE),
+            'param_response_json'  => json_encode([
+                'actor'                  => refundActor(),
+                'attempted_at'           => date('c'),
+                'payment_transaction_id' => $txId,
+                'status_before'          => $statusBefore,
+                'provider'               => IyzicoClient::redact($res),
+            ], JSON_UNESCAPED_UNICODE),
         ]);
 
         if ($ok) {
             $refunded = round($refunded + $price, 2);
         } else {
             $failures[] = sprintf('%s: %s', $txId, (string) ($res['errorMessage'] ?? 'bilinmeyen hata'));
-            error_log('[iyzico] kalem iadesi başarısız tx=' . $txId . ' msg=' . (string) ($res['errorMessage'] ?? '-'));
+            error_log(sprintf(
+                '[iyzico] kalem iadesi başarısız order=%s tx=%s admin=%s msg=%s',
+                $payment['order_id'],
+                $txId,
+                refundActor(),
+                (string) ($res['errorMessage'] ?? '-')
+            ));
         }
     }
 
     if ($refunded <= 0) {
-        JsonResponse::error(
+        refundAudit($payment, 'başarısız', $statusBefore, $statusBefore, implode(' | ', $failures));
+        $refundAbort(
             'İade yapılamadı: ' . implode(' | ', $failures),
             422,
             AppConfig::ERR_PAYMENT
@@ -585,32 +674,98 @@ function processRefund(Database $db, PDO $conn, array $data): void {
 
     $total       = (float) $payment['amount'];
     $fullyRefund = $refunded >= round($total, 2) - 0.01;
+    $statusAfter = $fullyRefund ? 'refunded' : 'partial_refund';
 
-    $db->update(
-        'param_marketplace_payments',
-        ['status' => $fullyRefund ? 'refunded' : 'partial_refund'],
-        'id = ?',
-        [$payment['id']]
-    );
-
-    // İade edilen bir satışın satıcı payı ödenebilir kalmamalı.
-    if ($fullyRefund) {
+    // I-02 — durum geçişi TEK bir transaction'da. Eskiden ödeme satırı ile
+    // detay satırları ayrı ayrı güncelleniyordu: araya giren bir hata
+    // "ödeme iade edildi ama satıcı payı hâlâ ödenebilir" gibi tutarsız bir
+    // ara duruma yol açabiliyordu.
+    //
+    // Sağlayıcı çağrıları BİLEREK bu transaction'ın dışında kaldı: ağ
+    // isteği süresince satır kilidi tutmak, ve bir rollback ile gerçekten
+    // yapılmış iadelerin kaydını silmek istemiyoruz.
+    $conn->beginTransaction();
+    try {
         $db->update(
-            'param_marketplace_details',
-            ['status' => 'refunded', 'refunded_at' => date('Y-m-d H:i:s')],
-            'payment_id = ?',
-            [$payment['id']]
+            'param_marketplace_payments',
+            ['status' => $statusAfter],
+            'id = ?',
+            [$paymentRowId]
         );
+
+        // İade edilen bir satışın satıcı payı ödenebilir kalmamalı.
+        if ($fullyRefund) {
+            $db->update(
+                'param_marketplace_details',
+                ['status' => 'refunded', 'refunded_at' => date('Y-m-d H:i:s')],
+                'payment_id = ?',
+                [$paymentRowId]
+            );
+        }
+
+        $conn->commit();
+    } catch (Throwable $e) {
+        if ($conn->inTransaction()) {
+            $conn->rollBack();
+        }
+        // Para geri gitti ama durum yazılamadı — sessizce geçilemez.
+        error_log(sprintf(
+            '[iyzico] KRİTİK: iade yapıldı ama durum yazılamadı order=%s tutar=%s hata=%s',
+            $payment['order_id'],
+            (string) $refunded,
+            $e->getMessage()
+        ));
+        $releaseLock();
+        throw $e;
     }
 
-    error_log(sprintf('[iyzico] iade tamamlandı order=%s tutar=%s tam=%s', $payment['order_id'], (string) $refunded, $fullyRefund ? 'evet' : 'hayır'));
+    refundAudit($payment, $fullyRefund ? 'tamamlandı' : 'kısmi', $statusBefore, $statusAfter, sprintf(
+        'tutar=%s atlanan=%d başarısız=%d',
+        (string) $refunded,
+        $skipped,
+        count($failures)
+    ));
+
+    $releaseLock();
 
     JsonResponse::success([
         'message'         => $fullyRefund ? 'İade tamamlandı.' : 'Kısmi iade tamamlandı.',
         'refunded_amount' => $refunded,
         'full_refund'     => $fullyRefund,
+        'skipped_items'   => $skipped,
         'failures'        => $failures,
     ]);
+}
+
+/**
+ * İade denemesini tetikleyen kişi. İade uç noktası `requireAdmin()`
+ * arkasında, yani normalde `$_SESSION['admin']` doludur.
+ */
+function refundActor(): string {
+    return (string) ($_SESSION['admin'] ?? ($_SESSION['user_id'] ?? 'bilinmiyor'));
+}
+
+/**
+ * I-02 — her iade DENEMESİNİN denetim kaydı: kim, ne zaman, hangi işlem,
+ * önceki ve sonraki durum.
+ *
+ * Başarılı denemeler `param_marketplace_refunds`'a satır yazıyor; ama
+ * reddedilen denemeler (zaten iade edilmiş, tahsil edilmemiş, sağlayıcı
+ * kimliği yok) hiçbir iz bırakmıyordu. Para hareketiyle ilgili her
+ * teşebbüs görünür olmalı.
+ */
+function refundAudit(array $payment, string $outcome, string $before, string $after, string $detail = ''): void {
+    error_log(sprintf(
+        '[refund-audit] order=%s payment_id=%s sonuc=%s durum=%s->%s admin=%s ip=%s%s',
+        (string) ($payment['order_id'] ?? '-'),
+        (string) ($payment['id'] ?? '-'),
+        $outcome,
+        $before,
+        $after,
+        refundActor(),
+        clientIp(),
+        $detail !== '' ? ' detay=' . $detail : ''
+    ));
 }
 
 /**
