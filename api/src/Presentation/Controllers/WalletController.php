@@ -440,6 +440,36 @@ class WalletController {
      * Yani ödeme artık karşılıksız değil: yazılan `user_plan_selection`
      * satırı doğrudan bot ve mesaj kotasına dönüşüyor.
      */
+    /**
+     * D-05 — `user_plan_selection` satırı.
+     *
+     * `expires_at` migration 011 ile geldi; uygulanmamış bir kurulumda
+     * sütuna yazmak SQL hatası verip tahsilat SONRASI adımı düşürürdü
+     * (yani "para çekildi, paket verilmedi"). Bu yüzden sütun varlığı
+     * kontrol ediliyor — `paymentsColumnExists` ile aynı savunma.
+     *
+     * @param string|null $expiresAt null = süresiz (ücretsiz plan)
+     */
+    private static function planSelectionRow(Database $db, int $userId, string $planName, ?string $expiresAt): array {
+        $row = [
+            'user_id'     => $userId,
+            'plan_name'   => $planName,
+            'selected_at' => date('Y-m-d H:i:s'),
+        ];
+
+        require_once __DIR__ . '/../../../functions/plans.php';
+        if (planSelectionHasExpiry($db)) {
+            $row['expires_at'] = $expiresAt;
+        } elseif ($expiresAt !== null) {
+            error_log(
+                '[upgradePlan] user_plan_selection.expires_at yok (migration 011 uygulanmamış) — '
+                . 'paket SÜRESİZ yazılıyor. user_id=' . $userId . ' plan=' . $planName
+            );
+        }
+
+        return $row;
+    }
+
     public static function upgradePlan(): void {
         require_method('POST');
         require_once __DIR__ . '/../../../functions/checkout_payments.php';
@@ -490,11 +520,8 @@ class WalletController {
                 error_log('[upgradePlan] ücretli plan için fiyat tanımsız: ' . $planName);
                 JsonResponse::error('Bu paket için geçerli bir fiyat tanımlanmamış.', 422, AppConfig::ERR_VALIDATION);
             }
-            $db->insert('user_plan_selection', [
-                'user_id'     => $userId,
-                'plan_name'   => $plan['name_tr'],
-                'selected_at' => date('Y-m-d H:i:s'),
-            ], true);
+            // Ücretsiz plan süresiz: bitiş tarihi yok (D-05).
+            $db->insert('user_plan_selection', self::planSelectionRow($db, $userId, (string) $plan['name_tr'], null), true);
             JsonResponse::success(['message' => 'Üyelik paketiniz güncellendi.', 'plan_name' => $plan['name_tr']]);
         }
 
@@ -560,11 +587,22 @@ class WalletController {
 
             // user_plan_selection'ın PK'sı user_id — upsert doğru davranış:
             // kullanıcının tek bir etkin planı var.
-            $db->insert('user_plan_selection', [
-                'user_id'     => $userId,
-                'plan_name'   => $plan['name_tr'],
-                'selected_at' => date('Y-m-d H:i:s'),
-            ], true);
+            //
+            // D-05 — paket 30 GÜNLÜK TEK SEFERLİK bir satış. Aylık fiyat bir
+            // kez tahsil edilip hak SÜRESİZ veriliyordu; tabloda süre
+            // sütunu yoktu ve `getUserPlan()` satırı koşulsuz okuyordu.
+            // Yinelenen tahsilat YOK: süre bitince kullanıcı varsayılan
+            // plana düşer ve dilerse elle yeniden satın alır.
+            //
+            // Bitiş tarihi MySQL'in saatinden türetiliyor (checkout'taki
+            // expiry hesabıyla aynı gerekçe: uygulama ve veritabanı
+            // sunucuları farklı saat diliminde olabiliyor).
+            $expiresAt = (string) $db->selectSingle(
+                'DATE_ADD(NOW(), INTERVAL ? DAY) AS bitis',
+                [AppConfig::SUBSCRIPTION_MONTHLY]
+            )['bitis'];
+
+            $db->insert('user_plan_selection', self::planSelectionRow($db, $userId, (string) $plan['name_tr'], $expiresAt), true);
         } catch (Throwable $e) {
             error_log('[upgradePlan] tahsilat sonrası kayıt başarısız: ' . $e->getMessage());
             cancelCharge($gatewayPayment, clientIp(), $orderId);

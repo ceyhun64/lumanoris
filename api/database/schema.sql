@@ -623,10 +623,17 @@ CREATE TABLE `user_emails` (
 
 -- ----------------------------------------------------------------
 DROP TABLE IF EXISTS `user_lists`;
+-- `color` ve `description` migration 009 ile geldi ama temel şemaya
+-- eklenmemişti. Sonuç: sıfırdan kurulan bir veritabanında SocialController'ın
+-- addUserList()/getUserLists() sorguları "Unknown column 'color'" ile
+-- patlıyor, yani liste oluşturma ve listeleme hiç çalışmıyordu (AUDIT K-01).
+-- 009 idempotent (sütun varsa dokunmuyor), bu yüzden ikisi çakışmaz.
 CREATE TABLE `user_lists` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `color` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'violet',
+  `description` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -645,11 +652,16 @@ CREATE TABLE `user_phones` (
 
 -- ----------------------------------------------------------------
 DROP TABLE IF EXISTS `user_plan_selection`;
+-- D-05: `expires_at` migration 011 ile geldi. Paket 30 GÜNLÜK TEK
+-- SEFERLİK bir satış; yinelenen tahsilat yok. NULL = süresiz (bu
+-- sütundan önce yazılmış satırlar geriye dönük iptal edilmesin diye).
 CREATE TABLE `user_plan_selection` (
   `user_id` int NOT NULL,
   `plan_name` varchar(30) NOT NULL,
   `selected_at` datetime NOT NULL,
-  PRIMARY KEY (`user_id`)
+  `expires_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`user_id`),
+  KEY `idx_user_plan_expires` (`expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ----------------------------------------------------------------

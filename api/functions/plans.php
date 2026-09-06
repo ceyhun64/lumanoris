@@ -60,6 +60,33 @@ function plansTableReady(Database $db): bool
 }
 
 /**
+ * D-05 — `user_plan_selection.expires_at` sütunu var mı? (migration 011)
+ *
+ * Sürüm farkını tolere ediyoruz: migration uygulanmamış bir kurulumda
+ * sorgu SQL 1054 ile patlayıp `getUserPlan()`'ı fallback'e düşürürdü —
+ * yani Elmas plandaki herkes sessizce ücretsiz kotalara inerdi. Kontrol
+ * istek başına bir kez yapılıp hatırlanıyor.
+ */
+function planSelectionHasExpiry(Database $db): bool
+{
+    static $has = null;
+    if ($has !== null) {
+        return $has;
+    }
+    try {
+        $row = $db->selectSingle(
+            "COUNT(*) AS cnt FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_plan_selection'
+               AND COLUMN_NAME = 'expires_at'"
+        );
+        return $has = ((int) ($row['cnt'] ?? 0) === 1);
+    } catch (Throwable $e) {
+        error_log('[plans] expires_at kontrolü başarısız: ' . $e->getMessage());
+        return $has = false;
+    }
+}
+
+/**
  * AppConfig'e dayanan geri düşüş planı. Migration 007 uygulanmadan önceki
  * davranışın birebir aynısı.
  *
@@ -104,12 +131,29 @@ function getUserPlan(Database $db, int $userId): array
     try {
         // `user_plan_selection.plan_name` serbest metin ve plana FK'sı yok;
         // ad üzerinden eşleştiriyoruz (007 `plans.name_tr`'ye UNIQUE koydu).
-        $plan = $db->selectSingle(
-            'p.* FROM user_plan_selection ups
-             JOIN plans p ON p.name_tr = ups.plan_name
-             WHERE ups.user_id = ?',
-            [$userId]
-        );
+        //
+        // D-05 — süre kontrolü. Bu satır eskiden KOŞULSUZ okunuyordu: bir
+        // kez ödeyen kullanıcı sonsuza kadar o planda kalıyordu, oysa
+        // paket "aylık" fiyatla satılıyor. Paket 30 günlük tek seferlik
+        // bir satış; süresi dolunca kullanıcı aşağıdaki varsayılan
+        // (ücretsiz) plana düşer ve dilerse elle yeniden satın alır.
+        //
+        // `expires_at IS NULL` = SÜRESİZ: sütun eklenmeden önce yazılmış
+        // satırlar geriye dönük iptal edilmiyor.
+        $plan = planSelectionHasExpiry($db)
+            ? $db->selectSingle(
+                'p.* FROM user_plan_selection ups
+                 JOIN plans p ON p.name_tr = ups.plan_name
+                 WHERE ups.user_id = ?
+                   AND (ups.expires_at IS NULL OR ups.expires_at > NOW())',
+                [$userId]
+            )
+            : $db->selectSingle(
+                'p.* FROM user_plan_selection ups
+                 JOIN plans p ON p.name_tr = ups.plan_name
+                 WHERE ups.user_id = ?',
+                [$userId]
+            );
 
         if (!$plan) {
             $plan = $db->selectSingle('* FROM plans WHERE is_default = 1 ORDER BY sort_order LIMIT 1')
