@@ -502,6 +502,20 @@ function processRefund(Database $db, PDO $conn, array $data): void {
         JsonResponse::error('payment_id veya order_id gerekli.', 400, AppConfig::ERR_VALIDATION);
     }
 
+    // İş kuralı: KISMİ / ORANSAL İADE YOK. İade her zaman siparişin tamamı
+    // üzerinden yapılır. Fonksiyon zaten istekten tutar okumuyor — tutarlar
+    // sağlayıcının kaydettiği `itemTransactions`'tan geliyor — ama tutar
+    // gönderen bir çağıran sessizce yok sayılmak yerine açıkça
+    // reddediliyor ki "kısmi iade istedim, tam iade oldu" sürprizi olmasın.
+    if (isset($data['amount']) || isset($data['items']) || isset($data['partial'])) {
+        JsonResponse::error(
+            'Kısmi iade desteklenmiyor: iade her zaman siparişin tamamı üzerinden yapılır. '
+            . 'Tutar/kalem göndermeyin.',
+            422,
+            AppConfig::ERR_VALIDATION
+        );
+    }
+
     $payment = $paymentRowId
         ? $db->selectSingle('* FROM param_marketplace_payments WHERE id = ?', [$paymentRowId])
         : $db->selectSingle('* FROM param_marketplace_payments WHERE order_id = ?', [$orderId]);
@@ -597,14 +611,47 @@ function processRefund(Database $db, PDO $conn, array $data): void {
         $alreadyRefunded[(int) $r['detail_id']] = true;
     }
 
-    // İade satırının bağlanacağı detay satırı. Döngünün İÇİNDE sorgulamak
-    // her kalem için aynı sorguyu tekrarlardı; ayrıca selectSingle() satır
-    // yoksa false döner, doğrudan ['id'] yazmak PHP 8'de uyarı üretir.
-    $firstDetail   = $db->selectSingle(
-        'id FROM param_marketplace_details WHERE payment_id = ? ORDER BY id LIMIT 1',
-        [$payment['id']]
+    /**
+     * D-08 — kalem bazlı iade satırları HEPSİ ilk detay satırına
+     * bağlanıyordu (`$firstDetailId`), hiç detay yoksa `0` yazılıyordu.
+     * İki sonucu vardı: çok kalemli bir siparişte muhasebe kaydı hangi
+     * satıcının kaleminin iade edildiğini gösteremiyordu, ve `detail_id`
+     * NOT NULL + `param_marketplace_details`'e FK olduğu için `0` yazmak
+     * sessizce değil FK ihlaliyle PATLIYORDU.
+     *
+     * Eşleme `chatbot_id` üzerinden: `createSubscription` iyzico'ya kalem
+     * kimliği olarak `chatbot_id` gönderiyor (`'id' => $row['chatbot_id']`),
+     * sağlayıcı da onu `itemTransactions[].itemId` olarak geri veriyor.
+     * `param_marketplace_details.chatbot_id` sütunu migration 004 ile
+     * geldi; yoksa (eski kurulum) tek detay satırına düşülüyor.
+     */
+    $detailRows = $db->selectMulti(
+        'id, chatbot_id, seller_user_id FROM param_marketplace_details WHERE payment_id = ? ORDER BY id',
+        [$paymentRowId]
     );
-    $firstDetailId = $firstDetail ? (int) $firstDetail['id'] : 0;
+
+    $detailByChatbot = [];
+    foreach ($detailRows as $d) {
+        $cid = (int) ($d['chatbot_id'] ?? 0);
+        if ($cid > 0) {
+            $detailByChatbot[$cid] = (int) $d['id'];
+        }
+    }
+    $firstDetailId = $detailRows ? (int) $detailRows[0]['id'] : 0;
+
+    if ($firstDetailId === 0) {
+        // `detail_id` NOT NULL ve FK'lı — bağlanacak satır olmadan iade
+        // kaydı YAZILAMAZ. Sağlayıcıya para iadesi gönderip kaydını
+        // tutamamaktansa hiç başlamamak doğru.
+        error_log('[iyzico] iade edilemiyor: ödemeye bağlı detay satırı yok. order=' . $payment['order_id']);
+        refundAudit($payment, 'reddedildi', $statusBefore, $statusBefore, 'detay satırı yok');
+        $refundAbort(
+            'Bu ödemenin kalem kayıtları eksik, otomatik iade yapılamıyor. '
+            . 'İade iyzico panelinden elle yapılmalı.',
+            422,
+            AppConfig::ERR_VALIDATION
+        );
+    }
 
     foreach ($transactions as $tx) {
         $txId  = (string) ($tx['paymentTransactionId'] ?? '');
@@ -613,7 +660,9 @@ function processRefund(Database $db, PDO $conn, array $data): void {
             continue;
         }
 
-        $detailId = $firstDetailId;
+        // D-08: kalemi kendi detay satırına bağla.
+        $itemChatbotId = (int) ($tx['itemId'] ?? 0);
+        $detailId      = $detailByChatbot[$itemChatbotId] ?? $firstDetailId;
 
         if ($detailId > 0 && isset($alreadyRefunded[$detailId])) {
             // Bu kalem daha önce başarıyla iade edilmiş — sağlayıcıya
@@ -675,6 +724,7 @@ function processRefund(Database $db, PDO $conn, array $data): void {
     $total       = (float) $payment['amount'];
     $fullyRefund = $refunded >= round($total, 2) - 0.01;
     $statusAfter = $fullyRefund ? 'refunded' : 'partial_refund';
+    $revoked     = ['subscriptions' => 0, 'credits' => 0, 'ambiguous' => []];
 
     // I-02 — durum geçişi TEK bir transaction'da. Eskiden ödeme satırı ile
     // detay satırları ayrı ayrı güncelleniyordu: araya giren bir hata
@@ -701,6 +751,19 @@ function processRefund(Database $db, PDO $conn, array $data): void {
                 'payment_id = ?',
                 [$paymentRowId]
             );
+
+            // D-03 — iade, satın alınan ERİŞİMİ de geri almalı.
+            //
+            // `processRefund()` yalnızca `param_marketplace_payments` ve
+            // `param_marketplace_details` durumlarını güncelliyordu;
+            // `user_subscriptions` ve `chatbot_purchase_credits` satırlarına
+            // HİÇ dokunmuyordu. Yani parası iade edilen kullanıcı botu
+            // kullanmaya süresi dolana kadar devam ediyordu.
+            //
+            // İş kuralı: iade tam tutar üzerinden yapılır, verilen süre ve
+            // kredi tamamen geri alınır, kullanılmış kısım için oransal
+            // hesap YAPILMAZ.
+            $revoked = revokeRefundedAccess($db, (int) $payment['user_id'], $detailRows, $payment['order_id']);
         }
 
         $conn->commit();
@@ -720,21 +783,107 @@ function processRefund(Database $db, PDO $conn, array $data): void {
     }
 
     refundAudit($payment, $fullyRefund ? 'tamamlandı' : 'kısmi', $statusBefore, $statusAfter, sprintf(
-        'tutar=%s atlanan=%d başarısız=%d',
+        'tutar=%s atlanan=%d başarısız=%d abonelik_iptal=%d kredi_sıfırlandı=%d',
         (string) $refunded,
         $skipped,
-        count($failures)
+        count($failures),
+        $revoked['subscriptions'],
+        $revoked['credits']
     ));
 
     $releaseLock();
 
+    // I-04 — kısmi durum bir İŞ KURALI değil, sağlayıcı tarafında kalmış
+    // bir arıza. Para bir kısmı için geri gitti ve geri alınamaz; erişim
+    // ise HENÜZ kesilmiyor (müşteri parasının tamamını almadan hizmetini
+    // kaybetmesin). Admin tekrar denediğinde iade edilmiş kalemler
+    // atlanıp yalnızca kalanlar denenir; tamamlanınca erişim kesilir.
+    $message = $fullyRefund
+        ? 'İade tamamlandı; erişim ve krediler geri alındı.'
+        : 'Kalemlerin bir kısmı iade EDİLEMEDİ. Erişim henüz kesilmedi — '
+          . 'sorunu giderip iadeyi tekrar çalıştırın, iade edilmiş kalemler atlanacaktır.';
+
     JsonResponse::success([
-        'message'         => $fullyRefund ? 'İade tamamlandı.' : 'Kısmi iade tamamlandı.',
+        'message'         => $message,
         'refunded_amount' => $refunded,
         'full_refund'     => $fullyRefund,
         'skipped_items'   => $skipped,
         'failures'        => $failures,
+        'revoked'         => $revoked,
+        // Aynı (kullanıcı, bot) için birden fazla abonelik bulunduğunda
+        // admin'in bilmesi gerekiyor: şema sipariş bağı tutmuyor.
+        'warnings'        => $revoked['ambiguous'] === [] ? [] : [
+            'Bu kullanıcının şu botlar için birden fazla satın alması var ve hepsi pasife alındı: '
+            . implode(', ', $revoked['ambiguous']),
+        ],
     ]);
+}
+
+/**
+ * D-03 — tam iade edilen bir siparişin verdiği erişimi geri alır.
+ *
+ * İş kuralı: süre ve kredi TAMAMEN geri alınır; kullanılmış kısım için
+ * oransal hesap yapılmaz.
+ *
+ * ⚠️ BİLİNEN SINIR — `user_subscriptions` ve `chatbot_purchase_credits`
+ * tablolarında ödeme/sipariş bağı YOK; tek eşleşme (user_id, chatbot_id).
+ * Aynı kullanıcı aynı botu iki kez satın aldıysa (I-01 düzeltmesinden
+ * sonra yenileme mümkün) birinci siparişin iadesi ikinciyi de kapatır.
+ * Bu durum sessiz geçilmiyor: tespit edilip log'a ve admin yanıtına
+ * yazılıyor. Kalıcı çözüm `user_subscriptions`'a `payment_id` eklemek.
+ *
+ * @param array $detailRows param_marketplace_details satırları
+ * @return array{subscriptions:int,credits:int,ambiguous:array}
+ */
+function revokeRefundedAccess(Database $db, int $buyerId, array $detailRows, string $orderId): array {
+    $result = ['subscriptions' => 0, 'credits' => 0, 'ambiguous' => []];
+    if ($buyerId <= 0) {
+        return $result;
+    }
+
+    foreach ($detailRows as $d) {
+        $chatbotId = (int) ($d['chatbot_id'] ?? 0);
+        if ($chatbotId <= 0) {
+            continue;
+        }
+
+        // Aynı (kullanıcı, bot) için birden fazla abonelik satırı varsa
+        // hangisinin BU siparişe ait olduğunu şema söyleyemiyor.
+        $rowCount = (int) ($db->selectSingle(
+            'COUNT(*) AS c FROM user_subscriptions WHERE user_id = ? AND chatbot_id = ?',
+            [$buyerId, $chatbotId]
+        )['c'] ?? 0);
+        if ($rowCount > 1) {
+            $result['ambiguous'][] = $chatbotId;
+            error_log(sprintf(
+                '[refund-audit] UYARI: order=%s bot=%d için %d abonelik satırı var; '
+                . 'sipariş bağı olmadığı için HEPSİ pasife alınıyor. user_id=%d',
+                $orderId,
+                $chatbotId,
+                $rowCount,
+                $buyerId
+            ));
+        }
+
+        $result['subscriptions'] += $db->update(
+            'user_subscriptions',
+            ['status' => 0],
+            'user_id = ? AND chatbot_id = ? AND status = 1',
+            [$buyerId, $chatbotId]
+        );
+
+        // Bonus mesaj kredisi: kalan hak sıfırlanıyor. `credits_total`
+        // muhasebe kaydı olarak DURUYOR — "ne kadar verilmişti" bilgisi
+        // iade sonrasında da lazım.
+        $result['credits'] += $db->update(
+            'chatbot_purchase_credits',
+            ['credits_remaining' => 0],
+            'user_id = ? AND chatbot_id = ? AND credits_remaining > 0',
+            [$buyerId, $chatbotId]
+        );
+    }
+
+    return $result;
 }
 
 /**
