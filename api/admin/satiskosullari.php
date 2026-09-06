@@ -3,7 +3,14 @@
 ?>
 <main class="bg-gray-50 p-6 min-h-screen">
     <div class="max-w-screen-xl mx-auto">
-        <?php pageTitle("Hakkımızda Sayfası", "Bu sayfada, sitenizin 'Hakkımızda' bölümünde yer alan içeriği düzenleyebilirsiniz."); ?>
+        <?php
+        // G-19 — başlık "Hakkımızda Sayfası" diyordu (kopyala-yapıştır);
+        // sayfa aslında Mesafeli Satış Sözleşmesi metnini düzenliyor.
+        pageTitle(
+            "Mesafeli Satış Sözleşmesi",
+            "Bu sayfada, sitenizde yayımlanan Mesafeli Satış Sözleşmesi metnini düzenleyebilirsiniz."
+        );
+        ?>
         <form id="aboutForm" class="space-y-6" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']; ?>">
              <!--form inputs go here-->

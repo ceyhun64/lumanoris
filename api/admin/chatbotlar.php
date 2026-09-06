@@ -209,18 +209,24 @@ $kategoriler = $database->selectMulti("id, kategori_adi_tr FROM chatbot_kategori
             });
             delete data.creator_name;
 
-            formData.append("data", JSON.stringify(data));
-
+            // G-14 — dosya döngüsü `formData.append("data", ...)` çağrısından
+            // SONRA `data[el.name] = relativePath` yazıyordu. `JSON.stringify`
+            // o anda zaten çalışmış olduğu için atama ÖLÜYDÜ: görsel yolu hiç
+            // gönderilmiyordu (ayrıca yol istemcinin dosya adından
+            // üretiliyordu, oysa sunucu adı kendisi belirliyor).
+            //
+            // Sıra düzeltildi: dosyalar önce eklenir, `data` en son
+            // serileştirilir. Yol bilgisi ARTIK GÖNDERİLMİYOR — sunucu
+            // (`ajax/create.php`/`update.php`) dosyayı doğrulayıp adı kendisi
+            // belirliyor; istemcinin verdiği yolu yazmak, doğrulanmamış bir
+            // yolu veritabanına koymak olurdu.
             Array.from(form.elements).forEach(el => {
                 if (el.type === "file" && el.files.length > 0) {
-                    // Dosyanın kendisini $_FILES için ekle
                     formData.append(el.name + "_file", el.files[0]);
-
-                    // Veritabanına gidecek yol bilgisini data içine ekle
-                    const relativePath = "assets/chatbotlar/" + el.name + "/" + el.files[0].name;
-                    data[el.name] = relativePath;
                 }
             });
+
+            formData.append("data", JSON.stringify(data));
 
             let url = "/admin/ajax/create.php";
 
@@ -251,7 +257,9 @@ $kategoriler = $database->selectMulti("id, kategori_adi_tr FROM chatbot_kategori
                     const li = document.createElement("li");
                     li.className = "bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded cursor-pointer transition";
                     li.dataset.id = id;
-                    li.innerText = `baslik1`;
+                    // G-16 — `` `baslik1` `` şablon değişkeni değil düz metindi:
+                    // yeni eklenen her bot listede literal "baslik1" görünüyordu.
+                    li.textContent = baslik1;
                     dataUl.appendChild(li);
 
                     li.addEventListener("click", async () => {

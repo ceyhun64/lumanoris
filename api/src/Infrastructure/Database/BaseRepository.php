@@ -72,12 +72,30 @@ abstract class BaseRepository {
 
     /**
      * Updates rows and returns the number of affected rows.
-     * $where is a raw SQL fragment (e.g. "id = :id AND user_id = :uid").
-     * Merge $data + $whereParams when calling:
-     *   self::update('table', ['name' => 'x'], 'id = :id', ['id' => 5])
+     * $where is a raw SQL fragment (e.g. "id = :_id AND user_id = :_uid").
+     *
+     * H-07 — WHERE parametrelerini `_` ÖNEKİYLE adlandırın:
+     *   self::update('table', ['name' => 'x'], 'id = :_id', ['_id' => 5])
+     *
+     * Docblock'un eski örneği tam tersini öğretiyordu (`'id = :id', ['id' => 5]`)
+     * ve bu tehlikeli: `$data` ile `$whereParams` `array_merge` ile
+     * birleştiriliyor, string anahtarlarda SONRAKİ KAZANIYOR. Yani `id`
+     * sütununu güncelleyen bir çağrı `['id' => 9]` verip WHERE'de de `:id`
+     * kullansaydı, SET değeri sessizce WHERE değeriyle ezilirdi — hata yok,
+     * yanlış satır güncellenir. Aşağıdaki kontrol o durumu artık gürültülü
+     * bir programlama hatasına çeviriyor.
      */
     protected static function update(string $table, array $data, string $where, array $whereParams = []): int {
         self::assertSafeColumns($data, 'update(' . $table . ')');
+
+        $collisions = array_keys(array_intersect_key($data, $whereParams));
+        if ($collisions !== []) {
+            throw new InvalidArgumentException(
+                'update(' . $table . '): $data ile $whereParams aynı anahtarı paylaşıyor ('
+                . implode(', ', $collisions) . '). WHERE parametrelerini `_` önekiyle adlandırın.'
+            );
+        }
+
         $setParts = implode(', ', array_map(fn($c) => "`$c` = :$c", array_keys($data)));
         $sql      = "UPDATE `$table` SET $setParts WHERE $where";
         $stmt     = self::pdo()->prepare($sql);

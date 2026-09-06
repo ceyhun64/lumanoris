@@ -11,15 +11,25 @@ header('Content-Type: application/json');
 
 if (session_status() === PHP_SESSION_NONE) {
     // Lax (not Strict) because top-level GET navigations into the app must
-    // still carry the cookie; Secure is conditional so local HTTP dev
-    // servers keep working — it flips on automatically once actually served
-    // over HTTPS.
+    // still carry the cookie.
+    //
+    // J-02 — `secure` bayrağı `$_SERVER['HTTPS']`e bağlanamaz: bu mimaride
+    // PHP her zaman proxy arkasında düz HTTP konuşuyor (web/server.js
+    // Express ile 127.0.0.1'e proxy'liyor), yani `$_SERVER['HTTPS']` canlıda
+    // da BOŞ. Sonuç: site https:// ile yayınlansa bile PHPSESSID hiçbir zaman
+    // `Secure` almıyordu ve `SameSite=Lax` üst düzey GET gezinmelerinde
+    // çerezi gönderdiği için siteye http:// ile atılan tek bir bağlantı
+    // oturum kimliğini ağda açığa çıkarıyordu.
+    //
+    // `RequestContext` bu dosya autoload zincirinin EN BAŞINDA çalıştığı için
+    // henüz kayıtlı değil; doğrudan require ediliyor.
+    require_once __DIR__ . '/../src/Shared/Utilities/RequestContext.php';
     session_set_cookie_params([
         'lifetime' => 0,
         'path'     => '/',
         'httponly' => true,
         'samesite' => 'Lax',
-        'secure'   => !empty($_SERVER['HTTPS']),
+        'secure'   => RequestContext::isHttps(),
     ]);
     session_start();
 }

@@ -69,7 +69,12 @@ function fallbackPlan(): array
 {
     return [
         'id'                    => null,
-        'name_tr'               => 'Ücretsiz Plan',
+        // E-05 — burası 'Ücretsiz Plan' idi, `plans` tablosuna seed edilen ad
+        // ise 'Ücretsiz' (007_plan_limits.sql:74). Aynı planın iki adı
+        // olduğu için `getPricing()`'in `is_current` karşılaştırması ve
+        // frontend'in "Pro rozeti" kontrolü yanlış cevap veriyordu. Tek
+        // kaynak artık AppConfig::FREE_PLAN_NAME.
+        'name_tr'               => AppConfig::FREE_PLAN_NAME,
         'monthly_price'         => 0.0,
         'independent_bot_limit' => AppConfig::FREE_INDEPENDENT_BOT_LIMIT,
         'public_bot_limit'      => AppConfig::FREE_PUBLIC_BOT_LIMIT,
@@ -126,7 +131,7 @@ function getUserPlan(Database $db, int $userId): array
 /** Kullanıcıya gösterilecek plan adı — başlık ve limit ekranı aynı kaynaktan. */
 function getUserPlanName(Database $db, int $userId): string
 {
-    return (string) (getUserPlan($db, $userId)['name_tr'] ?? 'Ücretsiz Plan');
+    return (string) (getUserPlan($db, $userId)['name_tr'] ?? AppConfig::FREE_PLAN_NAME);
 }
 
 /** Tüm katalog — `getPricing()` için. */

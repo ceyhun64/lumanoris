@@ -46,9 +46,24 @@ $global_vars = $database->getGlobalVars("smtp_host", "smtp_email", "smtp_pass", 
                     <!-- SMTP Şifre -->
                     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 shadow-sm">
                         <label for="smtp_pass" class="block font-semibold text-sm text-gray-700 mb-2">SMTP Şifre</label>
-                        <input type="password" id="smtp_pass" name="smtp_pass" placeholder="********"
+                        <!--
+                          I-06 — buraya mevcut parola `value` olarak BASILIYORDU.
+                          `type="password"` yalnızca ekranda noktalar gösterir;
+                          değer HTML kaynağında düz metindir, yani sayfayı açan
+                          herkes (ve tarayıcı geçmişi, proxy logu, ekran
+                          paylaşımı) parolayı görebiliyordu. Artık hiç
+                          basılmıyor: alan boş bırakılırsa kayıtlı parola
+                          korunuyor (bkz. ajax/smtp.php).
+                        -->
+                        <input type="password" id="smtp_pass" name="smtp_pass" autocomplete="new-password"
+                               placeholder="<?= !empty($global_vars['smtp_pass']) ? 'Kayıtlı — değiştirmek için yeni parola girin' : 'Parola girin' ?>"
                                class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition shadow-sm"
-                               value="<?= htmlspecialchars($global_vars['smtp_pass'] ?? '') ?>">
+                               value="">
+                        <p class="mt-2 text-xs text-gray-500">
+                            Boş bırakırsanız mevcut parola değişmez.
+                            Üretimde parolayı <code>api/.env</code> içindeki <code>SMTP_PASS</code>'a taşımak
+                            daha güvenli — dolu olduğunda buradaki değerin önüne geçer.
+                        </p>
                     </div>
 
                     <!-- Gönderici Adı -->

@@ -1,3 +1,16 @@
+<?php
+/**
+ * ⚠️ G-15 — SİLME ADAYI. Bu sayfa HİÇBİR YERDEN yüklenmiyor:
+ * `api/admin/index.php` içindeki `$adminRoutes` tablosunda karşılığı yok,
+ * kenar çubuğunda bağlantısı yok. Yüklense de çalışmazdı: `$logo`
+ * değişkeni hiçbir yerde tanımlanmıyor (satır 4 tanımsız değişken okuyor)
+ * ve gönderdiği alan adı `file-input`, `ajax/updategv.php`in beklediği
+ * `global_vars.var_key` sözleşmesine uymuyor.
+ *
+ * Silinmedi: logo yönetimi gerçekten isteniyorsa route + doğru alan adı
+ * gerekiyor; bu bir ürün kararı (AUDIT Belirsizlikler #1).
+ */
+?>
 <form id="logo-upload-form" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']; ?>">
     <div class="col-xs-12 mt-2 text-center">

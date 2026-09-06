@@ -10,17 +10,23 @@ class SocialController {
 
         if (!$data || !$chatbotId) JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
 
-        $db       = Database::getInstance();
-        $existing = $db->selectSingle('id FROM chatbot_likes WHERE user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
+        $db = Database::getInstance();
 
-        if ($existing) {
-            $deleted = $db->delete('chatbot_likes', 'id = ?', [$existing['id']]);
-            JsonResponse::success(['action' => 'unliked', 'deleted' => $deleted, 'message' => 'Like kaldırıldı.']);
-        } else {
-            $id = $db->insert('chatbot_likes', ['user_id' => $userId, 'chatbot_id' => $chatbotId, 'liked_at' => date('Y-m-d H:i:s')]);
-            $db->delete('chatbot_dislikes', 'user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
-            JsonResponse::success(['action' => 'liked', 'inserted_id' => $id, 'message' => 'Like eklendi.']);
+        // C-02 — "önce SELECT, sonra INSERT" iki eşzamanlı istekte UNIQUE
+        // (user_id, chatbot_id) ihlali (ham PDO hatası, 500) üretiyordu.
+        // Sıra tersine çevrildi: DELETE'in etkilenen satır sayısı atomik bir
+        // "var mıydı?" cevabı; yoksa INSERT ... ON DUPLICATE KEY UPDATE.
+        if ($db->delete('chatbot_likes', 'user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]) > 0) {
+            JsonResponse::success(['action' => 'unliked', 'deleted' => 1, 'message' => 'Like kaldırıldı.']);
         }
+
+        $id = $db->insert(
+            'chatbot_likes',
+            ['user_id' => $userId, 'chatbot_id' => $chatbotId, 'liked_at' => date('Y-m-d H:i:s')],
+            true
+        );
+        $db->delete('chatbot_dislikes', 'user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
+        JsonResponse::success(['action' => 'liked', 'inserted_id' => $id, 'message' => 'Like eklendi.']);
     }
 
     public static function dislikeChatbot(): void {
@@ -31,17 +37,20 @@ class SocialController {
 
         if (!$data || !$chatbotId) JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
 
-        $db       = Database::getInstance();
-        $existing = $db->selectSingle('id FROM chatbot_dislikes WHERE user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
+        $db = Database::getInstance();
 
-        if ($existing) {
-            $deleted = $db->delete('chatbot_dislikes', 'id = ?', [$existing['id']]);
-            JsonResponse::success(['action' => 'undisliked', 'deleted' => $deleted, 'message' => 'Dislike kaldırıldı.']);
-        } else {
-            $id = $db->insert('chatbot_dislikes', ['user_id' => $userId, 'chatbot_id' => $chatbotId, 'disliked_at' => date('Y-m-d H:i:s')]);
-            $db->delete('chatbot_likes', 'user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
-            JsonResponse::success(['action' => 'disliked', 'inserted_id' => $id, 'message' => 'Dislike eklendi.']);
+        // C-02 — bkz. likeChatbot(); aynı yarış, aynı çözüm.
+        if ($db->delete('chatbot_dislikes', 'user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]) > 0) {
+            JsonResponse::success(['action' => 'undisliked', 'deleted' => 1, 'message' => 'Dislike kaldırıldı.']);
         }
+
+        $id = $db->insert(
+            'chatbot_dislikes',
+            ['user_id' => $userId, 'chatbot_id' => $chatbotId, 'disliked_at' => date('Y-m-d H:i:s')],
+            true
+        );
+        $db->delete('chatbot_likes', 'user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
+        JsonResponse::success(['action' => 'disliked', 'inserted_id' => $id, 'message' => 'Dislike eklendi.']);
     }
 
     public static function didUserLike(): void {
@@ -90,16 +99,19 @@ class SocialController {
 
         if (!$data || !$chatbotId) JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
 
-        $db       = Database::getInstance();
-        $existing = $db->selectSingle('id FROM chatbot_follows WHERE user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]);
+        $db = Database::getInstance();
 
-        if ($existing) {
-            $deleted = $db->delete('chatbot_follows', 'id = ?', [$existing['id']]);
-            JsonResponse::success(['action' => 'unfollowed', 'deleted' => $deleted, 'message' => 'Follow kaldırıldı.']);
-        } else {
-            $id = $db->insert('chatbot_follows', ['user_id' => $userId, 'chatbot_id' => $chatbotId, 'followed_at' => date('Y-m-d H:i:s')]);
-            JsonResponse::success(['action' => 'follow', 'inserted_id' => $id, 'message' => 'Follow eklendi.']);
+        // C-02 — bkz. likeChatbot(); aynı yarış, aynı çözüm.
+        if ($db->delete('chatbot_follows', 'user_id = ? AND chatbot_id = ?', [$userId, $chatbotId]) > 0) {
+            JsonResponse::success(['action' => 'unfollowed', 'deleted' => 1, 'message' => 'Follow kaldırıldı.']);
         }
+
+        $id = $db->insert(
+            'chatbot_follows',
+            ['user_id' => $userId, 'chatbot_id' => $chatbotId, 'followed_at' => date('Y-m-d H:i:s')],
+            true
+        );
+        JsonResponse::success(['action' => 'follow', 'inserted_id' => $id, 'message' => 'Follow eklendi.']);
     }
 
     public static function didUserFollow(): void {
@@ -161,24 +173,40 @@ class SocialController {
 
     // ── Reports ───────────────────────────────────────────────────────────────
 
+    /**
+     * ReportModal.jsx'in `reportOptions` slug'larıyla aynı küme. Değer buradan
+     * geçmezse saklanmaz: `reported_for` admin panelinde rozet olarak render
+     * ediliyor ve `FIND_IN_SET` sorgusuna giriyor (G-01).
+     */
+    private const REPORT_REASONS = ['sexual_content', 'legal_issue', 'terrorism', 'spam'];
+
     public static function addReport(): void {
         require_method('POST');
         $userId = AuthMiddleware::requireAuth();
         $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
-        $chatbotId   = InputSanitizer::positiveInt($data['chatbot_id'] ?? 0);
-        $reportedFor = is_array($data['reported_for'] ?? null) ? $data['reported_for'] : [];
-        $detail      = InputSanitizer::text($data['report_detail'] ?? '', 2000);
+        $chatbotId = InputSanitizer::positiveInt($data['chatbot_id'] ?? 0);
+        // G-18 — sütun varchar(1000); 2000'e kırpmak sessiz veri kaybı demekti.
+        $detail    = InputSanitizer::text($data['report_detail'] ?? '', 1000);
 
-        if (!$chatbotId || empty($reportedFor)) {
+        // G-01 — bu alan hiç doğrulanmadan saklanıyor ve panelde HTML olarak
+        // render ediliyordu (depolanmış XSS, admin oturumunda). Kümede olmayan
+        // değer atılıyor; hiçbiri kalmazsa istek reddediliyor.
+        $rawReasons  = is_array($data['reported_for'] ?? null) ? $data['reported_for'] : [];
+        $reportedFor = array_values(array_unique(array_filter(
+            array_map(static fn($r) => is_string($r) ? $r : '', $rawReasons),
+            static fn(string $r) => in_array($r, self::REPORT_REASONS, true)
+        )));
+
+        if (!$chatbotId || $reportedFor === []) {
             JsonResponse::error('Eksik parametreler!', 400, AppConfig::ERR_VALIDATION);
         }
 
         $id = Database::getInstance()->insert('chatbot_reports', [
             'user_id'       => $userId,
             'chatbot_id'    => $chatbotId,
-            'reported_for'  => implode(',', array_map('strval', $reportedFor)),
+            'reported_for'  => implode(',', $reportedFor),
             'report_detail' => $detail,
         ]);
 
@@ -237,7 +265,12 @@ class SocialController {
             JsonResponse::error('Bu liste üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
         }
 
-        $id = $db->insert('chatbot_in_list', $data);
+        // B-04 — ham $data doğrudan insert()'e gidiyordu (kütle atama). Aynı
+        // dosyadaki addComment/addUserList deseni: yalnızca iki sütun.
+        $chatbotId = InputSanitizer::positiveInt($data['chatbot_id'] ?? 0);
+        if (!$chatbotId) JsonResponse::error('chatbot_id gereklidir.', 400, AppConfig::ERR_VALIDATION);
+
+        $id = $db->insert('chatbot_in_list', ['chatbot_id' => $chatbotId, 'list_id' => $listId]);
         JsonResponse::success(['message' => 'Bot listeye eklendi.', 'id' => $id]);
     }
 
@@ -285,10 +318,20 @@ class SocialController {
     }
 
     public static function getBotsOfList(): void {
+        // B-01 — bu metotta hiç kimlik doğrulama yoktu ve list_id'nin çağırana
+        // ait olduğu kontrol edilmiyordu: `?list_id=1,2,3…` ile herkesin özel
+        // listesinin içeriği okunabiliyordu. Kardeş üç metodun (addBotToList,
+        // deleteBotFromList, deleteUserList) kontrolünün aynısı.
+        $userId = AuthMiddleware::requireAuth();
         $listId = InputSanitizer::positiveInt($_GET['list_id'] ?? 0);
         if (!$listId) JsonResponse::error('Eksik parametre.', 400, AppConfig::ERR_VALIDATION);
 
-        $bots = Database::getInstance()->selectMulti(
+        $db = Database::getInstance();
+        if (!$db->selectSingle('id FROM user_lists WHERE id = ? AND user_id = ?', [$listId, $userId])) {
+            JsonResponse::error('Bu liste üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
+        }
+
+        $bots = $db->selectMulti(
             "c.id, c.isim, c.profil_fotografi, c.ucret_haftalik,
              COUNT(DISTINCT cc.id) AS toplam_chats
              FROM chatbot_in_list cil
@@ -364,8 +407,11 @@ class SocialController {
         $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
-        $data['user_id'] = $userId;
-        $id = Database::getInstance()->insert('chatbot_hide', $data);
+        // B-04 — ham $data doğrudan insert()'e gidiyordu (kütle atama).
+        $chatbotId = InputSanitizer::positiveInt($data['chatbot_id'] ?? 0);
+        if (!$chatbotId) JsonResponse::error('chatbot_id gereklidir.', 400, AppConfig::ERR_VALIDATION);
+
+        $id = Database::getInstance()->insert('chatbot_hide', ['user_id' => $userId, 'chatbot_id' => $chatbotId]);
         JsonResponse::success(['message' => 'Chatbot gizlendi.', 'id' => $id]);
     }
 
@@ -382,8 +428,11 @@ class SocialController {
         $data   = json_decode($_POST['data'] ?? '', true) ?? null;
         if (!$data) JsonResponse::error('Veri bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 
-        $data['user_id'] = $userId;
-        $id = Database::getInstance()->insert('chatbot_uninterested', $data);
+        // B-04 — ham $data doğrudan insert()'e gidiyordu (kütle atama).
+        $categoryId = InputSanitizer::positiveInt($data['category_id'] ?? 0);
+        if (!$categoryId) JsonResponse::error('category_id gereklidir.', 400, AppConfig::ERR_VALIDATION);
+
+        $id = Database::getInstance()->insert('chatbot_uninterested', ['user_id' => $userId, 'category_id' => $categoryId]);
         JsonResponse::success(['message' => 'Kategori ilgi dışı olarak işaretlendi.', 'id' => $id]);
     }
 

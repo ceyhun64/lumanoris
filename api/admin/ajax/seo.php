@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/_guard.php';
 // Ortak Başlangıç ve Bağlantılar
-require '../../functions/db.php';
+require_once __DIR__ . '/../../functions/db.php'; // G-13: göreli yol PHP'nin çalışma dizinine göre çözülüyordu
 $database = Database::getInstance();
 $conn = $database->getConnection();
 
@@ -33,56 +33,70 @@ $queries = [];
 $successMessages = [];
 $error_message = null;
 
-// Dosya Yükleme İşlemleri için Ortak Fonksiyon (Tekrar eden kod)
-function handleFileUpload($file_input_name, $upload_base_dir, $max_size, $allowed_types, $custom_file_name_prefix) {
+require_once __DIR__ . '/../functions/upload_guard.php';
+
+/**
+ * Dosya Yükleme İşlemleri için Ortak Fonksiyon.
+ *
+ * G-06 — bu fonksiyonun eski hâli panelin ÜÇÜNCÜ ve en zayıf yükleme
+ * yoluydu. İki ayrı sorunu vardı:
+ *   (a) Uzantı İSTEMCİNİN dosya adından alınıyordu
+ *       (`pathinfo($file['name'], PATHINFO_EXTENSION)`), yani doğrulanan
+ *       MIME ile diske yazılan uzantı arasında hiçbir bağ yoktu: geçerli
+ *       bir PNG "og_image.php" olarak kaydedilebiliyordu ve hedef dizin
+ *       web'den servis ediliyor.
+ *   (b) `mime_content_type()` `function_exists` koruması olmadan
+ *       çağrılıyordu; ext-fileinfo yoksa yakalanamayan fatal error.
+ * Artık uzantı DOĞRULANMIŞ MIME'dan türetiliyor
+ * (`functions/upload_guard.php`, upload.php ile aynı uygulama).
+ *
+ * G-13 — `$upload_base_dir` göreli yol ('../../assets/...') olarak
+ * geliyordu; göreli yollar PHP'nin ÇALIŞMA DİZİNİNE göre çözülür, dosyanın
+ * konumuna göre değil. Router/CLI/Apache üçünde üç farklı yere yazıyordu.
+ * Artık çağıranlar `__DIR__` tabanlı MUTLAK yol veriyor; veritabanına
+ * yazılacak göreli yol da ayrı parametre olarak alınıyor.
+ *
+ * @param string               $uploadBaseDir Mutlak hedef dizin (sonunda /)
+ * @param string               $publicPrefix  DB'ye yazılacak göreli önek
+ * @param array<string,string> $mimeToExt     izinli MIME → uzantı
+ */
+function handleFileUpload($file_input_name, $uploadBaseDir, $publicPrefix, $max_size, $mimeToExt, $custom_file_name_prefix) {
     global $error_message;
-    
-    if (isset($_FILES[$file_input_name]) && $_FILES[$file_input_name]['error'] === UPLOAD_ERR_OK) {
-        $file = $_FILES[$file_input_name];
-        
-        if (!is_dir($upload_base_dir)) {
-            if (!mkdir($upload_base_dir, 0755, true)) {
-                $error_message = "Klasör oluşturulamadı: " . $upload_base_dir;
-                return null;
-            }
-        }
 
-        $fileMimeType = mime_content_type($file['tmp_name']);
-        if (!in_array($fileMimeType, $allowed_types)) {
-            $error_message = "Geçersiz dosya türü! Sadece izin verilenler yüklenebilir.";
-            return null;
-        }
+    if (!isset($_FILES[$file_input_name]) || ($_FILES[$file_input_name]['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        return null;
+    }
 
-        if ($file['size'] > $max_size) {
-            $error_message = "Dosya çok büyük! Maksimum " . ($max_size / 1024) . " KB olmalıdır.";
-            return null;
-        }
+    $file = $_FILES[$file_input_name];
 
-        $fileExt = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $uploadFile = $upload_base_dir . $custom_file_name_prefix . '.' . $fileExt; 
+    if (!is_dir($uploadBaseDir) && !mkdir($uploadBaseDir, 0755, true) && !is_dir($uploadBaseDir)) {
+        $error_message = "Klasör oluşturulamadı.";
+        return null;
+    }
 
-        if (is_uploaded_file($file['tmp_name'])) {
-            // Eski dosyayı sil (aynı ön ekli farklı uzantı olabilir)
-            $oldFiles = glob($upload_base_dir . $custom_file_name_prefix . '.*');
-            foreach ($oldFiles as $oldFile) {
-                if (is_file($oldFile)) {
-                    unlink($oldFile);
-                }
-            }
-            
-            if (move_uploaded_file($file['tmp_name'], $uploadFile)) {
-                // Veritabanı için yolu kök dizine göre ayarla
-                return str_replace('../../', '', $uploadFile);
-            } else {
-                $error_message = ucfirst($custom_file_name_prefix) . " yükleme sırasında bir hata oluştu.";
-                return null;
-            }
-        } else {
-            $error_message = "Dosya doğrulaması başarısız oldu.";
-            return null;
+    $verifyError = null;
+    $verified    = upload_verify($file, $mimeToExt, $max_size, $verifyError);
+    if ($verified === null) {
+        $error_message = $verifyError;
+        return null;
+    }
+
+    [, $ext] = $verified;
+    $uploadFile = $uploadBaseDir . $custom_file_name_prefix . '.' . $ext;
+
+    // Eski dosyayı sil (aynı ön ekli farklı uzantı olabilir)
+    foreach (glob($uploadBaseDir . $custom_file_name_prefix . '.*') ?: [] as $oldFile) {
+        if (is_file($oldFile)) {
+            unlink($oldFile);
         }
     }
-    return null;
+
+    if (!move_uploaded_file($file['tmp_name'], $uploadFile)) {
+        $error_message = ucfirst($custom_file_name_prefix) . " yükleme sırasında bir hata oluştu.";
+        return null;
+    }
+
+    return $publicPrefix . $custom_file_name_prefix . '.' . $ext;
 }
 
 
@@ -91,10 +105,11 @@ switch ($seo_type) {
     case 'og':
         // 1. OG:Image Yükleme İşlemi
         $og_image_path = handleFileUpload(
-            'og_image', 
-            '../../assets/images/seo/', 
-            500 * 1024, // 500 KB
-            ['image/png', 'image/jpeg'], 
+            'og_image',
+            __DIR__ . '/../../assets/images/seo/',   // G-13: mutlak
+            'assets/images/seo/',                    // DB'ye yazılan göreli yol
+            AppConfig::MAX_SEO_IMAGE_BYTES,          // H-06
+            ['image/png' => 'png', 'image/jpeg' => 'jpg'],
             'og_image'
         );
 
@@ -130,10 +145,11 @@ switch ($seo_type) {
     case 'twitter':
         // 1. Twitter Görseli Yükleme İşlemi
         $twitter_image_path = handleFileUpload(
-            'twitter_image', 
-            '../../assets/images/twitter/', 
-            500 * 1024, // 500 KB
-            ['image/png', 'image/jpeg'], 
+            'twitter_image',
+            __DIR__ . '/../../assets/images/twitter/',
+            'assets/images/twitter/',
+            AppConfig::MAX_SEO_IMAGE_BYTES,
+            ['image/png' => 'png', 'image/jpeg' => 'jpg'],
             'twitter_image'
         );
 
@@ -187,10 +203,15 @@ switch ($seo_type) {
 
         // Favicon Yükleme İşlemi
         $favicon_path = handleFileUpload(
-            'site_favicon', 
-            '../../assets/', 
-            50 * 1024, // 50 KB
-            ['image/x-icon', 'image/vnd.microsoft.icon'], 
+            'site_favicon',
+            __DIR__ . '/../../assets/',
+            'assets/',
+            AppConfig::MAX_FAVICON_BYTES,
+            [
+                'image/x-icon'               => 'ico',
+                'image/vnd.microsoft.icon'   => 'ico',
+                'image/png'                  => 'png',
+            ],
             'favicon'
         );
         

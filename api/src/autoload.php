@@ -19,6 +19,18 @@ require_once __DIR__ . '/../functions/rate_limit.php';
 // AppException itself happened to be autoloaded first. Load unconditionally.
 require_once __DIR__ . '/Shared/Exceptions/AppException.php';
 
+/**
+ * H-05 — bu liste 31 dizin sayıyordu ve 11'i diskte HİÇ YOKTU
+ * (Application/UseCases/{Marketplace,Social,Chat,Note,Content,Notification,
+ * Training,Message,Seller,Contact}, Domain/Services). Autoloader her sınıf
+ * çözümlemesinde bu yolları tek tek `file_exists()` ile deniyordu; yani her
+ * istekte onlarca boşa dosya sistemi çağrısı, ve daha kötüsü, dizin listesi
+ * mimarinin gerçek hâlini değil bir YOL HARİTASINI anlatıyordu.
+ *
+ * Liste artık yalnızca var olan ve sınıf barındıran dizinleri içeriyor.
+ * Yeni bir katman açıldığında buraya bir satır eklenmesi gerekiyor — bu
+ * bilinçli: dizinin gerçekten var olduğu tek yerde doğrulanıyor.
+ */
 spl_autoload_register(function (string $class): void {
     static $searchDirs = null;
     if ($searchDirs === null) {
@@ -28,34 +40,15 @@ spl_autoload_register(function (string $class): void {
             "$base/Presentation/Controllers/",
             "$base/Presentation/Middleware/",
             "$base/Presentation/Response/",
-            // Application
+            // Application — yalnızca Auth'ta use case var; kalan alt
+            // dizinler henüz yazılmadı, mantık controller'larda duruyor.
             "$base/Application/UseCases/Auth/",
-            "$base/Application/UseCases/Chatbot/",
-            "$base/Application/UseCases/User/",
-            "$base/Application/UseCases/Wallet/",
-            "$base/Application/UseCases/Marketplace/",
-            "$base/Application/UseCases/Social/",
-            "$base/Application/UseCases/Chat/",
-            "$base/Application/UseCases/Note/",
-            "$base/Application/UseCases/Content/",
-            "$base/Application/UseCases/Notification/",
-            "$base/Application/UseCases/Training/",
-            "$base/Application/UseCases/Message/",
-            "$base/Application/UseCases/Seller/",
-            "$base/Application/UseCases/Contact/",
-            "$base/Application/DTO/",
-            "$base/Application/Validators/",
             // Domain
             "$base/Domain/Interfaces/",
-            "$base/Domain/Entities/",
-            "$base/Domain/Services/",
             // Infrastructure
             "$base/Infrastructure/Database/",
             "$base/Infrastructure/Repositories/",
-            "$base/Infrastructure/Mail/",
             "$base/Infrastructure/Payment/",
-            "$base/Infrastructure/FileStorage/",
-            "$base/Infrastructure/Cache/",
             // Shared
             "$base/Shared/Constants/",
             "$base/Shared/Exceptions/",

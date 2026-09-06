@@ -109,7 +109,11 @@
                       </button>
                       <ul class="contentList px-2 space-y-1 <?= $current_theme['sub_color'] ?>" style="max-height: 0; overflow: hidden; transition: max-height 0.5s ease;">
                         <li><a href="/admin/odemeentegrasyon" class="d-block p-2 mt-1 rounded <?= $currentPath === '/admin/odemeentegrasyon' ? $current_theme['active_color'] . ' hover:' . $current_theme['active_color'] : 'hover:' . $current_theme['hover_color'] . ' active:' . $current_theme['active_color'] ?> <?= $current_theme['text_color'] ?> sidebar-button transition duration-250 ease-in-out">Ödeme Entegrasyonları</a></li>
-                        <li><a href="/admin/abonelik" class="d-block p-2 mb-1 rounded <?= $currentPath === '/admin/abonelik' ? $current_theme['active_color'] . ' hover:' . $current_theme['active_color'] : 'hover:' . $current_theme['hover_color'] . ' active:' . $current_theme['active_color'] ?> <?= $current_theme['text_color'] ?> sidebar-button transition duration-250 ease-in-out">Abonelik Sistemi</a></li>
+                        <li><a href="/admin/abonelik" class="d-block p-2 rounded <?= $currentPath === '/admin/abonelik' ? $current_theme['active_color'] . ' hover:' . $current_theme['active_color'] : 'hover:' . $current_theme['hover_color'] . ' active:' . $current_theme['active_color'] ?> <?= $current_theme['text_color'] ?> sidebar-button transition duration-250 ease-in-out">Abonelik Sistemi</a></li>
+                        <!-- COMP-007 / AUDIT D-01: satıcı çekim taleplerinin
+                             tek yönetim noktası. Bu link olmadan sayfaya
+                             ulaşmanın yolu adresi elle yazmaktı. -->
+                        <li><a href="/admin/parcekme" class="d-block p-2 mb-1 rounded <?= $currentPath === '/admin/parcekme' ? $current_theme['active_color'] . ' hover:' . $current_theme['active_color'] : 'hover:' . $current_theme['hover_color'] . ' active:' . $current_theme['active_color'] ?> <?= $current_theme['text_color'] ?> sidebar-button transition duration-250 ease-in-out">Para Çekme Talepleri</a></li>
                       </ul>
                     </li>
                     <li>

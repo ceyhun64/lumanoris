@@ -3,6 +3,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Bot, MessageSquare, Heart, Trash2, Rocket, ExternalLink } from "lucide-react";
 import CategoryBadge from "@/shared/ui/category-badge";
+import { normalizeImagePath } from "@/shared/lib/image";
 
 // Only loaded once a card's publish/price/delete modal is actually opened —
 // these are bundled once per page (not per card) but are rarely needed at all.
@@ -31,12 +32,17 @@ export default function ChatbotCard({
   const [priceOpen, setPriceOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
+  // F-01: sunucu goreli yol donuyor (`assets/kapak_fotografi/...`); duz bir
+  // <img src> bunu bulundugu sayfaya gore cozup 404 veriyordu.
+  const coverSrc = normalizeImagePath(image);
+  const avatarSrc = normalizeImagePath(profileImage);
+
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0c0c10]/90 backdrop-blur-2xl transition-all duration-300 ease-out hover:border-violet-500/40 hover:shadow-[0_10px_40px_rgba(0,0,0,0.5)] hover:-translate-y-0.5">
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-violet-950/40 to-slate-900/60">
-        {image ? (
+        {coverSrc ? (
           <img
-            src={image}
+            src={coverSrc}
             alt={title}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
@@ -54,9 +60,9 @@ export default function ChatbotCard({
       <div className="flex flex-col flex-1 p-5 gap-4">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 overflow-hidden rounded-xl border border-white/10 bg-white/5 flex items-center justify-center shrink-0">
-            {profileImage ? (
+            {avatarSrc ? (
               <img
-                src={profileImage}
+                src={avatarSrc}
                 alt=""
                 className="h-full w-full object-cover"
               />

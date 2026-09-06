@@ -85,6 +85,14 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface {
     }
 
 
+    /**
+     * H-08: aynı kullanıcının SÜRESİ GEÇMİŞ remember-me satırlarını siler.
+     * Geçerli olanlara dokunmuyor — onlar kullanıcının diğer cihazları.
+     */
+    public function purgeExpiredRememberTokens(int $userId): void {
+        self::delete(self::T_TOKENS, 'user_id = ? AND expiry <= NOW()', [$userId]);
+    }
+
     /** SEC-009: token rotasyonu için tek bir selector'ı siler. */
     public function deleteRememberTokenBySelector(string $selector): void {
         self::delete(self::T_TOKENS, 'selector = ?', [$selector]);

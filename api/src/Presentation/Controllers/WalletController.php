@@ -107,7 +107,71 @@ class WalletController {
             JsonResponse::error('Geçersiz tutar.', 400, AppConfig::ERR_VALIDATION);
         }
 
+        // COMP-004 — IBAN biçim/sağlama doğrulaması, kilidi ALMADAN ÖNCE.
+        //
+        // Eskiden tek işlem `InputSanitizer::string($data['iban'], 40)` idi:
+        // "asdf" da geçerli bir çekim talebi açıyordu. Talep `beklemede`
+        // kalıyor ve tutar bakiyeden düşülüyor, yani hatalı IBAN kullanıcının
+        // parasını da kilitliyordu.
+        //
+        // Doğrulama kilidin ÖNÜNDE: geçersiz istek için 10 saniyelik named
+        // lock'u meşgul etmenin anlamı yok.
+        try {
+            $iban = BankIdentity::normalizeIban($data['iban']);
+        } catch (AppException $e) {
+            JsonResponse::fromException($e);
+        }
+
         $db = Database::getInstance();
+
+        // COMP-005b — para YALNIZCA kullanıcının kayıtlı IBAN'ına çekilebilir.
+        //
+        // COMP-004 IBAN'ın geçerli bir IBAN olduğunu doğruluyor; bu blok onun
+        // KULLANICIYA AİT olduğunu doğruluyor. İkisi ayrı şey: eskiden istekle
+        // gelen herhangi bir geçerli IBAN kabul ediliyordu, yani kullanıcı
+        // bakiyesini üçüncü bir kişinin hesabına gönderebiliyordu. Kimlik
+        // doğrulanmadan üçüncü kişiye para akıtmak, ödeme kuruluşu risk
+        // kriterlerinde ağır kalem (BLOCKERS B3) ve kayıtlı hesap dışına çıkan
+        // her transfer aklama şüphesi doğurur.
+        //
+        // Karşılaştırma NORMALİZE edilmiş biçim üzerinden: `saveBankInfo()`
+        // artık boşluksuz/büyük harf saklıyor ama bu yamadan ÖNCE kaydedilmiş
+        // satırlar "TR12 3456 …" biçiminde duruyor. Ham string karşılaştırması
+        // o kullanıcıları kendi IBAN'larından kilitlerdi.
+        $bankRow    = $db->selectSingle('iban FROM banka_bilgileri WHERE user_id = ?', [$userId]);
+        $storedIban = trim((string) ($bankRow['iban'] ?? ''));
+
+        if ($storedIban === '') {
+            JsonResponse::error(
+                'Para çekebilmek için önce Cüzdan > Banka Bilgileri bölümünden IBAN\'ınızı kaydedin.',
+                422,
+                AppConfig::ERR_VALIDATION
+            );
+        }
+
+        try {
+            $storedIban = BankIdentity::normalizeIban($storedIban);
+        } catch (AppException $e) {
+            // Kayıtlı IBAN bu yamadan önce doğrulanmadan yazılmış ve geçersiz.
+            // Kullanıcıyı çıplak bir doğrulama hatasıyla baş başa bırakmak
+            // yerine ne yapması gerektiğini söylüyoruz.
+            JsonResponse::error(
+                'Kayıtlı IBAN\'ınız geçerli görünmüyor. Lütfen Cüzdan > Banka Bilgileri '
+                . 'bölümünden güncelleyip tekrar deneyin.',
+                422,
+                AppConfig::ERR_VALIDATION
+            );
+        }
+
+        if ($iban !== $storedIban) {
+            JsonResponse::error(
+                'Para çekme talebi yalnızca hesabınıza kayıtlı IBAN\'a yapılabilir. '
+                . 'Farklı bir hesaba çekmek için önce Cüzdan > Banka Bilgileri bölümünden '
+                . 'IBAN\'ınızı güncelleyin.',
+                422,
+                AppConfig::ERR_VALIDATION
+            );
+        }
 
         // Previously inserted a withdrawal request for any client-supplied
         // amount with no check against the seller's actual balance — a user
@@ -141,7 +205,8 @@ class WalletController {
 
             $id = $db->insert('para_cekme_talepleri', [
                 'user_id' => $userId,
-                'iban'    => InputSanitizer::string($data['iban'], 40),
+                // COMP-004: normalize edilmiş (boşluksuz, büyük harf) biçim.
+                'iban'    => $iban,
                 'miktar'  => $amount,
                 'durum'   => 'beklemede',
             ]);
@@ -186,6 +251,36 @@ class WalletController {
         $filtered = array_intersect_key($data, array_flip($allowed));
         $filtered['user_id'] = $userId;
 
+        // COMP-004 — ödeme kimliği doğrulaması.
+        //
+        // Bu blok gelmeden önce beyaz listeden geçen HER değer doğrudan
+        // tabloya yazılıyordu: "TR00", "asdf", 3 haneli bir TCKN — hepsi
+        // kabul ediliyordu. Parayı elle havale eden operatör hatayı ancak
+        // bankada görürdü ve yanlış hesaba giden havale geri dönmeyebilir
+        // (BLOCKERS B7).
+        //
+        // Alanlar YALNIZCA gönderildiyse ve boş değilse doğrulanıyor:
+        // `BankInfo.jsx` formu kısmi kayıt yapabiliyor (önce IBAN, sonra
+        // adres), zorunlu kılmak mevcut akışı bozardı. Hesap tipine göre
+        // hangi numaranın isteneceği ise ürün kararı — burada tip ne olursa
+        // olsun, GÖNDERİLEN numara doğru biçimde olmak zorunda.
+        try {
+            if (isset($filtered['iban']) && trim((string) $filtered['iban']) !== '') {
+                // Normalize edilmiş biçim yazılıyor: form "TR12 3456 …" diye
+                // boşluklu gönderiyor, sütun varchar(40). Boşluklu saklamak
+                // ileride iki kaydın aynı IBAN olduğunu görmeyi zorlaştırır.
+                $filtered['iban'] = BankIdentity::normalizeIban($filtered['iban']);
+            }
+            if (isset($filtered['id_number']) && trim((string) $filtered['id_number']) !== '') {
+                $filtered['id_number'] = BankIdentity::normalizeTckn($filtered['id_number']);
+            }
+            if (isset($filtered['tax_number']) && trim((string) $filtered['tax_number']) !== '') {
+                $filtered['tax_number'] = BankIdentity::normalizeVkn($filtered['tax_number']);
+            }
+        } catch (AppException $e) {
+            JsonResponse::fromException($e);
+        }
+
         $existing = $db->selectSingle('id FROM banka_bilgileri WHERE user_id = ?', [$userId]);
 
         if ($existing) {
@@ -203,12 +298,19 @@ class WalletController {
 
         // Real column names are user_id/amount, not buyer_user_id/total_amount
         // (confirmed via live DESCRIBE — see MarketplaceController::createSubscription).
+        //
+        // D-06 — `param_marketplace_details` INNER JOIN ile bağlıydı.
+        // `upgradePlan()` bir ödeme satırı yazıyor ama HİÇ detay satırı
+        // yazmıyor (üyelik paketinin kalemi yok), yani paket satın alan
+        // kullanıcının ödemesi bu listede hiç görünmüyordu: para gitti, kayıt
+        // yok. LEFT JOIN kalemsiz ödemeyi de getiriyor; kalem alanları NULL
+        // gelir ve istemci onları zaten yokluk kontrolüyle okuyor.
         $rows = Database::getInstance()->selectMulti(
             "p.id, p.order_id, p.amount AS total_amount, p.status, p.created_at,
              d.chatbot_id, d.payable_amount AS item_amount, d.status AS item_status,
              c.isim AS chatbot_title
              FROM param_marketplace_payments p
-             JOIN param_marketplace_details d ON d.payment_id = p.id
+             LEFT JOIN param_marketplace_details d ON d.payment_id = p.id
              LEFT JOIN chatbotlar c ON c.id = d.chatbot_id
              WHERE p.user_id = ?
                AND p.status IN ('paid', 'refunded', 'partial_refund')
@@ -302,51 +404,19 @@ class WalletController {
             JsonResponse::success(['all_plans' => $output]);
         }
 
-        // ── Geri düşüş: migration 007 uygulanmamış ───────────────────────
-        $output = [
-            [
-                'title'         => 'Ücretsiz',
-                'monthly_price' => '₺0',
-                'yearly_price'  => null,
-                'description'   => 'LUMANORIS\'in gücünü hiçbir ücret ödemeden keşfedin.',
-                'features'      => ['Günlük mesaj hakkı', 'Temel chatbot oluşturma', 'Pazaryerinde gezinme'],
-                'buttonText'    => 'Mevcut Paket',
-                'buttonType'    => 'default',
-                'badge'         => null,
-            ],
-            [
-                'title'         => 'Gümüş',
-                'monthly_price' => '₺149,00',
-                'yearly_price'  => null,
-                'description'   => 'Daha fazla mesaj hakkı ve gelişmiş özelliklerle bir üst seviyeye taşıyın.',
-                'features'      => ['Artırılmış günlük mesaj hakkı', 'Daha fazla chatbot oluşturma limiti', 'Öncelikli destek'],
-                'buttonText'    => 'Bu Paketi Seç',
-                'buttonType'    => 'default',
-                'badge'         => null,
-            ],
-            [
-                'title'         => 'Altın',
-                'monthly_price' => '₺299,00',
-                'yearly_price'  => null,
-                'description'   => 'Yoğun kullanıcılar için genişletilmiş limitler ve öncelikli destek.',
-                'features'      => ['Yüksek günlük mesaj hakkı', 'Genişletilmiş chatbot limiti', 'Öncelikli destek', 'Gelişmiş istatistikler'],
-                'buttonText'    => 'Bu Paketi Seç',
-                'buttonType'    => 'primary',
-                'badge'         => 'Önerilen',
-            ],
-            [
-                'title'         => 'Elmas',
-                'monthly_price' => '₺599,00',
-                'yearly_price'  => null,
-                'description'   => 'Sınırsız imkanlar ve VIP destekle maksimum verim alın.',
-                'features'      => ['Sınırsız mesaj hakkı', 'Sınırsız chatbot oluşturma', '7/24 VIP destek', 'Gelişmiş istatistikler'],
-                'buttonText'    => 'Bu Paketi Seç',
-                'buttonType'    => 'default',
-                'badge'         => null,
-            ],
-        ];
-
-        JsonResponse::success(['all_plans' => $output]);
+        // E-04 — burada kodlanmış dört planlık bir "geri düşüş" kataloğu
+        // vardı: `plans` tablosuyla senkron tutan hiçbir mekanizma yoktu ve
+        // fiyatları (₺149/₺299/₺599) tablodakinden sessizce ayrışabiliyordu.
+        // Daha kötüsü, `upgradePlan()` aynı durumda 503 dönüyor — yani
+        // kullanıcı burada fiyat görüp satın almaya kalkınca "kullanılamıyor"
+        // cevabı alıyordu. İki metot artık aynı davranıyor: katalog yoksa
+        // fiyat da yok.
+        error_log('[getPricing] plans kataloğu boş ya da hazır değil (migration 007 uygulanmamış).');
+        JsonResponse::error(
+            'Paket kataloğu şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.',
+            503,
+            AppConfig::ERR_UNAVAILABLE
+        );
     }
 
     /**
@@ -644,7 +714,14 @@ class WalletController {
 
         // Kapanmış bir talebin yeniden açılması bakiyeyi geriye doğru
         // değiştirir; kasıtlı olabilir ama sessizce olmamalı.
-        $closed = ['odendi', 'reddedildi', 'iptal'];
+        //
+        // E-02 — bu liste ASCII yazımla (`odendi`) yazılmıştı, oysa kanonik
+        // değer `ödendi` (bkz. WITHDRAWAL_STATUSES ve normalizeWithdrawalStatus).
+        // Sonuç: ÖDENMİŞ bir talep "kapalı" sayılmıyordu ve force olmadan
+        // `beklemede`ye geri çevrilebiliyordu — yani ödenmiş tutar tekrar
+        // bakiyeden düşülüp ikinci kez talep edilebiliyordu. Liste artık
+        // kanonik kümeden türetiliyor, ikinci bir yazım kopyası kalmıyor.
+        $closed = array_values(array_diff(self::WITHDRAWAL_STATUSES, ['beklemede', 'onaylandı']));
         if (in_array((string) $request['durum'], $closed, true) && empty($data['force'])) {
             JsonResponse::error(
                 'Bu talep zaten kapatılmış (' . $request['durum'] . '). Değiştirmek için force gönderin.',

@@ -7,7 +7,8 @@ if (empty($_SESSION['admin'])) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    require '../../functions/db.php';
+    require_once __DIR__ . '/../../functions/db.php';
+    require_once __DIR__ . '/../functions/upload_guard.php';
     $database = Database::getInstance();
     $conn = $database->getConnection();
     $table = $_POST['table'] ?? null;
@@ -32,19 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
         Database::assertAllowedAdminTable($table);
 
-        foreach ($_FILES as $key => $file) {
-            if ($file['error'] === UPLOAD_ERR_OK) {
-                // "kapak_fotografi_file" -> "kapak_fotografi"
-                $column = str_replace('_file', '', $key);
-
-                // Dosyayı oku ve Base64'e çevir
-                $fileContent = file_get_contents($file['tmp_name']);
-                $base64 = "data:" . mime_content_type($file['tmp_name']) . ";base64," . base64_encode($fileContent);
-
-                // DB’ye Base64 string yaz
-                $data[$column] = $base64;
-            }
-        }
+        $data = admin_store_uploads($_FILES, $data);
 
         $id = $database->insert($table, $data);
 
@@ -54,9 +43,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             "id" => $id
         ]);
     } catch (Exception $e) {
+        // G-12 ailesi: ham istisna mesajı istemciye sızıyordu (tablo/sütun
+        // adları, SQLSTATE kodları).
+        error_log('[admin/create] ' . $e->getMessage());
         echo json_encode([
             "success" => false,
-            "message" => $e->getMessage()
+            "message" => "Kayıt oluşturulamadı."
         ]);
     }
 }

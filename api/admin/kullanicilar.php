@@ -43,7 +43,16 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
 
                     <div class="flex justify-between gap-2 pt-4">
                         <button type="button" id="new" class="flex-1 hidden bg-gray-200 text-indigo-600 font-semibold px-4 py-2 rounded-lg hover:bg-gray-300 active:bg-gray-400 active:scale-95 transition duration-150">Yeni Ekle</button>
-                        <button type="submit" id="saveOrUpdate" class="flex-1 hidden bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 active:bg-indigo-800 active:scale-95 transition duration-150 shadow-md shadow-indigo-500/30">Kaydet</button>
+                        <!--
+                          G-03 — bu butonun başlangıç sınıf listesinde `hidden`
+                          vardı ve kodun HİÇBİR yeri onu kaldırmıyordu (kardeş
+                          `new`/`delete` butonları satır seçilince
+                          `classList.remove("hidden")` alıyor, bu almıyordu).
+                          Sonuç: kullanıcı düzenleme ekranında Kaydet/Güncelle
+                          butonu hiç görünmüyor, yani sayfadan hiçbir
+                          değişiklik kaydedilemiyordu.
+                        -->
+                        <button type="submit" id="saveOrUpdate" class="flex-1 bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 active:bg-indigo-800 active:scale-95 transition duration-150 shadow-md shadow-indigo-500/30">Kaydet</button>
                         <button type="button" id="delete" class="flex-1 hidden bg-red-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-700 active:bg-red-800 active:scale-95 transition duration-150 shadow-md shadow-red-500/30">Sil</button>
                     </div>
                 </form>
@@ -65,6 +74,14 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
 
                 const formData = new FormData();
                 formData.append("table", "kullanicilar");
+                // G-11 — `columns` gönderilmediğinde `read.php` `*` kullanıyor
+                // ve `kullanicilar` satırının TAMAMI tarayıcıya iniyordu:
+                // bcrypt `sifre` hash'i, `google_id`, `telefon`,
+                // `dogum_tarihi`, base64 `avatar`. Üstelik aşağıdaki
+                // `console.log` hepsini konsola da yazıyordu. Form yalnızca
+                // üç alanı gösteriyor; yalnızca onlar isteniyor.
+                // `assertSafeColumnList` bu biçimi zaten kabul ediyor.
+                formData.append("columns", "id, ad_soyad, kullanici_adi, eposta");
                 formData.append("where", "id = " + id);
 
                 try {
@@ -78,7 +95,6 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
                     if (result.success === true) {
                         const row = result.data[0]; // ilk obje
                         Object.keys(row).forEach(key => {
-                            console.log(key, row[key]); // kontrol için
                             if (form[key]) {
                                 form[key].value = row[key];
                             }
@@ -171,7 +187,10 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
                     const li = document.createElement("li");
                     li.className = "bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded cursor-pointer transition";
                     li.dataset.id = id;
-                    li.innerText = `baslik1`;
+                    // G-16 — burası `` `baslik1` `` yazıyordu: şablon
+                    // değişkeni değil, düz metin. Yeni eklenen her kullanıcı
+                    // listede literal olarak "baslik1" adıyla görünüyordu.
+                    li.textContent = baslik1;
                     dataUl.appendChild(li);
 
                     li.addEventListener("click", async () => {
@@ -179,6 +198,9 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
 
                         const formData = new FormData();
                         formData.append("table", "kullanicilar");
+                        // G-11: bkz. yukarıdaki aynı çağrı — `*` yerine
+                        // yalnızca formun gösterdiği alanlar.
+                        formData.append("columns", "id, ad_soyad, kullanici_adi, eposta");
                         formData.append("where", "id = " + id);
 
                         try {
@@ -240,7 +262,12 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
         deleteBtn.addEventListener("click", async () => {
             const id = form.id.value;
             const currentLi = dataUl.querySelector(`li[data-id="${id}"]`);
-            const categoryName = form.isim.value || "Bu kullanıcı"; // Onay mesajı için isim
+            // G-04 — burası `form.isim.value` okuyordu ama formda `isim` adlı
+            // bir alan YOK: `form.isim` undefined, `.value` erişimi TypeError
+            // fırlatıyor ve handler daha onay penceresine gelmeden ölüyordu.
+            // Yani "Sil" düğmesi hiçbir şey yapmıyordu. Doğru alan `ad_soyad`
+            // (aynı dosyanın iki başka yeri zaten onu kullanıyor).
+            const categoryName = form.ad_soyad.value || "Bu kullanıcı"; // Onay mesajı için isim
 
             if (id === "0") {
                 new Notification({

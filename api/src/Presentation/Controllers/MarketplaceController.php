@@ -22,15 +22,82 @@ class MarketplaceController {
             JsonResponse::error('Bu chatbot şu anda satışa kapalı. Satıcısı henüz pazaryeri kaydını tamamlamamış.', 422, AppConfig::ERR_SELLER_INACTIVE);
         }
 
+        // COMP-005 — kendi botunu satın alma yasağı, birinci kapı.
+        //
+        // Bu kontrol gelmeden önce satın alma yolunda alıcı ile botun yazarını
+        // karşılaştıran TEK BİR satır yoktu. Açığın parasal hâli:
+        // kullanıcı bot oluşturur, MAX_WEEKLY_PRICE (5.000 ₺) fiyat verir,
+        // ikinci hesabından ya da çalıntı kartla satın alır; satıcı payı
+        // (SELLER_COMMISSION_WEEKLY = %85) bakiyesine yazılır ve IBAN'a
+        // çekilir — yani kart nakde çevrilmiş olur. Teslim edilen "ürün"
+        // dijital olduğu için işlem normal bir satıştan ayırt edilemez.
+        //
+        // `author_user_id` KULLANILIYOR, `owner_user_id` değil: satın alma
+        // sonrası `owner_user_id` alıcıya geçebiliyor; yasak, botu üreten ve
+        // satıştan pay alan kişiye bağlanmak zorunda.
+        //
+        // Bu kapı tek başına YETMEZ — `createSubscription()` sepeti kendi
+        // okuyor ve buradan geçmiş eski sepet satırlarını da işliyor. İkinci
+        // kapı orada, aynı ID ile.
+        self::assertNotOwnBot($db, $chatbotId, $userId);
+
         try {
             $id = $db->insert('user_cart', ['user_id' => $userId, 'chatbot_id' => $chatbotId, 'order_weeks' => $orderWeeks]);
             JsonResponse::success(['message' => 'Ürün sepete eklendi', 'id' => $id]);
         } catch (Exception $e) {
-            $msg = str_contains($e->getMessage(), 'Duplicate entry')
-                ? 'Bu chatbot zaten sepetinizde bulunuyor.'
-                : 'Hata: ' . $e->getMessage();
-            JsonResponse::error($msg, 409, AppConfig::ERR_DUPLICATE);
+            // B-08 — duplicate DIŞINDAKİ her PDO hatası ham `getMessage()` ile
+            // istemciye dönüyordu: tablo/sütun adları, SQLSTATE kodları, bazı
+            // kurulumlarda sorgu parçaları. Ayrıca hepsi 409 ile dönüyordu,
+            // yani gerçek sunucu hatası "çakışma" gibi görünüyordu.
+            if (str_contains($e->getMessage(), 'Duplicate entry')) {
+                JsonResponse::error('Bu chatbot zaten sepetinizde bulunuyor.', 409, AppConfig::ERR_DUPLICATE);
+            }
+            error_log('[addtocart] ' . $e->getMessage());
+            JsonResponse::error('Ürün sepete eklenemedi, lütfen tekrar deneyin.', 500, AppConfig::ERR_SERVER);
         }
+    }
+
+    /**
+     * COMP-005 — alıcı, botun yazarı olamaz.
+     *
+     * `addToCart()` ve `createSubscription()` aynı kuralı uygulamak zorunda,
+     * bu yüzden tek yerde: iki ayrı kopya er ya da geç ayrışır ve ayrışan
+     * kopya sessizce açık bırakır.
+     *
+     * Bot bulunamazsa sessiz geçiyor — "yok" durumunu ele almak bu metodun
+     * işi değil; iki çağıran da kendi bağlamında zaten `!$bot` dalını
+     * işletiyor ve burada ikinci bir hata mesajı üretmek onların akışını
+     * bozardı.
+     *
+     * @param callable|null $onViolation İhlalde JsonResponse'tan ÖNCE
+     *        çalıştırılacak temizlik (checkout'ta açık transaction'ın
+     *        rollback'i). `JsonResponse::error()` exit ettiği için sonrasında
+     *        hiçbir şey çalışmaz — geri alma bu yüzden ÖNCE yapılmalı.
+     */
+    private static function assertNotOwnBot(
+        Database $db,
+        int $chatbotId,
+        int $userId,
+        ?callable $onViolation = null
+    ): void {
+        $bot = $db->selectSingle('author_user_id FROM chatbotlar WHERE id = ?', [$chatbotId]);
+        if (!$bot) {
+            return;
+        }
+
+        if ((int) $bot['author_user_id'] !== $userId) {
+            return;
+        }
+
+        if ($onViolation !== null) {
+            $onViolation();
+        }
+
+        JsonResponse::error(
+            'Kendi oluşturduğunuz bir botu satın alamazsınız.',
+            422,
+            AppConfig::ERR_VALIDATION
+        );
     }
 
     /**
@@ -364,6 +431,22 @@ class MarketplaceController {
             if (($bot['seller_status'] ?? '') !== 'active') {
                 $conn->rollBack();
                 JsonResponse::error('Bu chatbot şu anda satışa kapalı. Satıcısı henüz pazaryeri kaydını tamamlamamış.', 422, AppConfig::ERR_SELLER_INACTIVE);
+            }
+
+            // COMP-005 — kendi botunu satın alma yasağının İKİNCİ kapısı.
+            //
+            // `addToCart()` bunu zaten reddediyor, ama bu kontrolün burada da
+            // olması şart: bu döngü sepeti veritabanından yeniden okuyor, yani
+            // sepete yama öncesinde girmiş satırlar ve `user_cart`'a başka bir
+            // yoldan yazılmış her kayıt buradan geçer. Yukarıdaki yorumun
+            // dediği gibi "addToCart'ın uyguladığı her kural burada yeniden
+            // kontrol edilmek zorunda".
+            //
+            // `assertNotOwnBot()` çağrılmıyor: `$bot` zaten `author_user_id`
+            // taşıyor, ikinci bir sorgu gereksiz olurdu. Kural aynı kural.
+            if ((int) $bot['author_user_id'] === $userId) {
+                $conn->rollBack();
+                JsonResponse::error('Kendi oluşturduğunuz bir botu satın alamazsınız.', 422, AppConfig::ERR_VALIDATION);
             }
 
             $isMonthly = $durationWeeks >= 4;

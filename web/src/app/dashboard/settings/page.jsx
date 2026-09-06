@@ -26,6 +26,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "@/shared/hooks/use-toast";
+import { FREE_PLAN_NAME } from "@/shared/lib/pricing";
 import { Card } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
@@ -826,7 +827,7 @@ export default function App() {
                 </span>
               </div>
               <h2 className="text-xl font-bold text-white tracking-tight">
-                {account?.planName || "Ücretsiz Plan"}
+                {account?.planName || FREE_PLAN_NAME}
               </h2>
               <p className="text-xs text-white/50 max-w-md">
                 Gelişmiş özellikler, yüksek limitler ve öncelikli destek için

@@ -76,7 +76,12 @@ export default function Wallet() {
               orders.get(row.order_id).titles.push(row.chatbot_title);
           }
           return Array.from(orders.values()).map((p, i) => {
-            const names = p.titles.length ? p.titles.join(", ") : "Sohbet botu";
+            // D-06: kalemsiz ödeme = üyelik paketi alımı (upgradePlan hiç
+            // `param_marketplace_details` satırı yazmıyor). Bu satırlar artık
+            // listeye giriyor; "Sohbet botu" demek yanlış olurdu.
+            const names = p.titles.length
+              ? p.titles.join(", ")
+              : "Üyelik paketi";
             const refunded =
               p.status === "refunded" || p.status === "partial_refund";
             let desc = `${names} satın alındı`;

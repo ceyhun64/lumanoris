@@ -199,7 +199,14 @@ function grantPurchaseCredit(Database $db, int $userId, int $chatbotId, float $t
          ON DUPLICATE KEY UPDATE
              credits_remaining = credits_remaining + VALUES(credits_remaining),
              credits_total     = credits_total + VALUES(credits_total),
-             expires_at        = GREATEST(expires_at, VALUES(expires_at))',
+             -- I-11: burası düz `GREATEST(expires_at, VALUES(expires_at))` idi.
+             -- MySQL\'de GREATEST argümanlarından biri NULL ise sonuç NULL, ve
+             -- `expires_at IS NULL` bu tabloda DESTEKLENEN bir durum ("süresiz").
+             -- Yani süresiz krediye sahip bir kullanıcı aynı botu yeniden satın
+             -- aldığında satır NULL kalmaya devam ediyordu — ödediği yeni süre
+             -- hiçbir şeye yazılmıyordu. COALESCE ile NULL, gelen değere
+             -- düşürülüyor: sonuç her zaman iki tarihten ileri olanı.
+             expires_at        = GREATEST(COALESCE(expires_at, VALUES(expires_at)), VALUES(expires_at))',
         [$userId, $chatbotId, $allowance, $allowance, $expiresAt]
     );
 }
@@ -231,12 +238,19 @@ function refundMessage(Database $db, int $userId, int $chatbotId, string $source
             // Kredi bu arada süresi dolduysa günlük havuza iade et.
         }
 
+        // I-10 — günlük havuza iade TAVANSIZDI (`coins_remaining + 1`), oysa
+        // kardeş dal (satın alma kredisi, yukarıda) `LEAST(credits_total, …)`
+        // ile sınırlıyor. Upstream'in art arda hata verdiği bir dakikada
+        // kullanıcı günlük hakkının ÜSTÜNE çıkabiliyordu: her başarısız
+        // istek tüketip iade ediyor, ama iade tavanı olmadığı için bakiye
+        // plan limitini aşabiliyordu. Tavan plandan okunuyor.
+        $dailyLimit = getDailyMessageLimit($db, $userId);
         $db->execute(
             'UPDATE ' . AppConfig::TABLE_COIN_BALANCES . '
-             SET coins_remaining = coins_remaining + 1,
+             SET coins_remaining = LEAST(?, coins_remaining + 1),
                  exhausted_at = NULL
              WHERE user_id = ?',
-            [$userId]
+            [$dailyLimit, $userId]
         );
     } catch (Throwable $e) {
         // İade başarısız olsa da kullanıcıya hata mesajı gitmeli; sessizce

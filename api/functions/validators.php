@@ -2,6 +2,15 @@
 /**
  * Input validation & sanitization helpers.
  * Include after bootstrap.php.
+ *
+ * ⚠️ I-07 — SİLME ADAYI. Bu dosyadaki YEDİ fonksiyonun da sıfır çağıranı var
+ * (arama üç yerde birden yapıldı: `web/src`, `api/admin`, `api/router.php`).
+ * Gerçek girdi temizliği `InputSanitizer` sınıfında yapılıyor. Dosya yine de
+ * `autoload.php:11` üzerinden HER API isteğinde yükleniyor.
+ *
+ * Silinmedi çünkü "ölü kod mu, bilerek duran bir yardımcı seti mi" sorusunun
+ * cevabı bende yok (AUDIT.md, Belirsizlikler #3). Silinecekse `autoload.php`
+ * satır 11 de kaldırılmalı.
  */
 
 function require_fields(array $data, array $fields): void {
@@ -12,12 +21,18 @@ function require_fields(array $data, array $fields): void {
     }
 }
 
+/**
+ * I-07 — iki hatası vardı:
+ *  1. `strlen`/`substr` BAYT sayıyor. Türkçe metinde 255. bayt bir çok baytlı
+ *     karakterin ORTASINA denk gelebiliyor ve dize bozuk UTF-8 olarak
+ *     kesiliyordu. `mb_*` karakter sayıyor.
+ *  2. `htmlspecialchars` GİRDİDE uygulanıyordu. Kaçış çıktı-anında yapılır:
+ *     girdide yapılınca veritabanında `&#039;` gibi değerler birikiyor, JSON
+ *     API'de çift kaçış oluyor ve uzunluk sınırı da bu şişmiş dize üzerinden
+ *     ölçülüyordu. `InputSanitizer::string()` ile aynı davranış.
+ */
 function sanitize_string(?string $value, int $maxLength = 255): string {
-    $value = trim($value ?? '');
-    if (strlen($value) > $maxLength) {
-        $value = substr($value, 0, $maxLength);
-    }
-    return htmlspecialchars($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    return mb_substr(trim($value ?? ''), 0, $maxLength);
 }
 
 function sanitize_int($value): int {

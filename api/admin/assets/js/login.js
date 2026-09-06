@@ -1,3 +1,12 @@
+/**
+ * ⚠️ G-15 — SİLME ADAYI. Bu dosya hiçbir sayfadan yüklenmiyor:
+ * `partials/_login.php` giriş formunun submit mantığını KENDİ satır içi
+ * <script> bloğunda taşıyor. Yüklenseydi de o blokla çakışır, aynı
+ * isteği iki kez gönderirdi.
+ *
+ * Silinmedi: ölü mü, taşınmayı bekleyen bir refactor mu — karar ürün
+ * tarafında (AUDIT Belirsizlikler #1).
+ */
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector("#login-form");
   const csrfToken = document.querySelector('input[name="csrf_token"]').value;

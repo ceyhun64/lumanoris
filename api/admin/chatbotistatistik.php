@@ -154,23 +154,47 @@ $chatbotlar = $database->selectMulti("id, isim FROM chatbotlar");
 
                     if (result.success === true && result.data.length > 0) {
                         result.data.forEach(item => {
-                            // Badge'leri güzelleştirelim (Virgülle ayrılmış SET değerlerini diziye çevirip dönebiliriz)
-                            const badges = item.reported_for.split(',').map(tag => 
-                                `<span class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold uppercase mr-1">${tag.replace('_', ' ')}</span>`
-                            ).join('');
+                            // G-01 — burası `insertAdjacentHTML` ile ŞABLON
+                            // İÇİNE gömüyordu. `reported_for` ve
+                            // `report_detail` sıradan bir kullanıcının
+                            // gönderdiği metin; sunucuda hiç sanitize
+                            // edilmiyordu. Sonuç: depolanmış XSS, ADMIN
+                            // oturumunda çalışan. Sunucu tarafı artık
+                            // `reported_for`'u sabit bir kümeye karşı
+                            // doğruluyor (SocialController::REPORT_REASONS),
+                            // burada da hiçbir kullanıcı verisi HTML olarak
+                            // ayrıştırılmıyor — hepsi `textContent`.
+                            const card = document.createElement('div');
+                            card.className = 'bg-gray-50 border border-gray-200 p-4 rounded-xl shadow-sm hover:border-red-200 transition';
 
-                            const detailHtml = `
-                                <div class="bg-gray-50 border border-gray-200 p-4 rounded-xl shadow-sm hover:border-red-200 transition">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <div class="flex flex-wrap">${badges}</div>
-                                        <span class="text-xs text-gray-400 font-medium">${item.reported_at}</span>
-                                    </div>
-                                    <p class="text-sm text-gray-700 leading-relaxed italic">
-                                        "${item.report_detail || 'Kullanıcı detay belirtmemiş.'}"
-                                    </p>
-                                </div>
-                            `;
-                            reportDetailsList.insertAdjacentHTML('beforeend', detailHtml);
+                            const head = document.createElement('div');
+                            head.className = 'flex justify-between items-center mb-2';
+
+                            const badgeWrap = document.createElement('div');
+                            badgeWrap.className = 'flex flex-wrap';
+                            String(item.reported_for || '').split(',').forEach(tag => {
+                                const t = tag.trim();
+                                if (!t) return;
+                                const badge = document.createElement('span');
+                                badge.className = 'text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold uppercase mr-1';
+                                badge.textContent = t.replace(/_/g, ' ');
+                                badgeWrap.appendChild(badge);
+                            });
+
+                            const when = document.createElement('span');
+                            when.className = 'text-xs text-gray-400 font-medium';
+                            when.textContent = item.reported_at || '';
+
+                            head.appendChild(badgeWrap);
+                            head.appendChild(when);
+
+                            const detail = document.createElement('p');
+                            detail.className = 'text-sm text-gray-700 leading-relaxed italic';
+                            detail.textContent = '"' + (item.report_detail || 'Kullanıcı detay belirtmemiş.') + '"';
+
+                            card.appendChild(head);
+                            card.appendChild(detail);
+                            reportDetailsList.appendChild(card);
                         });
                     } else {
                         reportDetailsList.innerHTML = `<p class="text-gray-500 italic text-sm bg-gray-50 p-4 rounded-lg border border-dashed border-gray-300 text-center">Bu chatbot için henüz detaylı bir şikayet kaydı bulunmuyor.</p>`;

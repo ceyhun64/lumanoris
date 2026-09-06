@@ -9,6 +9,8 @@ interface UserRepositoryInterface {
     public function updateById(int $id, array $data): bool;
     public function setRememberToken(int $id, string $selector, string $hashedValidator, string $expiry): void;
     public function clearRememberToken(int $id): void;
+    /** H-08: süresi geçmiş remember-me satırlarını temizler. */
+    public function purgeExpiredRememberTokens(int $id): void;
     public function existsByEmail(string $email): bool;
     public function existsByUsername(string $username): bool;
     public function getProfilePhoto(int $id): ?string;

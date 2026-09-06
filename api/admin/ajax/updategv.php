@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/_guard.php';
-require '../../functions/db.php';
+require_once __DIR__ . '/../../functions/db.php';
+require_once __DIR__ . '/../functions/upload_guard.php';
 $database = Database::getInstance();
 $conn = $database->getConnection();
 
@@ -53,14 +54,12 @@ if (!empty($_FILES)) {
         mkdir($uploadDir, 0755, true);
     }
 
-    // MIME -> uzantı. SVG bilinçli olarak YOK (bkz. yukarıdaki 1. madde).
-    $allowedMimes = [
-        'image/jpeg' => 'jpg',
-        'image/png'  => 'png',
-        'image/gif'  => 'gif',
-        'image/webp' => 'webp',
-    ];
-    $maxBytes = 5 * 1024 * 1024;
+    // H-06 — bu iki değer burada elle yazılıydı ve `AppConfig`teki "tek
+    // doğruluk kaynağı" ile bağlantısı yoktu. Artık oradan okunuyor.
+    // (SVG bilinçli olarak listede YOK — bkz. yukarıdaki 1. madde;
+    // AppConfig::IMAGE_MIME_EXTENSIONS de içermiyor.)
+    $allowedMimes = AppConfig::IMAGE_MIME_EXTENSIONS;
+    $maxBytes     = AppConfig::MAX_UPLOAD_SIZE_BYTES;
 
     foreach ($_FILES as $key => $file) {
         if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
@@ -74,21 +73,11 @@ if (!empty($_FILES)) {
             continue;
         }
 
-        // Magic-byte doğrulaması — upload.php ile aynı yaklaşım.
-        $mime = null;
-        if (function_exists('finfo_open')) {
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            if ($finfo !== false) {
-                $mime = finfo_file($finfo, $file['tmp_name']);
-                finfo_close($finfo);
-            }
-        }
-        if ($mime === null || $mime === false) {
-            $info = @getimagesize($file['tmp_name']);
-            $mime = $info['mime'] ?? null;
-        }
+        // Magic-byte doğrulaması — G-06/H-06: üç yükleme yolu artık aynı
+        // uygulamayı paylaşıyor (`functions/upload_guard.php`).
+        $mime = upload_detect_mime($file['tmp_name']);
 
-        if (!isset($allowedMimes[$mime])) {
+        if ($mime === false || !isset($allowedMimes[$mime])) {
             error_log('[updategv] reddedilen yükleme, mime=' . var_export($mime, true) . ' key=' . $key);
             continue;
         }

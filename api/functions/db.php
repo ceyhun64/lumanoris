@@ -93,22 +93,11 @@ class Database {
 
     private function __clone() {}
 
-    // Bu fonksiyon PDO için artık gerekli değil ama orijinal yapıyı korumak adına burada duruyor.
-    private function getParamTypes($params) 
-    {
-        $types = "";
-        foreach ($params as $param) {
-            if (is_null($param)) $types .= "s"; 
-            elseif (is_int($param)) $types .= "i";
-            elseif (is_float($param)) $types .= "d";
-            elseif (is_bool($param)) $types .= "i";
-            elseif (strtotime($param) !== false) $types .= "s";
-            elseif (is_object($param) || is_array($param)) $types .= "s";
-            elseif (is_string($param) && strlen($param) > 65535) $types .= "b"; // BLOB
-            else $types .= "s";
-        }
-        return $types;
-    }
+    // I-07: `getParamTypes()` buradan SİLİNDİ. mysqli döneminden kalma bir
+    // tip dizesi üreticisiydi; PDO'da karşılığı yok, `private` olduğu için
+    // dışarıdan çağrılamıyordu ve sınıf içinde de tek bir çağıranı yoktu.
+    // Ayrıca bozuktu: `strtotime($param)` bir diziye/null'a uygulandığında
+    // PHP 8'de TypeError fırlatırdı.
 
     private function executePreparedStatement($query, $params = []) {
         $stmt = $this->conn->prepare($query);
@@ -462,15 +451,12 @@ class Database {
         return $stmt->rowCount();
     }
     
-    public function truncate($table)
-    {
-        $query = "TRUNCATE TABLE `$table`";
-        if ($this->conn->query($query) === TRUE) {
-            return true;
-        } else {
-            throw new Exception('Tabloyu temizleme işlemi başarısız: ' . $this->conn->error);
-        }
-    }
+    // I-07: `truncate()` buradan SİLİNDİ. Sıfır çağıranı vardı (üçlü arama:
+    // web/src, api/admin, api/router.php) ve iki ayrı nedenle tehlikeliydi:
+    // `$table` doğrudan SQL'e gömülüyordu (allowlist yok, `assertAllowedAdminTable`
+    // çağrılmıyordu) ve `$this->conn->error` PDO'da var olmayan bir alan —
+    // yani hata dalı kendisi fatal üretirdi. CLAUDE.md TRUNCATE'i zaten
+    // yasaklıyor; sınıfta böyle bir kapı bulunmaması doğrusu.
 
     public function count($table, $whereClause = "", $params = [])
     {

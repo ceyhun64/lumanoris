@@ -11,64 +11,19 @@ import StatusBanner from "./components/StatusBanner";
 import PlanPaymentModal from "@/features/payment/PlanPaymentModal";
 import { toCardPayload } from "@/shared/lib/card";
 
-const initialPlanData = [
-  {
-    title: "Ücretsiz",
-    monthly_price: "₺0",
-    description: "LUMANORIS'in gücünü hiçbir ücret ödemeden keşfedin.",
-    features: [
-      "Günlük Lumacoin",
-      "Temel chatbot oluşturma",
-      "Pazaryerinde gezinme",
-    ],
-    buttonText: "Mevcut Paket",
-    buttonType: "secondary",
-    badge: null,
-  },
-  {
-    title: "Gümüş",
-    monthly_price: "₺149,00",
-    description:
-      "Daha fazla Lumacoin ve gelişmiş özelliklerle bir üst seviyeye taşıyın.",
-    features: [
-      "Artırılmış günlük Lumacoin",
-      "Daha fazla chatbot oluşturma limiti",
-      "Öncelikli destek",
-    ],
-    buttonText: "Bu Paketi Seç",
-    buttonType: "default",
-    badge: null,
-  },
-  {
-    title: "Altın",
-    monthly_price: "₺299,00",
-    description:
-      "Yoğun kullanıcılar için genişletilmiş limitler ve öncelikli destek.",
-    features: [
-      "Yüksek günlük Lumacoin",
-      "Genişletilmiş chatbot limiti",
-      "Öncelikli destek",
-      "Gelişmiş istatistikler",
-    ],
-    buttonText: "Bu Paketi Seç",
-    buttonType: "primary",
-    badge: "Önerilen",
-  },
-  {
-    title: "Elmas",
-    monthly_price: "₺599,00",
-    description: "Sınırsız imkanlar ve VIP destekle maksimum verim alın.",
-    features: [
-      "Sınırsız Lumacoin",
-      "Sınırsız chatbot oluşturma",
-      "7/24 VIP destek",
-      "Gelişmiş istatistikler",
-    ],
-    buttonText: "Bu Paketi Seç",
-    buttonType: "default",
-    badge: null,
-  },
-];
+/**
+ * E-04 — burada kodlanmış dört planlık bir katalog vardı (₺149/₺299/₺599)
+ * ve API başarısız olduğunda "güvenli modda varsayılan planlar" diye
+ * GÖSTERİLİYORDU. Bu, plan kataloğunun ÜÇÜNCÜ kopyasıydı (diğer ikisi:
+ * `plans` tablosu ve WalletController::getPricing()'in sunucu tarafı geri
+ * düşüşü) ve hiçbiri senkron tutulmuyordu.
+ *
+ * Daha kötüsü: sunucu katalog hazır değilken satın almayı 503 ile
+ * reddediyor. Yani kullanıcıya fiyat gösterip "Bu Paketi Seç"e basınca
+ * "kullanılamıyor" demek oluyordu. Fiyat artık tek kaynaktan geliyor;
+ * gelmiyorsa hiç fiyat gösterilmiyor.
+ */
+const initialPlanData = [];
 
 export default function PricingPlans() {
   const { userId } = useContext(UserContext);
@@ -89,15 +44,16 @@ export default function PricingPlans() {
     const fetchPlans = async () => {
       try {
         const response = await fetch("/api/wallet/getpricing.php");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        // Sunucu katalog hazır değilken 503 + gerçek bir mesaj dönüyor
+        // (E-04). Gövde her iki durumda da JSON zarfı, bu yüzden önce onu
+        // okuyup mesajı kullanıyoruz — "HTTP error! status: 503" kullanıcıya
+        // hiçbir şey anlatmıyordu.
+        const data = await response.json().catch(() => null);
 
-        if (data.success) {
-          setPlansData(data.all_plans || initialPlanData);
+        if (response.ok && data?.success) {
+          setPlansData(Array.isArray(data.all_plans) ? data.all_plans : []);
         } else {
-          throw new Error(data.message || "Veri alınamadı.");
+          throw new Error(data?.message || "Paket listesi alınamadı.");
         }
       } catch (err) {
         console.error("Fiyat planları yüklenirken hata oluştu:", err);
@@ -229,8 +185,12 @@ export default function PricingPlans() {
         <div>
           {error && (
             <StatusBanner variant="error">
-              API Hatası: {error}. Güvenli modda varsayılan planlar
-              gösterilmektedir.
+              Paketler yüklenemedi: {error}
+            </StatusBanner>
+          )}
+          {!error && plansData.length === 0 && (
+            <StatusBanner variant="error">
+              Şu anda gösterilebilecek bir paket yok.
             </StatusBanner>
           )}
           {upgradedPlan && (

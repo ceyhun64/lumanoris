@@ -10,20 +10,44 @@ class TrainingController {
 
         $id = InputSanitizer::positiveInt($data['id']);
 
+        // B-13 — bu uç noktada hiç hız sınırı yoktu; kardeşleri (readUrl,
+        // readPdf) checkRateLimit kullanıyor. Bilgi bankası yüklemesi parça
+        // parça geldiği için sınır cömert.
+        $db = Database::getInstance();
+        checkRateLimit($db, 'trainchunk:' . $userId, 240, 300);
+
         // Previously had no ownership check — anyone who knew a chatbot's id
         // could overwrite or append to its training prompt.
         if (!(new ChatbotRepository())->findByIdAndOwner($id, $userId)) {
             JsonResponse::error('Bu chatbot üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
         }
 
-        $chunk   = $data['textChunk'];
+        // B-13 — `textChunk` hiç kırpılmıyordu ve CONCAT ile LONGTEXT'e
+        // sınırsız ekleniyordu: tek istekle yüzlerce MB eğitim metni
+        // yazılabiliyordu, üstelik okuma tarafı zaten 60.000 karakterden
+        // fazlasını kullanmıyor. Hem parça hem TOPLAM uzunluk sınırlı.
+        $chunk   = mb_substr((string) $data['textChunk'], 0, AppConfig::MAX_TRAINING_CHARS);
         $isFirst = (bool) ($data['isFirst'] ?? false);
-        $conn    = Database::getInstance()->getConnection();
+        $conn    = $db->getConnection();
 
         if ($isFirst) {
             $stmt = $conn->prepare('UPDATE chatbotlar SET training_prompt = :chunk WHERE id = :id');
         } else {
-            $stmt = $conn->prepare("UPDATE chatbotlar SET training_prompt = CONCAT(IFNULL(training_prompt, ''), :chunk) WHERE id = :id");
+            $current = (int) ($db->selectSingle(
+                'CHAR_LENGTH(IFNULL(training_prompt, \'\')) AS len FROM chatbotlar WHERE id = ?',
+                [$id]
+            )['len'] ?? 0);
+
+            $room = AppConfig::MAX_TRAINING_CHARS - $current;
+            if ($room <= 0) {
+                JsonResponse::error(
+                    sprintf('Eğitim metni üst sınırına ulaşıldı (%d karakter).', AppConfig::MAX_TRAINING_CHARS),
+                    413,
+                    AppConfig::ERR_LIMIT_REACHED
+                );
+            }
+            $chunk = mb_substr($chunk, 0, $room);
+            $stmt  = $conn->prepare("UPDATE chatbotlar SET training_prompt = CONCAT(IFNULL(training_prompt, ''), :chunk) WHERE id = :id");
         }
         $stmt->bindParam(':chunk', $chunk);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
@@ -116,12 +140,20 @@ class TrainingController {
         if (!in_array($scheme, ['http', 'https'], true) || $host === '') {
             JsonResponse::error('Yalnizca http/https adresleri desteklenir.', 400, AppConfig::ERR_VALIDATION);
         }
-        if (!self::hostIsPublic($host)) {
+        // B-06 — dogrulanan IP'ler geri aliniyor; asagida CURLOPT_RESOLVE ile
+        // pinleniyor. Eskiden hostIsPublic() yalnizca bool donuyordu ve
+        // curl_init($url) host'u IKINCI KEZ, bagimsiz olarak cozuyordu:
+        // aradaki pencerede kisa TTL'li bir kayit farkli (ic ag) cevap
+        // verebiliyordu — klasik DNS rebinding.
+        $ips = self::resolvePublicIps($host);
+        if ($ips === []) {
             JsonResponse::error('Bu adres taranamaz (ic ag adresleri engellidir).', 400, AppConfig::ERR_VALIDATION);
         }
 
+        $port = (int) ($parts['port'] ?? ($scheme === 'https' ? 443 : 80));
+
         $ch = curl_init($url);
-        curl_setopt_array($ch, [
+        $options = [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_TIMEOUT        => self::URL_TIMEOUT_SEC,
@@ -131,14 +163,44 @@ class TrainingController {
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_PROTOCOLS      => CURLPROTO_HTTP | CURLPROTO_HTTPS,
-        ]);
-        $body   = curl_exec($ch);
+        ];
+
+        // Host zaten bir IP ise cozumleme yok, pinlemeye de gerek yok.
+        if (!filter_var($host, FILTER_VALIDATE_IP)) {
+            $options[CURLOPT_RESOLVE] = array_map(
+                static fn(string $ip): string => $host . ':' . $port . ':'
+                    . (str_contains($ip, ':') ? '[' . $ip . ']' : $ip),
+                $ips
+            );
+        }
+
+        // B-06b — CURLOPT_MAXFILESIZE yalnizca Content-Length varsa devreye
+        // giriyor; chunked yanitta hicbir sey yapmiyordu ve boyut kontrolu
+        // indirme BITTIKTEN sonra yapiliyordu (yani 3 MB tavani asan bir
+        // sunucu bellegi istedigi kadar doldurabiliyordu). Yazma geri
+        // cagirimi tavani asinca 0 dondurup aktarimi kesiyor.
+        $body     = '';
+        $overflow = false;
+        $options[CURLOPT_WRITEFUNCTION] = static function ($ch, string $chunk) use (&$body, &$overflow): int {
+            $body .= $chunk;
+            if (strlen($body) > self::MAX_URL_BYTES) {
+                $overflow = true;
+                return 0; // curl aktarimi CURLE_WRITE_ERROR ile durdurur
+            }
+            return strlen($chunk);
+        };
+
+        curl_setopt_array($ch, $options);
+        $ok     = curl_exec($ch);
         $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         $ctype  = (string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
         $err    = curl_error($ch);
         curl_close($ch);
 
-        if ($body === false) {
+        if ($overflow) {
+            JsonResponse::error('Sayfa cok buyuk (maks. 3MB).', 413, AppConfig::ERR_VALIDATION);
+        }
+        if ($ok === false) {
             error_log('[readurl] curl: ' . $err);
             JsonResponse::error('Sayfaya ulasilamadi.', 502, AppConfig::ERR_SERVER);
         }
@@ -155,8 +217,15 @@ class TrainingController {
         JsonResponse::success(['text' => self::htmlToText($body), 'url' => $url]);
     }
 
-    /** Host, DNS cozumlemesi dahil, halka acik bir adrese mi isaret ediyor? */
-    private static function hostIsPublic(string $host): bool {
+    /**
+     * Host'un cozuldugu TUM IP'ler halka acik mi? Oyleyse o IP'leri dondurur,
+     * degilse bos dizi (fail-closed).
+     *
+     * B-06: cagiran bu IP'leri CURLOPT_RESOLVE ile pinliyor — aksi hâlde curl
+     * kendi ikinci cozumlemesini yapar ve bu iki cozumleme arasindaki fark
+     * SSRF korumasini tamamen atlatir.
+     */
+    private static function resolvePublicIps(string $host): array {
         $ips = [];
 
         if (filter_var($host, FILTER_VALIDATE_IP)) {
@@ -174,7 +243,7 @@ class TrainingController {
         }
 
         if ($ips === []) {
-            return false; // cozulemeyen host: fail-closed
+            return []; // cozulemeyen host: fail-closed
         }
 
         foreach ($ips as $ip) {
@@ -184,10 +253,10 @@ class TrainingController {
                 FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
             );
             if ($ok === false) {
-                return false; // tek bir ozel IP bile yeterli sebep
+                return []; // tek bir ozel IP bile yeterli sebep
             }
         }
-        return true;
+        return array_values(array_unique($ips));
     }
 
     /** Kaba ama yeterli HTML -> duz metin. */
@@ -207,6 +276,15 @@ class TrainingController {
     // CPU/memory in Smalot\PdfParser (DoS).
     private const MAX_PDF_BYTES = 15 * 1024 * 1024;
 
+    /**
+     * PDF metnini çıkarır.
+     *
+     * Bu uçta HİÇBİR loglama yoktu: canlıda başarısız olduğunda geriye
+     * yalnızca istemcideki genel mesaj kalıyor, nedenini öğrenmenin bir yolu
+     * bulunmuyordu. Aşağıdaki her başarısızlık dalı artık gerçek nedeni
+     * error log'a yazıyor ve istemciye birbirinden AYIRT EDİLEBİLİR bir mesaj
+     * dönüyor — "çalışmıyor" ile "şu yüzden çalışmıyor" arasındaki fark.
+     */
     public static function readPdf(): void {
         require_method('POST');
         $userId = AuthMiddleware::requireAuth();
@@ -214,8 +292,47 @@ class TrainingController {
         checkRateLimit(Database::getInstance(), 'readpdf:' . $userId, 10, 300);
         require_once __DIR__ . '/../../../vendor/autoload.php';
 
-        $input = json_decode(file_get_contents('php://input'), true);
+        // Bağımlılık gerçekten kurulu mu? `vendor/` sürüm kontrolünde DEĞİL
+        // (.gitignore), yani dağıtımda `composer install` çalışmadıysa ya da
+        // eski bir vendor kopyası taşındıysa autoload dosyası VAR ama sınıf
+        // YOKTUR. O hâlde `new Parser()` bir \Error fırlatır; aşağıdaki eski
+        // `catch (\Exception)` bunu yakalamıyordu, istek gerekçesi hiçbir
+        // yere yazılmadan 500'e düşüyordu.
+        if (!class_exists(\Smalot\PdfParser\Parser::class)) {
+            error_log('[readpdf] smalot/pdfparser kurulu değil — api/ dizininde "composer install" gerekiyor.');
+            JsonResponse::error(
+                'PDF okuma bileşeni sunucuda kurulu değil. Lütfen yöneticiye bildirin.',
+                503,
+                AppConfig::ERR_UNAVAILABLE
+            );
+        }
+
+        $raw      = file_get_contents('php://input');
+        $declared = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
+
+        // Gövde sunucunun kabul ettiğinden büyükse PHP onu ATAR: php://input
+        // boş gelir ama Content-Length yerinde durur. Eskiden bu durum
+        // "base64Data eksik." diye raporlanıyordu — kullanıcı arayüzdeki
+        // "maks. 15 MB" yazısını okuduktan sonra bu mesajı görünce hatayı
+        // kendi dosyasında arıyordu. Asıl sınır şu: base64 veriyi ~%33
+        // büyüttüğü için 15 MB'lık bir PDF ~20 MB'lık istek gövdesi demek;
+        // post_max_size varsayılanı 8M olan bir sunucuda bu asla geçmez.
+        // Mesaj artık sunucunun GERÇEK sınırını söylüyor.
+        if ($raw === '' && $declared > 0) {
+            $limit = (string) ini_get('post_max_size');
+            error_log("[readpdf] istek gövdesi alınamadı: content_length={$declared}, post_max_size={$limit}");
+            JsonResponse::error(
+                "PDF, sunucunun kabul ettiği istek boyutunu aşıyor (sunucu sınırı: {$limit}). "
+                . 'Base64 kodlama dosyayı yaklaşık üçte bir büyüttüğü için sığabilecek PDF bundan '
+                . 'küçüktür. Daha küçük bir PDF deneyin.',
+                413,
+                AppConfig::ERR_VALIDATION
+            );
+        }
+
+        $input = json_decode($raw, true);
         if (!isset($input['base64Data'])) {
+            error_log('[readpdf] base64Data alanı yok. gövde uzunluğu=' . strlen($raw));
             JsonResponse::error('base64Data eksik.', 400, AppConfig::ERR_VALIDATION);
         }
 
@@ -228,17 +345,36 @@ class TrainingController {
         }
 
         $tmpFile = tempnam(sys_get_temp_dir(), 'pdf');
-        file_put_contents($tmpFile, $pdfBytes);
-
-        try {
-            $parser = new \Smalot\PdfParser\Parser();
-            $pdf    = $parser->parseFile($tmpFile);
-            $text   = $pdf->getText();
-        } catch (\Exception $e) {
-            unlink($tmpFile);
-            JsonResponse::error('PDF ayrıştırılamadı.', 400, AppConfig::ERR_VALIDATION);
+        if ($tmpFile === false) {
+            error_log('[readpdf] geçici dosya oluşturulamadı. sys_get_temp_dir=' . sys_get_temp_dir());
+            JsonResponse::error('Sunucuda geçici dosya oluşturulamadı.', 500, AppConfig::ERR_UNAVAILABLE);
         }
-        unlink($tmpFile);
+
+        // JsonResponse `exit` çağırdığı için `finally` ÇALIŞMAZ; geçici dosya
+        // bu yüzden yanıt üretilmeden önce, tek bir yerde siliniyor. Eski
+        // kodda \Error yoluyla çıkışta dosya diskte kalıyordu.
+        $text  = null;
+        $error = null;
+        try {
+            if (file_put_contents($tmpFile, $pdfBytes) === false) {
+                throw new \RuntimeException('geçici dosyaya yazılamadı: ' . $tmpFile);
+            }
+            $text = (new \Smalot\PdfParser\Parser())->parseFile($tmpFile)->getText();
+        } catch (\Throwable $e) {
+            // \Exception değil \Throwable: kütüphane bozuk girdide \Error de
+            // fırlatabiliyor ve o hâlde eski kod 500'e düşüyordu.
+            $error = $e;
+        }
+        @unlink($tmpFile);
+
+        if ($error !== null) {
+            error_log('[readpdf] ' . get_class($error) . ': ' . $error->getMessage());
+            JsonResponse::error(
+                'PDF ayrıştırılamadı. Dosya bozuk olabilir ya da yalnızca taranmış görüntü içeriyor olabilir.',
+                400,
+                AppConfig::ERR_VALIDATION
+            );
+        }
 
         JsonResponse::success(['text' => $text]);
     }

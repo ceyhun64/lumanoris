@@ -35,6 +35,13 @@ class ChatbotController {
         $repo = new ChatbotRepository();
 
         $db    = Database::getInstance();
+
+        // C-01 — limit kontrolü COUNT ile yapılıp INSERT ayrı gidiyordu; arada
+        // kilit yoktu, yani aynı kullanıcının iki eşzamanlı isteği aynı sayıyı
+        // okuyup ikisi de limiti geçebiliyordu. Kilit `create()`'ten sonra
+        // bırakılıyor, böylece ikinci istek güncel sayıyı görür.
+        $limitLock = self::acquireBotLimitLock($db->getConnection(), $authorUserId);
+
         $limit = $isIndependent ? getIndependentBotLimit($db, $authorUserId) : getPublicBotLimit($db, $authorUserId);
         $planName = getUserPlanName($db, $authorUserId);
         $counts = $repo->countByOwner($authorUserId);
@@ -114,10 +121,46 @@ class ChatbotController {
         }
         $data = $content;
 
+        // COMP-003 — içerik politikası. Beyaz listeden SONRA, INSERT'ten ÖNCE:
+        // yalnızca gerçekten yazılacak alanlar taransın, ve reddedilen içerik
+        // hiç veritabanına girmesin.
+        //
+        // `assertClean()` ValidationException fırlatıyor; global exception
+        // handler bunu 500 + "Sunucu hatası oluştu." diye gösterirdi, yani
+        // kullanıcı NEDEN reddedildiğini göremezdi. Bu yüzden burada
+        // yakalanıp `fromException()` ile 400 + gerçek mesaja çevriliyor.
+        try {
+            ContentPolicy::assertClean($data);
+        } catch (AppException $e) {
+            JsonResponse::fromException($e);
+        }
+
         $id         = $repo->create($data);
         $botCreated = true;
+        self::releaseBotLimitLock($db->getConnection(), $limitLock);
 
         JsonResponse::success(['message' => 'Chatbot başarıyla oluşturuldu!', 'id' => $id]);
+    }
+
+    /**
+     * C-01 — bot limitini "COUNT sonra yaz" deseninden koruyan adlandırılmış
+     * kilit. WalletController::withdraw()'daki desenin aynısı.
+     *
+     * Hata dallarında ayrıca serbest bırakmak gerekmiyor: `JsonResponse::error()`
+     * `exit` ediyor, MySQL adlandırılmış kilidi bağlantı kapanınca düşüyor.
+     */
+    private static function acquireBotLimitLock(PDO $conn, int $userId): string {
+        $lockName = 'botlimit_user_' . $userId;
+        $stmt     = $conn->prepare('SELECT GET_LOCK(?, 10) AS locked');
+        $stmt->execute([$lockName]);
+        if ((int) ($stmt->fetch()['locked'] ?? 0) !== 1) {
+            JsonResponse::error('İşlem şu anda gerçekleştirilemiyor, lütfen tekrar deneyin.', 409, AppConfig::ERR_VALIDATION);
+        }
+        return $lockName;
+    }
+
+    private static function releaseBotLimitLock(PDO $conn, string $lockName): void {
+        $conn->prepare('SELECT RELEASE_LOCK(?)')->execute([$lockName]);
     }
 
     /** BIZ-007: $data içindeki yüklenmiş görsel yollarını toplar. */
@@ -267,6 +310,17 @@ class ChatbotController {
             JsonResponse::error('Güncellenecek alan yok.', 400, AppConfig::ERR_VALIDATION);
         }
 
+        // COMP-003 — güncelleme yolu da taranıyor. Yalnızca oluşturmayı
+        // filtrelemek işe yaramazdı: temiz bir botu kaydedip hemen ardından
+        // güncelleme ile ihlal eden içeriği yazmak filtreyi tümden atlatırdı.
+        // `assertClean()` yalnızca GÖNDERİLEN alanlara bakıyor, yani kısmi
+        // güncellemede dokunulmayan sütunlar boşuna taranmıyor.
+        try {
+            ContentPolicy::assertClean($data);
+        } catch (AppException $e) {
+            JsonResponse::fromException($e);
+        }
+
         $repo->updateById($id, $data);
         JsonResponse::success(['message' => 'Chatbot başarıyla güncellendi!', 'id' => $id]);
     }
@@ -379,7 +433,12 @@ class ChatbotController {
             JsonResponse::error('Bu chatbot zaten yayında.', 400, AppConfig::ERR_DUPLICATE);
         }
 
-        $db          = Database::getInstance();
+        $db = Database::getInstance();
+
+        // C-01 — saveChatbot ile aynı yarış: iki eşzamanlı yayınlama isteği
+        // aynı `public` sayısını okuyup ikisi de limiti geçebiliyordu.
+        $limitLock   = self::acquireBotLimitLock($db->getConnection(), $userId);
+
         $publicLimit = getPublicBotLimit($db, $userId);
         $counts      = $repo->countByOwner($userId);
         if ($counts['public'] >= $publicLimit) {
@@ -392,6 +451,7 @@ class ChatbotController {
         }
 
         $repo->updateById($id, ['is_independent' => 0, 'ucret_haftalik' => $weekly, 'ucret_aylik' => $monthly]);
+        self::releaseBotLimitLock($db->getConnection(), $limitLock);
         JsonResponse::success(['message' => 'Chatbot herkese açık olarak yayınlandı!']);
     }
 
@@ -460,13 +520,12 @@ class ChatbotController {
         $categoryIds = array_filter(array_unique(array_column($cartRows, 'kategori_id')));
         $excludeIds  = array_filter(array_column($cartRows, 'chatbot_id'));
 
+        // A-03 — burada `profil_fotografi` `data:image/jpeg;base64,` ile
+        // öneklenirdi, ama sütunda base64 değil `assets/…` göreli yolu var
+        // (handleImageUploads dosyayı diske yazıyor). Sonuç bozuk bir data URI
+        // ve kırık görseldi. Yol olduğu gibi dönüyor; görsel URL'sini kurmak
+        // frontend'de tek bir yardımcının işi (shared/lib/image.js, F-01).
         $results = $repo->getSuggested($userId, $categoryIds, $excludeIds, $limit ?: 3);
-
-        foreach ($results as &$bot) {
-            if (isset($bot['profil_fotografi']) && !str_starts_with($bot['profil_fotografi'], 'data:')) {
-                $bot['profil_fotografi'] = 'data:image/jpeg;base64,' . $bot['profil_fotografi'];
-            }
-        }
 
         JsonResponse::success(['bots' => $results]);
     }

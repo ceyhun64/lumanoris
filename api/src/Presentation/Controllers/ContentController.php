@@ -50,6 +50,12 @@ class ContentController {
     }
 
     public static function getOwner(): void {
+        // B-10 — kimlik doğrulaması olmadan `user_id → kullanici_adi` eşlemesi
+        // veriyordu: id'leri sırayla gezerek tüm kullanıcı adları toplanabilir
+        // (numaralandırma). A-01'de silme adayı olarak da işaretli; silinene
+        // kadar en azından oturum arkasında.
+        AuthMiddleware::requireAuth();
+
         $userId = InputSanitizer::positiveInt($_GET['id'] ?? 0);
         if (!$userId) JsonResponse::error('ID bulunamadı!', 400, AppConfig::ERR_VALIDATION);
 

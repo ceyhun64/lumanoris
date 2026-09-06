@@ -21,8 +21,25 @@ export const SELLER_COMMISSION_MONTHLY = 0.80;
 // ChatbotController::assertValidPrice (publishChatbot / updateChatbotPrice).
 // Kept here too so the price popups can show the range as an inline note
 // and reject an out-of-range value before it ever reaches the server.
-export const MIN_WEEKLY_PRICE = 1;
+// 2026-09-05: taban 1 ₺'den 100 ₺'ye çıkarıldı. AppConfig::MIN_WEEKLY_PRICE
+// ile ELLE senkron tutuluyor; aylık taban buradan türüyor
+// (deriveMonthlyPrice(100) = 360 ₺), ayrı bir sabit değil.
+export const MIN_WEEKLY_PRICE = 100;
 export const MAX_WEEKLY_PRICE = 5000;
+
+// AppConfig::FREE_PLAN_NAME — ücretsiz planın KANONİK adı.
+//
+// E-05: bu ad üç yerde bağımsız yazılmıştı ve iki farklı değer taşıyordu
+// ('Ücretsiz' vs 'Ücretsiz Plan'). Frontend "Pro rozetini göster mi"
+// kararını bu isim karşılaştırmasıyla verdiği için, ücretsiz kullanıcıya
+// Pro rozeti gösteriliyordu. Sabit yerine bunu kullanın.
+export const FREE_PLAN_NAME = "Ücretsiz";
+
+/** Plan adı ücretli bir plana mı ait? (Pro rozeti kararı buradan geçmeli.) */
+export function isPaidPlan(planName) {
+    const name = String(planName ?? "").trim();
+    return name !== "" && name !== FREE_PLAN_NAME;
+}
 
 // Sohbet Luma Coini: per-bot bonus message allowance unlocked by a purchase,
 // tiered by how much was actually paid. Mirrors coin_engine.php's

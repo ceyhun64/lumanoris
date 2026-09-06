@@ -7,12 +7,26 @@ try {
     // authoritative kaynak web/src/app/robots.js.
     $seo_data = $database->getGlobalVars('site_baslik', 'site_aciklama', 'site_keywords', 'google_analytics', 'google_search');
 } catch (Exception $e) {
-    echo '<script>alert("Veriler alınırken bir hata oluştu: ' . $e->getMessage() . '");</script>';
+    // G-12 — ham istisna mesajı istemciye SIZIYORDU, üstelik bir
+    // `<script>alert("…")` bloğunun İÇİNE, hiçbir kaçış yapılmadan:
+    // mesajdaki tek bir `"` JavaScript'i kırıyor, mesajın içeriği ise
+    // tablo/sütun adlarını ve SQLSTATE kodlarını gösteriyordu. Kardeş
+    // sayfalar (seometa, seotwitter) zaten genel mesaj + error_log
+    // desenini kullanıyor; bu sayfa da artık onu kullanıyor.
+    error_log('[seosite] global_vars okunamadı: ' . $e->getMessage());
+    echo '<div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">'
+       . 'Veriler alınırken bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
+       . '</div>';
 }
 
-$faviconPath = '../assets/favicon.ico';
-// Favicon'un var olup olmadığını kontrol etme
-$faviconExists = file_exists($faviconPath) ? $faviconPath : 'https://via.placeholder.com/64x64?text=ICO'; 
+// G-13 — bu yol GÖRELİ'ydi ve göreli yollar PHP'nin ÇALIŞMA DİZİNİNE göre
+// çözülür, dosyanın konumuna göre değil: router altında bir yere, Apache
+// altında başka bir yere bakıyordu, yani `file_exists()` sonucu dağıtıma
+// göre değişiyordu (favicon varken bile "yok" diyebiliyordu).
+$faviconFile = __DIR__ . '/../assets/favicon.ico';
+// Favicon'un var olup olmadığını kontrol etme. Diskteki yol ile tarayıcıya
+// verilen URL ayrı şeyler: kontrol mutlak yolla, gösterim public URL ile.
+$faviconExists = file_exists($faviconFile) ? '/admin/assets/favicon.ico' : 'https://via.placeholder.com/64x64?text=ICO';
 ?>
 <!-- HTML / Tailwind Kodu -->
 <div class="max-w-[500px] mx-auto">

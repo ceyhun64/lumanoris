@@ -9,9 +9,14 @@ import {
     DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from '@/shared/ui/dropdown-menu';
 import { Badge } from '@/shared/ui/badge';
+import { resolveAvatarSrc, resolveCoverSrc } from '@/shared/lib/image';
 
 export default function SuggestedCard({ bot }) {
     const { id, image, title, author, dialogues, badge, avatar } = bot;
+    // F-01: sunucu goreli `assets/...` yolu donuyor; <Image src> bos ya da
+    // goreli deger aldiginda sirasiyla hard render error / 404 veriyordu.
+    const coverSrc = resolveCoverSrc(image);
+    const avatarSrc = resolveAvatarSrc(avatar);
     const router = useRouter();
     const [shareOpen, setShareOpen] = useState(false);
     const [reportOpen, setReportOpen] = useState(false);
@@ -29,7 +34,7 @@ export default function SuggestedCard({ bot }) {
                         {badge.label}
                     </Badge>
                 )}
-                <Image src={image} alt={title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 25vw" />
+                <Image src={coverSrc} alt={title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 25vw" />
             </div>
 
             {/* Info */}
@@ -37,7 +42,7 @@ export default function SuggestedCard({ bot }) {
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2">
                         <Image
-                            src={avatar}
+                            src={avatarSrc}
                             alt=""
                             width={22}
                             height={22}

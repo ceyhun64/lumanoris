@@ -347,9 +347,20 @@ class SellerController {
 
     public static function listIller(): void {
         require_once __DIR__ . '/../../../functions/ParamPosMarketplace.php';
+
+        // B-09 — bu iki uç nokta kimlik doğrulaması ve hız sınırı olmadan DIŞ
+        // sağlayıcıya gidiyordu: anonim biri `?nocache` ile önbelleği atlayıp
+        // sağlayıcıya karşı sınırsız istek ürettirebiliyordu (bizim üye iş
+        // yeri kimliğimizle). İl/ilçe listesi yalnızca satıcı kayıt formunda
+        // kullanılıyor, yani oturum zaten var.
+        $userId = AuthMiddleware::requireAuth();
+        checkRateLimit(Database::getInstance(), 'listiller:' . $userId, 30, 300);
+
         $cacheFile   = sys_get_temp_dir() . '/param_iller.json';
         $cacheTtl    = 900;
-        $bypassCache = isset($_GET['nocache']);
+        // `nocache` yalnızca admin oturumunda: sıradan kullanıcı önbelleği
+        // atlatıp her istekte sağlayıcıya gidemesin.
+        $bypassCache = isset($_GET['nocache']) && !empty($_SESSION['admin']);
 
         if (!$bypassCache && is_file($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTtl) {
             $cached  = file_get_contents($cacheFile);
@@ -372,6 +383,11 @@ class SellerController {
 
     public static function listIlceler(): void {
         require_once __DIR__ . '/../../../functions/ParamPosMarketplace.php';
+
+        // B-09 — bkz. listIller(); aynı gerekçe.
+        $userId = AuthMiddleware::requireAuth();
+        checkRateLimit(Database::getInstance(), 'listilceler:' . $userId, 60, 300);
+
         // Frontend (BankInfo.jsx, SellerOnboardingWizard.jsx) sends `il`, not `il_kodu`.
         $ilKodu    = InputSanitizer::positiveInt($_GET['il'] ?? 0);
         $cacheFile = sys_get_temp_dir() . '/param_ilceler_' . $ilKodu . '.json';

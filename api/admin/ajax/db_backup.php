@@ -81,12 +81,16 @@ try {
             ];
     }
 } catch (Throwable $e) {
+    // G-12 — ham `$e->getMessage()` istemciye dönüyordu. Bu uç nokta
+    // mysqldump/restore yolunda çalıştığı için mesaj dosya yollarını,
+    // veritabanı adını ve bazı hâllerde bağlantı dizesini taşıyabiliyordu.
+    // Gerçek neden zaten bir satır yukarıda log'a yazılıyor.
     error_log('[db_backup] ' . $e->getMessage());
     http_response_code(500);
     $response = [
         'status'  => 'error',
         'success' => false,
-        'message' => $e->getMessage(),
+        'message' => 'İşlem tamamlanamadı. Ayrıntı için sunucu günlüğüne bakın.',
     ];
 }
 

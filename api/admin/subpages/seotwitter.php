@@ -50,12 +50,20 @@ try {
                    class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
                    onchange="previewTwitterImage(event)">
             
-            <?php $twitterImagePath = $seo_data['twitter:image'] ?? ''; ?>
-            <img src="<?= htmlspecialchars($twitterImagePath) ?>" id="twitter-image-preview" 
-                 class="mt-3 block w-full max-w-full h-auto rounded-lg shadow-md border <?= !empty($twitterImagePath) && file_exists($twitterImagePath) ? 'block' : 'hidden' ?>" 
+            <?php
+            // G-13 — bkz. seometa.php: göreli yolla yapılan `file_exists()`
+            // PHP'nin çalışma dizinine göre çözülüyordu, yani önizleme
+            // dosya diskte dururken bile gizli kalıyordu.
+            $twitterImagePath   = (string) ($seo_data['twitter:image'] ?? '');
+            $twitterImageOnDisk = $twitterImagePath !== ''
+                && file_exists(__DIR__ . '/../../' . ltrim($twitterImagePath, '/'));
+            $twitterImageUrl    = $twitterImagePath !== '' ? '/' . ltrim($twitterImagePath, '/') : '';
+            ?>
+            <img src="<?= htmlspecialchars($twitterImageUrl) ?>" id="twitter-image-preview"
+                 class="mt-3 block w-full max-w-full h-auto rounded-lg shadow-md border <?= $twitterImageOnDisk ? 'block' : 'hidden' ?>"
                  style="max-width: 100%; object-fit: cover;">
             <!-- Eğer mevcut resim yoksa, önizleme için hidden bir img etiketi (JS için) -->
-            <?php if (empty($twitterImagePath) || !file_exists($twitterImagePath)): ?>
+            <?php if (!$twitterImageOnDisk): ?>
                 <img src="" id="twitter-image-preview-hidden" class="mt-3 block w-full max-w-full h-auto rounded-lg shadow-md border hidden" style="max-width: 100%; object-fit: cover;">
             <?php endif; ?>
         </div>

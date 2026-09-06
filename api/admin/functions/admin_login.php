@@ -205,8 +205,14 @@ function admin_login_attempt(Database $database, string $username, string $passw
     $_SESSION['admin']            = $adminName;
     $_SESSION['admin_id']         = $adminId;
     $_SESSION['admin_source']     = $adminSource;
+    // G-09 — bu iki alan artık gerçekten okunuyor:
+    // `admin_session_enforce_timeout()` boşta kalma ve mutlak zaman aşımını
+    // buradan hesaplıyor (functions/session.php). Eskiden yazılıp hiç
+    // okunmuyorlardı, yani panel oturumu süresizdi.
     $_SESSION['admin_login_at']   = time();
-    // Oturum sabitleme + oturum çalma karşısında ikinci bir bağ.
+    $_SESSION['admin_last_seen']  = time();
+    // Yalnızca tanı amaçlı: IP oturum içinde meşru olarak değişebildiği için
+    // (mobil ağ, CGNAT) yetkilendirme kararında KULLANILMIYOR.
     $_SESSION['admin_login_ip']   = $ip;
     $_SESSION['csrf_token']       = bin2hex(random_bytes(32));
 

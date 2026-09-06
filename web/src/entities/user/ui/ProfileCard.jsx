@@ -11,7 +11,7 @@ import CategoryBadge from '@/shared/ui/category-badge';
 import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
 import { requireLogin } from '@/shared/lib/auth-guard';
-import { resolveAvatarSrc } from '@/shared/lib/image';
+import { resolveAvatarSrc, normalizeImagePath } from '@/shared/lib/image';
 import { useAbortableEffect, isAbortError } from '@/shared/hooks/useAbortableEffect';
 
 // Only loaded once the user actually opens one of these — this card renders
@@ -35,16 +35,36 @@ function formatCompact(n) {
  * Eylem çubuğundaki tek düğme. Eskiden bu eylemlerin tamamı "…" menüsünün
  * içinde saklıydı: kullanıcı beğeni/yorum sayılarını görmek için bile menüyü
  * açmak zorundaydı. Artık hepsi sayaçlarıyla birlikte açıkta.
+ *
+ * Varsayılan olarak YALNIZCA İKON çiziliyor ("Beğen", "Beğenme", "Paylaş"
+ * gibi yazılar gösterilmiyor). `label` yine ZORUNLU ve kaldırılmadı, çünkü:
+ *   • `aria-label` olarak veriliyor — yazı gizlenince düğmenin erişilebilir
+ *     adı da kaybolurdu; ekran okuyucu "düğme" demekten başka bir şey
+ *     söyleyemezdi.
+ *   • `title` olarak veriliyor — fareyle üzerine gelince ipucu çıkıyor, yani
+ *     ikonun ne yaptığı tahmine kalmıyor.
+ *
+ * Sayaçlar (beğeni/yorum sayısı) yazı DEĞİL veri olduğu için duruyor.
+ *
+ * `showLabel` yalnızca yazının kendisi bilgi taşıdığı yerlerde açılıyor —
+ * bugün tek örneği fiyatı gösteren "Satın Al" düğmesi.
  */
-function ActionPill({ icon: Icon, label, count, active, activeTone = 'fuchsia', tone = 'default', disabled, onClick, className }) {
+function ActionPill({ icon: Icon, label, count, active, activeTone = 'fuchsia', tone = 'default', disabled, onClick, className, showLabel = false }) {
+    const hasCount = typeof count === 'number';
+
     return (
         <button
             type="button"
             onClick={onClick}
             disabled={disabled}
+            aria-label={label}
+            title={label}
             aria-pressed={typeof active === 'boolean' ? active : undefined}
             className={cn(
-                'flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 font-display text-label font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'flex h-8 shrink-0 items-center rounded-full border font-display text-label font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                // Yazısız ve sayaçsız düğme kare olmalı; `px-3` bırakılsaydı
+                // içinde tek bir ikonla yayvan bir hap gibi dururdu.
+                showLabel || hasCount ? 'gap-1.5 px-3' : 'w-8 justify-center',
                 active
                     ? activeTone === 'rose'
                         ? 'border-rose-400/40 bg-rose-500/[0.12] text-rose-200'
@@ -57,8 +77,8 @@ function ActionPill({ icon: Icon, label, count, active, activeTone = 'fuchsia', 
             )}
         >
             <Icon className="h-3.5 w-3.5 shrink-0" />
-            <span className="whitespace-nowrap">{label}</span>
-            {typeof count === 'number' && (
+            {showLabel && <span className="whitespace-nowrap">{label}</span>}
+            {hasCount && (
                 <span className="tabular-nums text-current opacity-55">{formatCompact(count)}</span>
             )}
         </button>
@@ -122,10 +142,11 @@ export default function ProfileCard({bot, comments}) {
         });
     }, [bot, comments]);
 
-    const formatImage = (img) => {
-        if (!img) return "";
-        return img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
-    };
+    // F-01/A-03 — burada her deger `data:image/jpeg;base64,` ile sariliyordu,
+    // ama sutunda base64 degil `assets/profil_fotografi/<ad>.jpg` goreli yolu
+    // var; sonuc bozuk bir data URI ve kirik gorseldi. Normalizasyon artik
+    // paylasilan yardimcida (shared/lib/image.js).
+    const formatImage = (img) => normalizeImagePath(img);
     // REACT-001: oturum kontrolü artık iptal edilebilir. Kullanıcı cevap
     // gelmeden sayfadan ayrılırsa setUserId çalışmıyor.
     useAbortableEffect((signal, isActive) => {
@@ -491,6 +512,11 @@ export default function ProfileCard({bot, comments}) {
                         <ActionPill
                             icon={ShoppingCart}
                             label={`Satın Al · ${formatCurrency(bot.ucret_haftalik)}`}
+                            // Tek istisna: buradaki yazı FİYATI taşıyor, ikonun
+                            // anlatamayacağı bir bilgi. Üstelik bu düğme
+                            // `sm:hidden` — yani mobilde fiyatın göründüğü tek
+                            // yer burası, gizlemek onu tamamen kaybettirirdi.
+                            showLabel
                             onClick={handleBuy}
                             className="border-fuchsia-400/40 bg-fuchsia-500/[0.12] text-fuchsia-200 sm:hidden"
                         />

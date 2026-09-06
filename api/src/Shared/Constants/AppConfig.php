@@ -13,22 +13,90 @@ final class AppConfig {
     const FREE_PUBLIC_BOT_LIMIT      = 2;
 
     // ── Producer-plan bot limits ───────────────────────────────────────────
-    // NOT WIRED UP: chatbot_limits.php only ever applies the FREE_* limits;
-    // nothing consults these when a producer plan is active.
+    // H-10 — buradaki yorum güncelliğini yitirmişti ("chatbot_limits.php only
+    // ever applies the FREE_* limits"), iki farklı gerçeği tek cümlede
+    // birleştiriyordu. Doğrusu ikiye ayrılmış hâli:
+    //
+    //   • FREE_* bir FALLBACK'tir, ölü değil: `plans.php` canlı kotaları
+    //     `plans` tablosundan okuyor, tablo yoksa/plan bulunamazsa
+    //     `fallbackPlan()` bu sabitlere düşüyor.
+    //   • PRODUCER_* gerçekten ÖLÜ: üretici planı akışı kapalı (D-07,
+    //     `producer_plan.php`), bu iki sabiti hiçbir kod okumuyor.
     const PRODUCER_INDEPENDENT_LIMIT = 10;
     const PRODUCER_PUBLIC_LIMIT      = 20;
+
+    // ── Eğitim metni tavanı ────────────────────────────────────────────────
+    // B-13 — okuma tarafı (ChatController, Gemini'ye giden bağlam) 60.000
+    // karakterle sınırlıydı ama YAZMA tarafı (TrainingController, CONCAT ile
+    // LONGTEXT'e ekleme) serbestti. İki taraf artık aynı sabiti okuyor.
+    const MAX_TRAINING_CHARS = 60000;
 
     // ── Daily free messages (coin system) ─────────────────────────────────
     const DAILY_FREE_MESSAGES = 10;
 
+    // ── Ücretsiz planın KANONİK adı ────────────────────────────────────────
+    // E-05 — bu ad üç yerde birbirinden bağımsız yazılmıştı: `plans` tablosuna
+    // 'Ücretsiz' seed ediliyor (007_plan_limits.sql:74), `plans.php`in geri
+    // düşüşü 'Ücretsiz Plan' üretiyordu, frontend ise "Pro rozetini göster mi"
+    // kararını `planName !== "Ücretsiz Plan"` karşılaştırmasıyla veriyordu.
+    // Sonuç: migration uygulanmış bir kurulumda ÜCRETSİZ kullanıcıya "Pro"
+    // rozeti gösteriliyordu. Sunucu tarafının tek kaynağı burası; frontend
+    // karşılığı `web/src/shared/lib/pricing.js` → FREE_PLAN_NAME (elle
+    // senkron, diğer sabitlerle aynı kural).
+    const FREE_PLAN_NAME = 'Ücretsiz';
+
     // ── Auth ───────────────────────────────────────────────────────────────
     const REMEMBER_ME_DAYS = 30;
 
+    // COMP-002 — kayıt için asgari yaş.
+    //
+    // `kullanicilar.dogum_tarihi` kayıt formunda TOPLANIYORDU ama sunucuda
+    // hiç doğrulanmıyordu: alan zorunlu bile değildi (yalnızca istemcide bir
+    // `if` vardı, doğrudan endpoint'e POST atarak atlanabiliyordu). Gizlilik
+    // politikası ise bu alanı "yaş doğrulaması için" topladığını yazıyor —
+    // yani beyan edilen davranış ile kod uyuşmuyordu.
+    //
+    // 18: platform kart ile tahsilat yapıyor ve süreli abonelik sözleşmesi
+    // kuruyor; reşit olmayan kullanıcı bu sözleşmenin tarafı olamaz. Ayrıca
+    // moderasyonsuz kullanıcı üretimi içerik barındıran bir platformun yaş
+    // kapısı olmaması, ödeme kuruluşu risk değerlendirmesinde doğrudan
+    // olumsuz kalem (bkz. BLOCKERS B3).
+    //
+    // Bu bir İŞ KURALI: eşiği değiştirmek isterseniz tek yer burası, ama
+    // kararı ürün tarafı vermeli.
+    const MIN_REGISTRATION_AGE = 18;
+
     // ── File upload ────────────────────────────────────────────────────────
+    //
+    // H-06 — bu sabitler "tek doğruluk kaynağı" olarak duruyordu ama admin
+    // tarafındaki ÜÇ yükleme yolunun (`ajax/upload.php`, `ajax/updategv.php`,
+    // `ajax/seo.php`) hiçbiri onları okumuyordu; her biri kendi kopyasını
+    // taşıyordu ve kopyalar zaten ayrışmıştı (biri PDF'e izin veriyor, biri
+    // 500 KB, biri 50 KB). Üçü de artık `admin/functions/upload_guard.php`
+    // üzerinden buradan okuyor.
     const ALLOWED_IMAGE_TYPES  = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
     const ALLOWED_IMAGE_MIMES  = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     const MAX_UPLOAD_SIZE_MB   = 5;
     const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024;
+
+    /** Doğrulanmış MIME → dosya uzantısı. Ad ASLA istemciden alınmaz. */
+    const IMAGE_MIME_EXTENSIONS = [
+        'image/jpeg' => 'jpg',
+        'image/png'  => 'png',
+        'image/gif'  => 'gif',
+        'image/webp' => 'webp',
+    ];
+
+    /**
+     * Bilinçli olarak FARKLI olan sınırlar — genel tavana değil, kullanım
+     * yerine bağlı oldukları için ayrı sabitler:
+     *   • SEO/OG/Twitter kartı görseli: sosyal ağlar zaten yeniden
+     *     boyutlandırıyor, 500 KB fazlasıyla yeterli.
+     *   • Favicon: .ico, birkaç KB'lık bir dosya.
+     */
+    const MAX_SEO_IMAGE_BYTES = 500 * 1024;
+    const MAX_FAVICON_BYTES   = 50 * 1024;
+    const ALLOWED_FAVICON_MIMES = ['image/x-icon', 'image/vnd.microsoft.icon', 'image/png'];
 
     // ── Pagination ─────────────────────────────────────────────────────────
     const DEFAULT_PAGE_LIMIT = 20;
@@ -55,10 +123,18 @@ final class AppConfig {
     // MIN_WEEKLY_PRICE was previously documented here as enforced while no PHP
     // read it and the frontend only checked `n <= 0`, so a 0,01 ₺ bot passed
     // both layers. The monthly field's floor is the same value run through the
-    // monthly derivation (round(min * 4 * DISCOUNT_MONTHLY_FACTOR) = 4 ₺).
-    // Placeholder business limits — confirm actual values with product/finance
-    // before relying on them long-term.
-    const MIN_WEEKLY_PRICE = 1;
+    // monthly derivation (round(min * 4 * DISCOUNT_MONTHLY_FACTOR)).
+    //
+    // 2026-09-05: taban ürün kararıyla 1 ₺'den 100 ₺'ye çıkarıldı. Aylık
+    // tabanı BURADAN türüyor, ayrı bir sabit değil: round(100 * 4 * 0.9) =
+    // 360 ₺. İkisini bağımsız vermek haftalık planı aylıktan pahalı yapıp
+    // fiyatlandırmayı tutarsızlaştırırdı.
+    //
+    // Bu taban yalnızca fiyatın YAZILDIĞI anda çalışıyor (publishChatbot /
+    // updateChatbotPrice). Daha önce daha ucuza yayınlanmış botlar fiyatlarını
+    // korur; ancak fiyatları bir daha düzenlendiğinde yeni tabana uymak
+    // zorunda kalırlar.
+    const MIN_WEEKLY_PRICE = 100;
     const MAX_WEEKLY_PRICE = 5000; // ₺
 
     // ── Database table names ───────────────────────────────────────────────

@@ -17,41 +17,21 @@ require_once __DIR__ . '/_guard.php';
  * extension from the verified type, and pick the name server-side.
  */
 
-/** Sniff the real type from the file's own bytes, never from its name. */
-function upload_detect_mime(string $tmpPath): string|false {
-    // ext-fileinfo is not guaranteed to be present (it is missing on the
-    // audited environment) and calling finfo_open() without it is a fatal
-    // error, so fall back to header-reading checks that need no extension.
-    if (function_exists('finfo_open')) {
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        if ($finfo !== false) {
-            $mime = finfo_file($finfo, $tmpPath);
-            finfo_close($finfo);
-            if ($mime !== false) return $mime;
-        }
-    }
-
-    $info = @getimagesize($tmpPath);
-    if ($info !== false && !empty($info['mime'])) return $info['mime'];
-
-    $head = (string) @file_get_contents($tmpPath, false, null, 0, 5);
-    if ($head === '%PDF-') return 'application/pdf';
-
-    return false;
-}
+// H-06/G-06 — `upload_detect_mime()` buradan `functions/upload_guard.php`'ye
+// TAŞINDI. Panelin üç yükleme yolu artık aynı uygulamayı paylaşıyor; eskiden
+// bu doğru sürüm yalnızca burada vardı, `seo.php` kendi zayıf kopyasını
+// kullanıyordu.
+require_once __DIR__ . '/../functions/upload_guard.php';
 
 // Only types whose content can actually be verified are accepted. doc/docx/txt
 // used to be allowed but cannot be confirmed from their bytes here, and an
 // unverifiable type in a web-served directory is the whole problem — they are
 // deliberately no longer accepted.
-const UPLOAD_ALLOWED_MIMES = [
-    'image/jpeg' => 'jpg',
-    'image/png'  => 'png',
-    'image/gif'  => 'gif',
-    'image/webp' => 'webp',
-    'application/pdf' => 'pdf',
-];
-const UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
+//
+// H-06: görsel tipleri AppConfig'ten; PDF bu uca ÖZEL bir ek (CKEditor
+// belge yüklemesi), o yüzden burada birleştiriliyor.
+const UPLOAD_ALLOWED_MIMES = AppConfig::IMAGE_MIME_EXTENSIONS + ['application/pdf' => 'pdf'];
+const UPLOAD_MAX_BYTES = AppConfig::MAX_UPLOAD_SIZE_BYTES;
 
 header('Content-Type: application/json; charset=utf-8');
 

@@ -4,7 +4,7 @@ Tarih: 2026-09-02 · Yöntem: salt-okunur kod incelemesi (hiçbir dosya değişt
 
 ## Kapsam
 
-Okunanlar: `api/api/**` (123 endpoint), `api/src/**` (14 controller, 2 repository, `AuthMiddleware`, `InputSanitizer`, `IyzicoClient`), `api/functions/**` (19 dosya), `api/database/schema.sql` + `migrations/001–009`, `api/admin/index.php` route tablosu, `web/src/**` (96 API çağrı noktası), `web/next.config.mjs`, `web/server.js`, üç denylist (`api/.htaccess`, `api/admin/.htaccess`, `api/router.php`).
+Okunanlar: `api/api/**` (123 endpoint), `api/src/**` (14 controller, 2 repository, `AuthMiddleware`, `InputSanitizer`, `IyzicoClient` — kalan 16 dosya için bkz. H serisi), `api/functions/**` (19 dosya), `api/database/schema.sql` + `migrations/001–009`, `api/admin/index.php` route tablosu, `web/src/**` (96 API çağrı noktası), `web/next.config.mjs`, `web/server.js`, üç denylist (`api/.htaccess`, `api/admin/.htaccess`, `api/router.php`).
 
 Kapsam dışı: `.history/`, `node_modules/`, `vendor/`, `web/src/.next-verify/`.
 
@@ -111,10 +111,334 @@ Denetim prompt'unun açıkça sorduğu, kontrol edilip **temiz çıkan** başlı
 
 ---
 
+# Ek tur — `api/admin/` kapsam kapatma (G serisi)
+
+Tarih: 2026-09-02 · Yöntem: salt-okunur. Bu tur **yeni bir tam denetim değil**; yalnızca yukarıdaki "Bakamadığım yerler" #2'yi kapatıyor.
+
+## Bu turda okunanlar
+
+`api/admin/` altındaki **49 PHP dosyasının tamamı** (`vendor/` hariç): 17 `ajax/` dosyası, 22 sayfa, 3 `partials/`, 3 `subpages/`, 3 `functions/`, `index.php`. Doğrulama için ayrıca: `api/functions/db.php` (admin beyaz listeleri + `backup()`/`restore()`/`listBackups()`), `api/functions/util.php` (`csrf_check`), `api/admin/assets/js/login.js`, `api/assets/.htaccess`, `api/admin/uploads/.htaccess`, `api/src/Presentation/Controllers/SocialController.php`, `InputSanitizer`, `api/database/schema.sql` (`kullanicilar`, `chatbot_reports`).
+
+`php -l` 49 dosyanın hepsinde temiz (bu turda çalıştırıldı — ana denetimin "Bakamadığım yerler" #5'ine tek istisna).
+
+## Sorulan 7 soruya doğrudan cevap
+
+| Soru | Cevap |
+|---|---|
+| `_guard.php` her ajax dosyasında çağrılıyor mu? | **Neredeyse.** 17 dosyanın 14'ü `require_once __DIR__ . '/_guard.php'` ile başlıyor. Çağırmayan üçü: `_guard.php` (kendisi), `giris.php` (giriş — kendi `csrf_check` + rate limit'i var, doğru), `cikis.php` (**hiçbir koruması yok** → G-10). |
+| CSRF hangilerinde var, hangilerinde yok? | `_guard.php:34-42` GET dışı her istekte `csrf_token` POST alanı **veya** `X-CSRF-Token` başlığı istiyor; `_header.php:10-41` shim'i her same-origin non-GET `fetch`/`XHR`'a başlığı ekliyor. `giris.php:29` ve `_login.php:16` kendi `csrf_check`'ini yapıyor. **Yalnızca `cikis.php` korumasız** (G-10). `updateenv.php:21` guard'ın üstüne ikinci bir kontrol koyuyor ama yalnızca `$_POST['csrf_token']`'a bakıyor — başlıkla gelen geçerli bir isteği reddeder (zararsız ama gereksiz sıkı). |
+| `create/update/delete` tabloyu istekten mi alıyor? Allowlist var mı? | **Evet istekten alıyor, ama allowlist var.** `Database::assertAllowedAdminTable()` 11 tablodan oluşan tam-eşleşmeli beyaz liste (`db.php:311-330`); `assertSafeWhereFragment()` `$where` için gramer beyaz listesi (`db.php:238-269`); `assertSafeColumnList()` `$columns` için (`db.php:285-303`). SQL enjeksiyonu bu üçüyle kapalı. **Kolon (`$data`) allowlist'i YOK** — ama tablo listesi `adminler`'i içermediği için yetki yükselmesine dönmüyor. `read.php` tarafında bu hassas sütun sızıntısına dönüyor → G-11. |
+| `updateenv.php` hangi anahtarlara izin veriyor? | **Hepsine — allowlist yok.** `foreach ($_POST as $key => $value)`, her alan adı `API_<BÜYÜK_HARF>` anahtarına çevrilip yazılıyor. Değer de kaçırılmıyor → satır sonu enjeksiyonu → G-07. |
+| `readenv.php` maskeleme yapıyor mu? | **Hayır.** İstenen anahtarın ham değeri JSON olarak dönüyor; allowlist ve maskeleme yok. Üstelik **hiçbir çağıranı yok** (üç yerde de arandı) → G-08. |
+| `upload.php` MIME/uzantı/boyut/dizin/traversal? | **Temiz, bulgu yok.** Magic-byte doğrulaması (`finfo` yoksa `getimagesize`/`%PDF-` yedeği), uzantı doğrulanmış MIME'dan türetiliyor, 5 MB sınırı, `is_uploaded_file()`, dosya adı sunucuda üretiliyor, `subdir` segment-başına allowlist ile yeniden kuruluyor (max 3 segment) — traversal mümkün değil. Hedef `api/admin/uploads/`, orada `php_flag engine off` + `.php` reddi taşıyan `.htaccess` var. Aynı sağlamlık `updategv.php`'de de var. Üçüncü yükleme yolu `ajax/seo.php` bu düzeltmelerden **payını almamış** → G-06. |
+| `db_backup.php` POST+CSRF+confirm zinciri kırılır mı? | **Kırılmıyor.** `_guard.php` GET dışı her metotta (HEAD dahil) CSRF şart koşuyor; satır 22 `mode !== 'list'` ise POST şart; `restore` ayrıca `$_POST['confirm'] === 'RESTORE'` istiyor. `?mode=restore` sorgu dizesiyle POST atmak CSRF'i atlamıyor. `Database::restore()` istemciden gelen dosya adına `basename()` + `realpath()` + dizin-içi kapsama uyguluyor → traversal yok. `backup()` boş dosya bırakmıyor. Tek kalıntı: satır 89 ham `$e->getMessage()` döndürüyor → G-12. |
+
+---
+
+## Bulgu tablosu (G serisi)
+
+| ID | Kategori | Sev | Dosya:satır | Problem | Kanıt | Kullanıcı etkisi | Önerilen çözüm | Blocker? | Efor |
+|---|---|---|---|---|---|---|---|---|---|
+| **G-01** | Security | **P0** | `api/admin/chatbotistatistik.php:158-160,173` · `api/src/Presentation/Controllers/SocialController.php:171,181` | Sıradan bir kullanıcının gönderdiği `reported_for` alanı **hiç sanitize edilmeden** saklanıyor ve admin panelinde `insertAdjacentHTML` ile HTML olarak render ediliyor → depolanmış XSS, admin oturumunda çalışıyor. | `SocialController:171-181`: `$reportedFor = is_array(...) ? $data['reported_for'] : []` → `implode(',', array_map('strval', $reportedFor))`. Allowlist/enum/`strip_tags` **yok** — kardeş alan `report_detail` (satır 172) `InputSanitizer::text()`'ten geçiyor, bu geçmiyor. `schema.sql:182` `reported_for varchar(255)`, kısıt yok. Admin tarafı `chatbotistatistik.php:158-160`: `item.reported_for.split(',').map(tag => "<span ...>" + tag.replace('_',' ') + "</span>")` → satır 173 `insertAdjacentHTML('beforeend', detailHtml)`. Kaçış yok, panelde CSP yok (`_header.php`). | **Sömürü senaryosu:** herhangi bir kayıtlı kullanıcı `addReport`'a POST atar: `data = {"chatbot_id":1,"reported_for":["<img src=x onerror=...>"],"report_detail":"x"}` (virgül kullanmadan, ≤255 karakter). Admin `/admin/chatbotistatistik` sayfasında o botu tıkladığı anda kod **aynı origin'de, admin oturumuyla** çalışır. `_header.php:12` `CSRF_TOKEN`'ı global değişkende tutup her `fetch`'e eklediği için saldırgan CSRF'i de bedava alır: `ajax/adminler.php` ile yeni admin açar, `ajax/readenv.php` ile Gemini anahtarını çeker, `ajax/db_backup.php` ile `mode=restore` tetikler, `ajax/seo.php` ile G-06'yı zincirler. **Tam admin devralma.** | Sunucuda `reported_for` değerlerini sabit bir kümeye karşı doğrula, kümede olmayanı at. Panelde `textContent` kullan ya da kaçır. Ek olarak panele CSP ekle. | Hayır | S |
+| **G-02** | Broken functionality | **P1** | `api/admin/abonelik.php:22,64,70,78,92,168,381` | `<form id="featureForm">` (satır 64) `<form id="dataForm">` (satır 22) **içine yuvalanmış**. HTML ayrıştırıcı iç `<form>` başlangıç etiketini yok sayar; satır 70'teki `</form>` dış formu kapatır. Sonuç: `getElementById("featureForm")` → `null`. | Satır 92 `const featureForm = document.getElementById("featureForm")` → `null`. Satır 381 `featureForm.addEventListener("submit", ...)` → `TypeError`; `DOMContentLoaded` handler'ı orada ölür → satır 435'teki `cancelFeatureBtn` dinleyicisi hiç bağlanmaz. Satır 168 `featureForm.reset()` de "Yeni Plan" handler'ının ortasında patlar (satır 174-177'deki liste temizliği çalışmaz). | Admin **plan içeriği (özellik) ekleyemiyor/güncelleyemiyor** — "Ekle/Güncelle" hiçbir şey yapmıyor, konsolda sessiz TypeError. Mevcut içerikler listelenir ve silinebilir (o dinleyiciler satır 381'den önce bağlanıyor). "Yeni Plan" butonu yarım çalışıyor. | `featureForm`'u `dataForm`'un dışına taşı, ya da `<form>` yerine `<div>` yapıp submit'i butonun `click`'ine bağla. | Hayır | S |
+| **G-03** | Broken functionality | **P1** | `api/admin/kullanicilar.php:46` | "Kaydet" butonunun başlangıç sınıf listesinde `hidden` var ve kodun hiçbir yeri onu kaldırmıyor. | Satır 46: `<button type="submit" id="saveOrUpdate" class="flex-1 hidden bg-indigo-600 ...">`. Dosyada `saveOrUpdateBtn.classList.remove("hidden")` **hiç geçmiyor** (yalnızca `newBtn`/`deleteBtn` için var: satır 96-97, 203-204). Kardeş sayfalar `chatbotlar.php:95`, `chatbotkategoriler.php:35`, `abonelik.php:75` aynı butonu `hidden`**siz** tanımlıyor — bu tek sayfaya özgü. | Admin **Kullanıcılar sayfasından hiçbir kullanıcıyı kaydedemiyor/güncelleyemiyor**: buton görünmez. Enter'a basmak formu native submit eder (form'un `action`'ı yok) → sayfa yeniden yüklenir, hiçbir şey kaydedilmez. | `class`'tan `hidden`'ı kaldır. | Hayır | XS |
+| **G-04** | Broken functionality | **P1** | `api/admin/kullanicilar.php:243` | Silme handler'ı `form.isim.value` okuyor ama formda `isim` adlı alan yok. | Formun alanları: `id` (22), `ad_soyad` (33), `kullanici_adi` (37), `eposta` (41). `isim` yok → `form.isim` `undefined` → satır 243 `TypeError` fırlatır, handler `confirm()`'a bile ulaşamaz. Aynı satır kardeş sayfada doğru: `abonelik.php:252` `dataForm.name_tr.value`. | Admin **Kullanıcılar sayfasından kullanıcı silemiyor**: "Sil" tıklanır, hiçbir şey olmaz, hata mesajı da yok. | `form.ad_soyad.value` yap (satır 169 ve 223 zaten onu kullanıyor). | Hayır | XS |
+| **G-05** | Broken functionality | **P1** | `api/admin/kullanicilar.php:31-42` · `api/database/schema.sql` (`kullanicilar.sifre`) | Kullanıcı ekleme formunda **şifre alanı yok**; `create.php` `kullanicilar`'a `sifre` olmadan INSERT ediyor. Sütun `DEFAULT NULL` olduğu için insert başarılı olur. | Form yalnızca `ad_soyad`, `kullanici_adi`, `eposta` (+ gizli `id`) gönderiyor — satır 137-141 tüm `form.elements`'i topluyor. `schema.sql`: `sifre varchar(255) ... DEFAULT NULL`, `eposta` NOT NULL+UNIQUE. Girişte `password_verify($password, $hash)` `$hash = null` ile daima `false`. | Panelden eklenen kullanıcı **hiçbir zaman giriş yapamaz** — panel "başarıyla kaydedildi" der, hesap ölüdür. G-03 yüzünden bu yol bugün tetiklenemiyor; G-03 düzeltilince yüzeye çıkar. | Ya forma zorunlu şifre alanı ekle ve sunucuda `password_hash()` uygula, ya da sayfayı salt-düzenleme yap. **İş kuralı sorusu — belirsizlik #2.** | Hayır | S |
+| **G-06** | File handling | **P1** | `api/admin/ajax/seo.php:37-86` (özellikle 50, 61-62) | Üçüncü ve **sertleştirilmemiş** yükleme yolu. İki ayrı sorun: (a) uzantı **istemcinin dosya adından** alınıyor, (b) `mime_content_type()` `function_exists` koruması olmadan çağrılıyor. | Satır 61-62: `$fileExt = pathinfo($file['name'], PATHINFO_EXTENSION); $uploadFile = $upload_base_dir . $custom_file_name_prefix . '.' . $fileExt;` → gerçek bir PNG `x.php` adıyla gönderilirse MIME kontrolünü geçer ve `assets/images/seo/og_image.php` olarak yazılır. Satır 50: `mime_content_type($file['tmp_name'])` — `upload.php:25` ve `updategv.php:79` ikisi de `function_exists('finfo_open')` ile koruyor, burada koruma yok; deponun kendi notları (`upload.php:22-24`, `InputSanitizer::detectMime`) denetlenen ortamda **ext-fileinfo'nun bulunmadığını** söylüyor → orada bu satır ölümcül hata. | (a) Apache'de `api/assets/.htaccess` (`php_flag engine off` + `.php` reddi) yürütmeyi engelliyor; ama `php -S ... router.php` altında `.htaccess` okunmaz ve `router.php` denylist'i `/assets/*.php`'yi kapsamıyor → **dev sunucuda kod çalıştırma**. G-01 ile zincirlenirse sıradan bir kullanıcıdan başlar. (b) fileinfo'suz ortamda **OG/Twitter/favicon görseli hiç yüklenemiyor** — 500. | Uzantıyı doğrulanmış MIME'dan türet (`upload.php:47-53` haritası); `upload_detect_mime()`'ı paylaşılan yardımcıya çıkarıp burada da kullan. | Hayır | S |
+| **G-07** | Environment | **P2** | `api/admin/ajax/updateenv.php:44-66` | Yazılacak `.env` anahtarları için **allowlist yok** ve değer kaçırılmıyor → satır sonu enjeksiyonu. | Satır 44-62: `foreach ($_POST as $key => $value)` → `camelToApiCase($key)` → `$lines[] = $newKey . '=' . $value`. `$value` içinde `\n` varsa satır 66'daki `implode(PHP_EOL, $lines)` onu **ayrı bir .env satırı** olarak yazar (ör. `googleGemini=x%0AFOO=bar`). Çağıran sayfa (`api.php`) tek alan gönderiyor; endpoint sınırsız. | Tek başına: admin kendi yapılandırma dosyasını bozabilir — yetki yükselmesi değil, çünkü hedef `api/admin/.env`, `admin_login` ise `api/.env`'i okuyor ve `Dotenv::createImmutable` yüklü anahtarı ezmiyor. **G-01 ile zincirlenince** sıradan bir kullanıcı sunucudaki bir yapılandırma dosyasına satır yazdırabiliyor. | Anahtar allowlist'i (`['googleGemini']`) + değerde `\r\n` reddi + değeri tırnak içine al. | Hayır | S |
+| **G-08** | Security | **P2** | `api/admin/ajax/readenv.php:21-60` | `.env` anahtar değerini **maskeleme ve allowlist olmadan** ham JSON olarak tarayıcıya döndürüyor. Üstelik endpoint'in hiçbir çağıranı yok. | Satır 21 `$key = $_POST['key']`, satır 55-60 `'value' => $envValue`. Filtre yok. Çağıran araması üç yerde de (`web/src`, `api/admin`, `api/router.php`) **sıfır** sonuç verdi — `api.php` bile değeri `$_ENV`'den okuyor, bu endpoint'ten değil. | Panelde bir XSS (G-01) bu uçla `api/admin/.env`'deki her anahtarı (bugün: Gemini API anahtarı) tek istekte dışarı çıkarır. Kullanımı olmayan saf saldırı yüzeyi. | **Silme adayı** (belirsizlik #1). Silinmeyecekse: anahtar allowlist'i + maskelenmiş değer. | Hayır | XS |
+| **G-09** | Authentication | **P2** | `api/admin/functions/admin_login.php:206-210` | Oturuma `admin_login_at`, `admin_login_ip`, `admin_source`, `admin_id` yazılıyor ama **hiçbiri hiçbir yerde okunmuyor**. Satır 209'daki yorum "oturum sabitleme + oturum çalma karşısında ikinci bir bağ" diyor — böyle bir bağ yok. | `api/admin`, `api/src`, `api/functions`, `api/api` genelinde arama: bu dört anahtar yalnızca yazıldıkları satırlarda geçiyor. `_guard.php:27` sadece `empty($_SESSION['admin'])`'e bakıyor. | Admin oturumunun **ne boşta kalma ne mutlak zaman aşımı var**; çerez `lifetime => 0` ama sunucu tarafı yalnızca PHP'nin varsayılan GC'sine bağlı. Çalınan bir oturum kimliği süresiz geçerli. Aynı oturum `AuthMiddleware::requireAdmin()` üzerinden 7 `/api` ucuna da yetki veriyor. | `_guard.php`'ye `admin_login_at` üzerinden boşta-kalma + mutlak zaman aşımı ekle; ya da yorumu gerçeğe uydurup alanları sil. Ortak guard'ı ve oturum davranışını etkiliyor → **uygulanmadı, diff olarak önerilir** (otonomi sözleşmesi md. 4). | Hayır | S |
+| **G-10** | Security | **P2** | `api/admin/ajax/cikis.php:1-11` | `_guard.php`'yi çağırmayan tek ajax dosyası: metot kontrolü yok, CSRF kontrolü yok. | Dosyanın tamamı 11 satır: `admin_session_start(); unset($_SESSION['admin']);`. `_guard.php`'nin kendi başlığı (satır 6-10) tam olarak bu deseni sorun olarak tarif ediyor ama bu dosya listeden düşmüş. | Cross-site logout: adminin ziyaret ettiği herhangi bir sayfa `<img src>`/form ile oturumu düşürebilir. Yıkıcı değil ama panel kullanılamaz hale gelir. Ayrıca `unset` oturumu yok etmiyor, yalnızca anahtarı siliyor (`session_destroy()` yok) → aynı oturum kimliği yeniden yetkilenebilir. | `require_once __DIR__ . '/_guard.php';` ekle (`_header.php` shim'i başlığı zaten gönderiyor) ve `session_destroy()` ile bitir. | Hayır | XS |
+| **G-11** | Security | **P2** | `api/admin/kullanicilar.php:66-84` · `api/admin/ajax/read.php:15,43` | Kullanıcı düzenleme ekranı `columns` göndermiyor → `read.php` `*` kullanıyor → `kullanicilar` satırının **tamamı** (bcrypt `sifre` hash'i, `google_id`, `telefon`, `dogum_tarihi`, base64 `avatar`) tarayıcıya iniyor; satır 81 hepsini `console.log`'a da yazıyor. | `kullanicilar.php:66-68` yalnızca `table` + `where` ekliyor. `read.php:15`: `$columns = $_POST['columns'] ?? "*"`. Sayfa bu verinin sadece üç alanını kullanıyor — satır 82 `if (form[key])` gerisini atıyor. | Her kullanıcı hash'i ve PII'si admin tarayıcısının belleğine, devtools geçmişine ve araya giren her proxy/log'a düşüyor. G-01 bunu doğrudan hasat edebilir. | `formData.append("columns", "id, ad_soyad, kullanici_adi, eposta")` — `assertSafeColumnList` bu biçimi zaten kabul ediyor. `console.log`'u kaldır. | Hayır | XS |
+| **G-12** | Error handling | **P2** | `api/admin/subpages/seosite.php:9-11` · `api/admin/ajax/db_backup.php:83-90` | İki yerde ham exception mesajı istemciye sızıyor; `seosite.php` ayrıca onu bir `<script>alert("...")` bloğunun **içine** yazıyor. | `seosite.php:10`: `echo '<script>alert("Veriler alınırken bir hata oluştu: ' . $e->getMessage() . '");</script>';` — kaçış yok; mesajdaki bir `"` JS'i bozar, mesajın kendisi SQL/tablo adı taşır. Kardeş dosyalar `seometa.php:6-7` ve `seotwitter.php:8-9` bunu doğru yapıyor (`error_log` + genel mesaj) — düzeltme bu dosyaya uygulanmamış. `db_backup.php:89`: `'message' => $e->getMessage()` — `mysqlBinary()` ve `backupDir()` istisnaları sunucu dosya yollarını içeriyor. | Admine sunucu iç yapısı sızıyor; `seosite.php`'de tırnak içeren bir hata mesajı sayfanın JS'ini kırar. | `seosite.php`'yi kardeşleriyle aynı desene çevir. `db_backup.php`'de `error_log` zaten var (satır 84); istemciye genel mesaj dön. | Hayır | XS |
+| **G-13** | Broken functionality | **P2** | `api/admin/ajax/seo.php:95,134,192` · `subpages/seosite.php:13` · `seometa.php:50` · `seotwitter.php:55` | Yükleme hedefleri ve varlık kontrolleri **göreli yol** kullanıyor — PHP'nin çalışma dizinine göre çözülüyor, dosyanın konumuna göre değil. | `seo.php:95` `'../../assets/images/seo/'`, satır 134 `'../../assets/twitter/'`, satır 192 `'../../assets/'`. Apache'de CWD betiğin dizini olduğu için `api/assets/...`'e düşer; `php -S ... router.php` altında CWD sunucunun başlatıldığı dizindir → proje dışına yazabilir. `seosite.php:13` `$faviconPath = '../assets/favicon.ico'`, `seometa.php:50`/`seotwitter.php:55` `file_exists($ogImagePath)` aynı sorunda. Bu, `sitemap.php:14-17` ve `seo.php:170-180`'de zaten teşhis edilip düzeltilmiş **SEO-002 hata sınıfının** kalan örneği. | Dev sunucuda SEO görselleri yanlış dizine yazılır ve önizleme daima "yok" görünür. Yayında sessizce çalışıyor gibi durur. | Üç yolu da `__DIR__` tabanlı yap. | Hayır | XS |
+| **G-14** | Broken functionality | **P2** | `api/admin/chatbotlar.php:212-224` | Yüklenen görselin göreli yolu `data` nesnesine, `JSON.stringify(data)` **çağrıldıktan sonra** yazılıyor → atama ölü. | `formData.append("data", JSON.stringify(data));` önce, `data[el.name] = relativePath;` sonra geliyor. Sunucuya giden JSON o alanı hiç içermiyor. Sunucu tarafında `create.php:35-47` / `update.php:43-55` `$_FILES`'ı zaten **base64'e çevirip** aynı sütuna yazıyor. | Chatbot kapak/profil görselleri panelden `assets/...` yolu yerine dev base64 blob'ları olarak DB'ye yazılıyor — F-01'in tarif ettiği yol tabanlı depolamayla çelişiyor, iki yazma yolu iki farklı biçim üretiyor. | Ölü atamayı sil; sunucu tarafındaki base64 dalını `ChatbotController::handleImageUploads` gibi dosya yazmaya çevir (F-01 ile birlikte ele alınmalı). | Hayır | M |
+| **G-15** | Dead code | **P2** | `api/admin/logo.php` · `api/admin/assets/js/login.js` | İkisi de hiçbir yerden yüklenmiyor ve yüklenseler çalışmazlardı. | `logo.php`: `index.php:32-56` route tablosunda **yok**, `include` eden başka dosya da yok; satır 4 tanımsız `$logo['var_value']`'yu yazdırıyor; satır 37 `updategv.php`'ye `var_key=site_logo` gönderiyor ama `updategv.php` POST anahtarlarını **doğrudan** `var_key` olarak kullanıyor — yani `var_key` adlı bir global var yazardı. `login.js`: `/ajax/giris.php`'ye POST ediyor (doğrusu `/admin/ajax/giris.php`), ve `_login.php` kendi inline script'ini kullanıyor — hiçbir `<script src>` bu dosyayı çağırmıyor. | Yok (erişilemez). Bakım yükü ve yanıltıcı: birinin "logo yönetimi var" sanmasına yol açar. | **Silme adayı** (belirsizlik #1). Logo yönetimi gerçekten isteniyorsa route + `updategv` sözleşmesine uygun alan adı gerekir. | Hayır | XS |
+| **G-16** | Frontend | **P3** | `api/admin/kullanicilar.php:174` · `api/admin/chatbotlar.php:254` | Yeni kayıt sonrası listeye eklenen `<li>`'nin metni şablon değişkeni yerine **düz metin**: `li.innerText = \`baslik1\``. | İki dosyada da bir satır üstte `const baslik1 = form.ad_soyad.value` / `form.isim.value` var; şablonda `${baslik1}` yazılması gerekirken ham `baslik1` duruyor. | Kayıt sonrası listede öğe "baslik1" diye görünür; sayfa yenilenene kadar hangi kaydın eklendiği anlaşılmaz. | `li.textContent = baslik1`. `abonelik.php:225` bunu doğru yapıyor. | Hayır | XS |
+| **G-17** | Frontend | **P3** | `api/admin/index.php:76-77` | `intval()` bir diziye uygulanıyor. | `$database->getGlobalVars('theme_index')` **dizi** döndürüyor (`db.php:355-366`). `intval(['theme_index' => '3'])` boş olmayan dizi için daima `1` → `$themes[1-1]` → daima `$themes[0]`. | Tema seçimi hiçbir zaman uygulanmıyor. `themes` tablosu boşsa `$current_theme` `null` olur ve `_sidebar.php:3` `$current_theme['main_color']` uyarı üretip boş sınıf yazar → panel stilsiz görünür. | `getGlobalVars('theme_index')['theme_index'] ?? 1` (`genelayar.php:2`'deki desen) + `$themes` boşsa yedek. `genelayar.php:137` "tema seçimi kaldırıldı" diyorsa alanı tamamen sil. | Hayır | XS |
+| **G-18** | Data integrity | **P3** | `api/src/Presentation/Controllers/SocialController.php:172` · `api/database/schema.sql:183` | Sanitizer 2000 karaktere kırpıyor, sütun `varchar(1000)`. | `InputSanitizer::text($data['report_detail'] ?? '', 2000)` ↔ `report_detail varchar(1000) DEFAULT NULL`. MySQL `STRICT_TRANS_TABLES` (5.7+ varsayılan) altında 1000'den uzun değer SQLSTATE 22001 ile **hata** verir. | 1000-2000 karakter arası açıklama yazan kullanıcı 500 alır; şikayeti kaydedilmez. | Sınırı 1000'e indir (ya da sütunu `TEXT` yap). G-01 düzeltilirken aynı fonksiyonda. | Hayır | XS |
+| **G-19** | Documentation | **P3** | `api/admin/satiskosullari.php:6` | Mesafeli Satış Sözleşmesi sayfası "Hakkımızda Sayfası" başlığını gösteriyor (kopyala-yapıştır). | `pageTitle("Hakkımızda Sayfası", "Bu sayfada, sitenizin 'Hakkımızda' bölümünde yer alan içeriği düzenleyebilirsiniz.")` — `hakkinda.php:6` ile birebir aynı metin. Dosyanın geri kalanı `satis_kosullari` anahtarıyla doğru çalışıyor. | Admin yanlış sayfada olduğunu sanır. | Başlığı düzelt. | Hayır | XS |
+| **G-20** | Security | **P3** | `api/admin/partials/_header.php:45-48` · beş içerik sayfasında `cdn.ckeditor.com` | Panel dört ayrı CDN'den SRI'siz script/CSS yüklüyor ve **hiç CSP yok**. | `_header.php:45-48`: `cdn.jsdelivr.net/npm/bootstrap@5.3.3`, `cdn.tailwindcss.com`, `cdnjs.cloudflare.com/.../bootstrap-icons`, `cdnjs.../bcryptjs`. Beş içerik sayfası ayrıca `cdn.ckeditor.com/ckeditor5/36.0.0/classic/ckeditor.js`. `integrity=`/`crossorigin=` hiçbirinde yok. `api/.htaccess:41-45` yalnızca `nosniff`/`X-Frame-Options`/`Referrer-Policy` gönderiyor. | Herhangi bir CDN'in ele geçirilmesi = en yetkili panelde kod çalıştırma. CSP'nin yokluğu ayrıca G-01'in tam etkili olmasının sebebi. | Kritik olanları yerelleştir veya SRI ekle; panele `Content-Security-Policy` ekle. `bcryptjs` (satır 48) hiçbir yerde kullanılmıyor — kaldırılabilir. | Hayır | M |
+
+### ŞÜPHE (kanıtlanamadı, bulgu olarak sayılmadı)
+
+- **CKEditor `editorInstance` yarışı** — `hakkinda.php:63-64`, `gizlilikpolitikasi.php:64-65`, `kullanimkosullari.php:64-65`, `satiskosullari.php:63-64`, `teslimatiade.php:65-66`. Beş sayfada da `editorInstance` `ClassicEditor.create(...).then()` içinde atanıyor ama `DOMContentLoaded` handler'ında **koşulsuz** kullanılıyor (`editorInstance.setData(...)`). Promise `DOMContentLoaded`'dan önce çözülmezse `TypeError` olur ve form submit dinleyicisi hiç bağlanmaz (→ sözleşme metinleri ne yüklenir ne kaydedilir). CKEditor 5'in init zinciri saf microtask ise sorun çıkmaz. **Statik okumayla karara bağlanamadı; tarayıcıda doğrulanması gerekiyor.** Doğruysa çözüm basit: `setData` ve form bağlamayı `.then(editor => ...)` içine taşımak.
+
+---
+
+## Doğrulanan ama bulgu OLMAYAN noktalar (G turu)
+
+- **Generic CRUD'da SQL enjeksiyonu yok.** `assertAllowedAdminTable` / `assertSafeWhereFragment` / `assertSafeColumnList` üçlüsü dört ucun (`create/read/update/delete`) tamamında çağrılıyor; gramer beyaz listeleri alt sorguya, fonksiyon çağrısına ya da serbest string literaline yer bırakmıyor. Panelin gönderdiği tüm biçimler (`id = N`, `plan_id = N ORDER BY id ASC`, `chatbot_id = N AND FIND_IN_SET('spam', reported_for) > 0`, `COUNT(*) as total`, `c.*, CONCAT(...)`) beyaz listelerle uyuşuyor — düzeltme paneli kırmamış.
+- **`adminler` tablosuna generic CRUD'dan erişilemiyor.** Dört uçta da `stripos($table, 'adminler')` bloğu **ve** tablo beyaz listesi var (çift kilit). `ajax/adminler.php` ayrı bir uç ve `admin_env_account() !== null` ise 409 ile fail-closed.
+- **`upload.php`** — yukarıdaki soru-cevap tablosunda ayrıntılandırıldı. Bulgu yok. `subdir` parametresi bugün hiçbir çağıran tarafından gönderilmiyor.
+- **`db_backup.php` zinciri** kırılmıyor; `restore()` yol geçişine kapalı; `backup()` boş dosya bırakmıyor.
+- **Admin girişi.** `admin_login_attempt()` tek nokta; `session_regenerate_id(true)` yetki yükselmesinden önce; iki katmanlı rate limit (hesap 5/15dk, IP 20/15dk); `X-Forwarded-For`'a güvenmiyor; hesap yoksa da dummy hash doğrulaması (zamanlama); `hash_equals` doğru kullanılmış; `.env` modunda `adminler` tablosu hiç okunmuyor.
+- **Oturum çerezi.** `admin_session_start()` `HttpOnly` + `SameSite=Lax` + koşullu `Secure` ile `functions/bootstrap.php`'yi birebir aynalıyor.
+- **Admin sayfalarında sunucu tarafı XSS yok.** Listelerde DB'den gelen her metin `htmlspecialchars` ile kaçırılıyor (`kullanicilar.php:14`, `chatbotlar.php:15`, `chatbotkategoriler.php:14`, `abonelik.php:15`, `adminler.php:57`, `hit.php:33-34`, SEO `value=` alanlarının tamamı). `tailmind.php`'nin `pageTitle()`/`generalInput()` yardımcıları kaçırmıyor ama **13 çağıranın hepsi sabit metin geçiyor** — bugün sömürülebilir değil. `renderDataList()` kaçırıyor ve hiç çağrılmıyor. İstemci tarafında `innerHTML` kullanan tek **kullanıcı-verili** nokta G-01.
+- **`.env` dosyaları git'te değil.** `git ls-files` yalnızca `api/.env.example` döndürüyor; `.gitignore:64-66` `.env*`'i dışlıyor. `api/.env` ve `api/admin/.env` takipsiz. (İçerikleri okunmadı.)
+- **Üç denylist tutarlı.** `api/.htaccess`, `api/admin/.htaccess`, `api/router.php` üçü de `.env`, `db_backup`, `error_log`, arşiv/dump uzantılarını kapsıyor; `router.php:16-20` ayrıca `%2e%2e` çözümü sonrası traversal'ı reddediyor.
+- **`sitemap.php`** bilerek 410 dönüyor, hata değil.
+- **`php -l`** 49 dosyanın hepsinde temiz.
+
+---
+
+## Kalan boşluklar (G turu sonrası)
+
+`api/admin/` artık kapsam dışı **değil**. Aşağıdakiler hâlâ açık:
+
+1. **`api/admin/vendor/` (77 dosya) okunmadı** — kural gereği kapsam dışı. `vlucas/phpdotenv` ve `symfony/polyfill-*` sürümlerinin CVE durumu kontrol edilmedi. Not: `api/admin/` **kendi** `composer.json`/`vendor`'ını taşıyor, `api/`'ninkinden ayrı — iki bağımlılık ağacı farklı sürümlere sürüklenebilir.
+2. **`api/admin/assets/js/admin.js` ve `Notification.js` okunmadı** — PHP olmadıkları için 49'un dışında kaldılar. `admin.js` her sayfada yükleniyor (`_header.php:49`); `Notification` sınıfı **her ajax yanıtının `message` alanını** render ediyor. `Notification.js` `innerHTML` kullanıyorsa her `result.message` bir XSS yüzeyi olur — ve `create.php:59`, `update.php:67`, `delete.php:44` ham `$e->getMessage()` döndürüyor. **Bir sonraki turda ilk okunacak şey bu.**
+3. **Hiçbir bulgu çalışan panele karşı doğrulanmadı.** G-02/G-03/G-04 HTML+JS semantiğinden kesin çıkarılıyor; G-06'nın (b) şıkkı "bu ortamda fileinfo var mı?" sorusuna bağlı ve deponun kendi notlarına dayanıyor (`php -m` çalıştırılmadı); ŞÜPHE maddesi tarayıcı gerektiriyor.
+4. **`api/admin/uploads/` ve `api/assets/` dizinlerinin gerçek içeriği ve izinleri incelenmedi** (ana denetimin #8'i geçerli). Şu an ikisi de boş görünüyor.
+5. **Panelin yük altındaki davranışı ölçülmedi.** `kullanicilar.php:2` `SELECT * FROM kullanicilar` (tüm kullanıcılar, `avatar` longtext dahil, LIMIT'siz); `chatbotlar.php:2`, `abonelik.php:2`, `chatbotistatistik.php:2` aynı desende. Veri hacmi ölçülemediği için bulgu yazılmadı.
+6. **`chatbotistatistik.php:101-147`** her tıklamada 5 + 4 + 1 = **10 ayrı `read.php` isteği** atıyor. Ölçülmediği için bulgu değil; mevcut N+1 kayıtlarıyla aynı desen.
+
+---
+
+## Karar vermem gereken belirsizlikler (G turu)
+
+1. **`readenv.php` ve `logo.php` silinsin mi? (G-08, G-15)** İkisinin de üç yerde çağıranı yok. `readenv.php` ileride bir "anahtarı göster" özelliği için bilerek bırakılmış olabilir; `logo.php` yarım kalmış bir logo yönetimi ekranına benziyor. **Soru:** bunlar (a) silinecek ölü kod mu, (b) tamamlanacak yarım özellik mi? Kendim silmedim.
+
+2. **Admin panelinden kullanıcı eklenebilmeli mi? (G-05)** Form şifre alanı taşımıyor, dolayısıyla eklenen hesap giriş yapamıyor. İki makul davranış var ve hangisinin doğru olduğu bir iş kuralı: (a) admin şifre belirleyerek kullanıcı açabilmeli, (b) kullanıcı yalnızca kayıt akışından doğmalı, panel salt-düzenleme olmalı. (b) ise "Yeni Ekle" butonu ve `create.php` çağrısı kaldırılmalı. **Mevcut davranışın doğru mu yanlış mı olduğu belirsiz olduğu için test yazmadım.**
+
+3. **`reported_for` için kanonik küme nedir? (G-01)** `chatbotistatistik.php:84-89` dört değer sayıyor (`sexual_content`, `legal_issue`, `terrorism`, `spam`); `web/src/features/moderation/ReportModal.jsx` daha fazlasını gönderiyor olabilir; sunucuda hiç liste yok. **Soru:** izin verilen şikayet nedenlerinin tam listesi nedir? Yanlış bir liste mevcut şikayet gönderimlerini sessizce kırar. (Not: yama bu cevabı beklemek zorunda değil — panel tarafında `textContent`'e geçmek tek başına XSS'i kapatır ve hiçbir davranışı kırmaz.)
+
+---
+
+# Ek tur — `api/src/` kapsam kapatma (H serisi)
+
+Tarih: 2026-09-02 · Yöntem: salt-okunur. Bu tur da yeni bir tam denetim değil; ana denetimin `api/src/**` kapsamındaki 16 dosyalık boşluğu kapatıyor.
+
+## Okunmamış olan 16 dosya
+
+Ana denetimin "Kapsam" satırı `api/src/**` için 19 dosya sayıyor (14 controller, 2 repository, `AuthMiddleware`, `InputSanitizer`, `IyzicoClient`). Ağaçta 35 PHP dosyası var. Aradaki 16 dosya — hepsi bu turda okundu:
+
+| # | Dosya | Satır | Katman |
+|---|---|---|---|
+| 1 | `Application/UseCases/Auth/RegisterUseCase.php` | 64 | Application |
+| 2 | `Application/UseCases/Auth/LoginUseCase.php` | 46 | Application |
+| 3 | `Application/UseCases/Auth/GoogleLoginUseCase.php` | 36 | Application |
+| 4 | `Domain/Interfaces/CartRepositoryInterface.php` | 11 | Domain |
+| 5 | `Domain/Interfaces/ChatRepositoryInterface.php` | 15 | Domain |
+| 6 | `Domain/Interfaces/ChatbotRepositoryInterface.php` | 24 | Domain |
+| 7 | `Domain/Interfaces/NotificationRepositoryInterface.php` | 8 | Domain |
+| 8 | `Domain/Interfaces/SocialRepositoryInterface.php` | 39 | Domain |
+| 9 | `Domain/Interfaces/SubscriptionRepositoryInterface.php` | 10 | Domain |
+| 10 | `Domain/Interfaces/UserRepositoryInterface.php` | 18 | Domain |
+| 11 | `Domain/Interfaces/WalletRepositoryInterface.php` | 12 | Domain |
+| 12 | `Infrastructure/Database/BaseRepository.php` | 115 | Infrastructure |
+| 13 | `Presentation/Response/JsonResponse.php` | 60 | Presentation |
+| 14 | `Shared/Constants/AppConfig.php` | 140 | Shared |
+| 15 | `Shared/Exceptions/AppException.php` | 53 | Shared |
+| 16 | `autoload.php` | 73 | — |
+
+Doğrulama için ayrıca (yeniden) bakılanlar: `UserRepository`, `ChatbotRepository`, `AuthController` (register/login/google dalları), `InputSanitizer::pickAllowed`/`isSafeIdentifier`, `functions/bootstrap.php` (`parse_post_data`), `functions/plans.php`, `functions/chatbot_limits.php`, `functions/producer_plan.php`, `functions/coin_engine.php`, `web/src/shared/lib/pricing.js`, `migrations/007_plan_limits.sql`, `WalletController::getPricing()`.
+
+---
+
+## E kategorisi — sabit senkronizasyon tablosunun genişletilmiş hâli
+
+Ana denetimin tablosu üç kaynağı karşılaştırıyordu (`AppConfig.php` · `coin_engine.php` · `pricing.js`) ve uyuşmazlık bulmamıştı. **O tablo hâlâ doğru.** Ancak `AppConfig` tam olarak okununca senkron yüzeyinin üç değil **beş** olduğu görülüyor: `plans` tablosunun satırları ve yükleme uçlarının kendi kopyaları da aynı değerleri taşıyor.
+
+### Ana tabloya eklenen satırlar
+
+| Sabit | `AppConfig.php` | Diğer kopyalar | Durum |
+|---|---|---|---|
+| Bağımsız bot limiti | `FREE_INDEPENDENT_BOT_LIMIT = 1` (s.12) | `plans.independent_bot_limit` sütunu `NOT NULL DEFAULT 1` (007:44) · `plans.php:74` fallback | ⚠️ İki kaynak. Fallback ile DB varsayılanı bugün eşit, ama H-04'e bakın. |
+| Herkese açık bot limiti | `FREE_PUBLIC_BOT_LIMIT = 2` (s.13) | `plans.public_bot_limit` `DEFAULT 2` (007:44) · `plans.php:75` | ⚠️ Aynı. |
+| Günlük mesaj | `DAILY_FREE_MESSAGES = 10` (s.22) | `plans.daily_message_limit` `DEFAULT 10` (007:44) · `plans.php:76` | ⚠️ Aynı. |
+| Maks yükleme boyutu | `MAX_UPLOAD_SIZE_BYTES = 5 MB` (s.31) | `admin/ajax/upload.php:54` **5 MB (elde)** · `admin/ajax/updategv.php:63` **5 MB (elde)** · `admin/ajax/seo.php:96,137` **500 KB** · `:192` **50 KB** | ⚠️ H-06 — dört ayrı kopya, hiçbiri `AppConfig`'i okumuyor. |
+| İzinli görsel MIME | `ALLOWED_IMAGE_MIMES` (s.29) | `admin/ajax/upload.php:47-53` (+`application/pdf`) · `admin/ajax/updategv.php:57-62` · `admin/ajax/seo.php:97,136` (yalnız png/jpeg) | ⚠️ H-06 — dört ayrı liste. |
+| Abonelik süreleri | `SUBSCRIPTION_WEEKLY = 7` / `MONTHLY = 30` (s.8-9) | Yalnız `MarketplaceController:383` okuyor | ✅ Tek okuyucu. |
+| Sayfalama | `DEFAULT_PAGE_LIMIT = 20` (s.34) | — | ⚠️ Hiçbir yerde okunmuyor (README:1033 de böyle diyor). |
+| Üretici planı limitleri | `PRODUCER_*_LIMIT` (s.18-19) | — | ⚠️ Hiçbir yerde okunmuyor (D-07). `producer_plan.php:13` ve `chatbot_limits.php` bunu kendi yorumlarında doğruluyor. |
+
+**Fiyat/komisyon/coin tarafında hâlâ uyuşmazlık yok.** Yeni olan: bot ve mesaj kotalarının **canlı DB satırlarında** da yaşaması ve o satırların admin panelinden düzenlenebilir olması — sabitin senkronu artık kod incelemesiyle garanti edilemiyor. H-04 bunun somut kırılmasını gösteriyor.
+
+---
+
+## Bulgu tablosu (H serisi)
+
+| ID | Kategori | Sev | Dosya:satır | Problem | Kanıt | Kullanıcı etkisi | Önerilen çözüm | Blocker? | Efor |
+|---|---|---|---|---|---|---|---|---|---|
+| **H-01** | Security | **P1** | `api/src/Application/UseCases/Auth/RegisterUseCase.php:34-47` · `Infrastructure/Repositories/UserRepository.php:51-53` · `Infrastructure/Database/BaseRepository.php:51-71` | Kayıt akışı istemcinin gönderdiği ham diziyi **sütun beyaz listesi olmadan** `INSERT`'e geçiriyor → mass assignment. `kullanicilar` tablosunun her sütunu istemci tarafından belirlenebiliyor. | `AuthController:57` `$data = parse_post_data()` — `bootstrap.php:175-184` yalnızca `json_decode` yapıyor, anahtar filtresi yok. `RegisterUseCase:34-36` sadece `sifre`, `kullanici_adi`, `eposta`'yı **üzerine yazıyor**; diğer anahtarlar dokunulmadan kalıyor. Satır 47 `$this->users->create($data)` → `UserRepository:52` `self::insert(self::T, $data)` → `BaseRepository:62-71` sütun listesini `array_keys($data)`'dan kuruyor. Tek kontrol `assertSafeColumns` (s.51-59) ve o yalnızca adın **şeklini** doğruluyor (`isSafeIdentifier`: `^[A-Za-z_][A-Za-z0-9_]*$`), **hangi sütun** olduğunu değil. `InputSanitizer::pickAllowed` altı çağrı yerinde uygulanmış (`ChatbotController:103,257`, `ChatController:17`, `MarketplaceController:161,627`, `SocialController:125`) — **kayıt yolunda yok.** `BaseRepository:48-49`'un kendi yorumu "çağıranlar ayrıca kendi sütun beyaz listelerini uyguluyor" diyor; bu çağıran için doğru değil. **Yüzey tam olarak bir uç:** `UserRepository::create()`'in yalnızca iki çağıranı var — `RegisterUseCase` (savunmasız) ve `GoogleLoginUseCase:14-18` (üç anahtarlı sabit dizi geçiyor, etkilenmiyor). `kullanicilar`'a yazan diğer yol `UserController`'ın `updateById` çağrıları ve hepsi elle kurulmuş tek-anahtarlı dizi (`:83,106,130,213`), yani yamanın kapsamı dar ve risksiz. | **Sömürü senaryosu:** `POST` kayıt isteğine fazladan alan eklenir: `{"kullanici_adi":"x","eposta":"a@b.c","sifre":"Str0ng!pass","google_id":"<kurbanın Google sub'ı>"}`. `google_id varchar(64) DEFAULT NULL` ve `isSafeIdentifier('google_id')` geçtiği için satır yazılır. Sonra kurban **ilk kez** Google ile giriş yaptığında `UserRepository::findByGoogleId():45-48` `WHERE google_id = ? OR eposta = ?` sorgusu **saldırganın satırını** bulur, `GoogleLoginUseCase:28` onun `id`'sini döndürür ve kurban saldırganın hesabına giriş yapar — o oturumda girdiği her şey (checkout kartı, eğitim verisi, notlar) saldırganın hesabına yazılır. ⚠️ **Ön koşul:** saldırganın kurbanın Google `sub` değerini bilmesi gerekir; bu değer herkese açık değildir, kurbanın giriş yaptığı başka bir OAuth uygulamasından elde edilebilir. Ön koşulsuz ikinci etki: `avatar` (`longtext`) alanına kayıt sırasında megabaytlarca veri yazılabilir (kayıt limiti IP başına 5/10dk) ve `id` elle verilebilir. | `RegisterUseCase`'in başına `InputSanitizer::pickAllowed($data, ['kullanici_adi','eposta','sifre','ad_soyad','telefon','dogum_tarihi','dil'])` ekle — altı kardeş çağrı yerindeki desenin aynısı. | Hayır | S |
+| **H-02** | Race conditions | **P1** | `api/src/Application/UseCases/Auth/GoogleLoginUseCase.php:11-25` | Klasik check-then-create: `findByGoogleId()` ile bakılıyor, sonra `create()` çağrılıyor; ikisi ayrı gidiş-dönüş ve **duplicate yakalaması yok**. | Satır 11 `$user = $this->users->findByGoogleId(...)`, satır 14 `$userId = $this->users->create([...])`. Arada hiçbir transaction/kilit yok. `kullanicilar.eposta` UNIQUE olduğu için ikinci INSERT `PDOException` fırlatır ve `AuthController:179-180`'deki `try` yalnızca `AppException` yakalıyor → **yakalanmamış PDOException, ham 500**. Kardeş dosya `RegisterUseCase:46-53` tam olarak bu senaryoyu yakalıyor ve neden yakaladığını yorumda açıklıyor; `coin_engine.php:65-80` de aynı deseni uyguluyor. Üç yerden ikisinde düzeltme var, burada yok. | **"Aynı istek iki sekmeden gelirse":** Google ile ilk kez giriş yapan bir kullanıcı butona iki kez basarsa (ya da iki sekmeden dönerse) iki istek de "kullanıcı yok" görür, ikisi de INSERT dener, biri 500 alır. Kullanıcı için görünen: giriş rastgele başarısız oluyor. Veri bozulmuyor (UNIQUE koruyor). | `create()` çağrısını `RegisterUseCase:46-53`'teki `try/catch (str_contains($e->getMessage(), 'Duplicate entry'))` bloğuyla sar; yakalayınca satırı yeniden oku ve o kullanıcıyla devam et. | Hayır | XS |
+| **H-03** | Broken functionality | **P2** | `api/src/Application/UseCases/Auth/GoogleLoginUseCase.php:14-18` | Google ile açılan hesaba **`kullanici_adi` hiç yazılmıyor** ve hiçbir yerde sonradan doldurulmuyor. | Satır 14-18 `create()`'e yalnızca `google_id`, `eposta`, `ad_soyad` veriyor. Şema: `kullanici_adi varchar(30) DEFAULT NULL` + UNIQUE (MySQL çoklu NULL'a izin verir, bu yüzden hata da vermiyor). Klasik kayıt yolunda alan her zaman dolu: `web/src/app/login/page.jsx:427-428` `eposta.split("@")[0]` ile türetiyor. Google yolunda karşılığı yok. `UserController:46` ve `:65` `'username' => $user['kullanici_adi']` döndürüyor → **null**. | Google ile kaydolan her kullanıcının kullanıcı adı boş: `dashboard/chat/page.jsx:228` (`item.kullanici_adi` — mesaj yazarı), `notes/page.jsx:65,470` ve `DialogueModal.jsx:304,323` (`owner_kullanici_adi`) boş görünüyor; profil başlığında kullanıcı adı yok. Kullanıcı Ayarlar'dan (`settings/page.jsx:744`) elle doldurabiliyor, yani kalıcı değil ama varsayılan hâli bozuk. İkincil asimetri: `RegisterUseCase:54` `addEmailRecord()` çağırıyor, `GoogleLoginUseCase` çağırmıyor → Google kullanıcıları `user_emails` tablosunda yok. (Bu tabloyu bugün **hiçbir kod okumuyor**, o yüzden görünür etkisi yok.) | `create()`'e türetilmiş bir `kullanici_adi` ekle (e-postanın yerel kısmı + çakışmada sayaç), ya da ilk girişte kullanıcıya seçtir. `addEmailRecord()` çağrısını da ekleyerek iki yolu eşitle. | Hayır | S |
+| **H-04** | Data integrity | **P2** | `api/database/migrations/007_plan_limits.sql:44` · `api/admin/abonelik.php:26-55` · `api/functions/plans.php:74-76` | `plans` tablosundaki üç kota sütunu (`independent_bot_limit`, `public_bot_limit`, `daily_message_limit`) **admin panelinin plan formunda yok**. Panelden açılan her yeni plan bu sütunları DB varsayılanlarıyla, yani **ücretsiz plan kotalarıyla** alıyor. | Migration 007 satır 44: `ADD COLUMN independent_bot_limit INT NOT NULL DEFAULT 1, ADD COLUMN public_bot_limit INT NOT NULL DEFAULT 2, ADD COLUMN daily_message_limit INT NOT NULL DEFAULT 10`. `abonelik.php`'nin formu yalnızca `name_tr, name_en, monthly_price, yearly_price, currency, description_tr, description_en` gönderiyor (satır 26-55; `saveOrUpdateBtn` satır 189-192 tüm `dataForm.elements`'i topluyor, kota alanı hiç yok) → `ajax/create.php` → `INSERT INTO plans (...)`. Kotalar `chatbot_limits.php:22-27` → `plans.php::getUserPlan()` üzerinden **canlı olarak** uygulanıyor, ve `WalletController::getPricing()` bunları `limits` alanında istemciye gösteriyor. | Admin panelden "Platin — ₺999/ay" planı açar; o planı satın alan kullanıcı **1 bağımsız bot, 2 herkese açık bot, günde 10 mesaj** alır — yani ücretsiz plan kotaları. Fiyatlandırma kartında da bu kotalar yazar. Ve **panelden düzeltmenin hiçbir yolu yok**, çünkü sütunlar hiçbir admin ekranında görünmüyor. Migration 007'nin tohumladığı dört plan doğru değerleri taşıyor; sorun yalnızca panelden **sonradan eklenen** planlarda. | `abonelik.php`'nin formuna üç sayısal alan ekle (`ajax/create.php`/`update.php` zaten `plans` tablosunu beyaz listesinde tutuyor, sunucu tarafında değişiklik gerekmiyor). | Hayır | S |
+| **H-05** | Dead code | **P2** | `api/src/Domain/Interfaces/` (6 dosya, 95 satır) · `api/src/autoload.php:26-63` | Clean Architecture ağacının büyük kısmı iskelet: 8 `Domain` arayüzünden **6'sının ne implementasyonu ne de tek bir referansı var**, 9 katman dizini tamamen boş, autoloader'ın aradığı 31 dizinden 11'i hiç yok. | Tüm `api/src` içinde `implements` yalnızca iki yerde geçiyor: `ChatbotRepository:2` ve `UserRepository:2`. `Cart`/`Chat`/`Notification`/`Social`/`Subscription`/`WalletRepositoryInterface` adları kendi tanım dosyaları dışında **hiçbir dosyada geçmiyor**. Boş dizinler (0 dosya): `Application/UseCases/{Chatbot,User,Wallet}`, `Application/DTO`, `Application/Validators`, `Domain/Entities`, `Infrastructure/{Mail,FileStorage,Cache}`. `autoload.php`'nin listesindeki `Application/UseCases/{Marketplace,Social,Chat,Note,Content,Notification,Training,Message,Seller,Contact}` ve `Domain/Services` **dizin olarak da yok**. 17 use-case dizininden yalnızca `Auth` dolu (3 dosya); 14 controller kendi SQL'ini yazıyor. | Arayüzler yürürlükte olmayan sözleşmeler tarif ediyor: `WalletRepositoryInterface::requestWithdrawal(int, float): int` imzasına güvenip yazılacak kod, `WalletController`'ın gerçekte yaptığıyla eşleşmez. `CartRepositoryInterface` var ama `CartController` yok (sepeti `MarketplaceController` yönetiyor). Ayrıca her autoload ıskası 31'e kadar `file_exists` çağrısı yapıyor, bunların ~20'si var olmayan/boş dizinlere. | Ya arayüzleri **sil** (bugün hiçbir şey kırılmaz — sıfır referans), ya da hangilerinin yol haritası olduğunu dosya başında yaz. `autoload.php`'nin dizin listesini var olanlarla sınırla. İki implement edilen arayüz (`Chatbot`, `User`) doğrulandı: **metot kümeleri eksiksiz eşleşiyor**, fatal error yok. | Hayır | S |
+| **H-06** | Data integrity | **P2** | `api/src/Shared/Constants/AppConfig.php:28-31` · `api/admin/ajax/upload.php:47-54` · `updategv.php:57-63` · `ajax/seo.php:96-97,136-137,192-193` | Yükleme sınırları ve izinli MIME listesi `AppConfig`'de "tek doğruluk kaynağı" olarak duruyor ama **admin tarafındaki üç yükleme yolunun hiçbiri onu okumuyor**; her biri kendi kopyasını taşıyor. | `MAX_UPLOAD_SIZE_BYTES` ve `ALLOWED_IMAGE_MIMES`'i okuyan tek yer `ChatbotController:547,551`. Kopyalar: `upload.php:54` `5 * 1024 * 1024` + `:47-53` kendi MIME haritası (`application/pdf` **fazladan**), `updategv.php:63` `5 * 1024 * 1024` + `:57-62` kendi haritası, `seo.php:96,137` 500 KB / `:192` 50 KB + `:97,136` yalnız `image/png, image/jpeg`. `AppConfig.php:4`'ün kendi başlığı "Single source of truth for all magic numbers" diyor. | Bugün değerler çelişmiyor (5 MB'lar eşit), ama sınırı değiştirmek dört dosyaya dokunmayı gerektiriyor ve bunu zorlayan hiçbir mekanizma yok — CLAUDE.md'nin "sabitler üç yerde kopyalanmış" tuzağının dördüncü ve beşinci örneği. `webp`/`gif` `seo.php`'de sessizce reddediliyor, kullanıcıya sebebi söylenmiyor. | Üç admin ucunu `AppConfig::MAX_UPLOAD_SIZE_BYTES` / `ALLOWED_IMAGE_MIMES` okuyacak şekilde çevir (uçlar zaten `functions/db.php` üzerinden `AppConfig`'i yüklüyor). Farklı olması gereken sınırlar (favicon 50 KB) `AppConfig`'de ayrı sabit olsun. | Hayır | S |
+| **H-07** | Error handling | **P3** | `api/src/Infrastructure/Database/BaseRepository.php:75-84` | `update()` `$data` ile `$whereParams`'ı `array_merge` ile birleştiriyor; string anahtarlarda **sonraki kazanır**, yani `$where` parametresi aynı adı taşıyorsa `SET` değeri sessizce ezilir. Docblock'un kendi örneği tam olarak bu tehlikeli deseni öğretiyor. | Satır 84: `$stmt->execute(array_merge($data, $whereParams));`. Satır 76-78'deki örnek: `self::update('table', ['name' => 'x'], 'id = :id', ['id' => 5])` — burada `$data`'ya bir `id` anahtarı eklenirse `SET id = :id` ile `WHERE id = :id` **aynı** placeholder'a bağlanır ve `$whereParams`'ın değeri kazanır. Bugün canlı bir kırılma yok: her gerçek çağıran `:_id` alt çizgi önekini kullanıyor (`UserRepository:62,106,110`, `ChatbotRepository:28,36,40,44`) — yani düzeltme uygulanmış ama **docblock güncellenmemiş**. | Bugün etkisi yok. Docblock'taki deseni izleyen bir sonraki çağıran sessiz veri bozulması üretir (yanlış satır güncellenmez, yanlış değer yazılır — hata da vermez). | Docblock örneğini `:_id` önekiyle güncelle; ek olarak `array_merge` öncesi anahtar çakışmasını `array_intersect_key` ile tespit edip `InvalidArgumentException` fırlat. | Hayır | XS |
+| **H-08** | Data integrity | **P3** | `api/src/Application/UseCases/Auth/LoginUseCase.php:31-42` · `Infrastructure/Repositories/UserRepository.php:78-85,92-94` | "Beni hatırla" ile her giriş `user_tokens`'a **yeni bir satır ekliyor**; eski satırlar hiç temizlenmiyor. `clearRememberToken()` var ama giriş yolundan çağrılmıyor. | `LoginUseCase:37` `setRememberToken(...)` → `UserRepository:79` düz `self::insert(self::T_TOKENS, [...])`. Dosyada `clearRememberToken` (s.92-94) tanımlı ve `AuthController::logout`'tan çağrılıyor, girişten çağrılmıyor. Her token `AppConfig::REMEMBER_ME_DAYS = 30` gün yaşıyor. Süresi geçmiş satırları silen bir temizlik işi de yok (`findByRememberToken:33` yalnızca `expiry > NOW()` ile **filtreliyor**, silmiyor). | Aynı kullanıcının her "beni hatırla" girişi kalıcı bir satır bırakıyor; tablo sınırsız büyüyor ve kullanıcının eski cihazlarındaki oturumları 30 gün boyunca geçerli kalıyor — cihaz listesi/iptal ekranı olmadığı için kullanıcının bunu görmesi ya da kapatması mümkün değil. | Girişte aynı kullanıcının süresi geçmiş token'larını sil; ya da cihaz başına tek token politikası uygula. Süresi geçmiş satırlar için bir temizlik adımı ekle. | Hayır | S |
+| **H-09** | Error handling | **P3** | `api/src/Application/UseCases/Auth/LoginUseCase.php:25` | Google ile açılmış (parolasız) bir hesap parola formundan denendiğinde `password_verify()`'a `null` geçiliyor. | Satır 25: `password_verify($password, $user['sifre'])`. `findByUsernameOrEmail:26` `sifre` sütununu seçiyor; Google hesaplarında bu sütun NULL (H-03, `GoogleLoginUseCase` `sifre` yazmıyor). PHP 8.1'de dahili fonksiyona `null` geçmek deprecated; sonuç `false` olduğu için **kimlik doğrulama kararı doğru**. | `display_errors` açık bir ortamda deprecation metni JSON gövdesine karışıp `res.json()`'ı bozar. Kapalıyken (varsayılan, `bootstrap.php`) yalnızca hata günlüğünü şişirir. | `$user['sifre'] ?? ''` ya da NULL ise doğrudan `AuthException` — kullanıcıya "bu hesap Google ile açılmış" demeden, aynı genel mesajla (kullanıcı sayımını önlemek için). | Hayır | XS |
+| **H-10** | Documentation | **P3** | `api/src/Shared/Constants/AppConfig.php:16-17` | Yorum güncelliğini yitirmiş: "`chatbot_limits.php` only ever applies the FREE_* limits". | `chatbot_limits.php:22-27` artık `getUserPlan($db, $userId)['independent_bot_limit']` okuyor, yani limit **`plans` tablosundan** geliyor; `FREE_*` yalnızca migration 007 uygulanmamışsa `plans.php::fallbackPlan()` üzerinden devreye giriyor. Yorumun ikinci cümlesi ("nothing consults these when a producer plan is active") ise hâlâ doğru — `producer_plan.php:13` bunu teyit ediyor. | Sabiti okuyan biri limitlerin kodda sabit olduğunu sanır; oysa canlı davranış DB satırına bağlı (bkz. H-04). | Yorumu iki cümleye ayır: `FREE_*` bir **fallback**, `PRODUCER_*` gerçekten ölü. | Hayır | XS |
+
+---
+
+## Doğrulanan ama bulgu OLMAYAN noktalar (H turu)
+
+- **Google giriş akışının e-posta doğrulaması yerinde.** `GoogleLoginUseCase::execute()` imzasında `email_verified` yok, yani güvenlik tamamen çağırana bağlı — ve çağıran bunu yapıyor: `AuthController:160-161` `$payload['email_verified']`'ı okuyup satır 153-159'daki yorumda neden şart olduğunu açıklıyor (`email_verified: false` token'larla hesap ele geçirme). `verifyIdToken` istisnası da ele alınmış (s.131-137).
+- **Giriş ve kayıt rate limit'li.** `AuthController:22-23` (`login:` hesap+IP 8/5dk, `login-ip:` 30/5dk), `:59` (`register:` 5/10dk), `:205` ve `:309` (parola sıfırlama). Use case'lerin kendisinde limit yok ama tek çağıran yolları korumalı.
+- **Kullanıcı sayımı (enumeration) kapalı.** `LoginUseCase:24-26` bilinmeyen kimlik ile yanlış parolayı aynı mesaj ve aynı `AuthException` (401) ile döndürüyor; gerekçe satır 18-23'te yazılı.
+- **`RegisterUseCase`'in yarış durumu ele alınmış.** `existsByUsernameOrEmail` + `create` iki gidiş-dönüş, ama satır 46-53 `Duplicate entry`'yi yakalayıp aynı 409'a çeviriyor; DB'deki UNIQUE kısıtı gerçek koruma. (H-02 bu düzeltmenin kardeş dosyada eksik olması.)
+- **`BaseRepository`'de SQL enjeksiyonu yok.** `one/all/scalar` tamamen parametreli; `insert/update` sütun adlarını `assertSafeColumns` → `InputSanitizer::isSafeIdentifier` gramerinden geçiriyor; tablo adları yalnızca `AppConfig::TABLE_*` sabitlerinden geliyor; `inClause()` placeholder üretiyor. (H-01 bir **yetkilendirme/beyaz liste** eksiği, enjeksiyon değil.)
+- **İmplement edilen iki arayüz eksiksiz.** `UserRepositoryInterface`'in 15 metodunun ve `ChatbotRepositoryInterface`'in 17 metodunun tamamı ilgili sınıflarda mevcut — hiçbirinde "abstract method not implemented" fatal error'ı yok. `ChatbotRepositoryInterface:19-23` kaldırılan `findBySlug()`'ı neden kaldırdığını da açıklıyor.
+- **`JsonResponse` Content-Type gönderiyor.** Sınıfın kendisi başlık yazmıyor ama `autoload.php:10` → `functions/bootstrap.php:10` `header('Content-Type: application/json')` ile global olarak ayarlıyor; her API girişi `autoload.php` üzerinden geçiyor. Ayrıca `success()`/`error()` her ikisi de `exit` ediyor, yani "yanıttan sonra çalışan kod" sınıfı bir hata yok.
+- **`AppException` hiyerarşisi ve autoload etkileşimi doğru.** Sekiz sınıf tek dosyada tanımlı ve autoloader dosya-adı-başına-tek-sınıf çalıştığı için `autoload.php:20` dosyayı koşulsuz yüklüyor; gerekçe satır 14-19'da yazılı. `JsonResponse::codeForException` sekiz alt sınıfın yedisini eşliyor, kalan her şey `ERR_SERVER`'a düşüyor.
+- **`AppConfig::googleGeminiApiKey()`** `api/admin/.env`'i doğru yoldan okuyor (`__DIR__ . '/../../../admin/.env'` → `api/admin/.env`) ve `$_ENV` önceliği doğru. Not: bu dosya G-07'nin allowlist'siz yazdığı dosya — iki bulgu aynı dosyada buluşuyor.
+- **Fiyat/komisyon/coin sabitleri hâlâ senkron.** Ana denetimin tablosundaki 8 satırın tamamı yeniden doğrulandı; uyuşmazlık yok.
+
+---
+
+## Kalan boşluklar (H turu sonrası)
+
+`api/src/` artık tamamen okundu (35/35). Aşağıdakiler açık:
+
+1. **`api/functions/` tam olarak okunmadı.** Dizinde 16 PHP dosyası var (ana denetimin "19 dosya" ifadesiyle uyuşmuyor — alt dizin yok, sayım fazla). Bu turda yalnızca beşine bakıldı: `bootstrap.php` (kısmen), `plans.php`, `chatbot_limits.php`, `producer_plan.php`, `coin_engine.php` (kısmen). `ParamPosMarketplace.php`, `checkout_payments.php`, `smtp_client.php`, `phpmailer.php`, `minify.php`, `validators.php`, `rate_limit.php`, `logging.php`, `env.php`, `db.php`, `util.php` doğrulanmadı — H-01/H-02'nin güvendiği `checkRateLimit()` davranışı da bunlardan birinde. **Bir sonraki turun doğal kapsamı bu.**
+2. **`api/api/**` (123 endpoint) bu turda yeniden okunmadı.** H-01 için gereken çağıran araması yapıldı ve kapatıldı: `UserRepository::create()`'in `api/src` + `api/api` genelinde yalnızca iki çağıranı var (iki Auth use case'i). Ama başka repository'lerin ham `$data` alıp almadığı taranmadı.
+3. **Hiçbir bulgu çalışan sisteme karşı doğrulanmadı.** H-01'in `google_id` zinciri koddan kesin çıkıyor ama ön koşulu (kurbanın Google `sub`'ının bilinmesi) saha koşuluna bağlı — sömürülebilirliğin pratik değeri ölçülmedi. H-04'ün etkisi "panelden yeni plan eklendi mi?" sorusuna bağlı; canlı `plans` tablosunun içeriği görülmedi.
+4. **Migration'ların canlıda uygulanmış olup olmadığı bilinmiyor** (ana denetimin #1'i hâlâ geçerli). H-04 doğrudan "migration 007 uygulandı mı?" sorusuna bağlı: uygulanmadıysa `fallbackPlan()` devreye girer ve panelden eklenen plan zaten hiçbir şey yapmaz.
+5. **`web/src/shared/lib/pricing.js` dışındaki frontend sabitleri taranmadı.** E tablosu yalnızca `pricing.js`'i kapsıyor; başka bileşenlerde kalmış kopyalar (ör. yükleme boyutu doğrulaması) aranmadı.
+6. **Performans ölçülmedi.** H-05'teki autoload `file_exists` taraması ve `plans.php::getUserPlan()`'ın istek-içi `static` cache'i dışında sorgu sayısı ölçülmedi.
+
+---
+
+## Karar vermem gereken belirsizlikler (H turu)
+
+1. **Boş katman dizinleri ve 6 arayüz silinsin mi? (H-05)** Sıfır referansları var, bugün silmek hiçbir şeyi kırmaz. Ama `Domain/Entities`, `Application/DTO` gibi dizinler bilinçli bir yol haritası olabilir. **Soru:** bu iskelet (a) terk edilmiş bir refactor kalıntısı mı, (b) devam eden bir planın parçası mı? Kendim silmedim.
+
+2. **Google ile açılan hesabın kullanıcı adı ne olmalı? (H-03)** Üç makul seçenek var ve hangisinin doğru olduğu ürün kararı: (a) e-postanın yerel kısmından türet (klasik kayıt yolunun yaptığı), (b) ilk girişte kullanıcıya seçtir, (c) kullanıcı adı opsiyonel kalsın ve arayüz her yerde `ad_soyad`'a düşsün. (c) seçilirse bu bir bulgu değil, arayüz hatası olur. **Mevcut davranışın doğru mu yanlış mı olduğu belirsiz olduğu için test yazmadım.**
+
+3. **Panelden eklenen bir planın kotaları ne olmalı? (H-04)** Formu üç alanla genişletmek teknik çözüm, ama varsayılanların ücretsiz plan değerleri olması bilinçli bir "fail-safe" olabilir (yanlış yapılandırılmış plan bedava kota dağıtmasın). **Soru:** yeni plan kotaları (a) admin tarafından zorunlu girilmeli mi, (b) mevcut bir plandan kopyalanmalı mı, (c) bugünkü gibi 1/2/10'da mı kalmalı? (c) ise bu bir bulgu değil, eksik olan yalnızca panelde bir uyarı metni.
+
+---
+
+# Ek tur — `api/functions/` kapsam kapatma (I serisi)
+
+Tarih: 2026-09-02 · Yöntem: salt-okunur. "Kalan boşluklar (H turu sonrası)" #1'i kapatıyor.
+
+## Bu turda okunanlar
+
+`api/functions/` altındaki **16 PHP dosyasının tamamı** (alt dizin yok). `php -l` 16'sında da temiz.
+
+Öncelik sırası kullanıcının verdiği gibi işlendi: `rate_limit.php` → `checkout_payments.php` → `ParamPosMarketplace.php` → `coin_engine.php` → kalan 12.
+
+Doğrulama için ayrıca bakılanlar: `MarketplaceController::createSubscription` (idempotency + transaction sınırları), `SellerController::refund/reconcile` (yetki), `ChatController::generateReply` (coin tüketim/iade akışı), `AuthController` (oturum yenileme), `admin/ajax/smtp.php`, `migrations/007`, `web/src` (idempotency anahtarı gönderiliyor mu).
+
+## Öncelikli dört soruya doğrudan cevap
+
+| Soru | Cevap |
+|---|---|
+| **`checkRateLimit()` atomik mi?** (H-01/H-02 buna güveniyor) | **Evet, sayaç atomik.** `rate_limit.php:52-59` tek bir `INSERT … ON DUPLICATE KEY UPDATE` ile hem pencere devrini hem artırmayı yapıyor; `attempts` ve `window_start` aynı ifadede `IF(window_start < NOW() - INTERVAL ? SECOND, …)` ile karara bağlanıyor. Okuma-sonra-yazma yarışı yapısal olarak yok. Satır 61'deki ayrı `SELECT` bir yarışa açık ama **yalnızca fazla sayma yönünde**: iki eşzamanlı istek de daha yüksek değeri okur, ikisi de reddedilir. Kendi artışından düşük bir değer okumak mümkün değil. **H-01 ve H-02'nin bu davranışa güvenmesi yerinde.** |
+| **Pencere sınırında ne oluyor?** | Sabit pencere (fixed window), yani sınırın klasik zaafı var: 5 dakikalık pencerede 8 hakkı olan giriş limiti, pencere sınırının iki yanına yayılan **16 denemeye** birkaç saniye içinde izin verir. Ayrıca satır 52-61 arasında başka bir istek pencereyi devrettirirse bu istek sıfırlanmış sayacı okur ve **tam bir istek** sızar. İkisi de I-09. |
+| **Store bozulduğunda fail-open mı fail-closed mı?** | **Fail-closed.** `ensureTable`, `execute` ve `selectSingle` DB hatasında istisna fırlatıyor, `rateLimitHit` bunları yakalamıyor → istisna çağırana çıkıyor. JSON uçlarında `bootstrap.php:43`'teki global handler 500 üretiyor; istek **geçmiyor**. Tek fail-open dal satır 62: `$row` boş dönerse `attempts = 1` varsayılıyor (yalnızca araya `rateLimitReset()` girerse olur, zararsız). **Ancak** satır 22'deki "Never throws" iddiası yanlış ve admin paneli tam olarak o iddiaya güveniyor → I-08. |
+| **`db_backup`/checkout idempotency var mı?** | Checkout'ta **var ve iyi kurulmuş**: `MarketplaceController:249-283` `GET_LOCK(checkout_user_<id>, 10)` + `checkout_idempotency` tablosu. İade tarafında **hiç yok** → I-02. Ve checkout idempotency'sinin kendisi başarı durumunda hiç temizlenmiyor → I-01. |
+
+## D-02'nin tam contract'ı (`ParamPosMarketplace.php`)
+
+Stub'ın altı metodu ve gerçek dönüş değerleri:
+
+| Metot | Dönüş | Çağıran | Sonuç |
+|---|---|---|---|
+| `addSubMerchant(array)` | `success:false` **her zaman** | `SellerController:84` | Satıcı kaydı imkânsız (D-02'nin çekirdeği) |
+| `listSubMerchants()` | `success:**true**, items: []` | `SellerController:171` | **Tek başarı dönen metot.** Çağıran "satıcı listesi boş" cevabını *başarılı* olarak görüyor — hata değil, "hiç satıcı yok" olarak yorumlanıyor |
+| `updateSubMerchant(array)` | `success:false` | `SellerController:181` | Satıcı bilgisi güncellenemiyor |
+| `deleteSubMerchant(array)` | `success:false` | `SellerController:192` | Satıcı silinemiyor |
+| `listIller()` | `success:false, items: []` | `SellerController:364` | **Satıcı kayıt formundaki il açılır listesi boş** |
+| `listIlceler(int)` | `success:false, items: []` | `SellerController:385` | **İlçe açılır listesi boş** |
+
+**D-02'ye eklenecek nokta:** `addSubMerchant` düzeltilse bile satıcı kayıt formu **doldurulamaz**, çünkü il/ilçe listeleri de aynı stub'dan geliyor ve ikisi de `success:false` dönüyor. D-02'nin kilidi tek metot değil, üç metot. Ayrıca sınıfta `getSubMerchant`, ödeme/transfer ya da KYC durumu sorgulayan bir metot **hiç yok** — gerçek entegrasyon geldiğinde contract'ın genişlemesi gerekecek. Kişisel veri redaksiyonu (`redact()`, s.27-49) doğru çalışıyor, DEP-002 kapalı.
+
+## E kategorisi — `coin_engine.php` ↔ `AppConfig` ↔ `pricing.js` (yeniden doğrulandı)
+
+| Sabit / formül | `AppConfig.php` | `coin_engine.php` | `pricing.js` | Durum |
+|---|---|---|---|---|
+| Coin kademesi — taban | — | `COIN_TIER_BASE = 150` (s.168) | `COIN_TIER_BASE = 150` (s.30) | ✅ |
+| Coin kademesi — adım | — | `COIN_TIER_STEP = 100` (s.169) | `COIN_TIER_STEP = 100` (s.31) | ✅ |
+| Coin kademesi — tavan | — | `COIN_TIER_CAP = 1000` (s.170) | `COIN_TIER_CAP = 1000` (s.32) | ✅ |
+| Kademe **formülü** | — | `if (<100) 0; tier = floor(paid/100); min(CAP, BASE + (tier-1)*STEP)` (s.172-176) | Aynısı (s.39-43) | ✅ İki uygulama satır satır eşdeğer. JS'teki fazladan `!totalPaid` kontrolü davranışı değiştirmiyor (0 zaten <100). |
+| Günlük mesaj hakkı | `DAILY_FREE_MESSAGES = 10` (s.22) | Sabiti **okumuyor** — `getDailyMessageLimit()` → `plans.php` → `plans` tablosu (s.48-49) | — | ⚠️ `AppConfig` yalnızca `fallbackPlan()` yolunda devreye giriyor. Canlı değer DB satırında; bkz. H-04 ve I-03. |
+
+**Yeni uyuşmazlık yok.** Ancak kota tarafındaki tek doğruluk kaynağı artık `plans` tablosu ve o tablo admin panelinden düzenlenebilir — I-03 bunun sessiz kırılmasını gösteriyor.
+
+---
+
+## Bulgu tablosu (I serisi)
+
+| ID | Kategori | Sev | Dosya:satır | Problem | Kanıt | Kullanıcı etkisi | Önerilen çözüm | Blocker? | Efor |
+|---|---|---|---|---|---|---|---|---|---|
+| **I-01** | Broken functionality | **P1** | `api/src/Presentation/Controllers/MarketplaceController.php:226-238,262-265,576-580` | Checkout idempotency satırı **başarı durumunda hiç silinmiyor ve süresi dolmuyor**. Aynı sepet bir daha satın alınamıyor. | Anahtar sepet parmak izinden türetiliyor: satır 232-236 `chatbot_id:duration_weeks` çiftlerini sıralayıp `cart:` öneki ile birleştiriyor, satır 238 `hash('sha256', userId + '|' + idemRaw)`. Kontrol sorgusu (s.262-265) **zaman filtresi taşımıyor**. Başarısızlık dallarında satır siliniyor (s.304, s.566 — yorum s.564 kalıcı bloklanma riskini zaten biliyor), **başarı dalında ise** satır 578 yalnızca `order_id`'yi yazıyor, satır kalıcı oluyor. İstemci kendi anahtarını gönderebiliyor (s.230) ama `web/src` genelinde `idempotency_key` **hiç geçmiyor** (arama sonucu boş), yani parmak izi yolu her zaman devrede. | Kullanıcı 42 numaralı botu 1 haftalığına aldıktan sonra **aynı botu aynı süreyle bir daha alamıyor**: istek `repeated: true` ve eski `order_id` ile "Bu sipariş zaten oluşturulmuş." dönüyor, yeni abonelik/kredi yazılmıyor, para da çekilmiyor. Yani abonelik yenileme yine kırık — `coin_engine.php:184-189`'un "abonelik yenileme hiç mümkün değildi, düzeltildi" notu bu katman yüzünden pratikte hâlâ geçerli. Farklı süre seçilirse (2 hafta) anahtar değiştiği için çalışıyor, bu da hatayı gözden kaçırtıyor. | Kontrol sorgusuna kısa bir pencere ekle (`AND created_at > NOW() - INTERVAL 10 MINUTE`) — idempotency'nin amacı çift tıklamayı yakalamak, kalıcı bir "satın alınmış" kaydı tutmak değil. Süresi geçmiş satırlar için `rate_limit.php:34-44`'teki fırsatçı temizliğin aynısı kullanılabilir. | Hayır | S |
+| **I-02** | Race conditions | **P2** | `api/functions/checkout_payments.php:487-614` (özellikle 512-521, 549-556) | `processRefund()` **transaction, kilit ve idempotency olmadan** çalışıyor. `PDO $conn` parametresini alıyor ve gövdede **hiç kullanmıyor**. | İmza satır 487: `processRefund(Database $db, PDO $conn, array $data)`. Gövdenin tamamında `$conn` yalnızca imzada geçiyor (dosya içi arama: tek eşleşme). "Zaten iade edilmiş" kontrolü (s.512-518) klasik check-then-act: `SELECT` ile durum okunuyor, `FOR UPDATE` yok, aradaki pencerede ikinci istek aynı `paid` durumunu görüyor. Döngü (s.549-556) her `paymentTransactionId` için sağlayıcıya `refund` çağrısı atıyor ve sonucu `param_marketplace_refunds`'a yazıyor. Karşılaştırma: aynı depodaki checkout yolu (`MarketplaceController:249-283`) `GET_LOCK` + idempotency tablosu kullanıyor — desen biliniyor, iade tarafına uygulanmamış. | İki eşzamanlı iade isteği (admin panelinde çift tıklama, ya da G-01'in XSS'i) aynı ödeme için sağlayıcıya **iki kez** iade çağrısı atar. iyzico ikinciyi büyük olasılıkla reddeder (o zaman `failed` durumlu çöp `param_marketplace_refunds` satırları kalır), ama bu sağlayıcının davranışına bırakılmış bir garanti — kod tarafında hiçbir koruma yok. Kısmi iadelerde tutarların üst üste binmesi mümkün. Yetki tarafı temiz: uç nokta `AuthMiddleware::requireAdmin()` arkasında (`SellerController:267-275`), yani IDOR **yok**. | `processRefund`'ı `$conn->beginTransaction()` içine al ve ödeme satırını `SELECT … FOR UPDATE` ile kilitle; ya da checkout'taki `GET_LOCK` desenini `refund_payment_<id>` adıyla tekrarla. Ödeme yollarını etkilediği için **uygulanmadı, diff olarak önerilir** (CLAUDE.md: "Önce raporla, onay bekle"). | Hayır | M |
+| **I-03** | Data integrity | **P1** | `api/functions/plans.php:100-111` · `api/admin/abonelik.php:26-33` · `migrations/007_plan_limits.sql:56-58` | Kullanıcı ↔ plan bağı **serbest metin isim eşleşmesi** üzerinden kuruluyor. Admin panelinden bir planın adı değiştirilirse o plandaki **tüm kullanıcılar sessizce varsayılan (ücretsiz) plana düşüyor**. | `plans.php:102-107`: `SELECT p.* FROM user_plan_selection ups JOIN plans p ON p.name_tr = ups.plan_name WHERE ups.user_id = ?`. Yorum satır 100-101 durumu kabul ediyor: "`user_plan_selection.plan_name` serbest metin ve plana FK'sı yok". Eşleşme başarısız olursa satır 110-111 `is_default = 1` satırına düşüyor, o da migration 007'nin tohumladığı **Ücretsiz** plan. Admin paneli `name_tr`'yi düzenlenebilir bir alan olarak sunuyor (`abonelik.php:28` "Plan Adı (TR)") ve `ajax/update.php` `plans` tablosunu beyaz listesinde tutuyor, yani yeniden adlandırma başarılı oluyor (007 `name_tr`'ye UNIQUE koydu, çakışma da olmuyor). Hiçbir yerde uyarı yok. | Admin "Elmas" planının adını "Elmas Plus" yapar → o planı satın almış **her kullanıcı** bir sonraki istekte 1 bağımsız bot / 2 herkese açık bot / 10 mesaj kotasına düşer. Kullanıcı ödeme yapmış, hakkı kaybolmuş; hiçbir hata da üretilmiyor, `getUserPlan()` sessizce fallback dönüyor. Geri alma tek yol: adı harfi harfine eski hâline döndürmek. Aynı kırılganlık plan **silmede** de var. | `user_plan_selection`'a `plan_id` sütunu ekleyip FK ile bağla (isim yalnızca gösterim olsun). Kısa vadede: admin plan formunda `name_tr` alanını salt-okunur yap ya da yeniden adlandırmada `user_plan_selection`'ı da güncelle. **Şema değişikliği içeriyor → uygulanmadı** (CLAUDE.md). | Hayır | M |
+| **I-04** | Payments | **P2** | `api/functions/checkout_payments.php:543-546,556,586-604` | İki ayrı muhasebe hatası: (a) kalem bazlı iade satırlarının hepsi **ilk** detay satırına bağlanıyor, (b) **kısmi iadede satıcı payları hiç dokunulmadan `approved` kalıyor**. | (a) Satır 543-546 döngüden **önce** `firstDetailId`'yi bir kez çekiyor (`ORDER BY id LIMIT 1`), satır 556 her kalem için `'detail_id' => $firstDetailId` yazıyor. Kalem ile detay satırını eşleştiren hiçbir mantık yok — satır 555'teki "eşleşme yoksa 0" yorumu gerçekleşmeyen bir eşleştirmeyi ima ediyor. (b) Satır 586-604: `param_marketplace_payments.status` `refunded`/`partial_refund` olarak güncelleniyor, ama `param_marketplace_details` güncellemesi **yalnızca `if ($fullyRefund)`** bloğunun içinde (s.594-601). Kısmi iadede hiçbir detay satırı `refunded` olmuyor. | (a) Üç botluk bir sepetin iadesinde üç iade satırı da 1. botun satıcısına bağlanıyor → satıcı bazlı iade raporu yanlış. (b) Bir kalemi iade edilen siparişte **o kalemin satıcısı parasını almaya devam ediyor**: `param_marketplace_details.status` `approved` kalıyor, `WalletController` bunu ödenebilir bakiye olarak görüyor. Platform iade ettiği parayı satıcıya da ödüyor. Bu, D-03'ün "iade `user_subscriptions`/`chatbot_purchase_credits`'e dokunmuyor" tespitinin **üçüncü ayağı**. | `itemTransactions[].itemId`'yi `param_marketplace_details.chatbot_id` ile eşleştirip doğru `detail_id`'yi yaz; kısmi iadede yalnızca iade edilen kaleme ait detay satırını `refunded` yap. **Ödeme yolu → uygulanmadı, diff olarak önerilir.** | Hayır | M |
+| **I-05** | Security | **P2** | `api/admin/ajax/smtp.php:22-27` · `api/functions/phpmailer.php:96-99` · `api/functions/smtp_client.php:68,86` | SMTP ayarları hiçbir doğrulamadan geçmeden saklanıyor ve gönderim yolunda **CR/LF temizliği olmadan** SMTP komutuna ve `From:` başlığına giriyor → SMTP komut/başlık enjeksiyonu. | `admin/ajax/smtp.php:22-27` dört alanı ham `$_POST` olarak `global_vars`'a yazıyor (biçim kontrolü yok). `phpmailer.php:96-99` `mailerConfig()` bunları yalnızca `trim()` ile okuyor. `smtp_client.php:68` `MAIL FROM:<' . $from['email'] . '>` ve satır 86 `'From: ' . encodeHeaderName(...) . ' <' . $from['email'] . '>'` — `$from['email']` hiçbir yerde `encodeHeaderValue()`'dan geçmiyor; o fonksiyon (s.252-255) CR/LF'i **yalnızca** `Subject` ve görünen ad için temizliyor. Alıcı tarafı temiz: `phpmailer.php:35` `FILTER_VALIDATE_EMAIL` CR/LF'i reddediyor. Satır 87 `'To: ' . implode(', ', $to)` de kaçırılmıyor ama girdisi doğrulanmış. | `smtp_email` alanına `x@y.com\r\nRCPT TO:<kurban@...>` yazan bir admin, sitenin SMTP kimlik bilgileriyle keyfi alıcıya posta gönderebilir; `From:` başlığına satır ekleyerek `Bcc`/`Reply-To` uydurabilir. Tek başına admin yetkisi gerektirdiği için P2 — ama **G-01 ile zincirlenince** sıradan bir kullanıcı platformu spam rölesine çevirebilir (ve bu, alan adının itibarını yakar). | `smtp.php`'de `smtp_email` için `FILTER_VALIDATE_EMAIL`, `smtp_host` için ana bilgisayar adı deseni zorunlu kıl; ayrıca `smtp_client.php`'de zarf adreslerini de CR/LF'ten arındır (savunma derinliği). | Hayır | S |
+| **I-06** | Security | **P2** | `api/functions/phpmailer.php:98` · `api/admin/smtp.php:49-51` · `api/admin/ajax/smtp.php:25` | SMTP parolası veritabanında **düz metin** duruyor ve admin sayfası onu HTML'e geri basıyor. | `global_vars.smtp_pass` düz metin yazılıyor (`ajax/smtp.php:25`), düz metin okunuyor (`phpmailer.php:98`). `admin/smtp.php:49-51` değeri `<input type="password" … value="<?= htmlspecialchars($global_vars['smtp_pass'] ?? '') ?>">` ile sayfaya gömüyor — `type="password"` yalnızca ekranda gizliyor, HTML kaynağında ve DOM'da düz metin. | Bir DB dökümü (G tarafındaki `db_backup.php` ya da herhangi bir yedek) SMTP kimlik bilgisini de taşıyor. Admin panelinde bir XSS (G-01) `document.getElementById('smtp_pass').value` ile parolayı tek satırda okuyabiliyor. `read.php`'nin `global_vars`'ı beyaz listede olmadığı için oradan okunamıyor, bu yüzden tek sızıntı yüzeyi sayfanın kendisi. | Parolayı `global_vars` yerine `api/.env`'e taşı (`mailerConfig()` zaten `SMTP_PASS`'i önce okuyor — s.98'deki `env_get('SMTP_PASS')` dalı hazır). Sayfada mevcut değeri **hiç basma**; boş bırakıldığında eskisini koru. | Hayır | S |
+| **I-07** | Dead code | **P2** | `api/functions/validators.php` (41 satır) · `api/functions/minify.php` (8 satır) · `api/functions/db.php:465-473,97-110` | Dört ölü yardımcı; biri ayrıca bozuk. `validators.php` her API isteğinde yükleniyor. | Çağıran araması (`api/` geneli, `vendor/` hariç) yalnızca tanımları buldu: `require_fields`, `sanitize_string`, `sanitize_float`, `validate_positive_int`, `allowed_values`, `minify_html` → **sıfır çağıran**. `autoload.php:11` `validators.php`'yi koşulsuz `require_once` ediyor. `db.php:465-473` `truncate()` ve `db.php:97-110` `getParamTypes()` (private) de çağrılmıyor. **`truncate()` ayrıca çalışmaz durumda:** satır 466 `if ($this->conn->query($query) === TRUE)` — `PDO::query()` `PDOStatement` döndürür, asla `TRUE` değil, dolayısıyla **her zaman** else dalına düşer; o dal da PDO'da var olmayan `$this->conn->error` özelliğini okuyor. | Doğrudan kullanıcı etkisi yok. Ama `sanitize_string` (s.15-21) aktif bir tuzak: girdi anında `htmlspecialchars` uyguluyor (çıktı anında değil) ve `strlen`/`substr` ile **bayt** bazlı kırpıyor — Türkçe bir karakterin ortasından kesip geçersiz UTF-8 üretebilir, o da `json_encode`'u `false` döndürüp boş yanıt gövdesine yol açar. Bunu "hazır yardımcı" sanıp kullanacak bir sonraki geliştirici iki hatayı birden devralır. | `minify.php` ve `validators.php`'yi **silme adayı** olarak işaretle (`autoload.php:11`'deki require ile birlikte). Saklanacaksa `sanitize_string`'i `mb_substr` + çıktı-anında kaçış olacak şekilde düzelt. `truncate()`/`getParamTypes()` silinmeli — CLAUDE.md zaten TRUNCATE'i yasaklıyor. | Hayır | S |
+| **I-08** | Error handling | **P3** | `api/functions/rate_limit.php:20-24` · `api/admin/functions/admin_login.php:129-137` | `rateLimitHit()`'in docblock'u "Never throws, never writes a response" diyor; fonksiyon **üç yerden** istisna fırlatabiliyor ve admin girişi tam olarak o iddiaya güvenerek onu `checkRateLimit` yerine doğrudan çağırıyor. | Satır 22 iddiayı yapıyor. Fırlatabilen çağrılar: `ensureTable` (s.26), `execute` (s.52), `selectSingle` (s.61) — üçü de `Database` üzerinden ve `PDO::ERRMODE_EXCEPTION` etkin (`db.php:71`). Yalnızca temizlik bloğu (s.34-44) ve `rateLimitReset` (s.84-89) `try/catch` içinde. `admin_login.php:129-130` `if (!rateLimitHit(...))` diye çağırıyor; `admin/ajax/giris.php` bir `try` taşımıyor. | DB kısa süreli erişilemez olduğunda admin girişi düzgün bir hata yerine yakalanmamış istisnaya düşüyor (fail-**closed**, yani güvenlik açığı değil — ama HTML render eden panel için docblock'un vaat ettiği "kendi işleme" imkânı yok). Yanlış yorum, bir sonraki çağıranı da yanıltır. | Ya gövdeyi `try/catch` ile sarıp `false` döndür (fail-closed'ı koru), ya da docblock'tan "Never throws" iddiasını kaldır. | Hayır | XS |
+| **I-09** | Security | **P3** | `api/functions/rate_limit.php:52-64` | Sabit pencere (fixed window) sayacı: pencere sınırının iki yanında limitin iki katına izin veriyor. Ayrıca artış ile okuma arasındaki ayrı `SELECT` sınırda bir isteğin sızmasına izin veriyor. | Satır 56-57 pencereyi `window_start` tek bir zaman damgasıyla yönetiyor (kayan pencere değil). `AuthController:22` girişte 8/300 sn tanımlıyor → t=299'da 8, t=301'de 8 daha, toplam **16 deneme birkaç saniyede**. İkinci nokta: satır 52-59 artışı yapıyor, satır 61 ayrı bir `SELECT` ile okuyor; arada başka bir istek pencereyi devrettirirse (s.56 `IF(...)` dalı) bu istek `attempts = 1` okur ve `1 <= 8` ile geçer. | Parola deneme hızını pratikte ikiye katlıyor. Mutlak sayılar küçük olduğu için (16/5dk) sömürü değeri sınırlı; yine de belgelenen limit gerçek limit değil. | Kayan pencere (iki sayaç ya da zaman damgası listesi) ya da artış ifadesinin kendisinden `ROW_COUNT()`/`LAST_INSERT_ID(attempts)` ile değeri geri okuyup ayrı `SELECT`'i kaldırmak. | Hayır | S |
+| **I-10** | Data integrity | **P3** | `api/functions/coin_engine.php:234-240` | Günlük havuza iade **tavansız**: `coins_remaining = coins_remaining + 1`, üst sınır kontrolü yok. Kardeş dal (satın alma kredisi, s.225) `LEAST(credits_total, credits_remaining + 1)` ile sınırlıyor. | Satır 225: `SET credits_remaining = LEAST(credits_total, credits_remaining + 1)`. Satır 236: `SET coins_remaining = coins_remaining + 1, exhausted_at = NULL` — `LEAST(daily_limit, …)` yok. Satır 231'deki yorum, süresi dolmuş bir satın alma kredisinin iadesinin **günlük havuza** yazıldığını açıkça söylüyor, yani iki havuz arasında tek yönlü bir akış var. | **Sömürü senaryosu kurulamadı** — `refundMessage` yalnızca başarılı bir `consumeMessage`'ın ardından ve yalnızca upstream hatasında çağrılıyor (`ChatController:319` ve `:400` birbirini dışlıyor, ikisi de `exit` ile bitiyor), yani tüketim/iade dengeli. Bu bir **asimetri ve latent tavan eksikliği** olarak raporlanıyor, kanıtlanmış bir açık olarak değil. | Günlük dala da tavan ekle: `LEAST(<plan limiti>, coins_remaining + 1)`. Plan limiti zaten `getDailyMessageLimit()` ile elde edilebiliyor. | Hayır | XS |
+| **I-11** | Data integrity | **P3** | `api/functions/coin_engine.php:202` | `GREATEST(expires_at, VALUES(expires_at))` — MySQL'de argümanlardan biri `NULL` ise sonuç `NULL`. Tabloda `expires_at IS NULL` **desteklenen bir durum** ("süresiz"). | Satır 202 `expires_at = GREATEST(expires_at, VALUES(expires_at))`. `getActivePurchaseCredit` (s.16) `expires_at IS NULL OR expires_at > NOW()` yazıyor, yani NULL "hiç dolmaz" anlamına geliyor. Mevcut satırda `expires_at` NULL ise yeni satın alma sonrası da NULL kalır (kullanıcı lehine, satır zaten süresizdi) — ama davranış tesadüfi, `GREATEST`'in NULL yayılımından geliyor, bilinçli bir karardan değil. | Bugün zararsız: `grantPurchaseCredit`'in imzası `string $expiresAt` olduğu için NULL geçilemiyor ve tek çağıran (`MarketplaceController:412`) hesaplanmış bir tarih veriyor. İmza gevşetilirse ya da NULL'lı bir satır oluşursa süre sessizce "sonsuz"a dönüşür. | `COALESCE` ile açık ol: `expires_at = GREATEST(COALESCE(expires_at, VALUES(expires_at)), VALUES(expires_at))`, ya da NULL'ın ne demek olduğuna karar verip sütunu `NOT NULL` yap. | Hayır | XS |
+
+---
+
+## Mevcut bulguları etkileyen tespitler
+
+**Aşağıdaki satırların hiçbiri AUDIT.md'de değiştirilmedi** — bu bölüm yalnızca yeni kanıtı kaydediyor.
+
+| Mevcut ID | Durum | Ne değişti |
+|---|---|---|
+| **D-02** (P0) | **Doğrulandı, kapsamı genişledi** | Kilit tek metotta değil: `addSubMerchant` düzeltilse bile `listIller()` ve `listIlceler()` de `success:false` döndüğü için satıcı kayıt formundaki il/ilçe alanları doldurulamıyor. Yukarıdaki contract tablosuna bakın. Severity değişmiyor (zaten P0). |
+| **D-03** (P1) | **Doğrulandı, üçüncü ayak eklendi** | `processRefund()` tam okundu: dosyanın tamamında `user_subscriptions` ve `chatbot_purchase_credits` **hiç geçmiyor** — D-03'ün iddiası birebir doğru. Ek olarak I-04(b): kısmi iadede `param_marketplace_details` de hiç güncellenmiyor, yani iade edilen kalemin satıcısı ödenmeye devam ediyor. |
+| **D-04** (P1) | **Doğrulandı, mekanizma keskinleşti** | `createSubscription` `orderId`'yi tahsilattan **önce** üretiyor (s.434) ve kod yorumu (s.428-433) bunun sebebini açıkça "mutabakat zaman aşımına uğramış tahsilatı sağlayıcıda YALNIZCA bu kimlikle bulabilir" diye yazıyor. Ama tahsilat başarısız/zaman aşımı olduğunda satır 460-461 `rollBack()` yapıyor ve `param_marketplace_payments` INSERT'i (s.520) hiç çalışmıyor — yani o kimlik **hiçbir yere yazılmıyor**, yalnızca error_log'da kalıyor. `reconcilePayments` sorgusu (s.393-400) yalnızca o tabloyu tarıyor. Kodun kendi yorumu ile davranışı çelişiyor. Severity P1'de kalıyor; öneri "ödeme satırını tahsilattan ÖNCE `pending` olarak yaz" olmalı. |
+| **H-01 / H-02** | **Dayandıkları varsayım doğrulandı** | `checkRateLimit()` gerçekten atomik ve fail-closed (yukarıdaki soru-cevap tablosu). H-01'in "kayıt uç noktası IP başına 5/10dk sınırlı" ve H-02'nin "eşzamanlı istek 500 üretir" iddiaları geçerli. **Severity değişmiyor.** |
+| **PAY-003** (coin_engine.php:179-189'da anılan) | **Pratikte hâlâ açık** | O düzeltme `grantPurchaseCredit`'i `ON DUPLICATE KEY UPDATE`'e çevirerek "abonelik yenileme hiç mümkün değildi" sorununu DB katmanında çözmüş. Ama I-01 yüzünden aynı sepet checkout katmanında zaten reddediliyor, yani yenileme akışı `grantPurchaseCredit`'e **hiç ulaşmıyor**. Düzeltme doğru, önündeki kapı kapalı. |
+
+---
+
+## Doğrulanan ama bulgu OLMAYAN noktalar (I turu)
+
+- **Coin kotası negatife düşemez.** Her iki tüketim dalı da `UPDATE … SET x = x - 1 WHERE … AND x > 0` + `rowCount()` kontrolü kullanıyor (`coin_engine.php:130-141`, `146-155`). Okuma-sonra-yazma yok. Günlük sıfırlama da tek atomik `UPDATE` (s.91-102), koşul `WHERE`'de, iki eşzamanlı istekten yalnızca biri sıfırlayabiliyor. İlk satır oluşturmada `Duplicate entry` yakalanıp satır yeniden okunuyor (s.64-82). **Kullanıcının "kota tüketimi atomik mi, negatife düşebilir mi?" sorusunun cevabı: atomik, düşemez.**
+- **`consumeMessage` çift iade üretmiyor.** `ChatController:319` (API anahtarı yok) ve `:400` (upstream hatası) birbirini dışlıyor; ilki `JsonResponse::error` ile, ikincisi `exit` ile bitiyor (s.411).
+- **Checkout idempotency + kilit doğru kurulmuş.** `GET_LOCK` kilidi alındıktan **sonra** kontrol yapılıyor (`MarketplaceController:260-265`), yarışı kaybeden istek kazananın satırını görüyor. Başarısızlık dallarında rezervasyon bırakılıyor. Tek kusur I-01 (süre yokluğu).
+- **İade ve mutabakat uçlarının yetkisi doğru.** `refund` → `AuthMiddleware::requireAdmin()` (`SellerController:269`); `reconcile` → `hash_equals` ile cron secret, secret tanımsızsa fail-closed 403 (s.255-260). IDOR yok.
+- **Oturum sabitleme kapalı.** `session_regenerate_id(true)` dört giriş yolunun **dördünde** de yetki yükselmesinden önce çağrılıyor: `AuthController:35` (parola), `:185` (Google), `AuthMiddleware:90` (beni-hatırla), `admin_login.php:202` (admin).
+- **DB katmanı sağlam.** `db.php:73` `PDO::ATTR_EMULATE_PREPARES => false` (gerçek hazır ifadeler), `:71` `ERRMODE_EXCEPTION`, yapılandırma eksikse bağlanmak yerine yüksek sesle hata (s.41-57 — SEC-008 kapalı, hard-coded kimlik bilgisi yok). `insert()`/`update()` sütun adlarını `assertSafeColumnName` gramerinden geçiriyor.
+- **SMTP taşıma katmanı güvenli.** `verify_peer`, `verify_peer_name` açık, `allow_self_signed` kapalı (`smtp_client.php:94-98`); STARTTLS başarısızsa istisna (s.57-58); RFC 3207 gereği TLS sonrası EHLO tekrarlanıyor (s.61); nokta-doldurma yapılıyor (s.246); `Subject` ve görünen ad CR/LF'ten arındırılıyor (s.252-255); alıcı `FILTER_VALIDATE_EMAIL`'den geçiyor. Tek boşluk zarf adresi → I-05.
+- **`phpmailer.php` fail-closed.** SMTP host tanımsızsa `success:false` dönüyor (s.46-54), DEP-003'ün fail-open stub'ı kapatılmış.
+- **`logging.php`** log hedefini doküman kökünün dışına sabitliyor, dizin yoksa PHP varsayılanına dokunmadan sessizce vazgeçiyor (s.34-36) ve `APP_DEBUG` kapalıyken `display_errors`'ı kapatıyor.
+- **`env.php`** gerçek ortam değişkenlerini asla ezmiyor (s.42), tek çift tırnak soyuyor, `env_get` boş değeri "tanımsız"dan ayırıyor (`DB_PASS=` senaryosu).
+- **`bootstrap.php`** üç hata kancasını (exception / error / shutdown) DB bağlantısından **önce** kuruyor (ERR-004), uyarıları yanıt gövdesinden uzak tutuyor (s.106 `return true`), fatal'ı JSON'a çeviriyor ve `headers_sent()` ise SSE akışını bozmuyor (s.129-131). `APP_DEBUG` kapalıyken istisna mesajı sızmıyor.
+- **`chatbot_limits.php`, `producer_plan.php`** kendi yorumlarında `PRODUCER_*_LIMIT`'in okunmadığını doğruluyor — D-07 ile tutarlı.
+- **`php -l`** 16 dosyanın hepsinde temiz.
+
+---
+
+## Kalan boşluklar (I turu sonrası)
+
+`api/functions/` artık tamamen okundu (16/16). Açık kalanlar:
+
+1. **`api/api/**` (123 endpoint ince sarmalayıcı) hiçbir turda tek tek okunmadı.** Ana denetim bunları "okundu" sayıyor ama A kategorisi eşleştirmesi düzeyinde; her dosyanın `require_method`/yetki çağrısını taşıyıp taşımadığı dosya bazında doğrulanmadı. **Bir sonraki turun doğal kapsamı bu** (G ve H turlarının `api/admin` ve `api/src` için yaptığının karşılığı).
+2. **`api/database/` (schema.sql + 9 migration) satır satır okunmadı.** Bu turda yalnızca `007_plan_limits.sql` ve `kullanicilar`/`chatbot_reports` tanımlarına bakıldı. I-03 ve H-04 doğrudan şema kararlarına bağlı.
+3. **Hiçbir bulgu çalışan sisteme karşı doğrulanmadı.** I-01 koddan kesin çıkıyor (frontend'in `idempotency_key` göndermediği arama ile teyit edildi) ama canlı `checkout_idempotency` tablosunun içeriği görülmedi. I-03'ün etkisi "panelden plan adı değiştirildi mi?" sorusuna bağlı.
+4. **`IyzicoClient` bu turda yeniden okunmadı** — ana denetim okumuş sayıyor. I-02/I-04'ün önerileri `refund()` ve `cancelPayment()`'ın idempotency davranışına bağlı; sağlayıcının aynı `paymentTransactionId` için ikinci iadeyi nasıl karşıladığı **doğrulanmadı** (anahtar yok, B3).
+5. **`web/src` bileşen taraması hâlâ eksik** (ana denetimin #3'ü). I-01'in kullanıcıya nasıl göründüğü (checkout ekranı `repeated: true` yanıtını nasıl render ediyor?) incelenmedi.
+6. **Yük/performans ölçülmedi.** `rate_limit.php:34-44`'teki temizlik `window_start` üzerinde indeks olmadan tam tarama yapıyor; `plans.php` ve `coin_engine.php` mesaj başına 4-6 sorgu atıyor. Veri hacmi ölçülemediği için bulgu yazılmadı.
+
+---
+
+## Karar vermem gereken belirsizlikler (I turu)
+
+1. **Checkout idempotency penceresi ne olmalı? (I-01)** Amaç çift tıklamayı yakalamaksa birkaç dakika yeter; amaç "aynı botu iki kez satın alma" iş kuralıysa bu bir ürün kararı ve mevcut davranış kasıtlı olabilir. **Soru:** kullanıcı aynı botu aynı süreyle (a) istediği zaman tekrar satın alabilmeli mi (yenileme), (b) yalnızca mevcut aboneliği bittikten sonra mı, (c) hiç mi? (a) ise pencere; (b) ise abonelik bitiş tarihi kontrolü gerekiyor. **Belirsiz olduğu için test yazmadım.**
+
+2. **Kısmi iadede hangi kalem iptal edilmeli? (I-04)** Bu, AUDIT.md'nin mevcut Belirsizlikler #3'ünün (D-03/D-08) teknik karşılığı. `itemTransactions[].itemId` ile `param_marketplace_details.chatbot_id` eşleştirmesi mümkün görünüyor ama `itemId`'nin gerçekte hangi değeri taşıdığı (`chatbot_id` mi, satır id'si mi) yalnızca canlı bir iyzico yanıtıyla doğrulanabilir. **Soru:** eşleştirme anahtarı ne olacak?
+
+3. **`validators.php` ve `minify.php` silinsin mi? (I-07)** İkisi de sıfır çağıranlı. `validators.php` `autoload.php:11` üzerinden her istekte yükleniyor; silmek o satırı da gerektirir. **Soru:** bunlar (a) silinecek ölü kod mu, (b) ileride kullanılmak üzere bilerek duran bir yardımcı seti mi? Kendim silmedim.
+
+---
+
 ## Bakamadığım yerler
 
 1. **Çalışan bir veritabanına karşı hiçbir sorgu doğrulanmadı.** Şema iddialarının tamamı `schema.sql` + `migrations/` okumasına dayanıyor. Canlı veritabanı bu dosyalarla aynı durumda değilse (migration'lar kısmen uygulanmışsa) bazı bulguların etkisi değişir. Özellikle E-03 ve E-04 doğrudan "hangi migration uygulanmış?" sorusuna bağlı.
-2. **`api/admin/` altındaki 22 sayfa ve 17 ajax dosyası okunmadı** — yalnızca `index.php` route tablosu, `.htaccess` ve `Database`'in admin beyaz listeleri incelendi. Admin panelinin kendi CSRF, yetki ve XSS durumu bu denetimin dışında. `ajax/upload.php`, `ajax/db_backup.php` ve `ajax/updateenv.php` yüksek riskli isimler taşıyor.
+2. ~~**`api/admin/` altındaki 22 sayfa ve 17 ajax dosyası okunmadı**~~ — **KAPANDI (2026-09-02).** 49 dosyanın tamamı okundu; bkz. yukarıdaki “Ek tur — `api/admin/` kapsam kapatma (G serisi)”. Kalan boşluklar o bölümün sonunda listelendi (`vendor/`, `assets/js/*.js`, canlı doğrulama).
 3. **`web/src` içindeki ~200 bileşenin tamamı okunmadı.** Frontend hedefli incelendi: checkout akışı, görsel render yolları, markdown/`dangerouslySetInnerHTML` noktaları, `next.config.mjs`, `server.js`. Loading/error/empty state kapsamı bileşen bazında taranmadı.
 4. **`vendor/` kapsam dışı** — `google/apiclient` ve `smalot/pdfparser` sürümlerinin bilinen CVE durumu kontrol edilmedi. `composer.lock` denylist'te olduğu için içeriği de okunmadı.
 5. **Doğrulama komutları çalıştırılmadı.** Denetim salt-okunur yapıldığı için `npm run build`, `npm run lint`, `php -l` ve `iyzico_selftest.php` **hiç koşturulmadı**. "Build kırık mı?" sorusunun cevabı bu denetimde yok.
@@ -139,3 +463,339 @@ Bunların hiçbirinde doğru davranışa kendim karar vermedim.
 5. **`SERVICE_FEE_PERCENT` uygulanacak mı?** Sabit `AppConfig`'de duruyor, hiçbir kod okumuyor, `createSubscription` `service_fee` sütununu bilerek boş bırakıyor. **Soru:** hizmet bedeli alınacak mı? Alınacaksa satıcı komisyonuyla (%85/%80) ilişkisi ne — üstüne mi ekleniyor, içinden mi düşülüyor?
 
 6. **`upgradePlan` neden `paymentsColumnExists()` guard'ını kullanmıyor?** `createSubscription:514-518` opsiyonel sütunları varlık kontrolüyle yazıyor; `upgradePlan:467-489` aynı sütunları koşulsuz yazıyor. İkisinden biri yanlış. **Soru:** `param_marketplace_payments`'ın opsiyonel sütunları her kurulumda var mı (o zaman `createSubscription`'daki guard gereksiz), yoksa yok mu (o zaman `upgradePlan` bazı kurulumlarda paket satışını kırıyor)? Guard'ın kendi yorumu "kurulumlar farklılık gösteriyor" dediği için bunu şemadan tek başına belirleyemedim.
+
+---
+
+## Bulgu tablosu (J serisi) — "Beni Hatırla" çerezi
+
+Tarih: 2026-09-05 · Yöntem: kod okuma + çalışan sunucuya karşı canlı `Set-Cookie` ölçümü + gerçek kodla transaction'lı uçtan uca test (tüm yazmalar rollback edildi, veritabanında kalıcı değişiklik yok).
+
+**Kök neden (ikisinde de ortak):** Bu mimaride PHP hiçbir zaman doğrudan TLS konuşmuyor — `web/server.js` Express ile `/api`, `/admin`, `/assets` yollarını düz HTTP üzerinden `127.0.0.1`'deki PHP'ye proxy'liyor. Yani **`$_SERVER['HTTPS']` canlıda da her zaman boş.** Çerezlerin `Secure` bayrağını buna bağlayan her kod canlıda sessizce yanlış karar veriyor. Kanıt: `curl -i -X POST http://localhost:3000/api/auth/logout.php` yanıtında `host: 127.0.0.1:8000`, ve CLI probu `$_SERVER['HTTPS'] === NULL`.
+
+| ID | Kategori | Sev | Dosya:satır | Problem | Kanıt | Kullanıcı etkisi | Çözüm | Durum |
+|---|---|---|---|---|---|---|---|---|
+| **J-01** | Broken functionality / Security | **P1** | `api/src/Presentation/Controllers/AuthController.php:38-45,85-89` · `api/src/Presentation/Middleware/AuthMiddleware.php:107-113,127-134` | `remember_me` çerezi dört ayrı yerde elle yazılıyordu ve `secure` bayrağı **birbirini tutmuyordu**: giriş `'secure' => true` sabitliyor, rotasyon ve temizlik `'secure' => !empty($_SERVER['HTTPS'])` (yani her zaman `false`) kullanıyordu. | `AuthController::login` satır 42 `'secure' => true`; `AuthMiddleware::tryRememberMe` satır 111 `'secure' => !empty($_SERVER['HTTPS'])`. Kök nedende kanıtlandığı gibi `$_SERVER['HTTPS']` hiç dolmuyor. | İki yönlü hata: **(a)** Düz HTTP sunulan kurulumda (localhost dışı — LAN IP'si, HTTP staging) giriş, tarayıcının reddettiği bir `Secure` çerez yazıyor → **"Beni Hatırla" hiç çalışmıyor, kullanıcı her seferinde yeniden giriş yapıyor.** Aynı nedenle çıkışta silme çerezi de reddediliyor. **(b)** HTTPS'te çerez ilk rotasyonda `Secure` bayrağını **kaybediyor** → 30 günlük kimlik doğrulama sırrı bundan sonra düz HTTP isteklerinde de gönderilebilir hâle geliyor (MITM'e açık). | Dört çağrı noktası tek bir `RememberMeCookie` yardımcısına bağlandı; `secure` bayrağı, `X-Forwarded-Proto`'yu **yalnızca doğrudan bağlantı yerel bir adresten geliyorsa** okuyan `RequestContext::isHttps()` ile belirleniyor (`checkout_payments.php`'deki `clientIp()` ile aynı güven deseni). | **UYGULANDI** |
+| **J-02** | Security | **P1** | `api/functions/bootstrap.php:22` | PHP oturum çerezi (`PHPSESSID`) **canlıda hiçbir zaman `Secure` bayrağı almıyor** — aynı kök neden. | Canlı ölçüm, uçta HTTPS simüle edilerek: `curl -i -X POST -H "X-Forwarded-Proto: https" http://localhost:3000/api/auth/logout.php` → `set-cookie: PHPSESSID=...; path=/; HttpOnly; SameSite=Lax` — `secure` yok. | Oturum kimliği, https:// ile yayınlanan sitede bile düz HTTP isteklerinde gönderilebilir. `SameSite=Lax` üst düzey GET gezinmelerinde çerezi gönderdiği için, siteye http:// ile atılan tek bir bağlantı oturum kimliğini ağda açığa çıkarır → oturum ele geçirme. | Tek satır: `'secure' => !empty($_SERVER['HTTPS'])` → `'secure' => RequestContext::isHttps()`. Yardımcı yazıldı ve yedi dağıtım senaryosunda doğrulandı (sahte `X-Forwarded-Proto` dahil). | **UYGULANMADI** — otonomi sözleşmesi "session/oturum davranışını etkileyen yama → diff olarak öner" diyor. Yanlış pozitif bir `true` **tüm kullanıcıları** dışarıda bırakır; kararı kullanıcı vermeli. |
+
+### J-02 için önerilen yama (uygulanmadı)
+
+`api/functions/bootstrap.php` — mevcut hâli `require_once __DIR__ . '/../src/autoload.php'` zincirinin en başında çalıştığı için `RequestContext` sınıfı henüz autoload'a kayıtlı değil; bu yüzden dosyanın **doğrudan `require_once`** etmesi gerekiyor:
+
+```diff
+ if (session_status() === PHP_SESSION_NONE) {
++    // Secure bayrağı $_SERVER['HTTPS']'e bağlanamaz: PHP bu mimaride her
++    // zaman proxy arkasında düz HTTP konuşuyor (bkz. RequestContext).
++    require_once __DIR__ . '/../src/Shared/Utilities/RequestContext.php';
+     session_set_cookie_params([
+         'lifetime' => 0,
+         'path'     => '/',
+         'httponly' => true,
+         'samesite' => 'Lax',
+-        'secure'   => !empty($_SERVER['HTTPS']),
++        'secure'   => RequestContext::isHttps(),
+     ]);
+     session_start();
+ }
+```
+
+**Uygulamadan önce doğrulanması gereken:** canlıda uçtaki proxy (nginx/Cloudflare/Express) `X-Forwarded-Proto: https` gönderiyor mu? Göndermiyorsa yama bir şeyi bozmaz (bugünkü davranışın aynısı, `secure=false`) ama açığı da kapatmaz. Kontrol: canlıda `curl -i https://<alan-adı>/api/auth/logout.php -X POST` → yanıtta `PHPSESSID` çerezinde `secure` görünüyorsa yama işe yaramış demektir.
+
+### J turunda doğrulanan ama bulgu OLMAYAN noktalar
+
+Sunucu tarafı remember-me mantığının tamamı gerçek kodla test edildi (geçici kullanıcı + token, hepsi tek transaction içinde, sonunda rollback — `kalan_token: 0`, `kalan_test_kullanici: 0`):
+
+- Token yazımı ve `findByRememberToken()` ile geri okunması — **çalışıyor**.
+- Oturumsuz ziyaretçide `AuthMiddleware::optionalAuth()` doğru `user_id`'yi döndürüyor ve `$_SESSION`'ı kuruyor — **çalışıyor**.
+- Rotasyon: eski selector siliniyor, kullanıcıda tek token kalıyor — **çalışıyor**.
+- Tek kullanımlık olma: tüketilmiş çerez ikinci kez `0` döndürüyor — **çalışıyor**.
+- Süresi dolmuş token kabul edilmiyor (`expiry > NOW()` sorguda var) — **çalışıyor**.
+- Yanlış validator selector'ı yakıyor — **çalışıyor**.
+- Frontend: `Beni Hatırla` kutusu kontrollü, değer `rememberMe` olarak payload'a giriyor, `login.php` `(bool)` okuyor — **çalışıyor**.
+- Şema: `user_tokens` tablosu mevcut, `selector varchar(32)` / `hashed_validator varchar(64)` üretilen değerlere yetiyor — **uygun**.
+- Express proxy birden fazla `Set-Cookie` başlığını olduğu gibi geçiriyor (tek yanıtta üç tanesi ölçüldü) — **sorun yok**.
+
+### J turunda not edilen, düzeltilmeyen kenar durum
+
+`AuthMiddleware::tryRememberMe()` token'ı tek kullanımlık yaptığı için (SEC-009'un bilinçli kararı), dönen kullanıcının ilk sayfa yüklemesinde **aynı çereze dayanan ikinci bir eşzamanlı istek** 401 alabilir: ilk istek `session_regenerate_id(true)` ile eski oturum dosyasını siler ve selector'ı tüketir; kilit sırasını bekleyen ikinci istek artık geçersiz olan eski çerezle gelir. Etki geçici ve kendi kendini onarıyor (tarayıcı yeni çerezi almış olur), ama bir istek boşa gider. Kalıcı çözüm bir "grace period" (eski token'ı kısa süre geçerli tutmak) olurdu — bu SEC-009'un güvenlik duruşunu değiştireceği için **kendi başıma karar vermedim.**
+
+---
+
+## Bulgu (K serisi) — Canlıda "Yeni Liste Oluştur" çalışmıyor
+
+Tarih: 2026-09-05 · Yöntem: kod okuma + gerçek controller'ın CLI'da çalıştırılması + 009 öncesi şemanın GEÇİCİ (TEMPORARY) tabloyla birebir taklidi. Gerçek `user_lists` tablosuna hiçbir yazma yapılmadı (öncesi/sonrası: 7 sütun, 7 satır).
+
+| ID | Kategori | Sev | Dosya:satır | Problem | Kanıt | Kullanıcı etkisi | Çözüm | Durum |
+|---|---|---|---|---|---|---|---|---|
+| **K-01** | Deployment / Broken functionality | **P1** | `api/database/schema.sql:user_lists` · `api/database/migrations/009_user_list_color.sql` · `api/src/Presentation/Controllers/SocialController.php:193-224,265-270` | `addUserList()` ve `getUserLists()`, `user_lists` tablosunun `color` ve `description` sütunlarını **koşulsuz** kullanıyor. Bu iki sütun temel kurulum dosyası `schema.sql`'de YOK; yalnızca migration 009 ekliyor. Migration uygulanmamış bir veritabanında her iki endpoint de SQL 1054 ile patlıyor. | 009 öncesi şema geçici tabloyla taklit edilip `Database::insert('user_lists', [... 'color' ...])` çağrıldı: `PDOException 42S22 — Unknown column 'color' in 'field list'`. `addUserList()` içinde try/catch yok → global handler → **HTTP 500, `{"success":false,"message":"Sunucu hatası oluştu."}`**. Aynı satır, sütunlar mevcutken sorunsuz: controller `{"success":true,"listId":...}` döndürdü. | Kullanıcı liste oluşturamaz. Sayfa yine de AÇILIR — `fetchUserLists`'in hata dalı `setListData([])` + `setFetchError(...)` yapıyor — yani semptom "sayfa duruyor ama yeni liste oluşmuyor" şeklinde görünür. `AddToListModal` üzerinden liste oluşturma da aynı nedenle bozulur. | (a) Operasyonel: canlıda `php api/database/migrate.php --status` ile doğrula, `--apply` ile 009'u uygula (009 saf `ADD COLUMN`, idempotent, veri silmiyor — `--allow-destructive` gerekmez). (b) Kod: `schema.sql`'deki `user_lists` tanımına iki sütunu eklemek, ki temiz kurulum migration'a muhtaç olmasın. | (a) **UYGULANAMAZ** — `migrate.php --apply` otonomi sözleşmesinde "asla yapma" listesinde. (b) **UYGULANMADI** — veritabanı şeması değişikliği onay gerektiriyor. |
+
+### K-01 (b) için önerilen yama (uygulanmadı)
+
+`api/database/schema.sql` — temel kurulumun 009'a muhtaç kalmaması için:
+
+```diff
+ CREATE TABLE `user_lists` (
+   `id` int NOT NULL AUTO_INCREMENT,
+   `user_id` int NOT NULL,
+   `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
++  `color` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'violet',
++  `description` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+```
+
+Migration 009 idempotent olduğu için (sütun varsa hiçbir şey yapmıyor) bu değişiklik mevcut kurulumlarla çakışmaz.
+
+### K turunda elenen alternatif nedenler
+
+- **Denylist (üç dosya birden kontrol edildi).** `api/.htaccess` ve `api/router.php` yalnızca `.env`, dump, log, arşiv ve `src|vendor|migrations|database|functions` dizinlerini kapatıyor; `/api/social/adduserlist.php` normal bir giriş noktası, engellenmiyor.
+- **Benzersizlik çakışması.** `user_lists`'te `PRIMARY (id)` ve `KEY (user_id)` dışında index yok; migration 008 bu tabloya dokunmuyor. Aynı adla ikinci liste oluşturmak hata üretmez.
+- **Yetkilendirme.** `addUserList()` ve `getUserLists()` aynı `requireAuth()`'u kullanıyor; oturum sorunu olsaydı sayfa da hiç liste getiremezdi ve mesaj "Oturum açmanız gerekiyor." olurdu.
+- **İstek biçimi.** Frontend `FormData` içinde `data` alanı gönderiyor, controller `json_decode($_POST['data'])` ile okuyor — eşleşiyor. `require_method('POST')` sağlanıyor.
+- **Ad uzunluğu / kolasyon.** `mb_substr($name, 0, 255)` sınırı zorluyor, tablo utf8mb4.
+
+### Ayırt edici kontrol
+
+Sayfa canlıda **mevcut listeleri gösteriyorsa** sütunlar vardır ve neden başkadır — o hâlde canlıdaki `storage/logs/php-error.log` son satırı belirleyicidir. Sayfa **boş açılıyor ya da hata bandı gösteriyorsa** teşhis K-01'dir.
+
+---
+
+## Bulgu (L serisi) — Canlıda PDF yükleme
+
+Tarih: 2026-09-05 · Yöntem: kod okuma + kütüphanenin gerçek davranışının ölçülmesi + controller'ın dört hata dalının ayrı ayrı çalıştırılması + proxy üzerinden 12 MB gövde testi.
+
+**Teşhis edilemezlik asıl sorundu.** `readPdf()` içinde tek bir `error_log` yoktu; canlıda başarısız olduğunda geriye yalnızca istemcideki genel mesaj kalıyordu. Aşağıdaki dört kusur, "neden çalışmıyor" sorusunun cevapsız kalmasının sebebiydi.
+
+| ID | Kategori | Sev | Dosya | Problem | Kanıt | Kullanıcı etkisi | Durum |
+|---|---|---|---|---|---|---|---|
+| **L-01** | Broken functionality | **P1** | `TrainingController.php:readPdf` | Gövde `post_max_size`ı aştığında PHP onu atar, `php://input` boş gelir ve kod bunu **"base64Data eksik."** diye raporluyordu. Gerçek sınır: base64 %33 şişirdiği için 15 MB PDF ≈ 20 MB istek gövdesi; `post_max_size` varsayılanı **8M**. Yani arayüzün vaat ettiği 15 MB varsayılan yapılandırmada asla geçemez, tavan ~6 MB'tır. | Yerel PHP: `post_max_size=8M`, `upload_max_filesize=2M`. Controller çalıştırıldı, `CONTENT_LENGTH=20000000` + boş gövde ile eski kod "base64Data eksik." veriyordu. | Kullanıcı arayüzde "maks. 15 MB" okuyup 8-10 MB'lık normal bir PDF yüklüyor, anlamsız bir alan hatası alıyor ve sorunu kendi dosyasında arıyor. | **DÜZELTİLDİ** — durum ayrı ayrı yakalanıyor, HTTP 413 ve sunucunun GERÇEK sınırını söyleyen mesaj dönüyor (ölçüldü: `"sunucu sınırı: 8M"`). |
+| **L-02** | Broken functionality | **P1** | `TrainingController.php:readPdf` | `catch (\Exception)` `\Error`ı yakalamıyordu. `vendor/` sürüm kontrolünde değil (`.gitignore`); dağıtımda `composer install` çalışmadıysa `autoload.php` VAR ama `Smalot\PdfParser\Parser` YOK → `\Error` → yakalanmayan hata → gerekçesi hiçbir yere yazılmadan **500**. Ayrıca o dalda `unlink` atlandığı için geçici dosya diskte kalıyordu. | `JsonResponse::error()` `exit` çağırıyor, yani `finally` de çalışmaz — temizlik tek noktaya alındı. | Bileşen eksikse kullanıcı "Sunucu hatası" görür, yönetici nedenini asla öğrenemez. | **DÜZELTİLDİ** — `class_exists` ön kontrolü + net 503 mesajı + `\Throwable` yakalama + yanıttan önce tek noktada `unlink`. |
+| **L-03** | Observability | **P1** | `TrainingController.php:readPdf` | Uçta hiçbir loglama yoktu. | — | Canlı arıza teşhis edilemiyordu. | **DÜZELTİLDİ** — her başarısızlık dalı `[readpdf]` önekiyle gerçek nedeni yazıyor (log çıktısı doğrulandı). |
+| **L-04** | Frontend | **P1** | `create/page.jsx:handleKbPdf` | `await res.json()` doğrudan çağrılıyordu, `res.ok` kontrolü yoktu. Yanıt JSON değilse (vekil sunucunun HTML 413'ü, PHP fatal'inin boş gövdesi) atılan `SyntaxError` kullanıcıya PDF hatası gibi gösteriliyordu. Bu uçta önemli: gövde büyük olduğu için araya giren sunucunun gövdeyi reddetmesi en olası senaryolardan biri. | İstek gövdesi 12 MB ile proxy'den geçiyor (401 = PHP'ye ulaştı), yani reddetme noktası dağıtıma göre değişir. | Gerçek neden HTTP durumunda saklıyken kullanıcı alakasız bir ayrıştırma hatası görüyordu. | **DÜZELTİLDİ** — gövde metin olarak okunup ayrıştırılıyor, JSON değilse HTTP durumuna göre gerçek mesaj veriliyor (413 ayrıca ele alınıyor). |
+
+### Canlıda kalan olasılıklar (koddan çözülemez)
+
+Düzeltmelerden sonra canlıda hâlâ başarısız oluyorsa `storage/logs/php-error.log` artık nedeni yazıyor. `[readpdf]` satırı **hiç yoksa** istek PHP'ye ulaşmıyor demektir; sırasıyla:
+
+1. **Vekil sunucu gövde sınırı.** nginx `client_max_body_size` varsayılanı **1M** — 750 KB'tan büyük her PDF 413 alır. Apache'de `LimitRequestBody`. Bu katman PHP'den önce reddeder, loga hiçbir şey düşmez.
+2. **`post_max_size` / `memory_limit`.** Ölçülen etki L-01'de. `memory_limit=128M` iken 15 MB PDF (base64 20 MB + çözülmüş 15 MB + parser yapıları) tükenebilir; bellek tükenmesi **yakalanamayan** fatal'dir.
+3. **`max_execution_time`.** Yerelde `0` (sınırsız), canlı varsayılanı genelde 30 sn. Büyük PDF'te `Smalot\PdfParser` bunu aşabilir.
+4. **`composer install` çalışmamış.** Artık net bir 503 ve log satırı üretiyor (L-02).
+
+### Doğrulanan ama bulgu OLMAYAN noktalar
+
+- `smalot/pdfparser` `composer.json`'da erken bir commit'ten beri var, `composer.lock` sürüm kontrolünde — bağımlılık tanımı eksik değil.
+- Kütüphane bozuk/boş/başlıksız girdide `\Exception` türevleri fırlatıyor (ölçüldü), yani ayrıştırma hataları düzgün ele alınıyordu.
+- `.htaccess` ve `router.php` denylist'leri `/api/training/readpdf.php`'yi engellemiyor.
+- Geçerli bir PDF uçtan uca 200 dönüyor.
+
+---
+
+## Bulgu (M serisi) — Sohbette dosya yükleme hiçbir şey yapmıyor
+
+Tarih: 2026-09-05 · Yöntem: istemci gönderim yolunun ve sunucu tarafındaki Gemini payload'ının uçtan uca okunması + backend genelinde ek dosya araması.
+
+| ID | Kategori | Sev | Dosya:satır | Problem | Kanıt | Kullanıcı etkisi |
+|---|---|---|---|---|---|---|
+| **M-01** | Broken functionality | **P1** | `web/src/app/dashboard/chat/page.jsx:534-541` · `api/src/Presentation/Controllers/ChatController.php:325-333` | Sohbete eklenen dosya base64'e çevrilip `parts` dizisine konuyor ve **o dizi hiç kullanılmıyor**. İstek gövdesi yalnızca `{chatbot_id, message}` taşıyor. Dosya ne sunucuya ne modele ulaşıyor; veritabanına da yazılmıyor. | `parts` değişkeni 534'te tanımlanıp 538'de push ediliyor, başka hiçbir yerde OKUNMUYOR (664'teki `parts` Gemini'nin YANITINA ait, ayrı şey). `generateReply` gövdesi: `JSON.stringify({ chatbot_id: botId, message: userText })`. Sunucudaki payload yalnızca iki `text` parçası içeriyor. Backend genelinde `inline_data`/`file_data` araması: sohbet tarafında **0 sonuç**. `addchat.php`'ye giden kayıt da yalnızca `message: data.text`, dosya adı bile saklanmıyor. | Kullanıcı dosya seçiyor, mesaj balonunda dosya adını görüyor — yani **yüklenmiş gibi görünüyor** — ama bot dosyayı hiç almıyor. Sessiz başarısızlık: hata yok, yalnızca bot dosyadan habersiz cevap veriyor. |
+
+### Neden bu, "dosya başına LumaCoin" isteğini bloke ediyor
+
+Mevcut hâlin üstüne ücretlendirme eklemek, **atılan bir dosya için gerçek para birimi tahsil etmek** olurdu. Bu yüzden kendiliğimden uygulamadım; ayrıca otonomi sözleşmesi ödeme/coin yollarını "önce raporla, onay bekle" kapsamına alıyor.
+
+### Durum: KAPATILDI (2026-09-05)
+
+Kullanıcı onayıyla iki adım birlikte yapıldı: dosya artık isteğe gerçekten biniyor (sunucuda MIME beyaz listesi + 4 MB tavan + Gemini payload'ına inline_data parçası) ve dosyalı mesaj mesaj 1 + dosya 1 = 2 LumaCoin düşüyor. Doğrulama aşağıda.
+
+### Karar için gereken ek bilgiler (ölçüldü)
+
+- **Mesaj başına yalnızca BİR dosya seçilebiliyor**: `MessageInput.jsx:63` → `e.target.files?.[0]`, `<input type="file">`'da `multiple` yok. Yani "5 dosya = 5 coin" pratikte 5 ayrı mesaj demek.
+- Bugün **1 mesaj = 1 coin** (`consumeMessage`, `ChatController:306`). Dosyalı bir mesajın toplam maliyetinin 1+1 mi yoksa 1 mi olacağı ayrı bir iş kuralı.
+- Dosyayı gerçekten göndermek istek gövdesini büyütür; L serisindeki `post_max_size` (8M) tavanı burada da geçerli olur.
+
+---
+
+## Bulgu (COMP serisi) — iyzico reddi sonrası uyum taraması
+
+Tarih: 2026-09-05 · Tetikleyici: iyzico başvurusunun 02.09.2026'da reddedilmesi (BLOCKERS B3).
+Yöntem: iş modelinin kodda izlenmesi (para akışı, kayıt, içerik, pazarlama metni) + canlı sitenin dışarıdan görünümü.
+
+Ret gerekçesi sağlayıcı tarafından **belirtilmedi**; aşağıdakiler ret nedenlerinin *kanıtı* değil, ödeme kuruluşu risk kriterleriyle örtüşen ve kodda doğrulanmış eksiklerdir.
+
+### Kapatılanlar
+
+| ID | Sev | Dosya | Problem | Yapılan | Doğrulama |
+|---|---|---|---|---|---|
+| **COMP-001** | **P1** | `web/src/app/components/landing/LandingFooter.jsx` · `web/src/app/dashboard/checkout/page.jsx:548` · `web/src/features/payment/PlanPaymentModal.jsx:124` · `web/public/*.png` | Site, geçerli bir üye iş yeri sözleşmesi **olmadan** "iyzico ile Öde" logo bandını footer'da ve checkout'ta gösteriyordu; başvuru reddedildiği için böyle bir sözleşme yok. İzinsiz marka kullanımı. | Üç görünür referans da kaldırıldı; checkout'taki rozetin yerine sağlayıcı adı geçmeyen nötr güvenlik notu kondu. İki marka görseli `git rm` ile silindi (public/ altından servis edildikleri için adresi bilen herkes indirebiliyordu). | `grep -rn "iyzico" web/src` → yalnızca kod içi teknik referanslar (IyzicoClient, env adları) kaldı. Build + lint temiz. |
+| **COMP-002** | **P0** | `api/src/Application/UseCases/Auth/RegisterUseCase.php` · `api/src/Shared/Utilities/InputSanitizer.php` · `api/src/Shared/Constants/AppConfig.php` · `web/src/shared/lib/age.js` | `kullanicilar.dogum_tarihi` kayıt formunda toplanıyor ve gizlilik politikası bunu "yaş doğrulaması için" topladığını yazıyordu — ama **sunucuda hiçbir doğrulama yoktu**. Alan zorunlu bile değildi: zorunluluğu yalnızca `login/page.jsx` içindeki bir `if` sağlıyordu, `register.php`ye doğrudan POST atan biri alanı hiç göndermeden geçebiliyordu. | `AppConfig::MIN_REGISTRATION_AGE = 18` + `InputSanitizer::birthDate()` (biçim, `checkdate()`, gelecek tarih, 130 yaş üst sınırı, yaş kapısı). İstemci tarafına aynı kontrolün uyarı kopyası (`shared/lib/age.js`) ve forma görünür "(18+)" etiketi. | `php -l` temiz; sınır durumları (takvimde olmayan tarih, gelecek tarih, 17/18 yaş) ayrı ayrı ele alınıyor. |
+| **SEC-014b** | **P1** | `api/src/Application/UseCases/Auth/RegisterUseCase.php` | Kütle atama: `$data` **ham hâliyle** `UserRepository::create()` → `insert()` içine giriyordu, yani istemcinin gönderdiği her anahtar `kullanicilar` tablosuna yazılmaya çalışılıyordu. İstemci `google_id` göndererek hesabını bir Google kimliğine bağlayabiliyor, `avatar` (longtext) alanına sınırsız veri basabiliyordu. | Beyaz liste: yalnızca `kullanici_adi`, `eposta`, `sifre`, `dogum_tarihi` ve (varsa) `telefon` yazılıyor. | `php -l` temiz. COMP-002 ile aynı turda yakalandı. |
+| **COMP-003** | **P0** | `api/src/Shared/Utilities/ContentPolicy.php` (yeni) · `ChatbotController::saveChatbot/updateChatbot` | Kullanıcı üretimi bot içeriğinde (isim, açıklama, stil promptu, karşılama mesajı) **hiçbir katmanda tek bir içerik kontrolü yoktu**: yasaklı kelime listesi de, insan incelemesi de, rapor üzerine askıya alma da. Bu botlar pazaryerinde ücretle satılıyor. | İlk hat filtre: cinsel/pornografik içerik, uyuşturucu, kumar/bahis, sahte ürün, reçetesiz ilaç kalemleri için sözcük kökü + çok sözcüklü kalıp eşleştirme; leet katlama; oluşturma **ve** güncelleme yollarında. Yanlış pozitif koruması: kök sözcüğün başında olmalı, ek toleransı 6 harf, bilinen çakışmalar için istisna listesi. | Ad-hoc test: 14 masum ifade (`seksen`, `esrarengiz`, `seksiyon`, `sıkışmak`, `kumaş`, `Amsterdam`, `poker yüzü` …) → 0 yanlış pozitif; 16 ihlal ifadesi (`p0rn0`, `s3ks`, `iddaa kuponu`, `replika saat satışı`, `çocuk pornosu` …) → 16/16 yakalandı. |
+| **COMP-004** | **P1** | `api/src/Shared/Utilities/BankIdentity.php` (yeni) · `WalletController::saveBankInfo/withdraw` | Satıcı ödeme kimliğinde **sıfır doğrulama** vardı: `saveBankInfo()` beyaz listeden geçen ne varsa (`"TR00"`, `"asdf"`, 3 haneli TCKN) doğrudan `banka_bilgileri`'ne yazıyordu; `withdraw()` de `InputSanitizer::string($data['iban'], 40)` dışında hiçbir kontrol yapmadan çekim talebi açıyordu. Hatalı IBAN'lı talep bakiyeden düşüldüğü için kullanıcının parasını da kilitliyordu. | IBAN: TR ön eki + 26 hane + **ISO 13616 mod-97** sağlaması, normalize edilmiş biçimde saklanıyor. TCKN: 11 hane + resmî sağlama algoritması + yer tutucu (`11111111111`) reddi. Doğrulama `withdraw()`'da named lock'tan **önce**. | Bilinen geçerli örneklerle test edildi: `TR330006100519786457841326` ✓ (boşluklu yazımı da ✓), son hanesi bozuk hâli ✗, `DE…` ✗; TCKN `10000000146` ✓, `10000000147` ✗, `11111111111` ✗. |
+| **COMP-006** | **P2** | `web/src/shared/config/site.js` · `HeroSection.jsx` · `HeroChatCard.jsx` · `LandingFooter.jsx` | Ana sayfa, footer ve meta açıklaması platformu öncelikle bir **kazanç fırsatı** olarak konumlandırıyordu ("gelir elde edebileceğin", "kolayca gelir modeline dönüştürün", "gelir elde etme fırsatını yakalayın"). Bu kalıp, ödeme kuruluşu risk kriterlerinde gelir vaadi / ağ pazarlaması sinyaliyle örtüşüyor. | Dört metin de olgusal ifadeye çevrildi ("dilersen pazaryerinde satışa sunabileceğin"). Pazaryeri ve komisyon modeli **gizlenmedi** — yalnızca vaat dili kaldırıldı. | Build + lint temiz. |
+| **COMP-007** (= **D-01**) | **P0** | `api/admin/parcekme.php` (yeni) · `api/admin/index.php` · `api/admin/partials/_sidebar.php` | D-01'in kod yarısı: `listWithdrawals()` ve `updateWithdrawalStatus()` `/api/wallet/` altında yayındaydı ama **hiçbir arayüz onları çağırmıyordu**; her çekim talebi kalıcı olarak `beklemede` kalıyor ve tutar bakiyeden düşüldüğü için satıcının parası süresiz kilitleniyordu. | Admin paneline "Para Çekme Talepleri" sayfası: durum filtresi, satır bazlı durum güncelleme, `ödendi` için ayrı onay adımı, tüm kullanıcı verisi HTML-escape'li. Route tablosuna ve kenar çubuğuna bağlandı. | `php -l` temiz. Sayfa `$_SESSION['admin']` arkasında; çağırdığı iki uç nokta ayrıca kendi içinde `requireAdmin()` çalıştırıyor. |
+
+> **D-01 notu:** bu satır blocker'ı KAPATMAZ. B7'nin operasyonel yarısı (talebi kim onaylar, havaleyi kim yapar, `ödendi` işaretini kim atar) hâlâ açık. Sayfa para göndermez; `ödendi` yalnızca bir kayıttır ve arayüzde bu açıkça yazıyor.
+
+### Uygulanmadı — onay bekliyor
+
+Aşağıdakiler otonomi sözleşmesinin "önce raporla" kapsamına giriyor (ödeme yolu / iş kuralı / kullanıcıyı parasından kilitleme riski).
+
+#### COMP-005 — Kendi botunu satın alma engellenmiyor (kartı nakde çevirme)
+
+`MarketplaceController::addToCart()` (satır 3-34) ve `createSubscription()`'ın kalem döngüsü (satır 344-410) satıcı durumunu, `is_independent`'i ve fiyatı kontrol ediyor — ama **alıcının botun yazarı olup olmadığını hiç kontrol etmiyor**. `grep -n "author_user_id" MarketplaceController.php` → 4 sonuç, hiçbiri karşılaştırma değil.
+
+**Sömürü:** kullanıcı bir bot oluşturur, `MAX_WEEKLY_PRICE` (5.000 TL) fiyat verir, ikinci hesabından ya da çalıntı kartla satın alır; `param_marketplace_details.payable_amount` satıcı payı olarak bakiyeye yazılır (`SELLER_COMMISSION_WEEKLY = 0.85`), ardından IBAN'a çekilir. Teslim edilen "ürün" dijital ve doğrulanamaz olduğu için işlem normal bir satıştan ayırt edilemez. Ödeme kuruluşlarının en çok baktığı kalıp budur.
+
+Önerilen yama (iki noktaya da gerekli — sepet kontrolü tek başına yetmez, checkout sepeti yeniden okuyor):
+
+    // addToCart(), $sellerCheck bloğundan sonra:
+    $owner = $db->selectSingle('author_user_id FROM chatbotlar WHERE id = ?', [$chatbotId]);
+    if ($owner && (int) $owner['author_user_id'] === $userId) {
+        JsonResponse::error('Kendi botunuzu satın alamazsınız.', 422, AppConfig::ERR_VALIDATION);
+    }
+
+    // createSubscription(), $bot okunduktan ve seller_status kontrolünden sonra:
+    if ((int) $bot['author_user_id'] === $userId) {
+        $conn->rollBack();
+        JsonResponse::error('Kendi botunuzu satın alamazsınız.', 422, AppConfig::ERR_VALIDATION);
+    }
+
+**Neden uygulanmadı:** `createsubscription.php` otonomi sözleşmesinde adı geçen üç ödeme dosyasından biri. Ayrıca "kendi botunu önizlemek için satın alma" gibi meşru bir kullanım varsayılmışsa bu yama onu kırar — kararı ürün tarafı vermeli.
+
+#### COMP-005b — Çekim, kayıtlı IBAN'a değil herhangi bir IBAN'a yapılabiliyor
+
+`withdraw()` IBAN'ı **istekten** alıyor; `banka_bilgileri`'ndeki kayıtlı IBAN ile karşılaştırılmıyor. COMP-004 ile biçim doğrulandı ama sahiplik doğrulanmıyor: kullanıcı parasını üçüncü bir kişinin hesabına gönderebilir. Kimlik doğrulanmadan üçüncü kişiye para göndermek, ödeme kuruluşu risk kriterlerinde ağır kalem.
+
+Önerilen yama: `withdraw()` içinde kayıtlı IBAN'ı okuyup eşitlik aramak; eşleşmiyorsa reddedip kullanıcıyı banka bilgilerini güncellemeye yönlendirmek.
+
+**Neden uygulanmadı:** kayıtlı banka bilgisi olmayan mevcut kullanıcıları bakiyelerinden kilitler. Önce "kayıtlı IBAN'ı olmayan kaç kullanıcının bekleyen talebi var" ölçülmeli.
+
+#### COMP-008 — Her ödemede sabit TCKN gönderiliyor
+
+`checkout_payments.php:176` — `$identity = ... ?: '11111111111';`. `$context['identity_number']` hiçbir çağıran tarafından doldurulmuyor, yani **pratikte her işlem** bu yer tutucuyla gidiyor. Adres de sabit: `'Dijital teslimat - fiziksel adres yok'`, zip `34000`. Sağlayıcı bu alanları dolandırıcılık skorlamasında kullanıyor; tüm işlemlerin tek kimlikle gelmesi risk skorunu doğrudan yükseltir.
+
+Kod tarafındaki yama küçük (COMP-004'teki `BankIdentity::normalizeTckn()` ile doğrulanmış gerçek TCKN'yi bağlamak), ama **veri yok**: kullanıcıdan TCKN hiç toplanmıyor. Bu yüzden madde önce bir ürün kararı: checkout'ta TCKN sorulacak mı, yoksa sağlayıcıyla bu alanın zorunluluğu mu görüşülecek.
+
+**Neden uygulanmadı:** `checkout_payments.php` otonomi sözleşmesindeki üç ödeme dosyasından biri.
+
+### Kod ile çözülemeyenler
+
+| ID | Problem | Neden kod değil |
+|---|---|---|
+| **COMP-009** | Pazaryeri modeli alt üye iş yeri (sub-merchant) olmadan kurulu: tahsilat kendi üye iş yeri hesabında toplanıp elle IBAN havalesiyle dağıtılıyor. Üçüncü kişiler adına para toplayıp dağıtmak 6493 sayılı Kanun'da ödeme hizmetidir. | İş modeli kararı + sağlayıcı ürünü. **B1** ve **B7** ile aynı kök. |
+| **COMP-010** | Sitede ticaret ünvanı, adres, telefon, vergi dairesi/no, MERSİS **hiçbiri yok**; iletişim yalnızca iki gmail adresi (`TeslimatIadePopup.jsx:69-72`). Mesafeli satış mevzuatının açık şartı ve onboarding'in ilk kontrol kalemi. | Bende bu veriler yok. Uydurma/yer tutucu değer yazmak blocker'ın üstünü örtmek olurdu (CLAUDE.md). Gerçek değerler verilirse tek kaynak bir config + footer + sözleşme sayfalarına bağlanabilir. |
+| **COMP-011** | Pazaryeri dışarıdan görünmüyor: `/dashboard` giriş arkasında, üstelik `ChatbotRepository::getPublished()`'in `param_marketplace_sellers.status='active'` INNER JOIN'i yüzünden giriş yapılsa bile boş. İnceleyen kişi ürün göremiyor. | **B1**'e bağlı. B1 açıkken vitrin doldurulamaz. |
+| **COMP-012** | Cayma hakkı tamamen kapalı, iade yalnızca üç istisnai durumda (`TeslimatIadePopup.jsx`). Müşteri iade alamayınca bankaya itiraz eder — reddin gerekçesinde açıkça sayılan "harcama itiraz riski". | Hukuki/ticari karar. Ayrıca sözleşme metinleri admin panelindeki `global_vars`'tan geliyor, koddan değil. |
+| **COMP-002b** | Yaş kapısının Google ile kayıt yarısı açık: `GoogleLoginUseCase` hesabı `dogum_tarihi` NULL olarak açıyor, Google ID token doğum tarihi taşımıyor. | Çözüm oturum akışını değiştiriyor (NULL doğum tarihli kullanıcıyı ilk girişte tarih soran adıma zorlamak). Varsayılan tarih uydurmak kapıyı anlamsızlaştırırdı; yapılmadı, kod içinde de not düşüldü. |
+
+### Onay sonrası kapatılanlar (2026-09-05, aynı tur)
+
+Yukarıdaki "Uygulandı değil — onay bekliyor" bölümündeki üç madde kullanıcı onayıyla uygulandı. Bölüm tarihsel kayıt olarak duruyor; güncel durum aşağıdadır.
+
+| ID | Sev | Dosya | Yapılan | Doğrulama |
+|---|---|---|---|---|
+| **COMP-005** | **P0** | `MarketplaceController::addToCart()` · `createSubscription()` · `assertNotOwnBot()` (yeni) | Kendi botunu satın alma **iki kapıda birden** yasaklandı. Sepet tarafında paylaşılan `assertNotOwnBot()`; checkout tarafında `$bot` zaten `author_user_id` taşıdığı için satır içi karşılaştırma (ikinci sorgu yok). Checkout kapısı şart: döngü sepeti veritabanından yeniden okuyor, yani yamadan önce sepete girmiş satırlar oradan geçer. `owner_user_id` değil `author_user_id` kullanıldı — satın alma sonrası owner değişebiliyor, satıştan pay alan ise yazar. | `php -l` temiz. Checkout ihlal dalında `$conn->rollBack()` `JsonResponse::error()`'dan ÖNCE (error exit ediyor). |
+| **COMP-005b** | **P1** | `WalletController::withdraw()` | Çekim artık yalnızca `banka_bilgileri`'ndeki kayıtlı IBAN'a yapılabiliyor. Karşılaştırma normalize edilmiş biçim üzerinden — bu yamadan önce boşluklu kaydedilmiş IBAN'lar kilitlenmesin diye. Üç ayrı yol ayrı ayrı ele alındı: kayıtlı IBAN yok → kaydetmeye yönlendiriliyor; kayıtlı IBAN geçersiz (yama öncesi doğrulanmadan yazılmış) → güncellemeye yönlendiriliyor; eşleşmiyor → reddediliyor. | `php -l` temiz. Mevcut akış kırılmıyor: `WithdrawalModal.jsx:29-36` zaten `getiban.php`'den kayıtlı IBAN'ı çekip onu gönderiyor — yani yama yalnızca API'ye doğrudan istek atan yolu kapatıyor. |
+| **COMP-010** | **P1** | `web/src/shared/config/company.js` (yeni) · `LandingFooter.jsx` · `LegalPage.jsx` | Yasal künye altyapısı kuruldu, **değerler boş**. `hasCompanyIdentity()` boşken künye blokları hiç render edilmiyor ve Organization JSON-LD'ye hiçbir künye alanı girmiyor. Doldurulduğu anda üç yerde birden belirir: landing footer, sözleşme sayfası alt bilgisi, JSON-LD. Yer tutucu değer YAZILMADI — sahte tüzel kişilik bilgisi eksiği kapatmaz, gizler. | Build + lint temiz. Boş konfigürasyonla site bugünküyle birebir aynı görünüyor (blok render edilmiyor). |
+
+> **COMP-010 durumu:** altyapı hazır, **veri yok**. Ticaret ünvanı ve adres girilene kadar madde AÇIK sayılmalı — mesafeli satış mevzuatı ve ödeme kuruluşu onboarding'i açısından eksik olan şey kod değil, veridir.
+
+---
+
+# Kapatma turu (2026-09-06) — "AUDIT.md'deki istenilen her şeyi düzelt"
+
+Yöntem: bulgu bulgu kod okuma + düzeltme, ardından dört doğrulama komutunun tamamı ve gerçek veritabanına karşı davranış testleri (geçici tablo + rollback; kalıcı yazma yok).
+
+**Doğrulama komutları — dördü de temiz:**
+
+- `find api -name "*.php" -not -path "*/vendor/*" | xargs -n1 php -l` → 0 hata
+- `cd web && npm run lint` → 0 uyarı
+- `cd web && NEXT_DIST_DIR=.next-verify npm run build` → başarılı (29 route)
+- `php api/database/iyzico_selftest.php` → 77 geçti, 0 başarısız (canlı sandbox tahsilat + iptal dahil)
+
+**Ek davranış testleri (gerçek MySQL'e karşı, 33 kontrol, hepsi geçti):** hız sınırı sayacı (5/7 sınırı, reset, fail-closed), `GREATEST`/`COALESCE` NULL davranışı, `DELETE` rowCount ile atomik toggle, `ON DUPLICATE KEY UPDATE` ile ikinci beğeninin 500 üretmemesi, `LEAST` coin tavanı, `CHAR_LENGTH` çok baytlı sayım, çekim durum kümesi, plan adı tek kaynak, `update()` anahtar çakışması istisnası, `getGlobalVars()` dönüş tipi, `reported_for` kümesi, Google kullanıcı adı türetme (varchar(30) sınırı dahil), SMTP CRLF reddi, uzantısı `.php` olan gerçek PNG'nin içerikten tespiti.
+
+**Canlı şema teyidi (üç sütun kümesi de mevcut, yani aşağıdaki düzeltmeler bugünkü kurulumu kırmıyor):** `notifications.message_tr`/`message_en` ✔, `plans.independent_bot_limit`/`public_bot_limit`/`daily_message_limit` ✔, `user_lists.color`/`description` ✔.
+
+## Kapatılanlar
+
+| ID | Ne yapıldı |
+|---|---|
+| **A-03** | `getSuggested()` içindeki `data:image/jpeg;base64,` öneki kaldırıldı — sütunda base64 değil `assets/…` yolu var, önek her görseli bozuyordu. |
+| **F-01** | Görsel yolu normalizasyonu tek yere alındı: `shared/lib/image.js` → `normalizeImagePath()`. Üç düzeltmeyen render noktası bağlandı (`ChatbotCard.jsx`, `ProfileCard.formatImage`, `SuggestedCard.jsx`). |
+| **F-02** | `updateUserNames`/`updateUserEmail` yazmadan önce UNIQUE çakışmasını sorguluyor, 409 + anlamlı mesaj dönüyor (eskiden ham PDO istisnası → 500). Ayrıca `kullanici_adi` kırpma sınırı 60'tan sütunun gerçek genişliği olan 30'a çekildi. |
+| **F-04 / J-02** | Çerez `Secure` bayrağı üç yerde `RequestContext::isHttps()`e bağlandı: `bootstrap.php` (PHPSESSID), `AuthController::logout()` (silme çerezi artık yazma çereziyle birebir aynı bayraklarda), `admin/functions/session.php` (kendi yorumundaki "bootstrap ile birebir aynı olmalı" kuralı). |
+| **E-02** | Kapanmış çekim durumu kümesi ASCII `odendi` yerine `WITHDRAWAL_STATUSES`ten türetiliyor — ödenmiş talep force'suz yeniden açılamıyor. |
+| **E-03** | `migrations/010_notification_message_columns.sql` yazıldı; controller'daki çalışma zamanı `ALTER TABLE` kaldırıldı, yerine varlık kontrolü + net 503 kondu. |
+| **E-04** | `getPricing()`'in kodlanmış geri düşüş kataloğu kaldırıldı → `upgradePlan()` ile aynı 503. Frontend'deki DÖRDÜNCÜ kopya (`upgrade/page.jsx` → `initialPlanData`) da boşaltıldı; hata durumunda fiyat gösterilmiyor. |
+| **E-05** | Ücretsiz plan adı tek kaynağa bağlandı: `AppConfig::FREE_PLAN_NAME` + `pricing.js` → `FREE_PLAN_NAME`/`isPaidPlan()`. Yan bulgu: frontend `planName !== "Ücretsiz Plan"` karşılaştırması yüzünden ücretsiz kullanıcıya **"Pro" rozeti** gösteriyordu (Sidebar, DashboardHeader). |
+| **B-01** | `getBotsOfList()` `requireAuth()` + `user_lists` sahiplik kontrolü aldı. |
+| **B-02 / B-03 / B-04 / B-12** | Altı yazma yolunda kütle atama kapatıldı: `addDialogBook`, `addComment` (Note), `addBotToList`, `addHide`, `addUninterest`, `updateConversation`. `addComment` ayrıca `dialog_id` varlığını doğruluyor. |
+| **B-06** | `hostIsPublic()` → `resolvePublicIps()`; doğrulanan IP `CURLOPT_RESOLVE` ile pinleniyor (DNS rebinding penceresi kapandı). |
+| **B-06b** | `CURLOPT_WRITEFUNCTION` ile bayt sayılıyor, tavan aşılınca aktarım kesiliyor (chunked yanıtta `CURLOPT_MAXFILESIZE` hiçbir şey yapmıyordu). |
+| **B-08** | `addToCart()` duplicate dışındaki PDO hatasını artık istemciye yazmıyor: `error_log` + genel 500. |
+| **B-09** | `listIller`/`listIlceler` `requireAuth()` + `checkRateLimit` aldı; `?nocache` yalnızca admin oturumunda. |
+| **B-10** | `getOwner()` `requireAuth()` arkasına alındı (kullanıcı adı numaralandırma). |
+| **B-11** | Şifre sıfırlamaya IP'siz ikinci sayaç eklendi (`resetcode-account:<eposta>`, 15 dk / 10 deneme) — IP havuzuyla sayaç atlatma kapandı. |
+| **B-13** | `updateTrainingChunk` hız sınırı + parça ve TOPLAM uzunluk tavanı aldı; tavan `AppConfig::MAX_TRAINING_CHARS` (okuma tarafıyla aynı sabit). |
+| **C-01** | Bot limiti `GET_LOCK('botlimit_user_<id>')` ile korunuyor — `saveChatbot` ve `publishChatbot` ikisinde de. |
+| **C-02** | Beş beğen/beğenme/takip metodu atomik hâle geldi: `DELETE`in satır sayısı toggle kararı, `INSERT … ON DUPLICATE KEY UPDATE` ile yarışta 500 yok. |
+| **D-06** | `getMyPayments()` `LEFT JOIN`e çevrildi — üyelik paketi alımı (detay satırı yok) artık Ödemelerim listesinde görünüyor; kalemsiz sipariş "Üyelik paketi" olarak etiketleniyor. |
+| **G-01** | `reported_for` sunucuda sabit kümeye karşı doğrulanıyor; admin panelindeki `insertAdjacentHTML` render'ı tamamen `textContent`e çevrildi (depolanmış XSS iki taraftan kapandı). |
+| **G-02** | `featureForm` iç içe `<form>` olmaktan çıkarıldı (`<div>` + click handler) — "Plan İçerikleri" hiç çalışmıyordu ve dış formun yarısı form dışında kalıyordu. |
+| **G-03 / G-04 / G-11 / G-16** | `kullanicilar.php`: Kaydet butonundan `hidden` kaldırıldı; silme handler'ı `form.isim` yerine `form.ad_soyad` okuyor; `read.php` çağrılarına `columns` eklendi (bcrypt hash + `google_id` + base64 avatar artık tarayıcıya inmiyor) ve `console.log` silindi; `li.innerText` düz metin yerine değişkeni yazıyor. Aynı `baslik1` hatası `chatbotlar.php`de de düzeltildi. |
+| **G-06 / H-06** | Ortak `admin/functions/upload_guard.php` yazıldı; üç yükleme yolu (`upload.php`, `updategv.php`, `seo.php`) tek doğrulamayı ve `AppConfig` sınırlarını paylaşıyor. Uzantı artık doğrulanmış MIME'dan türüyor, istemcinin dosya adından değil. |
+| **G-07** | `.env` yazımı: anahtar beyaz listesi, CR/LF + tırnak reddi, tırnaklı değer. Boş gönderim mevcut anahtarı korur (`api.php` artık anahtarı HTML'e basmıyor). |
+| **G-08** | `readenv.php`: anahtar beyaz listesi + maskelenmiş değer. Silme adayı olarak işaretlendi. |
+| **G-09** | `admin_login_at` gerçekten okunuyor: boşta 2 saat / mutlak 12 saat zaman aşımı (`admin_session_enforce_timeout()`). `admin_login_ip` bilinçli olarak yetkilendirmede kullanılmıyor, gerekçesi kod içinde. |
+| **G-10** | `ajax/cikis.php` `_guard.php` kullanıyor (metot + CSRF) ve oturumu tamamen yıkıyor. |
+| **G-12** | Ham istisna mesajı sızan dört nokta kapatıldı: `seosite.php` (mesajı bir `<script>alert()` bloğunun içine yazıyordu), `db_backup.php`, `ajax/create.php`, `ajax/update.php`. |
+| **G-13** | Göreli yollar `__DIR__` tabanlı yapıldı: `seo.php` yükleme hedefleri ve `require`, `seosite.php` favicon kontrolü, `seometa.php`/`seotwitter.php` görsel önizleme kontrolleri. |
+| **G-14** | Ölü atama silindi; sunucudaki base64 dalı `handleImageUploads` gibi dosya yazmaya çevrildi (`admin_store_uploads()`), yani panelden yüklenen görsel artık uygulamanın beklediği `assets/…` yolunu üretiyor. `update.php`deki artık gereksiz `SELECT *` de kaldırıldı. |
+| **G-15** | `logo.php` ve `assets/js/login.js` neden çalışmadıklarıyla birlikte **silme adayı** olarak işaretlendi (silme kararı kullanıcıda). |
+| **G-17** | `intval($database->getGlobalVars(...))` → `(int) (...)['theme_index'] ?? 1`; `$themes` boşken kenar çubuğunu görünmez yapan null durumu için varsayılan tema eklendi. |
+| **G-18** | `report_detail` kırpması 2000 → 1000 (sütun `varchar(1000)`). |
+| **G-19** | "Hakkımızda Sayfası" başlığı "Mesafeli Satış Sözleşmesi" olarak düzeltildi. |
+| **G-20** | Panele CSP + `X-Content-Type-Options` + `Referrer-Policy` eklendi (`object-src 'none'`, `base-uri`, `form-action`, `frame-ancestors`, `connect-src 'self'`); kullanılmayan `bcryptjs` CDN script'i kaldırıldı. SRI EKLENMEDİ — uydurulan bir `integrity` kaynağı sessizce bloke eder; kalıcı çözüm bağımlılıkları yerelleştirmek. |
+| **H-01** | Zaten kapalıydı (SEC-014b beyaz listesi `RegisterUseCase`te yerinde); doğrulandı, ek değişiklik gerekmedi. |
+| **H-02** | `GoogleLoginUseCase` duplicate yakalıyor ve satırı yeniden okuyor (çift tıklama / iki sekme artık 500 üretmiyor). |
+| **H-03** | Google ile açılan hesaba `kullanici_adi` türetiliyor (çakışmada sayaç, varchar(30) sınırı test edildi) ve `user_emails` kaydı da yazılıyor — iki kayıt yolu eşitlendi. |
+| **H-04** | Admin plan formuna üç kota alanı eklendi; panelden açılan plan artık ücretsiz kotalarla doğmuyor. |
+| **H-05** | `autoload.php`in dizin listesi 31'den 11'e indi (11 dizin diskte hiç yoktu); implementasyonsuz altı `Domain` arayüzü dosya başında "yol haritası, sıfır referans" notuyla işaretlendi. |
+| **H-07** | `BaseRepository::update()` `$data`/`$whereParams` anahtar çakışmasında `InvalidArgumentException` fırlatıyor; docblock örneği `_` önekiyle düzeltildi. |
+| **H-08** | Girişte aynı kullanıcının süresi geçmiş `user_tokens` satırları siliniyor (`purgeExpiredRememberTokens`). |
+| **H-09** | `password_verify($password, $user['sifre'] ?? '')` — Google ile açılmış parolasız hesapta deprecation uyarısı/log gürültüsü bitti, kullanıcıya giden mesaj değişmedi (hesap numaralandırma kapalı kalıyor). |
+| **H-10** | `AppConfig` yorumu gerçeğe uyduruldu: `FREE_*` bir fallback, `PRODUCER_*` gerçekten ölü. |
+| **I-05** | SMTP ayarları doğrulanıyor (`FILTER_VALIDATE_EMAIL`, host deseni, CR/LF reddi) ve `smtp_client.php` zarf adreslerini de CR/LF + `<>` + biçim kontrolünden geçiriyor (savunma derinliği). |
+| **I-06** | SMTP parolası artık HTML'e basılmıyor; boş bırakılırsa mevcut parola korunuyor. `.env`e taşıma yolu sayfada belirtildi. |
+| **I-07** | `db.php`ten iki kanıtlanmış ölü metot silindi: `getParamTypes()` (mysqli kalıntısı, PHP 8'de TypeError üretirdi) ve `truncate()` (allowlist yok, `$this->conn->error` PDO'da yok, CLAUDE.md TRUNCATE'i zaten yasaklıyor). `validators.php` + `minify.php` silme adayı olarak işaretlendi; `sanitize_string()` düzeltildi (mb_substr + girdide kaçış yok). |
+| **I-08** | `rateLimitHit()` gövdesi try/catch içine alındı — docblock'un "Never throws" iddiası artık doğru, fail-closed korunuyor. Admin girişi tam olarak bu iddiaya güveniyordu. |
+| **I-09** | Ayrı `SELECT attempts` kaldırıldı; sayaç `LAST_INSERT_ID()` ile artışın kendi ifadesinden okunuyor. Sabit pencere davranışı bilinçli olarak korundu, gerekçesi kod içinde. |
+| **I-10** | Günlük coin iadesine `LEAST(<plan limiti>, …)` tavanı kondu. |
+| **I-11** | `GREATEST(COALESCE(expires_at, VALUES(expires_at)), VALUES(expires_at))` — süresiz kredide yenileme artık süreyi yazıyor (eskiden NULL kalıyordu). |
+| **K-01 (b)** | `schema.sql`deki `user_lists` tanımında `color`/`description` mevcut (bu turdan önce kapanmış); canlı şemada da var olduğu ölçüldü. |
+
+## Açık kalanlar — kod değil, KARAR gerekiyor
+
+Bunların hiçbirinde doğru davranışa kendim karar vermedim; hepsi CLAUDE.md'nin "önce raporla, onay bekle" ya da "iş kuralı belirsizse kendin karar verme" kapsamında.
+
+| ID | Neden uygulanmadı |
+|---|---|
+| **D-01** | Kod yarısı COMP-007 ile kapandı. Operasyonel yarısı (talebi kim onaylar, havaleyi kim yapar) **BLOCKERS B7**. |
+| **D-02** | `addSubMerchant()` stub. `status='active'` yazmak KYC'siz satıcıya para akışı açmak olurdu — gerçek sağlayıcı entegrasyonu gerekiyor (**B1**). |
+| **D-03 / D-08 / I-04** | İade semantiği bir iş kuralı: iade erişimi anında mı keser, dönem sonuna kadar mı sürer; harcanmış kredi geri alınır mı; kısmi iadede hangi kalem iptal edilir. Üçü birbirine bağlı. Ayrıca `checkout_payments.php` otonomi sözleşmesindeki üç ödeme dosyasından biri. |
+| **D-04** | Öneri net (tahsilattan ÖNCE `pending` ödeme satırı yaz), ama `createsubscription.php` + `checkout_payments.php` ödeme yolu. |
+| **D-05** | "Aylık" paket süresiz veriliyor. Abonelik mi, tek seferlik yükseltme mi? Süre dolunca Elmas'tan düşen kullanıcının fazla botlarına ne olur? Şema değişikliği + iş kuralı. |
+| **D-07** | Üretici planı bilinçli kapalı; açmak iki iş kararı gerektiriyor. |
+| **I-01** | Checkout idempotency satırı başarıda silinmiyor → aynı botu aynı süreyle yeniden satın alma reddediliyor (abonelik yenileme pratikte kırık). Düzeltme `createSubscription` içinde, ödeme yolu. **Açık maddeler arasında en yüksek etkili olan budur.** |
+| **I-02** | `processRefund()` transaction/kilit/idempotency istiyor — ödeme yolu. |
+| **I-03** | `user_plan_selection` ↔ `plans` bağı serbest metin isim üzerinden; `plan_id` + FK şema değişikliği. Bu turda ad tek kaynağa bağlandı (E-05) ama YAPISAL sorun duruyor: admin panelinden bir plan yeniden adlandırılırsa o plandaki tüm kullanıcılar sessizce ücretsize düşer. |
+| **B-05** | Sohbet Defteri'nin herkese açık mı olacağı ürün kararı; özel yapmak şema değişikliği. |
+| **B-07** | E-posta değiştirmede parola + yeni adrese doğrulama akışı; oturum ve e-posta akışını etkiliyor, ayrıca **B5**'e bağlı. |
+| **A-01** | 25 silme adayı endpoint SİLİNMEDİ: hangilerinin gelecekteki bir entegrasyon için bilerek durduğunu (`marketplace_reconcile.php`, `parampos_callback.php`) kod içi aramayla ayırt etmek mümkün değil. |
+| **A-02** | 15 metodun `JsonResponse` zarfına taşınması API contract'ında kırıcı değişiklik. |
+| **G-05** | Kullanıcı ekleme formunda şifre alanı yok. Sayfa salt-düzenleme mi olacak, yoksa forma zorunlu şifre mi eklenecek — iş kuralı. (Not: H-09 düzeltmesinden sonra `sifre` NULL olan hesap parolayla giriş yapamıyor, yani şu an sömürülebilir değil; yalnızca işe yaramaz hesap üretiyor.) |
+| **G-15 / I-07** | `logo.php`, `assets/js/login.js`, `validators.php`, `minify.php` silme adayı olarak İŞARETLENDİ ama silinmedi. |
+| **COMP-008 / COMP-009 / COMP-010 / COMP-011 / COMP-012 / COMP-002b** | Değişmedi — veri, iş modeli ya da hukuki karar gerektiriyor. |
+
+## Bu turda dikkat edilmesi gereken tek operasyonel adım
+
+`migrations/010_notification_message_columns.sql` **yazıldı, uygulanmadı** (CLAUDE.md `--apply` yasağı). Canlı veritabanında `notifications.message_tr`/`message_en` sütunlarının **zaten var olduğu ölçüldü**, yani bugünkü kurulum etkilenmiyor; migration sıfırdan kurulan veritabanları ve migration geçmişinin tutarlılığı için gerekli.

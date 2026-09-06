@@ -149,6 +149,11 @@ class ChatController {
         $id = InputSanitizer::positiveInt($data['id']);
         unset($data['id'], $data['user_id']);
 
+        // B-12 — sahiplik kontrolü vardı ama ardından ham $data update()'e
+        // gidiyordu; dosyada hazır olan beyaz liste burada kullanılmıyordu.
+        $data = self::assertOnlyAllowed($data, self::CONVERSATION_COLUMNS);
+        if ($data === []) JsonResponse::error('Güncellenecek alan yok.', 400, AppConfig::ERR_VALIDATION);
+
         $db = Database::getInstance();
         // Previously had no ownership check — anyone could rename any conversation by id.
         if (!$db->selectSingle('id FROM chatbot_conversations WHERE id = ? AND user_id = ?', [$id, $userId])) {
@@ -236,9 +241,50 @@ class ChatController {
      * = tek kullanıcıdan 2,5M token/dk. Sınır artık sunucuda, yani istemci
      * değiştirilerek aşılamıyor.
      */
-    private const MAX_TRAINING_CHARS = 60000;
+    // B-13: tek kaynak AppConfig — yazma tarafı (TrainingController) da onu okuyor.
+    private const MAX_TRAINING_CHARS = AppConfig::MAX_TRAINING_CHARS;
     private const MAX_STYLE_CHARS    = 4000;
     private const MAX_MESSAGE_CHARS  = 8000;
+
+    /**
+     * Sohbete eklenen dosyanın ÇÖZÜLMÜŞ tavanı.
+     *
+     * 4 MB seçildi çünkü dosya base64 ile taşınıyor ve base64 veriyi ~1/3
+     * büyütüyor: 4 MB'lık dosya ~5,3 MB'lık istek gövdesi demek. PHP'nin
+     * `post_max_size` varsayılanı 8M; sınırı ona yaklaştırmak, gövdenin
+     * sessizce atıldığı ve isteğin anlamsız bir hatayla döndüğü duruma
+     * (bkz. AUDIT L-01) kapı açardı.
+     *
+     * İstemcideki karşılığı chat/page.jsx içindeki MAX_CHAT_FILE_BYTES;
+     * ikisi elle senkron tutuluyor.
+     */
+    private const MAX_FILE_BYTES = 4 * 1024 * 1024;
+
+    /**
+     * Bir mesaja eklenebilecek belge SAYISI ve bunların TOPLAM boyutu.
+     *
+     * Toplam, tek dosya sınırından ayrı bir kapı: her biri 4 MB sınırını
+     * geçen beş dosya birlikte ~6,7 MB base64 üretir ve `post_max_size`
+     * (varsayılan 8M) aşılınca PHP gövdeyi tamamen atar. Toplamı 5 MB'ta
+     * tutmak, mesaj metni ve JSON yükü de eklendiğinde güvenli bir pay
+     * bırakıyor.
+     *
+     * İstemcideki karşılıkları: MessageInput MAX_FILES, chat/page.jsx
+     * MAX_CHAT_FILE_BYTES / MAX_CHAT_TOTAL_FILE_BYTES.
+     */
+    private const MAX_FILES = 5;
+    private const MAX_TOTAL_FILE_BYTES = 5 * 1024 * 1024;
+
+    /**
+     * Modele iletilebilecek dosya türleri — Gemini'nin inline_data ile
+     * kabul ettiklerinin muhafazakâr bir alt kümesi. Listeyi serbest
+     * bırakmak, modelin reddedeceği bir dosya için kullanıcıdan coin almak
+     * anlamına gelirdi.
+     */
+    private const ALLOWED_FILE_MIMES = [
+        'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif',
+        'application/pdf', 'text/plain',
+    ];
 
     public static function generateReply(): void {
         require_method('POST');
@@ -255,6 +301,16 @@ class ChatController {
         $data      = json_decode($_POST['data'] ?? '', true) ?? null;
         $message   = $data['message'] ?? null;
         $chatbotId = InputSanitizer::positiveInt($data['chatbot_id'] ?? 0);
+        /* Çoklu belge: istemci artık `files` dizisi gönderiyor. Tekil `file`
+           biçimi geriye dönük uyumluluk için kabul ediliyor — eski bir sekme
+           açık kaldıysa isteği reddetmek yerine tek elemanlı listeye
+           çeviriyoruz. */
+        $files = [];
+        if (is_array($data['files'] ?? null)) {
+            $files = array_values(array_filter($data['files'], 'is_array'));
+        } elseif (is_array($data['file'] ?? null)) {
+            $files = [$data['file']];
+        }
 
         if (!$data || $message === null || $message === '') {
             JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
@@ -290,6 +346,61 @@ class ChatController {
             JsonResponse::error('Chatbot bulunamadı.', 404, AppConfig::ERR_NOT_FOUND);
         }
 
+        // Dosya doğrulaması coin TÜKETİMİNDEN ÖNCE yapılıyor: geçersiz bir
+        // dosya için kullanıcıdan hak düşmemeli. Tümü doğrulanmadan hiçbiri
+        // kabul edilmiyor — beşinci dosya reddedilirken ilk dördü için coin
+        // düşmüş olması kullanıcı açısından açıklanamaz olurdu.
+        $fileParts = [];
+        if ($files !== []) {
+            if (count($files) > self::MAX_FILES) {
+                JsonResponse::error(
+                    'Bir mesaja en fazla ' . self::MAX_FILES . ' belge ekleyebilirsiniz.',
+                    400,
+                    AppConfig::ERR_VALIDATION
+                );
+            }
+
+            $totalBytes = 0;
+            foreach ($files as $index => $file) {
+                $mime = (string) ($file['mime_type'] ?? '');
+                $b64  = (string) ($file['data'] ?? '');
+                $sira = $index + 1;
+
+                if (!in_array($mime, self::ALLOWED_FILE_MIMES, true)) {
+                    JsonResponse::error(
+                        $sira . '. belgenin türü desteklenmiyor. Görsel (JPEG/PNG/WebP/HEIC), PDF veya düz metin gönderebilirsiniz.',
+                        400,
+                        AppConfig::ERR_VALIDATION
+                    );
+                }
+
+                $bytes = base64_decode($b64, true);
+                if ($bytes === false || $bytes === '') {
+                    JsonResponse::error($sira . '. belge okunamadı.', 400, AppConfig::ERR_VALIDATION);
+                }
+                if (strlen($bytes) > self::MAX_FILE_BYTES) {
+                    JsonResponse::error(
+                        $sira . '. belge çok büyük (dosya başına maks. ' . (int) (self::MAX_FILE_BYTES / 1024 / 1024) . ' MB).',
+                        413,
+                        AppConfig::ERR_VALIDATION
+                    );
+                }
+
+                $totalBytes += strlen($bytes);
+                if ($totalBytes > self::MAX_TOTAL_FILE_BYTES) {
+                    JsonResponse::error(
+                        'Belgelerin toplam boyutu çok büyük (maks. ' . (int) (self::MAX_TOTAL_FILE_BYTES / 1024 / 1024) . ' MB).',
+                        413,
+                        AppConfig::ERR_VALIDATION
+                    );
+                }
+
+                // Yeniden kodluyoruz: istemciden gelen dizgede boşluk/satır sonu
+                // bulunabiliyor ve upstream bunu reddediyor.
+                $fileParts[] = ['inline_data' => ['mime_type' => $mime, 'data' => base64_encode($bytes)]];
+            }
+        }
+
         $message = mb_substr((string) $message, 0, self::MAX_MESSAGE_CHARS);
         $style   = mb_substr((string) ($bot['style_prompt'] ?? ''), 0, self::MAX_STYLE_CHARS);
         $corpus  = (string) ($bot['training_prompt'] ?? '');
@@ -314,19 +425,71 @@ class ChatController {
         }
         $allowanceSource = (string) ($allowance['source'] ?? 'coins');
 
+        /* Dosya eklenmişse mesajın ÜSTÜNE bir hak daha düşüyor: dosyalı bir
+           istek modele belirgin biçimde daha fazla iş yaptırıyor, bu yüzden
+           düz mesajla aynı fiyatta değil.
+
+           İkinci düşüm ayrı bir mekanizma DEĞİL, aynı consumeMessage()
+           çağrısı — böylece atomik "UPDATE ... WHERE remaining > 0" güvencesi
+           ve satın alma kredisi/günlük havuz sıralaması aynen korunuyor.
+           Kaynak ayrı tutuluyor: iki düşüm farklı havuzlardan gelebilir
+           (biri kredi, biri günlük coin) ve iade doğru havuza dönmeli.
+
+           Hak yetmezse BİRİNCİ düşüm geri veriliyor: kullanıcı hem coin'ini
+           kaybedip hem cevapsız kalmamalı. */
+        /* Her belge için AYRI bir hak düşüyor: 3 belgeli bir mesaj
+           1 (mesaj) + 3 (belge) = 4 LumaCoin.
+
+           Düşümlerin kaynakları tek tek saklanıyor; biri satın alma
+           kredisinden, diğeri günlük havuzdan gelebiliyor ve iade doğru
+           havuza dönmek zorunda.
+
+           Ortada hak biterse O ANA KADAR düşülenlerin HEPSİ iade ediliyor:
+           kullanıcı ne yarım bir işlem için ödemeli ne de cevapsız kalmalı. */
+        $fileAllowanceSources = [];
+        foreach ($fileParts as $index => $unused) {
+            $fileAllowance = consumeMessage($db, $userId, $chatbotId);
+            if (empty($fileAllowance['allowed'])) {
+                refundMessage($db, $userId, $chatbotId, $allowanceSource);
+                foreach ($fileAllowanceSources as $source) {
+                    refundMessage($db, $userId, $chatbotId, $source);
+                }
+                JsonResponse::error(
+                    sprintf(
+                        '%d belge eklemek için %d ek LumaCoin gerekiyor, hakkınız yetmiyor.',
+                        count($fileParts),
+                        count($fileParts)
+                    ),
+                    429,
+                    AppConfig::ERR_LIMIT_REACHED,
+                    ['remaining' => $fileAllowance['remaining'] ?? 0, 'source' => $fileAllowance['source'] ?? 'coins']
+                );
+            }
+            $fileAllowanceSources[] = (string) ($fileAllowance['source'] ?? 'coins');
+            // İstemciye gösterilecek kalan, TÜM düşümlerden sonraki değer.
+            $allowance['remaining'] = $fileAllowance['remaining'] ?? $allowance['remaining'] ?? null;
+        }
+
         $apiKey = AppConfig::googleGeminiApiKey();
         if (!$apiKey) {
             refundMessage($db, $userId, $chatbotId, $allowanceSource);
             JsonResponse::error('Yapay zeka servisi yapılandırılmamış.', 500, AppConfig::ERR_SERVER);
         }
 
+        // Dosya, metin parçalarının ARDINDAN ekleniyor: talimat ve kullanıcı
+        // mesajı modele önce ulaşsın, dosya onların bağlamında okunsun.
+        $parts = [
+            ['text' => $systemInstruction],
+            ['text' => $message],
+        ];
+        foreach ($fileParts as $filePart) {
+            $parts[] = $filePart;
+        }
+
         $payload = json_encode([
             'contents' => [[
                 'role'  => 'user',
-                'parts' => [
-                    ['text' => $systemInstruction],
-                    ['text' => $message],
-                ],
+                'parts' => $parts,
             ]],
         ]);
 
@@ -396,8 +559,12 @@ class ChatController {
                 $errorBody !== '' ? mb_substr($errorBody, 0, 500) : '-'
             ));
 
-            // AI-005: cevap üretilemedi — yakılan mesaj hakkını geri ver.
+            // AI-005: cevap üretilemedi — yakılan hakları geri ver. Dosya
+            // için düşülen ikinci hak da buraya dahil, kendi kaynağına.
             refundMessage($db, $userId, $chatbotId, $allowanceSource);
+            foreach ($fileAllowanceSources as $source) {
+                refundMessage($db, $userId, $chatbotId, $source);
+            }
 
             // Never leak the upstream body (it can echo the API key back) —
             // send a stable code the client maps to its own wording.

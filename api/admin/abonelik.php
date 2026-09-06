@@ -54,20 +54,68 @@ $abonelikler = $database->selectMulti("* FROM plans");
                       <textarea id="description_en" name="description_en" rows="2" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm"></textarea>
                     </div>
                     
+                    <!--
+                      H-04 — `plans` tablosunun üç KOTA sütunu bu formda hiç
+                      yoktu. Panelden açılan her yeni plan bu sütunları DB
+                      varsayılanlarıyla, yani ÜCRETSİZ plan kotalarıyla
+                      (1/2/10) alıyordu: "Elmas" planı satılıyor, kullanıcı
+                      ücretsiz limitleri görüyordu. `ajax/create.php` ve
+                      `update.php` `plans` tablosunu zaten beyaz listede
+                      tuttuğu için sunucu tarafında değişiklik gerekmedi.
+                    -->
+                    <div class="border-t pt-4 mt-4">
+                        <h4 class="text-md font-bold text-indigo-700 mb-2">Plan Kotaları</h4>
+                        <p class="text-xs text-gray-500 mb-3">
+                            Bu üç değer doğrudan kullanıcının bot ve mesaj hakkına dönüşür
+                            (<code>functions/plans.php</code>). Boş bırakılırsa ücretsiz plan
+                            varsayılanları uygulanır.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="independent_bot_limit" class="block font-semibold text-sm text-gray-700 mb-2">Bağımsız bot</label>
+                                <input type="number" id="independent_bot_limit" name="independent_bot_limit" min="0" step="1" value="1"
+                                       class="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm">
+                            </div>
+                            <div>
+                                <label for="public_bot_limit" class="block font-semibold text-sm text-gray-700 mb-2">Herkese açık bot</label>
+                                <input type="number" id="public_bot_limit" name="public_bot_limit" min="0" step="1" value="2"
+                                       class="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm">
+                            </div>
+                            <div>
+                                <label for="daily_message_limit" class="block font-semibold text-sm text-gray-700 mb-2">Günlük mesaj</label>
+                                <input type="number" id="daily_message_limit" name="daily_message_limit" min="0" step="1" value="10"
+                                       class="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Plan İçerikleri Yönetimi -->
+                    <!--
+                      G-02 — burada `<form id="featureForm">` DIŞ `<form
+                      id="dataForm">`in İÇİNE yuvalanmıştı. HTML ayrıştırıcı
+                      iç form başlangıç etiketini yok sayar, kapanış etiketi
+                      ise DIŞ formu kapatır. Sonuç:
+                      `getElementById("featureForm")` null dönüyor, ona
+                      bağlanan submit dinleyicisi hiç kurulamıyordu — yani
+                      "Plan İçerikleri" ekleme/güncelleme HİÇ ÇALIŞMIYORDU;
+                      üstelik dış formun geri kalanı (kotalar, kaydet/sil
+                      düğmeleri) da form dışında kalıyordu.
+                      Çözüm: iç form bir `<div>`; submit yerine butonun
+                      `click`ine bağlanıyor (JS tarafı da güncellendi).
+                    -->
                     <div class="border-t pt-4 mt-4">
                         <h4 class="text-md font-bold text-indigo-700 mb-2">Plan İçerikleri</h4>
                         <ul id="featureList" class="space-y-2 mb-4">
                             <!-- İçerikler buraya JS ile eklenecek -->
                             <li class="text-sm text-gray-600 italic">Plan seçilince içerikler yüklenecektir.</li>
                         </ul>
-                        <form id="featureForm" class="flex gap-2">
+                        <div id="featureForm" class="flex gap-2">
                             <input type="hidden" id="feature_id" value="0">
                             <input type="text" id="feature_tr" placeholder="Özellik (TR)" class="flex-grow border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500">
                             <input type="text" id="feature_en" placeholder="Özellik (EN)" class="flex-grow border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500">
-                            <button type="submit" id="saveFeature" class="bg-green-500 text-white text-sm px-3 py-2 rounded-lg hover:bg-green-600 active:scale-95 transition">Ekle/Güncelle</button>
+                            <button type="button" id="saveFeature" class="bg-green-500 text-white text-sm px-3 py-2 rounded-lg hover:bg-green-600 active:scale-95 transition">Ekle/Güncelle</button>
                             <button type="button" id="cancelFeature" class="hidden bg-yellow-500 text-white text-sm px-3 py-2 rounded-lg hover:bg-yellow-600 active:scale-95 transition">İptal</button>
-                        </form>
+                        </div>
                     </div>
 
                     <div class="flex justify-between gap-2 pt-4">
@@ -96,6 +144,14 @@ $abonelikler = $database->selectMulti("* FROM plans");
         const featureEnInput = document.getElementById("feature_en");
         const saveFeatureBtn = document.getElementById("saveFeature");
         const cancelFeatureBtn = document.getElementById("cancelFeature");
+
+        // G-02: `featureForm` artık bir <form> değil <div> (iç içe form
+        // ayrıştırıcı tarafından atılıyordu), yani `.reset()` yok.
+        const resetFeatureForm = () => {
+            featureIdInput.value = "0";
+            featureTrInput.value = "";
+            featureEnInput.value = "";
+        };
 
 
         // --- Plan Okuma ve Seçme ---
@@ -165,7 +221,7 @@ $abonelikler = $database->selectMulti("* FROM plans");
             newBtn.classList.add("hidden");
             deleteBtn.classList.add("hidden");
             featureList.innerHTML = '<li class="text-sm text-gray-600 italic">Plan seçilince içerikler yüklenecektir.</li>';
-            featureForm.reset();
+            resetFeatureForm();
             featureIdInput.value = "0";
             saveFeatureBtn.textContent = "Ekle";
             cancelFeatureBtn.classList.add("hidden");
@@ -222,7 +278,12 @@ $abonelikler = $database->selectMulti("* FROM plans");
                         const newLi = document.createElement("li");
                         newLi.className = "flex items-center bg-gray-100 hover:bg-indigo-50/70 text-gray-800 px-3 py-2 rounded-lg cursor-pointer transition duration-150";
                         newLi.dataset.id = newId;
-                        newLi.innerHTML = `<span class="font-medium">${dataForm.name_tr.value}</span>`;
+                        // G-16 ailesi: innerHTML + şablon interpolasyonu yerine
+                        // textContent — plan adı bir metin, işaretleme değil.
+                        const newLabel = document.createElement("span");
+                        newLabel.className = "font-medium";
+                        newLabel.textContent = dataForm.name_tr.value;
+                        newLi.appendChild(newLabel);
                         dataUl.appendChild(newLi);
                         
                         // Yeni eklenen öğeyi seçili yap
@@ -278,7 +339,7 @@ $abonelikler = $database->selectMulti("* FROM plans");
                         newBtn.classList.remove("hidden");
                         deleteBtn.classList.add("hidden");
                         featureList.innerHTML = '<li class="text-sm text-gray-600 italic">Plan seçilince içerikler yüklenecektir.</li>';
-                        featureForm.reset();
+                        resetFeatureForm();
                         featureIdInput.value = "0";
                         saveFeatureBtn.textContent = "Ekle";
                         cancelFeatureBtn.classList.add("hidden");
@@ -378,7 +439,7 @@ $abonelikler = $database->selectMulti("* FROM plans");
         }
 
         // İçerik Ekle/Güncelle
-        featureForm.addEventListener("submit", async (e) => {
+        saveFeatureBtn.addEventListener("click", async (e) => {
             e.preventDefault();
             const planId = dataForm.id.value;
             if (planId === "0") {
@@ -418,7 +479,7 @@ $abonelikler = $database->selectMulti("* FROM plans");
                 
                 if (result.success) {
                     new Notification({text: result.message, type: "success", position: "top-right"});
-                    featureForm.reset();
+                    resetFeatureForm();
                     featureIdInput.value = "0";
                     saveFeatureBtn.textContent = "Ekle";
                     cancelFeatureBtn.classList.add("hidden");
@@ -433,7 +494,7 @@ $abonelikler = $database->selectMulti("* FROM plans");
         
         // İçerik Ekle/Güncelle İptal
         cancelFeatureBtn.addEventListener('click', () => {
-            featureForm.reset();
+            resetFeatureForm();
             featureIdInput.value = "0";
             saveFeatureBtn.textContent = "Ekle";
             cancelFeatureBtn.classList.add("hidden");

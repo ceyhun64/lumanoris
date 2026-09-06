@@ -45,12 +45,23 @@ try {
                    class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
                    onchange="previewOGImage(event)">
             
-            <?php $ogImagePath = $seo_data['og:image'] ?? ''; ?>
-            <img src="<?= htmlspecialchars($ogImagePath) ?>" id="og-image-preview" 
-                 class="mt-3 block w-full max-w-full h-auto rounded-lg shadow-md border <?= !empty($ogImagePath) && file_exists($ogImagePath) ? 'block' : 'hidden' ?>" 
+            <?php
+            // G-13 — `file_exists($ogImagePath)` GÖRELİ bir yol alıyordu
+            // (`assets/images/seo/og_image.png`). Göreli yollar PHP'nin
+            // ÇALIŞMA DİZİNİNE göre çözülür, dosyanın konumuna göre değil:
+            // yüklenen görsel diskte dururken bile kontrol `false` dönüyor
+            // ve önizleme hep gizli kalıyordu. Kontrol artık `__DIR__`
+            // tabanlı mutlak yolla; `src` ise tarayıcı için kök-göreli URL.
+            $ogImagePath   = (string) ($seo_data['og:image'] ?? '');
+            $ogImageOnDisk = $ogImagePath !== ''
+                && file_exists(__DIR__ . '/../../' . ltrim($ogImagePath, '/'));
+            $ogImageUrl    = $ogImagePath !== '' ? '/' . ltrim($ogImagePath, '/') : '';
+            ?>
+            <img src="<?= htmlspecialchars($ogImageUrl) ?>" id="og-image-preview"
+                 class="mt-3 block w-full max-w-full h-auto rounded-lg shadow-md border <?= $ogImageOnDisk ? 'block' : 'hidden' ?>"
                  style="max-width: 100%; object-fit: cover;">
             <!-- Eğer mevcut resim yoksa, önizleme için hidden bir img etiketi (JS için) -->
-            <?php if (empty($ogImagePath) || !file_exists($ogImagePath)): ?>
+            <?php if (!$ogImageOnDisk): ?>
                 <img src="" id="og-image-preview-hidden" class="mt-3 block w-full max-w-full h-auto rounded-lg shadow-md border hidden" style="max-width: 100%; object-fit: cover;">
             <?php endif; ?>
         </div>

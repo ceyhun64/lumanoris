@@ -1,11 +1,14 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import QuitModal from "@/features/auth/QuitModal";
 import { formatCurrency } from "@/shared/lib/format";
+import { isPaidPlan } from "@/shared/lib/pricing";
 import {
   Search,
   Bell,
   ShoppingCart,
+  LogIn,
   User,
   LogOut,
   X,
@@ -152,7 +155,10 @@ function ProfilePopup({ user, profileImage, onLogout, onClose, onNavigate }) {
             <span className="text-xs font-semibold text-white truncate tracking-tight">
               {user.fullname || user.username || "Kullanıcı"}
             </span>
-            {user.planName && user.planName !== "Ücretsiz Plan" && (
+            {/* E-05: sabit "Ücretsiz Plan" karşılaştırması, sunucunun kanonik
+                adı "Ücretsiz" olduğu için ücretsiz kullanıcıya da Pro rozeti
+                gösteriyordu. */}
+            {isPaidPlan(user.planName) && (
               <span className="px-1.5 py-0.2 text-caption font-bold uppercase tracking-wider text-fuchsia-400  rounded">
                 Pro
               </span>
@@ -260,6 +266,7 @@ export default function Header({
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [quitOpen, setQuitOpen] = useState(false);
   const profileMenuRef = useRef(null);
+  const notificationMenuRef = useRef(null);
   const notificationBtnRef = useRef(null);
   const profileBtnRef = useRef(null);
 
@@ -384,6 +391,33 @@ export default function Header({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showProfile]);
 
+  /* Bildirim panelinde bu yoktu: profil menüsü dışarı tıklamayla kapanırken
+     bildirimler yalnızca çarpı ya da Esc ile kapanıyordu. Yukarıdaki profil
+     efektinin birebir aynısı.
+
+     Dinlenen düğüm panel değil, tetikleyici düğmeyi DE içeren sarmalayıcı:
+     yalnızca paneli dinleseydik zilin kendisi "dışarısı" sayılırdı, mousedown
+     paneli kapatır, ardından gelen click tekrar açardı — düğme işlevsiz
+     görünürdü.
+
+     Kapatırken `closeNotification()` değil doğrudan `setShowNotification`
+     kullanılıyor: o yardımcı odağı zile geri veriyor ve kullanıcı başka bir
+     yere tıklamışken odağı geri çalmak yanlış olurdu. Esc yolu odağı geri
+     vermeye devam ediyor, çünkü orada kullanıcı klavyede kalıyor. */
+  useEffect(() => {
+    if (!showNotification) return;
+    function handleClickOutside(e) {
+      if (
+        notificationMenuRef.current &&
+        !notificationMenuRef.current.contains(e.target)
+      ) {
+        setShowNotification(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showNotification]);
+
   const closeNotification = () => {
     setShowNotification(false);
     notificationBtnRef.current?.focus();
@@ -440,12 +474,12 @@ export default function Header({
             <button
               type="button"
               onClick={goToExplore}
-              onTouchStart={goToExplore}
               aria-label="Keşfet"
               className={`flex shrink-0 items-center justify-center text-zinc-400 transition-colors duration-200 hover:text-white ${ICON_BTN_FOCUS}`}
             >
               <Search className="h-4 w-4" strokeWidth={2} />
             </button>
+
             <input
               ref={searchInputRef}
               type="text"
@@ -456,102 +490,128 @@ export default function Header({
               data-focus-managed
               className="min-w-0 flex-1 bg-transparent text-body-sm text-white outline-none placeholder:text-zinc-500 font-medium"
             />
+
             <div className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/5 text-caption text-zinc-400 font-mono border border-white/10 shrink-0 shadow-inner">
               <Command className="w-2.5 h-2.5" /> K
             </div>
           </div>
+
+          {/* Sadece masaüstünde görünür */}
+          <button
+            type="button"
+            onClick={goToExplore}
+            className={`hidden md:flex shrink-0 h-11 items-center gap-2 rounded-2xl border border-fuchsia-500/25 bg-fuchsia-500/10 px-4 text-xs font-semibold text-fuchsia-200 transition-all duration-200 hover:border-fuchsia-500/50 hover:bg-fuchsia-500/20 hover:text-white hover:shadow-[0_0_20px_rgba(217,70,239,0.15)] ${ICON_BTN_FOCUS}`}
+          >
+            <span>Keşfet</span>
+          </button>
         </div>
 
         {/* Action Controls & Profile Menu */}
         <div className="flex items-center gap-2.5 sm:gap-3.5">
-          {/* Notifications Trigger */}
-          <div className="relative">
-            <Tooltip content="Bildirimler">
-              <button
-                ref={notificationBtnRef}
-                onClick={() => {
-                  setShowNotification(!showNotification);
-                  setShowProfile(false);
-                }}
-                aria-label="Bildirimler"
-                aria-haspopup="dialog"
-                aria-expanded={showNotification}
-                className={`relative flex h-10 w-10 items-center justify-center rounded-2xl bg-white/[0.03] border border-white/[0.08] text-zinc-300 transition-all duration-200 hover:bg-violet-500/10 hover:border-violet-500/30 hover:text-violet-300 hover:shadow-[0_0_15px_rgba(139,92,246,0.15)] ${ICON_BTN_FOCUS}`}
-              >
-                <Bell className="h-4 w-4" strokeWidth={1.75} />
-                {unreadNotificationCount > 0 && (
-                  <>
-                    <span className="absolute top-2.5 right-2.5 flex h-2 w-2 rounded-full bg-fuchsia-500 animate-ping" />
-                    <span className="absolute top-2.5 right-2.5 flex h-2 w-2 rounded-full bg-fuchsia-500" />
-                  </>
-                )}
-              </button>
-            </Tooltip>
-
-            {showNotification && (
-              <NotificationPopup
-                onClose={closeNotification}
-                notifications={notifications}
-                loading={notificationsLoading}
-                onMarkAllRead={markAllNotificationsRead}
-              />
-            )}
-          </div>
-
-          {/* Cart Trigger */}
-          <Tooltip content="Sepetim & Lisanslar">
-            <button
-              onClick={() => navigate("/dashboard/checkout")}
-              aria-label="Sepetim"
-              className={`relative flex h-10 w-10 items-center justify-center rounded-2xl bg-white/[0.03] border border-white/[0.08] text-zinc-300 transition-all duration-200 hover:bg-fuchsia-500/10 hover:border-fuchsia-500/30 hover:text-fuchsia-300 hover:shadow-[0_0_15px_rgba(217,70,239,0.15)] ${ICON_BTN_FOCUS}`}
+          {/* Misafir kullanıcı: bildirim/sepet/profil kişisel veriye bağlı,
+              hepsi 401 döner ve boş görünürdü. Onların yerine tek bir
+              "Giriş Yap" duruyor — revize listesinin istediği sağ üst düğme.
+              Erken `return` ile aşağıdaki bloğun tamamı hiç render edilmiyor. */}
+          {!userId ? (
+            <Link
+              href="/login/"
+              className="flex h-10 items-center gap-2 rounded-2xl border border-fuchsia-500/30 bg-fuchsia-500/10 px-4 text-xs font-semibold text-fuchsia-200 transition-colors hover:border-fuchsia-500/50 hover:bg-fuchsia-500/20 hover:text-white"
             >
-              <ShoppingCart className="h-4 w-4" strokeWidth={1.75} />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-600 to-pink-600 px-1 text-caption font-bold leading-none tabular-nums text-white shadow-lg shadow-fuchsia-950/80 border border-white/20">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-          </Tooltip>
+              <LogIn className="h-4 w-4" strokeWidth={1.75} />
+              <span>Giriş Yap</span>
+            </Link>
+          ) : (
+            <>
+              {/* Notifications Trigger */}
+              <div className="relative" ref={notificationMenuRef}>
+                <Tooltip content="Bildirimler">
+                  <button
+                    ref={notificationBtnRef}
+                    onClick={() => {
+                      setShowNotification(!showNotification);
+                      setShowProfile(false);
+                    }}
+                    aria-label="Bildirimler"
+                    aria-haspopup="dialog"
+                    aria-expanded={showNotification}
+                    className={`relative flex h-10 w-10 items-center justify-center rounded-2xl bg-white/[0.03] border border-white/[0.08] text-zinc-300 transition-all duration-200 hover:bg-violet-500/10 hover:border-violet-500/30 hover:text-violet-300 hover:shadow-[0_0_15px_rgba(139,92,246,0.15)] ${ICON_BTN_FOCUS}`}
+                  >
+                    <Bell className="h-4 w-4" strokeWidth={1.75} />
+                    {unreadNotificationCount > 0 && (
+                      <>
+                        <span className="absolute top-2.5 right-2.5 flex h-2 w-2 rounded-full bg-fuchsia-500 animate-ping" />
+                        <span className="absolute top-2.5 right-2.5 flex h-2 w-2 rounded-full bg-fuchsia-500" />
+                      </>
+                    )}
+                  </button>
+                </Tooltip>
 
-          {/* User Profile Menu Trigger */}
-          <div className="relative ml-1 sm:ml-2" ref={profileMenuRef}>
-            <button
-              ref={profileBtnRef}
-              aria-label="Profil menüsü"
-              aria-haspopup="dialog"
-              aria-expanded={showProfile}
-              onClick={() => setShowProfile((prev) => !prev)}
-              className={`flex items-center gap-2.5 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] transition-all duration-200 hover:border-violet-500/40 hover:bg-white/[0.06] hover:shadow-[0_0_20px_rgba(139,92,246,0.15)] ${ICON_BTN_FOCUS}`}
-            >
-              <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0 ring-1 ring-white/20">
-                {profileImage ? (
-                  <img
-                    src={profileImage}
-                    alt=""
-                    className="h-full w-full object-cover"
+                {showNotification && (
+                  <NotificationPopup
+                    onClose={closeNotification}
+                    notifications={notifications}
+                    loading={notificationsLoading}
+                    onMarkAllRead={markAllNotificationsRead}
                   />
-                ) : (
-                  <span>
-                    {(account.fullname || account.username || "?")
-                      .charAt(0)
-                      .toUpperCase()}
-                  </span>
                 )}
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-zinc-400 mr-1 hidden sm:block transition-transform duration-200" />
-            </button>
 
-            {showProfile && (
-              <ProfilePopup
-                user={account}
-                profileImage={profileImage}
-                onLogout={handleLogout}
-                onClose={closeProfile}
-                onNavigate={navigate}
-              />
-            )}
-          </div>
+              {/* Cart Trigger */}
+              <Tooltip content="Sepetim & Lisanslar">
+                <button
+                  onClick={() => navigate("/dashboard/checkout")}
+                  aria-label="Sepetim"
+                  className={`relative flex h-10 w-10 items-center justify-center rounded-2xl bg-white/[0.03] border border-white/[0.08] text-zinc-300 transition-all duration-200 hover:bg-fuchsia-500/10 hover:border-fuchsia-500/30 hover:text-fuchsia-300 hover:shadow-[0_0_15px_rgba(217,70,239,0.15)] ${ICON_BTN_FOCUS}`}
+                >
+                  <ShoppingCart className="h-4 w-4" strokeWidth={1.75} />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-600 to-pink-600 px-1 text-caption font-bold leading-none tabular-nums text-white shadow-lg shadow-fuchsia-950/80 border border-white/20">
+                      {cartCount}
+                    </span>
+                  )}
+                </button>
+              </Tooltip>
+
+              {/* User Profile Menu Trigger */}
+              <div className="relative ml-1 sm:ml-2" ref={profileMenuRef}>
+                <button
+                  ref={profileBtnRef}
+                  aria-label="Profil menüsü"
+                  aria-haspopup="dialog"
+                  aria-expanded={showProfile}
+                  onClick={() => setShowProfile((prev) => !prev)}
+                  className={`flex items-center gap-2.5 p-1.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] transition-all duration-200 hover:border-violet-500/40 hover:bg-white/[0.06] hover:shadow-[0_0_20px_rgba(139,92,246,0.15)] ${ICON_BTN_FOCUS}`}
+                >
+                  <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0 ring-1 ring-white/20">
+                    {profileImage ? (
+                      <img
+                        src={profileImage}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span>
+                        {(account.fullname || account.username || "?")
+                          .charAt(0)
+                          .toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-zinc-400 mr-1 hidden sm:block transition-transform duration-200" />
+                </button>
+
+                {showProfile && (
+                  <ProfilePopup
+                    user={account}
+                    profileImage={profileImage}
+                    onLogout={handleLogout}
+                    onClose={closeProfile}
+                    onNavigate={navigate}
+                  />
+                )}
+              </div>
+            </>
+          )}
         </div>
       </header>
 

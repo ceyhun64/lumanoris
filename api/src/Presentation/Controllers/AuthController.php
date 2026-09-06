@@ -36,13 +36,11 @@ class AuthController {
         $_SESSION['user_id'] = $result['user_id'];
 
         if ($rememberMe && isset($result['remember_selector'])) {
-            setcookie('remember_me', $result['remember_selector'] . ':' . $result['remember_validator'], [
-                'expires'  => $result['remember_expiry'],
-                'path'     => '/',
-                'httponly' => true,
-                'secure'   => true,
-                'samesite' => 'Strict',
-            ]);
+            RememberMeCookie::issue(
+                $result['remember_selector'],
+                $result['remember_validator'],
+                $result['remember_expiry']
+            );
         }
 
         JsonResponse::success([
@@ -74,7 +72,21 @@ class AuthController {
         $_SESSION = [];
         session_unset();
         session_destroy();
-        setcookie('PHPSESSID', '', time() - 3600, '/', '', true, true);
+
+        // F-04 — silme çerezi koşulsuz `secure: true` ile yazılıyordu ve
+        // `samesite` taşımıyordu; oysa oturum çerezi bootstrap.php'de
+        // `RequestContext::isHttps()` + `SameSite=Lax` ile yazılıyor.
+        // Bayrakları tutmayan bir silme çerezini tarayıcı AYRI bir çerez
+        // sayar: orijinal PHPSESSID silinmeden yerinde kalır, yani düz HTTP
+        // sunulan kurulumda çıkış çerezi hiç temizlemiyordu. Bayraklar artık
+        // yazma tarafıyla birebir aynı (RememberMeCookie ile aynı gerekçe).
+        setcookie(session_name(), '', [
+            'expires'  => time() - 3600,
+            'path'     => '/',
+            'httponly' => true,
+            'secure'   => RequestContext::isHttps(),
+            'samesite' => 'Lax',
+        ]);
 
         // Session cookie alone isn't enough — a live remember-me token would
         // let sessionCheck() silently re-authenticate the user right after
@@ -82,13 +94,7 @@ class AuthController {
         if ($userId) {
             (new UserRepository())->clearRememberToken((int) $userId);
         }
-        setcookie('remember_me', '', [
-            'expires'  => time() - 3600,
-            'path'     => '/',
-            'httponly' => true,
-            'secure'   => true,
-            'samesite' => 'Strict',
-        ]);
+        RememberMeCookie::clear();
 
         JsonResponse::success(['message' => 'Çıkış yapıldı.']);
     }
@@ -306,7 +312,17 @@ class AuthController {
 
         // The reset code is only 6 digits (1M combinations) — without this,
         // it's brute-forceable within the 15-minute expiry window.
-        checkRateLimit(Database::getInstance(), 'resetcode:' . ($_SERVER['REMOTE_ADDR'] ?? '') . ':' . $email, 10, 600);
+        $db = Database::getInstance();
+        checkRateLimit($db, 'resetcode:' . ($_SERVER['REMOTE_ADDR'] ?? '') . ':' . $email, 10, 600);
+
+        // B-11 — yukarıdaki anahtar IP İÇERİYOR, yani farklı IP'lerden gelen
+        // denemeler AYRI sayaçlara düşüyordu: botnet ya da proxy havuzu olan
+        // biri her IP'den 10 deneme yaparak sayacı hiç doldurmadan 6 haneli
+        // kodu (10⁶) deneyebiliyordu. Bu ikinci sayaç IP'siz, yani HESAP
+        // başına toplam denemeyi sınırlıyor. Anahtar e-posta üzerinden
+        // kuruluyor çünkü user_id'yi öğrenmek için önce satırı okumak gerekir
+        // ve o okuma da sınırın içinde olmalı.
+        checkRateLimit($db, 'resetcode-account:' . $email, 10, 900);
 
         $users = new UserRepository();
         $user  = $users->findByEmail($email);
@@ -314,7 +330,6 @@ class AuthController {
             JsonResponse::error('Kod geçersiz veya süresi dolmuş.', 400, AppConfig::ERR_VALIDATION);
         }
 
-        $db  = Database::getInstance();
         $row = $db->selectSingle(
             '* FROM password_resets WHERE user_id = ? AND expires_at > NOW() ORDER BY id DESC LIMIT 1',
             [$user['id']]

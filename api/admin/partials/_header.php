@@ -1,3 +1,47 @@
+<?php
+/**
+ * G-20 — panelde HİÇ Content-Security-Policy yoktu.
+ *
+ * Panel dört ayrı CDN'den script/CSS yüklüyor ve kullanıcı üretimi içeriği
+ * (şikâyet metinleri, bot adları, plan adları) render ediyor. G-01'in
+ * depolanmış XSS'i tam olarak burada, admin oturumunda çalışıyordu. Kaynak
+ * tarafı düzeltildi ama CSP ikinci savunma hattı: bir enjeksiyon yeniden
+ * ortaya çıksa bile veriyi dışarı taşıyacak kanal kalmıyor.
+ *
+ * Bilinçli tavizler — panel bugünkü hâliyle bunlarsız çalışmaz:
+ *   • `'unsafe-inline'`: sayfaların tamamı satır içi `<script>` blokları ve
+ *     `onchange="..."` öznitelikleri kullanıyor.
+ *   • `'unsafe-eval'`: Tailwind play-CDN sınıfları çalışma zamanında
+ *     `new Function` ile derliyor.
+ * Gerçek kazanç kalan direktiflerde: `object-src 'none'` (Flash/PDF
+ * gömülemez), `base-uri 'self'` (`<base>` enjeksiyonuyla tüm göreli URL'ler
+ * ele geçirilemez), `form-action 'self'` (form dışarı POST edemez),
+ * `frame-ancestors 'none'` (clickjacking), ve `connect-src 'self'`
+ * (enjekte edilen kod veriyi dışarı gönderemez).
+ *
+ * SRI EKLENMEDİ: doğru bütünlük özetleri ancak dosyalar indirilip
+ * hesaplanarak üretilebilir; uydurulan bir `integrity` değeri kaynağı
+ * SESSİZCE bloke eder ve paneli kırar. Kalıcı çözüm bu dört bağımlılığı
+ * yerelleştirmek (`assets/vendor/`), o da ayrı bir iş.
+ */
+$adminCsp = implode('; ', [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.ckeditor.com",
+    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.ckeditor.com",
+    "font-src 'self' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
+    "img-src 'self' data: blob: https:",
+    "connect-src 'self' https://cdn.ckeditor.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+]);
+if (!headers_sent()) {
+    header('Content-Security-Policy: ' . $adminCsp);
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: same-origin');
+}
+?>
 <!DOCTYPE html>
 <html>
 
@@ -45,7 +89,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+    <!-- G-20: `bcryptjs` KALDIRILDI. Panelde tek bir çağıranı yoktu (parola
+         hash'leme sunucuda, `ajax/adminler.php` → `password_hash()`), ama her
+         sayfa yüklemesinde üçüncü taraf bir CDN'den SRI'siz script çekiyordu:
+         sıfır fayda, gerçek bir tedarik zinciri yüzeyi. -->
     <script src="/admin/assets/js/admin.js"></script>
     <link rel="stylesheet" href="/admin/assets/css/admin.css">
     <link rel="stylesheet" href="/admin/assets/css/notification.css">

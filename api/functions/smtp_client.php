@@ -36,6 +36,20 @@ final class SmtpClient
      */
     public function send(array $from, array $to, string $subject, string $htmlBody, string $textBody): void
     {
+        // I-05 — savunma derinliği. Zarf adresleri (`MAIL FROM:<…>`,
+        // `RCPT TO:<…>`) ve `From:`/`To:` başlıkları bu değerleri HAM olarak
+        // alıyordu; konu ve gönderici adı `encodeHeaderValue()` ile CR/LF'ten
+        // arındırılıyordu ama ADRESLER arındırılmıyordu. İçinde CRLF olan tek
+        // bir adres, SMTP oturumuna kendi komutlarını enjekte etmeye
+        // (fazladan RCPT TO, yani sunucumuz üzerinden spam) yeterdi.
+        //
+        // Kaynak tarafında da doğrulama var (admin/ajax/smtp.php); ikisi
+        // birbirinden bağımsız, çünkü alıcı adresi başka yollardan da geliyor.
+        self::assertCleanAddress($from['email'] ?? '', 'gönderici adresi');
+        foreach ($to as $recipient) {
+            self::assertCleanAddress($recipient, 'alıcı adresi');
+        }
+
         $this->connect();
 
         try {
@@ -247,6 +261,20 @@ final class SmtpClient
         $message = preg_replace('/^\./m', '..', $message);
 
         return $message;
+    }
+
+    /**
+     * I-05: bir e-posta adresi SMTP komutuna/başlığa gömülmeye uygun mu?
+     * CR, LF, NUL ve `<`/`>` reddediliyor; ayrıca biçim doğrulanıyor.
+     */
+    private static function assertCleanAddress(string $address, string $label): void
+    {
+        if (strpbrk($address, "\r\n\0<>") !== false) {
+            throw new SmtpException(ucfirst($label) . ' geçersiz karakter içeriyor.');
+        }
+        if (!filter_var($address, FILTER_VALIDATE_EMAIL)) {
+            throw new SmtpException(ucfirst($label) . ' geçerli bir e-posta adresi değil.');
+        }
     }
 
     private static function encodeHeaderValue(string $value): string

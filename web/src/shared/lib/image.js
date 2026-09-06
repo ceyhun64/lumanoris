@@ -26,10 +26,31 @@ import coverFallback from "@/images/bot-image.png";
  * ile kullaniliyorlar), bu yuzden tek tip string donmek iki tarafi da
  * memnun ediyor.
  */
+/**
+ * F-01 — Sunucu yuklenen gorseli GORELI yolla sakliyor:
+ * `assets/kapak_fotografi/<ad>.jpg` (ChatbotController::handleImageUploads).
+ * Boyle bir src tarayicida bulundugu sayfaya gore cozulur, yani
+ * `/dashboard/chatbots` icinde `/dashboard/chatbots/assets/...` olur ve 404
+ * verir. Dort sayfa bunu kendi yerel yardimcisiyla duzeltiyordu, uc render
+ * noktasi duzeltmiyordu — normalizasyon artik burada, tek yerde.
+ *
+ * http(s):, protokolsuz //, data: ve zaten kok-goreli /... degerlere
+ * dokunulmuyor.
+ */
+export function normalizeImagePath(value) {
+    if (typeof value !== "string") return "";
+    const src = value.trim();
+    if (!src) return "";
+    if (/^(https?:)?\/\//i.test(src) || src.startsWith("data:") || src.startsWith("blob:")) {
+        return src;
+    }
+    return src.startsWith("/") ? src : `/${src}`;
+}
+
 export function resolveAvatarSrc(value) {
-    return value || avatarFallback.src;
+    return normalizeImagePath(value) || avatarFallback.src;
 }
 
 export function resolveCoverSrc(value) {
-    return value || coverFallback.src;
+    return normalizeImagePath(value) || coverFallback.src;
 }

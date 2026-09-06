@@ -21,8 +21,14 @@ class LoginUseCase {
         // enumerate which emails/usernames have accounts. Both cases now
         // return the same message and status so a login attempt can't
         // reveal whether the identifier itself exists.
+        // H-09 — Google ile açılmış hesabın `sifre` sütunu NULL. PHP 8.1'de
+        // `password_verify(string, null)` deprecation uyarısı basıyor (canlıda
+        // log gürültüsü, display_errors açık bir kurulumda ise JSON'u bozan
+        // çıktı). Boş hash'e düşürmek `false` üretiyor; kullanıcıya ayrı bir
+        // mesaj VERİLMİYOR — "bu hesap Google ile açılmış" demek yukarıda
+        // kapatılan hesap numaralandırma açığını geri açardı.
         $user = $this->users->findByUsernameOrEmail($identifier);
-        if (!$user || !password_verify($password, $user['sifre'])) {
+        if (!$user || !password_verify($password, (string) ($user['sifre'] ?? ''))) {
             throw new AuthException('Kullanıcı adı/e-posta veya şifre hatalı!');
         }
 
@@ -34,6 +40,13 @@ class LoginUseCase {
             $hashedValidator = hash('sha256', $validator);
             $expiry          = date('Y-m-d H:i:s', time() + 86400 * AppConfig::REMEMBER_ME_DAYS);
 
+            // H-08 — her giriş `user_tokens`'a YENİ bir satır ekliyordu ve
+            // eskiler hiç temizlenmiyordu: tablo sınırsız büyüyor, süresi
+            // dolmuş kimlik doğrulama sırları veritabanında kalıcı olarak
+            // duruyordu. `clearRememberToken()` vardı ama giriş yolundan hiç
+            // çağrılmıyordu. Yalnızca SÜRESİ GEÇMİŞ satırlar siliniyor —
+            // geçerli olanlar kullanıcının diğer cihazları.
+            $this->users->purgeExpiredRememberTokens((int) $user['id']);
             $this->users->setRememberToken((int) $user['id'], $selector, $hashedValidator, $expiry);
 
             $result['remember_selector'] = $selector;

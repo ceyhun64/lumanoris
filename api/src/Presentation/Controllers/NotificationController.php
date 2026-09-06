@@ -13,23 +13,27 @@ class NotificationController {
 
         $db = Database::getInstance();
 
-        // Root-cause fix: the real `notifications` table never had
-        // message_tr/message_en columns, but callers (e.g. the purchase-
-        // success flow in CartConfirm.jsx) always sent them, and
-        // NotificationPopup.jsx already reads notif.message_tr to render a
-        // notification's body — so every insert with a message crashed
-        // (500) and no notification could ever store real body text. Added
-        // additively (nullable, doesn't touch existing rows), same
-        // idempotent pattern already used for param_marketplace_details in
-        // MarketplaceController::createSubscription().
-        $conn = $db->getConnection();
-        $columnCheck = $db->selectSingle(
-            "COUNT(*) AS cnt FROM information_schema.columns
-             WHERE table_schema = DATABASE() AND table_name = 'notifications' AND column_name = 'message_tr'"
-        );
-        if ((int) ($columnCheck['cnt'] ?? 0) === 0) {
-            $conn->exec('ALTER TABLE notifications ADD COLUMN message_tr TEXT NULL AFTER title_en');
-            $conn->exec('ALTER TABLE notifications ADD COLUMN message_en TEXT NULL AFTER message_tr');
+        // E-03 — burada bir ÇALIŞMA ZAMANI ALTER TABLE vardı.
+        //
+        // `notifications.message_tr` / `message_en` `schema.sql`de tanımlı ama
+        // hiçbir migration onları eklemiyordu; boşluk her istekte
+        // information_schema'yı sorgulayıp gerekirse ALTER çalıştıran bu
+        // blokla kapatılıyordu. Üç sorunu vardı: şema değişikliği kullanıcı
+        // isteğinin içinde ve DDL yetkisiyle çalışıyordu; MySQL'de ALTER
+        // örtük COMMIT yaptığı için çağıranın transaction'ını sessizce
+        // kesiyordu; ve her bildirimde fazladan bir katalog sorgusu ödeniyordu.
+        //
+        // Sütunlar artık `migrations/010_notification_message_columns.sql` ile
+        // geliyor. Burada yalnızca VARLIK KONTROLÜ kaldı: yoksa şema
+        // sessizce değiştirilmiyor, migration'ın uygulanması gerektiğini
+        // söyleyen açık bir hata dönüyor.
+        if (!self::messageColumnsExist($db)) {
+            error_log('[notification] notifications.message_tr/message_en yok — migration 010 uygulanmamış.');
+            JsonResponse::error(
+                'Bildirim altyapısı henüz hazır değil. Lütfen daha sonra tekrar deneyin.',
+                503,
+                AppConfig::ERR_UNAVAILABLE
+            );
         }
 
         // Whitelist so an unrelated/misspelled future field can't crash this
@@ -42,6 +46,26 @@ class NotificationController {
 
         $id = $db->insert('notifications', $filtered);
         JsonResponse::success(['message' => 'Bildirim oluşturuldu.', 'id' => $id]);
+    }
+
+    /**
+     * E-03: migration 010 uygulandı mı? İstek başına bir kez sorulup
+     * hatırlanıyor — eski kod bu sorguyu her çağrıda tekrarlıyordu.
+     */
+    private static function messageColumnsExist(Database $db): bool {
+        static $exists = null;
+        if ($exists !== null) {
+            return $exists;
+        }
+
+        $row = $db->selectSingle(
+            "COUNT(*) AS cnt FROM information_schema.columns
+             WHERE table_schema = DATABASE()
+               AND table_name = 'notifications'
+               AND column_name IN ('message_tr', 'message_en')"
+        );
+
+        return $exists = ((int) ($row['cnt'] ?? 0) === 2);
     }
 
     public static function getNotification(): void {

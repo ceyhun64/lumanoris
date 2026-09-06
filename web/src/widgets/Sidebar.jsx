@@ -3,6 +3,7 @@ import { useRouter, usePathname } from "next/navigation";
 import QuitModal from "@/features/auth/QuitModal";
 import logo from "@/images/header-logo-icon.png";
 import { Lumacoin } from "@/shared/ui/lumacoin";
+import { FREE_PLAN_NAME, isPaidPlan } from "@/shared/lib/pricing";
 import {
   Plus,
   TrendingUp,
@@ -79,7 +80,7 @@ const DEFAULT_ACCOUNT = {
   username: "",
   chatbotCount: 0,
   balance: 0,
-  planName: "Ücretsiz Plan",
+  planName: FREE_PLAN_NAME,
   dailyCoinsRemaining: 0,
   dailyCoinsTotal: 0,
 };
@@ -238,12 +239,14 @@ export function Sidebar({
                     <span className="font-semibold text-sm text-white tracking-tight truncate">
                       Lumanoris
                     </span>
-                    {account.planName &&
-                      account.planName !== "Ücretsiz Plan" && (
-                        <span className="px-1.5 py-0.2 text-caption font-bold uppercase tracking-wider text-fuchsia-400  rounded">
-                          Pro
-                        </span>
-                      )}
+                    {/* E-05: "Ücretsiz Plan" ile sabit karşılaştırma yapılıyordu;
+                        sunucunun kanonik adı "Ücretsiz" olduğu için ücretsiz
+                        kullanıcıya Pro rozeti gösteriliyordu. */}
+                    {isPaidPlan(account.planName) && (
+                      <span className="px-1.5 py-0.2 text-caption font-bold uppercase tracking-wider text-fuchsia-400  rounded">
+                        Pro
+                      </span>
+                    )}
                   </div>
                   <span className="text-caption text-zinc-500 truncate">
                     AI Stüdyo & Market

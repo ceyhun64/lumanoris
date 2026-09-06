@@ -13,9 +13,25 @@ $dotenv->load();
         <form id="apiForm" class="space-y-6" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']; ?>">
 
+            <?php
+            // G-08 ailesi (I-06 ile aynı sınıf) — burada anahtarın TAM DEĞERİ
+            // `value="..."` olarak HTML'e basılıyordu. Sayfayı açan herkes
+            // (ve tarayıcı geçmişi, proxy logu, ekran paylaşımı, sayfa
+            // kaynağı) canlı Gemini anahtarını görebiliyordu. Artık yalnızca
+            // "kayıtlı mı" bilgisi gösteriliyor; alan boş bırakılırsa mevcut
+            // anahtar korunuyor (ajax/updateenv.php).
+            $geminiSet = ($_ENV['API_GOOGLE_GEMINI'] ?? '') !== '';
+            ?>
             <div>
                 <label for="googleGemini" class="block font-semibold text-sm text-gray-700 mb-2">Google Gemini API Anahtarı</label>
-                <input type="text" id="googleGemini" name="googleGemini" placeholder="Google Gemini API Anahtarı" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm" value="<?= $_ENV['API_GOOGLE_GEMINI'] ?>" required>
+                <input type="password" id="googleGemini" name="googleGemini" autocomplete="off"
+                       placeholder="<?= $geminiSet ? 'Kayıtlı — değiştirmek için yeni anahtar girin' : 'Google Gemini API Anahtarı' ?>"
+                       class="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm"
+                       value="">
+                <p class="mt-2 text-xs text-gray-500">
+                    Durum: <strong><?= $geminiSet ? 'kayıtlı' : 'kayıtlı değil' ?></strong>.
+                    Boş bırakırsanız mevcut anahtar değişmez.
+                </p>
             </div>
 
             <div class="pt-2 text-right">

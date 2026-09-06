@@ -7,7 +7,8 @@ if (empty($_SESSION['admin'])) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    require '../../functions/db.php';
+    require_once __DIR__ . '/../../functions/db.php';
+    require_once __DIR__ . '/../functions/upload_guard.php';
     $database = Database::getInstance();
     $conn = $database->getConnection();
 
@@ -35,24 +36,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         Database::assertAllowedAdminTable($table);
         Database::assertSafeWhereFragment($where);
 
-        // Mevcut veriyi çek
-        $sql = "SELECT * FROM $table WHERE $where LIMIT 1";
-        $stmt = $conn->query($sql);
-        $currentRow = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Buradaki `SELECT * FROM $table WHERE $where LIMIT 1` KALDIRILDI:
+        // tek işlevi, yüklenen dosyanın base64'ünü mevcut sütun değeriyle
+        // karşılaştırmaktı. Dosyalar artık base64 olarak saklanmadığı için
+        // (G-14) karşılaştırılacak bir şey yok; sorgu her güncellemede tüm
+        // satırı — bcrypt hash'ler ve base64 avatarlar dahil — belleğe
+        // okuyordu.
 
-        foreach ($_FILES as $key => $file) {
-            if ($file['error'] === UPLOAD_ERR_OK) {
-                $column = str_replace('_file', '', $key);
-
-                $fileContent = file_get_contents($file['tmp_name']);
-                $base64 = "data:" . mime_content_type($file['tmp_name']) . ";base64," . base64_encode($fileContent);
-
-                // Eğer mevcut değer farklıysa güncelle
-                if (!isset($currentRow[$column]) || $currentRow[$column] !== $base64) {
-                    $data[$column] = $base64;
-                }
-            }
-        }
+        // G-14 — bkz. admin/functions/upload_guard.php: base64'ü sütuna
+        // yazmak yerine dosya diske yazılıyor ve `assets/...` göreli yolu
+        // saklanıyor (uygulamanın geri kalanının beklediği biçim).
+        $data = admin_store_uploads($_FILES, $data);
 
         $newDataId = $database->update($table, $data, $where);
 
@@ -62,9 +56,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             "id" => $newDataId
         ]);
     } catch (Exception $e) {
+        // G-12 ailesi: ham istisna mesajı istemciye sızıyordu.
+        error_log('[admin/update] ' . $e->getMessage());
         echo json_encode([
             "success" => false,
-            "message" => $e->getMessage()
+            "message" => "Güncelleme yapılamadı."
         ]);
     }
 }

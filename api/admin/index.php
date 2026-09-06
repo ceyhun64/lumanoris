@@ -46,6 +46,10 @@ $adminRoutes = [
     '/admin/chatbotistatistik'  => 'chatbotistatistik.php',
     '/admin/chatayar'           => 'chatayar.php',
     '/admin/abonelik'           => 'abonelik.php',
+    // COMP-007 / AUDIT D-01: bu satır olmadan `listWithdrawals()` ve
+    // `updateWithdrawalStatus()` yayında olmalarına rağmen çağrılamıyordu ve
+    // her çekim talebi kalıcı olarak `beklemede` kalıyordu.
+    '/admin/parcekme'           => 'parcekme.php',
     '/admin/odemeentegrasyon'   => 'odemeentegrasyon.php',
     '/admin/anasayfa'           => 'anasayfa.php',
     '/admin/hakkinda'           => 'hakkinda.php',
@@ -72,9 +76,25 @@ if (empty($_SESSION['csrf_token'])) {
   <?php include("./partials/_login.php"); ?>
 <?php else: ?>
   <?php
-  $themes = $database->selectMulti("* FROM themes");
-  $theme_index = intval($database->getGlobalVars('theme_index'));
-  $current_theme = $themes[$theme_index - 1] ?? $themes[0];
+  // G-17 — `getGlobalVars()` bir DİZİ döndürüyor (['theme_index' => '2']),
+  // `intval()` ise diziye uygulandığında PHP 8'de her zaman 1 verir (üstelik
+  // "Array to string conversion" uyarısı basar). Yani tema seçimi hiç
+  // çalışmıyor, her zaman ilk tema kullanılıyordu. Doğru okuma
+  // `genelayar.php:2`'deki desen.
+  //
+  // `$themes` boşsa `$themes[0]` da yok: `$current_theme` null kalıyor ve
+  // onu sayfa boyunca dizi gibi okuyan `_sidebar.php` her erişimde uyarı
+  // basıp boş sınıf adı üretiyordu (kenar çubuğu görünmez oluyordu).
+  // Bu yüzden son çare olarak sabit bir varsayılan tema var.
+  $themes       = $database->selectMulti("* FROM themes");
+  $theme_index  = (int) ($database->getGlobalVars('theme_index')['theme_index'] ?? 1);
+  $current_theme = $themes[$theme_index - 1] ?? ($themes[0] ?? [
+      'main_color'   => 'bg-gray-800',
+      'sub_color'    => 'bg-gray-700',
+      'hover_color'  => 'bg-gray-700',
+      'active_color' => 'bg-gray-900',
+      'text_color'   => 'text-white',
+  ]);
   ?>
   <?php include("./partials/_header.php"); ?>
 

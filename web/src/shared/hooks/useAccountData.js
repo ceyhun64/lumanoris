@@ -1,4 +1,5 @@
 "use client";
+import { FREE_PLAN_NAME } from "@/shared/lib/pricing";
 import { useState, useEffect, useCallback } from "react";
 
 const DEFAULT_ACCOUNT = {
@@ -10,7 +11,7 @@ const DEFAULT_ACCOUNT = {
   sharedDialogueCount: 0,
   balance: 0,
   transactions: [],
-  planName: "Ücretsiz Plan",
+  planName: FREE_PLAN_NAME,
   dailyCoinsRemaining: 0,
   dailyCoinsTotal: 0,
 };
@@ -36,7 +37,7 @@ export function useAccountData(userId) {
             chatbotCount: result.chatbotCount ?? 0,
             purchasedCount: result.purchasedCount ?? 0,
             sharedDialogueCount: result.sharedDialogueCount ?? 0,
-            planName: result.planName || "Ücretsiz Plan",
+            planName: result.planName || FREE_PLAN_NAME,
             dailyCoinsRemaining: result.dailyCoinsRemaining ?? 0,
             dailyCoinsTotal: result.dailyCoinsTotal ?? 0,
           }));

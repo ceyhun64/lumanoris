@@ -55,6 +55,51 @@ class UserController {
         ]);
     }
 
+    /**
+     * Başka bir kullanıcının herkese açık profili.
+     *
+     * getUserHeader() ÇAĞIRANIN kendi hesabını döndürür ve içinde e-posta,
+     * telefon, plan, coin bakiyesi gibi yalnızca hesap sahibini ilgilendiren
+     * alanlar var. Bu metot onun yerine geçmez: burada dönen her alan, zaten
+     * pano içinde herkese görünen bir şey.
+     *
+     * BİLEREK DÖNMEYENLER: eposta, telefon, ad_soyad, dogum_tarihi, plan,
+     * coin bakiyesi. Yeni bir alan eklemeden önce "bunu yabancı biri
+     * görebilir mi?" sorusu sorulmalı.
+     *
+     * Bot sayısı `is_independent = 0` ile sınırlı: bağımsız botlar tanımı
+     * gereği yalnızca sahibine açık (schema.sql'deki sütun yorumu), sayısını
+     * yayınlamak da özel bilgi sızdırırdı.
+     */
+    public static function getPublicProfile(): void {
+        // Misafire kapalı: bu veri pano içi, açık internete değil.
+        AuthMiddleware::requireAuth();
+
+        $id = InputSanitizer::positiveInt($_GET['id'] ?? 0);
+        if (!$id) {
+            JsonResponse::error('Kullanıcı id gereklidir.', 400, AppConfig::ERR_VALIDATION);
+        }
+
+        $user = (new UserRepository())->findById($id);
+        if (!$user) {
+            JsonResponse::error('Kullanıcı bulunamadı!', 404, AppConfig::ERR_NOT_FOUND);
+        }
+
+        $db = Database::getInstance();
+
+        JsonResponse::success([
+            'id'                  => (int) $user['id'],
+            'username'            => $user['kullanici_adi'],
+            'avatar'              => $user['avatar'] ?: null,
+            'chatbotCount'        => (int) $db->count(
+                AppConfig::TABLE_CHATBOTS,
+                'author_user_id = ? AND is_independent = 0',
+                [$id]
+            ),
+            'sharedDialogueCount' => (int) $db->count('user_dialog_books', 'user_id = ?', [$id]),
+        ]);
+    }
+
     public static function getUserNames(): void {
         $userId = AuthMiddleware::requireAuth();
 
@@ -70,7 +115,7 @@ class UserController {
         $userId = AuthMiddleware::requireAuth();
 
         $adSoyad      = InputSanitizer::string($_POST['ad_soyad'] ?? '', 100);
-        $kullaniciAdi = InputSanitizer::string($_POST['kullanici_adi'] ?? '', 60);
+        $kullaniciAdi = InputSanitizer::string($_POST['kullanici_adi'] ?? '', 30);
 
         if (!$adSoyad && !$kullaniciAdi) {
             JsonResponse::error('Güncellenecek alan bulunamadı!', 400, AppConfig::ERR_VALIDATION);
@@ -80,8 +125,34 @@ class UserController {
         if ($adSoyad)      $updates['ad_soyad']      = $adSoyad;
         if ($kullaniciAdi) $updates['kullanici_adi']  = $kullaniciAdi;
 
+        // F-02 — `kullanicilar.kullanici_adi` üzerinde UNIQUE var ama çakışma
+        // hiç yakalanmıyordu: başkasının kullanıcı adını yazmaya çalışmak ham
+        // PDO istisnasına, yani "Sunucu hatası oluştu." diyen bir 500'e
+        // dönüşüyordu. Kullanıcı neyin yanlış olduğunu göremiyordu.
+        if ($kullaniciAdi) {
+            self::assertUniqueOrConflict('kullanici_adi', $kullaniciAdi, $userId, 'Bu kullanıcı adı zaten kullanılıyor.');
+        }
+
         (new UserRepository())->updateById($userId, $updates);
         JsonResponse::success(['message' => 'Kullanıcı güncellendi.']);
+    }
+
+    /**
+     * F-02 — UNIQUE sütuna yazmadan önce çakışma kontrolü.
+     *
+     * Yarış penceresi kapanmıyor (kontrol ile yazma arasında başkası aynı
+     * değeri alabilir); bu yüzden çağıranlar ayrıca duplicate istisnasını da
+     * yakalıyor. Buradaki kontrol yaygın durumu anlamlı bir 409'a çeviriyor,
+     * DB kısıtı ise son savunma olarak yerinde duruyor.
+     */
+    private static function assertUniqueOrConflict(string $column, string $value, int $userId, string $message): void {
+        $taken = Database::getInstance()->selectSingle(
+            "id FROM " . AppConfig::TABLE_USERS . " WHERE `$column` = ? AND id <> ?",
+            [$value, $userId]
+        );
+        if ($taken) {
+            JsonResponse::error($message, 409, AppConfig::ERR_DUPLICATE);
+        }
     }
 
     public static function getUserEmail(): void {
@@ -102,6 +173,10 @@ class UserController {
         if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
             JsonResponse::error('Geçerli bir e-posta adresi girin.', 400, AppConfig::ERR_VALIDATION);
         }
+
+        // F-02 — `eposta` UNIQUE; çakışma yakalanmadığı için başkasının
+        // e-postasını yazmaya çalışmak 500 üretiyordu.
+        self::assertUniqueOrConflict('eposta', $newEmail, $userId, 'Bu e-posta adresi başka bir hesapta kayıtlı.');
 
         $ok = (new UserRepository())->updateById($userId, ['eposta' => $newEmail]);
         if ($ok) {
