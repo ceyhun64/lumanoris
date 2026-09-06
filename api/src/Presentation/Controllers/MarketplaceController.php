@@ -274,6 +274,66 @@ class MarketplaceController {
      *   3. `checkRateLimit` — anahtarı her seferinde değiştiren bir istemci
      *      idempotency'yi atlatabilir; bu taban koruma.
      */
+    /**
+     * I-01 — tamamlanmış bir siparişin idempotency anahtarının ne kadar
+     * süre "aynı sipariş" sayılacağı.
+     *
+     * Amaç çift gönderimi yakalamak: çift tıklama, ağ yeniden denemesi,
+     * kullanıcının ödeme sonrası sayfayı yenilemesi. Bunların hepsi
+     * saniyeler-dakikalar mertebesinde olur. Süresiz tutmak ise I-01'in ta
+     * kendisiydi — aynı botu aynı süreyle YENİDEN satın almayı (abonelik
+     * yenilemesini) kalıcı olarak engelliyordu.
+     */
+    private const IDEMPOTENCY_REPLAY_SECONDS = 900;    // 15 dakika
+
+    /**
+     * Sonucu belirsiz kalmış rezervasyonun azami ömrü. Mutabakat
+     * (`reconcilePayments`) normalde bunu çok daha önce çözer; bu yalnızca
+     * mutabakatın hiç çalışmadığı bir kurulumda kullanıcının kalıcı olarak
+     * kilitli kalmasını önleyen son emniyet.
+     */
+    private const IDEMPOTENCY_HOLD_SECONDS = 172800;   // 48 saat
+
+    /**
+     * I-01 — süresi dolmuş idempotency satırlarını temizler.
+     *
+     * Tamamlanmış siparişler tekrar penceresinden sonra, belirsiz kalmış
+     * rezervasyonlar ise tutma süresinden sonra düşer. `rate_limit.php`
+     * ile aynı desen: ayrı bir cron gerekmiyor, yaklaşık her 20 checkout'ta
+     * bir çalışıyor.
+     */
+    private static function purgeStaleIdempotency(Database $db): void {
+        if (random_int(1, 20) !== 1) {
+            return;
+        }
+        try {
+            $db->execute(
+                'DELETE FROM checkout_idempotency
+                 WHERE (order_id IS NOT NULL AND created_at < (NOW() - INTERVAL ? SECOND))
+                    OR (order_id IS NULL     AND created_at < (NOW() - INTERVAL ? SECOND))',
+                [self::IDEMPOTENCY_REPLAY_SECONDS, self::IDEMPOTENCY_HOLD_SECONDS]
+            );
+        } catch (Throwable $e) {
+            error_log('[checkout] idempotency temizliği başarısız: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * I-01 — tahsilat sonucu BELİRSİZ mi (para çekilmiş olabilir mi)?
+     *
+     * `IyzicoClient::request()` ulaşılamama ve ayrıştırılamayan yanıt
+     * durumlarını ayrı kodluyor; geri kalan her şey sağlayıcının verdiği
+     * KESİN bir cevaptır (kart reddi vb.), yani para çekilmemiştir.
+     * Yapılandırma eksikse istek hiç gönderilmemiştir.
+     */
+    private static function chargeOutcomeIsIndeterminate(array $chargeResult): bool {
+        return in_array(
+            (string) ($chargeResult['error_code'] ?? ''),
+            ['TRANSPORT_ERROR', 'BAD_RESPONSE'],
+            true
+        );
+    }
+
     public static function createSubscription(): void {
         require_method('POST');
         require_once __DIR__ . '/../../../functions/coin_engine.php';
@@ -312,6 +372,10 @@ class MarketplaceController {
                 INDEX (user_id)
             )');
 
+        // I-01 — süresi dolmuş kayıtları fırsat buldukça temizle. Tablo
+        // eskiden hiç küçülmüyordu; artık her satırın bir ömrü var.
+        self::purgeStaleIdempotency($db);
+
         // (1) Aynı kullanıcının eşzamanlı checkout'ları sıraya girsin.
         $lockName = 'checkout_user_' . $userId;
         $lockStmt = $conn->prepare('SELECT GET_LOCK(?, 10) AS locked');
@@ -326,18 +390,62 @@ class MarketplaceController {
 
         // Kilidi aldıktan SONRA bakıyoruz: yarışı kaybeden istek burada
         // ilkinin yazdığı satırı görür.
+        //
+        // I-01 — bu blok eskiden "satır varsa reddet" diyordu ve satır
+        // BAŞARIDA HİÇ SİLİNMİYORDU. Sonuç: kullanıcı 42 numaralı botu bir
+        // haftalığına aldıktan sonra AYNI botu AYNI süreyle bir daha
+        // alamıyordu — istek `repeated: true` ve eski `order_id` ile
+        // dönüyor, yeni abonelik yazılmıyor, para da çekilmiyordu. Yani
+        // abonelik yenileme pratikte kırıktı; farklı bir süre seçilince
+        // anahtar değiştiği için çalışıyor olması hatayı gizliyordu.
+        //
+        // Satırın artık üç anlamı var ve üçü de ömürlü:
+        //   • order_id DOLU  → tamamlanmış sipariş. Yalnızca kısa bir
+        //     tekrar penceresi boyunca aynı yanıtı verir (çift tıklama,
+        //     ağ yeniden denemesi, tarayıcı yenilemesi). Pencere geçince
+        //     satır silinir ve YENİ bir satın alma serbesttir.
+        //   • order_id BOŞ   → sonucu BELİRSİZ kalmış bir deneme
+        //     (sağlayıcıya ulaşılamadı). Para çekilmiş olabilir, o yüzden
+        //     tekrar denemeye izin YOK; mutabakat çözene kadar bekliyor.
+        //   • satır yok      → serbest.
         $existing = $db->selectSingle(
-            'order_id FROM checkout_idempotency WHERE idem_key = ?',
-            [$idempotencyKey]
+            'order_id, created_at,
+             (created_at > (NOW() - INTERVAL ? SECOND)) AS taze
+             FROM checkout_idempotency WHERE idem_key = ?',
+            [self::IDEMPOTENCY_REPLAY_SECONDS, $idempotencyKey]
         );
+
         if ($existing) {
-            $releaseLock();
-            JsonResponse::success([
-                'message'  => 'Bu sipariş zaten oluşturulmuş.',
-                'order_id' => $existing['order_id'],
-                'ids'      => [],
-                'repeated' => true,
-            ]);
+            $completed = ($existing['order_id'] ?? null) !== null;
+
+            if ($completed && (int) $existing['taze'] === 1) {
+                // Aynı siparişin tekrarı — ilk siparişin sonucunu döndür.
+                $releaseLock();
+                JsonResponse::success([
+                    'message'  => 'Bu sipariş zaten oluşturulmuş.',
+                    'order_id' => $existing['order_id'],
+                    'ids'      => [],
+                    'repeated' => true,
+                ]);
+            }
+
+            if (!$completed) {
+                // Belirsiz deneme. `order_id` yazılamamış, yani tahsilatın
+                // sonucunu bilmiyoruz. Kullanıcıyı ikinci kez çektirmektense
+                // bekletmek doğru olan; mutabakat çalıştığında satır
+                // temizlenir (bkz. releaseIndeterminateHold()).
+                $releaseLock();
+                JsonResponse::error(
+                    'Önceki ödemenizin sonucu hâlâ doğrulanıyor. Lütfen birkaç dakika sonra '
+                    . '"Ödemelerim" sayfasını kontrol edin; tahsilat gerçekleşmediyse tekrar deneyebilirsiniz.',
+                    409,
+                    AppConfig::ERR_PAYMENT
+                );
+            }
+
+            // Tamamlanmış ama tekrar penceresi geçmiş: bu artık YENİ bir
+            // satın alma (yenileme). Eski satırı bırak, aşağıdan devam et.
+            $db->execute('DELETE FROM checkout_idempotency WHERE idem_key = ?', [$idempotencyKey]);
         }
 
         // Anahtarı ŞİMDİ rezerve ediyoruz (order_id sonra doldurulacak) —
@@ -361,9 +469,15 @@ class MarketplaceController {
         //
         // Shutdown kancası, çıkış yolu ne olursa olsun tamamlanmamış
         // rezervasyonu siliyor. `$orderCompleted` başarı yolunda true olur.
-        $orderCompleted = false;
-        register_shutdown_function(static function () use ($db, $idempotencyKey, &$orderCompleted): void {
-            if ($orderCompleted) {
+        //
+        // I-01 — `$keepReservation` yeni: tahsilatın sonucu BELİRSİZ
+        // kaldığında (sağlayıcıya ulaşılamadı) rezervasyon BİLEREK
+        // bırakılıyor. Silmek, kullanıcının "tekrar dene"ye basıp ikinci kez
+        // çekilme riskini açardı; para çekilip çekilmediğini bilmiyoruz.
+        $orderCompleted  = false;
+        $keepReservation = false;
+        register_shutdown_function(static function () use ($db, $idempotencyKey, &$orderCompleted, &$keepReservation): void {
+            if ($orderCompleted || $keepReservation) {
                 return;
             }
             try {
@@ -541,6 +655,37 @@ class MarketplaceController {
         ]);
         if (!$chargeResult['success']) {
             $conn->rollBack();
+
+            // I-01 — iki hata sınıfını ayır.
+            //
+            // KESİN RET (kart reddedildi, kart bilgisi geçersiz, sağlayıcı
+            // yapılandırılmamış): para KESİNLİKLE çekilmedi. Rezervasyon
+            // silinir, kullanıcı kartını düzeltip aynı sepeti tekrar
+            // gönderebilir.
+            //
+            // BELİRSİZ (sağlayıcıya hiç ulaşılamadı ya da anlamsız yanıt):
+            // tahsilat yapılmış OLABİLİR. Rezervasyon KALIR; aynı sepetin
+            // tekrar gönderilmesi yukarıdaki "doğrulanıyor" dalına düşer,
+            // yani çift tahsilat olmaz. `reconcilePayments()` sağlayıcıya
+            // sorup durumu kesinleştirince rezervasyon serbest bırakılır.
+            $keepReservation = self::chargeOutcomeIsIndeterminate($chargeResult);
+
+            if ($keepReservation) {
+                error_log(sprintf(
+                    '[checkout] tahsilat sonucu BELİRSİZ, idempotency tutuluyor order=%s user=%d code=%s',
+                    $orderId,
+                    $userId,
+                    (string) ($chargeResult['error_code'] ?? '-')
+                ));
+                $releaseLock();
+                JsonResponse::error(
+                    'Ödemenizin sonucu doğrulanamadı. Kartınızdan çekim yapılmış olabilir; '
+                    . 'lütfen tekrar denemeden önce "Ödemelerim" sayfasını kontrol edin.',
+                    502,
+                    AppConfig::ERR_PAYMENT
+                );
+            }
+
             JsonResponse::error($chargeResult['message'] ?? 'Ödeme başarısız.', 402, AppConfig::ERR_PAYMENT);
         }
 
@@ -638,17 +783,35 @@ class MarketplaceController {
             // Aynı gün tam iptal (`/payment/cancel`) bunun doğru aracı.
             // Başarısız olursa cancelCharge() operatöre "ELLE İADE GEREKİYOR"
             // diye loglar; sessizce yutmuyoruz.
+            // I-01 — telafinin SONUCU önemli. İptal başarılıysa para geri
+            // döndü, yani ortada tahsilat yok ve kullanıcı tekrar
+            // deneyebilir. İptal BAŞARISIZSA para müşteride değil bizde
+            // kalmıştır: rezervasyonu bırakmak, kullanıcının tekrar deneyip
+            // İKİNCİ kez ödemesine kapı açardı.
+            $compensated = true;
             if ($gatewayPayment !== '') {
-                cancelCharge($gatewayPayment, clientIp(), $orderId);
+                $compensated = cancelCharge($gatewayPayment, clientIp(), $orderId);
             }
 
             // PAY-008: sipariş başarısız oldu — idempotency rezervasyonunu
             // bırak ki kullanıcı düzeltip tekrar deneyebilsin. Bırakılmazsa
             // aynı sepet kalıcı olarak "zaten oluşturulmuş" sayılırdı.
-            try {
-                $db->execute('DELETE FROM checkout_idempotency WHERE idem_key = ?', [$idempotencyKey]);
-            } catch (Throwable $inner) {
-                error_log('[checkout] idempotency rezervasyonu bırakılamadı: ' . $inner->getMessage());
+            if ($compensated) {
+                try {
+                    $db->execute('DELETE FROM checkout_idempotency WHERE idem_key = ?', [$idempotencyKey]);
+                } catch (Throwable $inner) {
+                    error_log('[checkout] idempotency rezervasyonu bırakılamadı: ' . $inner->getMessage());
+                }
+            } else {
+                // Rezervasyon KALIYOR (bkz. $keepReservation): elle iade
+                // gerekiyor, o çözülene kadar aynı sepet tekrar denenemez.
+                $keepReservation = true;
+                error_log(sprintf(
+                    '[checkout] telafi başarısız, idempotency tutuluyor order=%s user=%d paymentId=%s',
+                    $orderId,
+                    $userId,
+                    $gatewayPayment
+                ));
             }
             $releaseLock();
             throw $e;
@@ -656,9 +819,14 @@ class MarketplaceController {
 
         // Rezervasyonu gerçek sipariş numarasıyla tamamla — tekrar gönderilen
         // istek artık ilk siparişin numarasını görecek.
+        //
+        // I-01 — `created_at` de ŞİMDİYE çekiliyor: tekrar penceresi
+        // rezervasyonun açıldığı andan değil, siparişin TAMAMLANDIĞI andan
+        // başlasın. Pencere dolduğunda satır bir sonraki denemede silinip
+        // aynı bot aynı süreyle yeniden satın alınabilir hâle gelir.
         try {
             $db->execute(
-                'UPDATE checkout_idempotency SET order_id = ? WHERE idem_key = ?',
+                'UPDATE checkout_idempotency SET order_id = ?, created_at = NOW() WHERE idem_key = ?',
                 [$orderId, $idempotencyKey]
             );
         } catch (Throwable $e) {
