@@ -799,3 +799,50 @@ Bunların hiçbirinde doğru davranışa kendim karar vermedim; hepsi CLAUDE.md'
 ## Bu turda dikkat edilmesi gereken tek operasyonel adım
 
 `migrations/010_notification_message_columns.sql` **yazıldı, uygulanmadı** (CLAUDE.md `--apply` yasağı). Canlı veritabanında `notifications.message_tr`/`message_en` sütunlarının **zaten var olduğu ölçüldü**, yani bugünkü kurulum etkilenmiyor; migration sıfırdan kurulan veritabanları ve migration geçmişinin tutarlılığı için gerekli.
+
+---
+
+# Karar turu (2026-09-06) — kullanıcı kararlarıyla kapatılan maddeler
+
+Bir önceki turda "karar gerekiyor" diye açık bırakılan maddeler için kullanıcı kararları alındı ve uygulandı. Her madde ayrı commit; commit mesajında bulgu numarası var.
+
+## Uygulanmadan önce bildirilen iki çelişki
+
+1. **I-01 talimatı kendi içinde çelişiyordu.** "Başarısız/beklemedeki denemede kayıt kalsın" ile "başarısız→tekrar deneme senaryosunu test et" aynı anda sağlanamaz: kart reddedildikten sonra kayıt kalırsa istek `$existing` dalına düşüp *"Bu sipariş zaten oluşturulmuş."* (`order_id: NULL`) döner ve o sepet kalıcı olarak kilitlenir. Mevcut kod tam da bunu önlemek için hata dalında siliyordu. **Karar:** hata sınıfı ikiye ayrıldı — kesin ret temizler, belirsiz sonuç tutar.
+2. **İade sırasında sağlayıcı kaynaklı kısmi başarı**, kullanıcının "kısmi iade yok" kuralının kapsamadığı bir arıza durumu. **Karar:** erişim ancak TAM iade tamamlanınca kesilir; kısmi hâl admin'e bildirilir ve tekrar denemede iade edilmiş kalemler atlanır.
+
+## I-03 için istenen ölçüm
+
+`user_plan_selection` tablosunda **0 satır** var — yani bozulmuş plan bağı **yok**, FK migration'ı veri onarımı gerektirmeyecek. Katalog sağlam: Ücretsiz (#5), Gümüş (#6), Altın (#7), Elmas (#8). Migration kullanıcı talimatı gereği **yazılmadı**, karar bekliyor.
+
+## Kapatılanlar
+
+| ID | Ne yapıldı | Doğrulama |
+|---|---|---|
+| **I-01** | Idempotency kaydına yaşam döngüsü: `order_id` dolu + taze → tekrar penceresi (15 dk, çift tıklama koruması); dolu + eski → düşer, yeniden satın alma serbest; boş → tahsilat sonucu belirsiz, tekrar denemeye izin yok (48 saat). Hata dalı ikiye ayrıldı (kesin ret temizler / belirsiz tutar). `cancelCharge()` dönüşü artık dikkate alınıyor: telafi başarısızsa rezervasyon bırakılmıyor. | Gerçek MySQL'e karşı 18 kontrol; iki ardışık başarılı alım ve başarısız→tekrar deneme senaryoları ayrı ayrı. |
+| **D-04** | Ödeme satırı tahsilattan ÖNCE, transaction'ın DIŞINDA `pending` olarak yazılıyor; rollback onu silmiyor. Sonuç yazımı: başarı→`paid` (UPDATE), kesin ret→`failed`, belirsiz→`pending` kalır (mutabakat çözsün), telafi başarısız→`unknown`. Transaction içindeki beş doğrulama çıkışı ortak `$failCheckout`'a alındı. | 15 kontrol: rollback'in pending satırı silmediği, mutabakat sorgusunun onu yakaladığı, kullanıcıya görünen listelere ve bakiyeye girmediği. |
+| **I-02** | `processRefund()`'a `GET_LOCK('refund_payment_<id>')`, kilit sonrası yeniden okuma, kalem bazlı idempotency (tamamlanmış kalem sağlayıcıya ikinci kez gitmiyor) ve tek transaction'lık durum geçişi. Sağlayıcı çağrıları bilerek transaction dışında. Her DENEME log'lanıyor (kim, ne zaman, hangi ödeme, önceki→sonraki durum). | 14 kontrol (aşağıdaki satırla ortak koşum). |
+| **D-03 / D-08 / I-04** | **D-03:** tam iadede abonelik `status=0`, kalan bonus kredi sıfırlanıyor; `credits_total` muhasebe kaydı olarak korunuyor; oransal hesap yok. **D-08:** kalem→detay eşlemesi `chatbot_id` üzerinden (eskiden hepsi ilk detaya bağlanıyordu; detay yoksa yazılan `0` aslında FK ihlaliyle patlıyordu — testte doğrulandı). **I-04:** tutar/kalem gönderen çağıran açıkça reddediliyor; sağlayıcı kaynaklı kısmi başarıda erişim kesilmiyor, admin'e bildiriliyor. | 14 kontrol; dört tablonun satır sayıları test öncesi/sonrası aynı. |
+| **D-05** | Üyelik paketi 30 günlük tek seferlik satış. `migrations/011_user_plan_expiry.sql` (+`schema.sql`), `getUserPlan()`'da süre kontrolü, `upgradePlan()`'da `NOW() + SUBSCRIPTION_MONTHLY`. `expires_at IS NULL` = süresiz (geriye dönük iptal yok). Sütun yoksa iki yönlü fail-safe: yazma tarafı süresiz yazıp log'lar, okuma tarafı sorguyu değiştirmez (aksi hâlde 1054 → herkes sessizce ücretsiz kotalara inerdi). | 9 kontrol; migration sonrası şema geçici tabloyla taklit edildi. |
+| **B-05** | Karar: Sohbet Defteri **herkese açık** ve bu bilinçli — arayüz kaydetme anında açıkça uyarıyor ("Bu bir herkese açık paylaşımdır…"), sekmeler "Tüm Paylaşılanlar"/"Paylaştıklarım". `is_public` sütunu EKLENMEDİ. Kapatılan asıl açık: `udb.*` → açık sütun listesi, yani tabloya eklenecek yeni bir alan otomatik olarak yayına girmiyor. | Sorgu canlıda çalıştırıldı, frontend'in okuduğu 14 alanın tamamı dönüyor. |
+| **B-07** | Mevcut parola doğrulaması + hız sınırı (15 dk / 5). Oturum ele geçirme → e-posta değiştirme → şifre sıfırlama → kalıcı devralma zinciri 2. adımda kesiliyor. Parolasız (Google) hesap için ayrı mesaj. İki frontend çağıranı da güncellendi. | php -l + build + lint temiz. |
+| **G-05** | Kullanıcı ekranı salt-düzenleme yapıldı ("Yeni Ekle" kaldırıldı; şifresiz, giriş yapamayan hesap üretiyordu). Forma şifre alanı EKLENMEDİ: sayfa genel CRUD ucunu kullanıyor, gönderilen `sifre` hash'lenmeden sütuna yazılırdı. `functions/crud_guard.php` (yeni) genel uçlarda `kullanicilar.{sifre,google_id,avatar}` ve `adminler.sifre` yazımını reddediyor. | php -l temiz; panel JS'i `node --check` ile ayrıştırıldı. |
+
+## Bu turda ortaya çıkan, ŞEMA gerektiren iki sınır
+
+1. **İade → erişim eşlemesi belirsiz.** `user_subscriptions` ve `chatbot_purchase_credits` tablolarında sipariş/ödeme bağı yok; tek eşleşme `(user_id, chatbot_id)`. I-01 düzeltmesinden sonra aynı botu iki kez satın almak mümkün olduğu için, birinci siparişin iadesi ikinciyi de kapatabilir. Sessiz bırakılmadı: durum tespit edilip log'a ve admin yanıtına `warnings` olarak yazılıyor. **Kalıcı çözüm:** `user_subscriptions`'a `payment_id` eklemek.
+2. **İade denetim izinde admin kimliği.** `param_marketplace_refunds.requested_by_user_id`'nin FK'sı `kullanicilar`'a, admin ise `adminler` tablosunda — sütuna admin id'si yazılamıyor. Kimlik şimdilik `param_response_json` ve log'da. **Kalıcı çözüm:** ayrı bir `requested_by_admin` sütunu ya da ortak bir aktör tablosu.
+
+## Ertelenenler (kullanıcı kararı)
+
+- **A-01 / A-02** — bu turun kapsamı dışında.
+- **I-03** — FK migration'ı, bozuk kayıt sayısı (0) bildirildikten sonra konuşulacak.
+
+## Uygulanmayı bekleyen migration'lar
+
+| Dosya | İçerik | Durum |
+|---|---|---|
+| `010_notification_message_columns.sql` | `notifications.message_tr/message_en` | Canlıda sütunlar zaten VAR; migration geçmiş tutarlılığı için. |
+| `011_user_plan_expiry.sql` | `user_plan_selection.expires_at` + index | **Uygulanmalı.** Uygulanana kadar üyelik paketi süresiz yazılmaya devam eder (fail-safe, log'a düşüyor). |
+
+İkisi de yazıldı, **uygulanmadı** (CLAUDE.md `--apply` yasağı; deploy sırasında elle çalıştırılacak).
