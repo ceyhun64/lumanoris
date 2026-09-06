@@ -27,6 +27,29 @@ class NoteController {
         JsonResponse::success(['message' => 'Yeni sohbet başarıyla başlatıldı!', 'id' => $id]);
     }
 
+    /**
+     * B-05 — "Sohbet Defteri herkese açık mı olmalı?" sorusunun cevabı:
+     * EVET, ve bu bilinçli bir üründür.
+     *
+     * Denetim bunu belirsiz saymıştı; arayüz o zamandan beri netleşti ve
+     * artık kullanıcıya kaydetme ANINDA açıkça söylüyor
+     * (`DialogNotebookModal.jsx`):
+     *   • Başlık: "Diyalog Defterine Ekle"
+     *   • Alt başlık: "…Diyalog Defteri sayfasında paylaşın."
+     *   • Kehribar uyarı kutusu: "Bu bir herkese açık paylaşımdır.
+     *     Yayınladığınızda sorunuz ve yapay zekânın yanıtı, kullanıcı
+     *     adınızla birlikte tüm kullanıcılara görünür olur."
+     *   • Başarı bildirimi: "Başarıyla yayınlandı"
+     * Sekmeler de aynı şeyi söylüyor: "Tüm Paylaşılanlar" / "Paylaştıklarım".
+     * Yani "kaydet" ile "yayınla" arasında bir ayrım YOK — olmaması bilinçli.
+     * Bu yüzden `is_public` sütunu EKLENMEDİ: arayüzde karşılığı olmayan bir
+     * gizlilik bayrağı, akışı sessizce boşaltmaktan başka bir şey yapmazdı.
+     *
+     * Asıl kapatılan açık, `udb.*` idi: SELECT * bu tabloya ileride eklenecek
+     * HER sütunu otomatik olarak yayına sokardı. Sütunlar artık açıkça
+     * sayılıyor — yeni bir alan eklendiğinde varsayılan davranış "yayınla"
+     * değil "yayınlama" oluyor.
+     */
     public static function getDialogues(): void {
         // The dialogue book is a deliberately public feed (notes/page.jsx has a
         // "Paylaştıklarım" tab), but it was readable with no session at all, so
@@ -48,7 +71,10 @@ class NoteController {
             // `avatar` bilerek ÇEKİLMİYOR: longtext ve base64 gömülü
             // olabiliyor, 100 satırda yanıtı şişirirdi. Profil sayfası onu
             // kendi tekil isteğinde alıyor.
-            "udb.*,
+            // B-05: `udb.*` yerine açık sütun listesi. Aşağıdakiler
+            // `notes/page.jsx`in gerçekten okuduğu alanlar.
+            "udb.id, udb.user_id, udb.chatbot_id, udb.name,
+             udb.input_message, udb.output_message, udb.created_at,
              udb.chatbot_id AS conversation_chatbot_id,
              c.owner_user_id, c.isim AS chatbot_isim, c.kategori_id AS chatbot_kategori_id,
              c.profil_fotografi AS chatbot_profil_fotografi,
