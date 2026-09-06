@@ -92,7 +92,13 @@ export default function PricingSection() {
 
       {/* Faturalandırma anahtarı */}
       <div className="flex mb-10 sm:mb-14 items-center justify-center">
-        <div className="inline-flex ring-1 ring-white/10 bg-luma-base rounded-full p-1 relative shadow-lg space-x-1 items-center">
+        {/* `space-x-1` DEĞİL `gap-1`: space-x, ilki hariç TÜM çocuklara
+            margin-left basıyor — kaydırıcı da (son çocuk) 4px payını alıyordu.
+            Mutlak konumlu bir öğede margin, `left` değerinin üstüne eklenir;
+            bu yüzden kaydırıcı butonun 4px sağına kayıyor ve "Yıllık" seçili
+            olduğunda (o buton sağ kenara dayalı) yuvarlak zeminin dışına
+            taşıyordu. `gap` akış dışı çocuklara uygulanmaz. */}
+        <div className="inline-flex ring-1 ring-white/10 bg-luma-base rounded-full p-1 relative shadow-lg gap-1 items-center">
           {["aylık", "yıllık"].map((option) => (
             <button
               key={option}

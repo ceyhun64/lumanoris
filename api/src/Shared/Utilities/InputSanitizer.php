@@ -216,4 +216,63 @@ final class InputSanitizer {
 
         return null;
     }
+
+    /**
+     * COMP-002 — doğum tarihini normalize eder ve yaş kapısını uygular.
+     *
+     * `Y-m-d` bekleniyor (kayıt formundaki BirthdatePicker ISO gönderiyor).
+     * Dönüş `Y-m-d` biçiminde normalize edilmiş tarih.
+     *
+     * `checkdate()` ile doğrulama şart: `strtotime('2026-02-31')` false
+     * DÖNMEZ, 3 Mart'a taşar — yani takvimde olmayan bir tarih sessizce
+     * geçerli sayılırdı.
+     *
+     * Yaş hesabı `DateTime::diff()` ile yapılıyor; "gün farkı / 365" gibi bir
+     * yaklaşıklık artık yıllarda sınırdaki kullanıcıyı yanlış tarafa atar.
+     *
+     * @return string  normalize edilmiş `Y-m-d`
+     * @throws ValidationException  eksik, biçimsiz, geleceğe ait veya yaşı küçük
+     */
+    public static function birthDate(mixed $value, int $minAge): string {
+        $raw = trim((string) $value);
+
+        if ($raw === '') {
+            throw new ValidationException('Doğum tarihi zorunludur.');
+        }
+
+        if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $raw, $m)) {
+            throw new ValidationException('Doğum tarihi GG.AA.YYYY biçiminde geçerli bir tarih olmalıdır.');
+        }
+
+        [$year, $month, $day] = [(int) $m[1], (int) $m[2], (int) $m[3]];
+        if (!checkdate($month, $day, $year)) {
+            throw new ValidationException('Doğum tarihi GG.AA.YYYY biçiminde geçerli bir tarih olmalıdır.');
+        }
+
+        try {
+            $birth = new DateTimeImmutable($raw, new DateTimeZone('UTC'));
+            $today = new DateTimeImmutable('today', new DateTimeZone('UTC'));
+        } catch (Exception $e) {
+            throw new ValidationException('Doğum tarihi GG.AA.YYYY biçiminde geçerli bir tarih olmalıdır.');
+        }
+
+        if ($birth > $today) {
+            throw new ValidationException('Doğum tarihi gelecekte olamaz.');
+        }
+
+        // 130 yaş üstü: gerçek bir kullanıcı değil, alanı doldurmak için
+        // rastgele yazılmış bir tarih. Sessizce kabul etmek yaş kapısını
+        // anlamsızlaştırır.
+        if ($birth < $today->modify('-130 years')) {
+            throw new ValidationException('Doğum tarihi geçerli bir aralıkta olmalıdır.');
+        }
+
+        if ($birth->diff($today)->y < $minAge) {
+            throw new ValidationException(
+                'Bu platformu kullanabilmek için en az ' . $minAge . ' yaşında olmalısınız.'
+            );
+        }
+
+        return $birth->format('Y-m-d');
+    }
 }

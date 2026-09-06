@@ -32,15 +32,38 @@ export const SITE_URL = resolveSiteUrl();
 
 export const SITE_NAME = 'Lumanoris';
 
+/*
+  COMP-006: açıklama ÜRÜNLE başlıyor, kazançla değil.
+  Önceki metin ("… gelir elde edebileceğin …") platformu bir kazanç fırsatı
+  olarak konumlandırıyordu. Bu, ödeme kuruluşu risk değerlendirmesinde gelir
+  vaadi/ağ pazarlaması kalıplarıyla aynı sinyali üretiyor (BLOCKERS B3).
+  Pazaryeri hâlâ anlatılıyor — "satışa sunabileceğin" olgusal bir ifade,
+  "gelir elde edebileceğin" ise bir vaat. Fark budur.
+*/
 export const SITE_DESCRIPTION =
-  'Lumanoris, kendi yapay zekâ sohbet botlarını oluşturup pazaryerinde ' +
-  'paylaşabileceğin ve gelir elde edebileceğin Türkçe yapay zekâ platformudur.';
+  'Lumanoris, kendi yapay zekâ sohbet botlarını oluşturup eğitebileceğin ve ' +
+  'dilersen pazaryerinde satışa sunabileceğin Türkçe yapay zekâ platformudur.';
 
-/** Organization JSON-LD `sameAs` — yalnızca doğrulanmış, gerçek hesaplar. */
-export const SITE_SOCIALS = [
-  'https://www.instagram.com/lumanoris/',
-  'https://www.youtube.com/channel/UCX6_dT34vajhx8PGk5_1xfA',
+/**
+ * Doğrulanmış, gerçek sosyal hesaplar — tek kaynak.
+ *
+ * Hem alt bilgideki GÖRÜNÜR linkler hem Organization JSON-LD'nin `sameAs`
+ * alanı buradan besleniyor. İkisi ayrı listeler olsaydı schema'da sayfada
+ * görünmeyen bir adres kalabilirdi; bu dosya o ikisini tek yerde tutuyor.
+ * `key`, alt bilgideki ikon adıyla eşleşiyor (LandingFooter `SOCIAL_ICONS`).
+ *
+ * LinkedIn adresi bilerek `/home/` soneki OLMADAN: o biçim yalnızca oturumu
+ * açık kullanıcılar için çalışıyor, anonim ziyaretçiyi 302 ile giriş sayfasına
+ * atıyor. Sonek olmadan sayfa 200 dönüyor.
+ */
+export const SITE_SOCIAL_LINKS = [
+  { key: 'instagram', label: 'Instagram', url: 'https://www.instagram.com/lumanoris/' },
+  { key: 'youtube', label: 'YouTube', url: 'https://www.youtube.com/channel/UCX6_dT34vajhx8PGk5_1xfA' },
+  { key: 'linkedin', label: 'LinkedIn', url: 'https://www.linkedin.com/company/luminoris/' },
 ];
+
+/** Organization JSON-LD `sameAs`. */
+export const SITE_SOCIALS = SITE_SOCIAL_LINKS.map((social) => social.url);
 
 export const OG_IMAGE = {
   url: '/og-image.png',

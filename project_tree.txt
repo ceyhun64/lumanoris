@@ -1,6 +1,6 @@
 ================================================================
 PROJE MİMARİSİ VE DOSYA YAPISI
-Oluşturulma Tarihi: 02.09.2026 14:19:17
+Oluşturulma Tarihi: 03.09.2026 13:36:44
 Kapsam: Tam Proje Haritası
 ================================================================
 
@@ -11,208 +11,6 @@ Kapsam: Tam Proje Haritası
 │   └── worktrees/
 ├── .DS_Store
 ├── .gitignore
-├── .history/
-│   ├── .gitignore_20250723171945
-│   ├── .gitignore_20250811233926
-│   └── src/
-│       └── app/
-│           ├── components/
-│           │   ├── BankInfo/
-│           │   │   ├── BankInfo_20250811225338.jsx
-│           │   │   ├── BankInfo_20250812120630.jsx
-│           │   │   ├── BankInfo_20250812120647.jsx
-│           │   │   ├── BankInfo_20250812120709.jsx
-│           │   │   ├── BankInfo_20250812120723.jsx
-│           │   │   ├── BankInfo_20250812120750.jsx
-│           │   │   ├── BankInfo_20250812120811.jsx
-│           │   │   ├── BankInfo_20250812120923.jsx
-│           │   │   ├── BankInfo_20250812120930.jsx
-│           │   │   └── BankInfo_20250812121551.jsx
-│           │   ├── ChatbotForm/
-│           │   │   ├── ChatbotForm_20250811231936.jsx
-│           │   │   ├── ChatbotForm_20250812105431.jsx
-│           │   │   ├── ChatbotForm_20250812105449.jsx
-│           │   │   ├── ChatbotForm_20250812105508.jsx
-│           │   │   ├── ChatbotForm_20250812105516.jsx
-│           │   │   ├── ChatbotForm_20250812105525.jsx
-│           │   │   ├── ChatbotForm_20250812105545.jsx
-│           │   │   ├── ChatbotForm_20250812105554.jsx
-│           │   │   ├── ChatbotForm_20250812105603.jsx
-│           │   │   ├── ChatbotForm_20250812105615.jsx
-│           │   │   ├── ChatbotForm_20250812113612.jsx
-│           │   │   ├── ChatbotForm_20250812113623.jsx
-│           │   │   ├── ChatbotForm_20250812113901.jsx
-│           │   │   ├── ChatbotForm_20250812113907.jsx
-│           │   │   └── ChatbotForm_20250812113918.jsx
-│           │   ├── CommentModal/
-│           │   │   ├── CommentModal_20250723171945.jsx
-│           │   │   ├── CommentModal_20250812110130.jsx
-│           │   │   ├── CommentModal_20250812110142.jsx
-│           │   │   └── CommentModal_20250812110156.jsx
-│           │   ├── MarketPlaceHeader/
-│           │   │   ├── MarketPlaceHeader_20250811150220.jsx
-│           │   │   ├── MarketPlaceHeader_20250811235425.jsx
-│           │   │   ├── MarketPlaceHeader_20250811235431.jsx
-│           │   │   └── MarketPlaceHeader_20250811235509.jsx
-│           │   ├── MessageInput/
-│           │   │   ├── MessageInput_20250806154555.jsx
-│           │   │   ├── MessageInput_20250811235536.jsx
-│           │   │   ├── MessageInput_20250811235548.jsx
-│           │   │   ├── MessageInput_20250811235551.jsx
-│           │   │   ├── MessageInput_20250811235833.jsx
-│           │   │   ├── MessageInput_20250811235844.jsx
-│           │   │   ├── MessageInput_20250811235853.jsx
-│           │   │   ├── MessageInput_20250811235943.jsx
-│           │   │   ├── MessageInput_20250811235950.jsx
-│           │   │   ├── MessageInput_20250811235955.jsx
-│           │   │   ├── MessageInput_20250812000426.jsx
-│           │   │   ├── MessageInput_20250812000548.jsx
-│           │   │   ├── MessageInput_20250812000642.jsx
-│           │   │   └── MessageInput_20250812000654.jsx
-│           │   ├── PhoneEditor/
-│           │   │   ├── PhoneEditor_20250810192628.jsx
-│           │   │   ├── PhoneEditor_20250811234313.jsx
-│           │   │   ├── PhoneEditor_20250811234358.jsx
-│           │   │   ├── PhoneEditor_20250811234409.jsx
-│           │   │   ├── PhoneEditor_20250811234417.jsx
-│           │   │   └── PhoneEditor_20250811234606.jsx
-│           │   └── Sidebar/
-│           │       ├── Sidebar_20250805232725.jsx
-│           │       └── Sidebar_20250811235933.jsx
-│           ├── css/
-│           │   ├── global_20250811232547.scss
-│           │   ├── global_20250811234446.scss
-│           │   ├── global_20250811234556.scss
-│           │   ├── global_20250811235440.scss
-│           │   ├── global_20250811235514.scss
-│           │   ├── global_20250811235859.scss
-│           │   ├── global_20250811235906.scss
-│           │   ├── global_20250812000004.scss
-│           │   ├── global_20250812000532.scss
-│           │   ├── global_20250812000740.scss
-│           │   ├── global_20250812000757.scss
-│           │   ├── global_20250812000851.scss
-│           │   ├── global_20250812000906.scss
-│           │   ├── global_20250812001041.scss
-│           │   ├── global_20250812001151.scss
-│           │   ├── global_20250812001213.scss
-│           │   ├── global_20250812001251.scss
-│           │   ├── global_20250812001310.scss
-│           │   ├── global_20250812002358.scss
-│           │   ├── global_20250812003300.scss
-│           │   ├── global_20250812003309.scss
-│           │   ├── global_20250812003322.scss
-│           │   ├── global_20250812003339.scss
-│           │   ├── global_20250812003536.scss
-│           │   ├── global_20250812003837.scss
-│           │   ├── global_20250812003844.scss
-│           │   ├── global_20250812003856.scss
-│           │   ├── global_20250812004045.scss
-│           │   ├── global_20250812004110.scss
-│           │   ├── global_20250812004213.scss
-│           │   ├── global_20250812004234.scss
-│           │   ├── global_20250812004703.scss
-│           │   ├── global_20250812004732.scss
-│           │   ├── global_20250812004734.scss
-│           │   ├── global_20250812004748.scss
-│           │   ├── global_20250812004813.scss
-│           │   ├── global_20250812004821.scss
-│           │   ├── global_20250812004957.scss
-│           │   ├── global_20250812005037.scss
-│           │   ├── global_20250812005125.scss
-│           │   ├── global_20250812005255.scss
-│           │   ├── global_20250812005349.scss
-│           │   ├── global_20250812005400.scss
-│           │   ├── global_20250812005505.scss
-│           │   ├── global_20250812005525.scss
-│           │   ├── global_20250812005527.scss
-│           │   ├── global_20250812005552.scss
-│           │   ├── global_20250812005823.scss
-│           │   ├── global_20250812005827.scss
-│           │   ├── global_20250812105108.scss
-│           │   ├── global_20250812105159.scss
-│           │   ├── global_20250812105231.scss
-│           │   ├── global_20250812105254.scss
-│           │   ├── global_20250812105649.scss
-│           │   ├── global_20250812105700.scss
-│           │   ├── global_20250812105717.scss
-│           │   ├── global_20250812105730.scss
-│           │   ├── global_20250812105746.scss
-│           │   ├── global_20250812105756.scss
-│           │   ├── global_20250812105807.scss
-│           │   ├── global_20250812105833.scss
-│           │   ├── global_20250812110222.scss
-│           │   ├── global_20250812113939.scss
-│           │   ├── global_20250812120129.scss
-│           │   ├── global_20250812120156.scss
-│           │   ├── global_20250812120209.scss
-│           │   └── global_20250812120440.scss
-│           └── dashboard/
-│               ├── chat/
-│               │   ├── page_20250811214652.jsx
-│               │   ├── page_20250811234133.jsx
-│               │   ├── page_20250811234845.jsx
-│               │   ├── page_20250811235238.jsx
-│               │   └── page_20250812000634.jsx
-│               ├── chatbots/
-│               │   └── create/
-│               │       ├── page_20250810125531.jsx
-│               │       └── page_20250812115502.jsx
-│               ├── explore/
-│               │   ├── page_20250811142458.jsx
-│               │   └── page_20250812003220.jsx
-│               ├── history/
-│               │   ├── page_20250810125317.jsx
-│               │   └── page_20250811234123.jsx
-│               ├── layout_20250723171945.jsx
-│               ├── layout_20250812120343.jsx
-│               ├── list/
-│               │   ├── page_20250811144119.jsx
-│               │   ├── page_20250812001356.jsx
-│               │   ├── page_20250812001404.jsx
-│               │   ├── page_20250812002323.jsx
-│               │   ├── page_20250812002332.jsx
-│               │   ├── page_20250812002408.jsx
-│               │   ├── page_20250812003425.jsx
-│               │   ├── page_20250812003439.jsx
-│               │   ├── page_20250812003443.jsx
-│               │   ├── page_20250812003448.jsx
-│               │   ├── page_20250812003453.jsx
-│               │   ├── page_20250812003531.jsx
-│               │   ├── page_20250812003850.jsx
-│               │   ├── page_20250812004019.jsx
-│               │   ├── page_20250812004226.jsx
-│               │   ├── page_20250812004430.jsx
-│               │   ├── page_20250812004449.jsx
-│               │   ├── page_20250812004514.jsx
-│               │   ├── page_20250812004521.jsx
-│               │   ├── page_20250812004538.jsx
-│               │   ├── page_20250812004546.jsx
-│               │   ├── page_20250812004633.jsx
-│               │   ├── page_20250812004654.jsx
-│               │   ├── page_20250812004656.jsx
-│               │   ├── page_20250812004657.jsx
-│               │   ├── page_20250812005246.jsx
-│               │   ├── page_20250812005455.jsx
-│               │   ├── page_20250812005623.jsx
-│               │   ├── page_20250812005629.jsx
-│               │   ├── page_20250812005636.jsx
-│               │   ├── page_20250812005642.jsx
-│               │   └── page_20250812005747.jsx
-│               └── notes/
-│                   ├── page_20250811233415.jsx
-│                   ├── page_20250812104415.jsx
-│                   ├── page_20250812104435.jsx
-│                   ├── page_20250812104452.jsx
-│                   ├── page_20250812104542.jsx
-│                   ├── page_20250812104553.jsx
-│                   ├── page_20250812104816.jsx
-│                   ├── page_20250812104826.jsx
-│                   ├── page_20250812104835.jsx
-│                   ├── page_20250812104845.jsx
-│                   ├── page_20250812115918.jsx
-│                   ├── page_20250812120040.jsx
-│                   └── page_20250812121620.jsx
 ├── .vscode/
 │   ├── lumanoris-useeffect.code-snippets
 │   └── settings.json
@@ -37596,6 +37394,7 @@ Kapsam: Tam Proje Haritası
 │   │                   ├── UnhandledMatchError.php
 │   │                   └── ValueError.php
 │   └── _restoretest.php
+├── AUDIT.md
 ├── autostart.bat
 ├── BLOCKERS.md
 ├── chatbot_table.txt
@@ -37603,16 +37402,16 @@ Kapsam: Tam Proje Haritası
 ├── customserver.txt
 ├── docs/
 │   └── prompts/
-│       ├── FAZ 3a — Ölü ağırlık (erken, düşük risk).md
-│       ├── FAZ 3b — Riskli temizlik (testler kurulduktan sonra).md
-│       ├── FAZ 4 — Regresyon test ağı.md
-│       ├── FAZ 5 — Düzeltme döngüsü (bütçeli).md
-│       ├── FAZ 6 — Stub'lar (her biri ayrı oturum).md
-│       ├── FAZ 7 — Build, deploy, observability.md
-│       ├── FAZ 8 — Release gate.md
-│       ├── faz1-audit.md
-│       ├── faz1.5-review.md
-│       └── faz2-security.md
+│       ├── 01-audit.md
+│       ├── 02-audit-review.md
+│       ├── 03-security.md
+│       ├── 04-olu-agirlik.md
+│       ├── 05-testler.md
+│       ├── 06-duzeltme-p0-p1.md
+│       ├── 07-stublar.md
+│       ├── 08-riskli-temizlik.md
+│       ├── 09-build-deploy.md
+│       └── 10-release-gate.md
 ├── google.txt
 ├── package.json
 ├── project_tree.txt
@@ -37637,6 +37436,466 @@ Kapsam: Tam Proje Haritası
 ├── TODO.md
 └── web/
     ├── .env
+    ├── .next-verify/
+    │   ├── app-build-manifest.json
+    │   ├── app-path-routes-manifest.json
+    │   ├── build-manifest.json
+    │   ├── BUILD_ID
+    │   ├── cache/
+    │   │   ├── .previewinfo
+    │   │   ├── .rscinfo
+    │   │   ├── eslint/
+    │   │   │   └── .cache_1pocx61
+    │   │   ├── swc/
+    │   │   │   └── plugins/
+    │   │   │       └── windows_x86_64_18.0.0/
+    │   │   └── webpack/
+    │   │       ├── client-production/
+    │   │       │   ├── 0.pack
+    │   │       │   └── index.pack
+    │   │       ├── edge-server-production/
+    │   │       │   ├── 0.pack
+    │   │       │   └── index.pack
+    │   │       └── server-production/
+    │   │           ├── 0.pack
+    │   │           └── index.pack
+    │   ├── diagnostics/
+    │   │   ├── build-diagnostics.json
+    │   │   └── framework.json
+    │   ├── export-marker.json
+    │   ├── images-manifest.json
+    │   ├── next-minimal-server.js.nft.json
+    │   ├── next-server.js.nft.json
+    │   ├── package.json
+    │   ├── prerender-manifest.json
+    │   ├── react-loadable-manifest.json
+    │   ├── required-server-files.json
+    │   ├── routes-manifest.json
+    │   ├── server/
+    │   │   ├── app/
+    │   │   │   ├── auth/
+    │   │   │   │   ├── page.js
+    │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   ├── auth.html
+    │   │   │   ├── auth.meta
+    │   │   │   ├── auth.rsc
+    │   │   │   ├── dashboard/
+    │   │   │   │   ├── chat/
+    │   │   │   │   │   ├── page.js
+    │   │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   │   ├── chat.html
+    │   │   │   │   ├── chat.meta
+    │   │   │   │   ├── chat.rsc
+    │   │   │   │   ├── chatbots/
+    │   │   │   │   │   ├── create/
+    │   │   │   │   │   │   ├── page.js
+    │   │   │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   │   │   ├── create.html
+    │   │   │   │   │   ├── create.meta
+    │   │   │   │   │   ├── create.rsc
+    │   │   │   │   │   ├── page.js
+    │   │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   │   ├── chatbots.html
+    │   │   │   │   ├── chatbots.meta
+    │   │   │   │   ├── chatbots.rsc
+    │   │   │   │   ├── checkout/
+    │   │   │   │   │   ├── page.js
+    │   │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   │   ├── checkout.html
+    │   │   │   │   ├── checkout.meta
+    │   │   │   │   ├── checkout.rsc
+    │   │   │   │   ├── explore/
+    │   │   │   │   │   ├── page.js
+    │   │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   │   ├── explore.html
+    │   │   │   │   ├── explore.meta
+    │   │   │   │   ├── explore.rsc
+    │   │   │   │   ├── following/
+    │   │   │   │   │   ├── page.js
+    │   │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   │   ├── following.html
+    │   │   │   │   ├── following.meta
+    │   │   │   │   ├── following.rsc
+    │   │   │   │   ├── history/
+    │   │   │   │   │   ├── page.js
+    │   │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   │   ├── history.html
+    │   │   │   │   ├── history.meta
+    │   │   │   │   ├── history.rsc
+    │   │   │   │   ├── list/
+    │   │   │   │   │   ├── page.js
+    │   │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   │   ├── list.html
+    │   │   │   │   ├── list.meta
+    │   │   │   │   ├── list.rsc
+    │   │   │   │   ├── notes/
+    │   │   │   │   │   ├── page.js
+    │   │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   │   ├── notes.html
+    │   │   │   │   ├── notes.meta
+    │   │   │   │   ├── notes.rsc
+    │   │   │   │   ├── page.js
+    │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   ├── page_client-reference-manifest.js
+    │   │   │   │   ├── purchased/
+    │   │   │   │   │   ├── page.js
+    │   │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   │   ├── purchased.html
+    │   │   │   │   ├── purchased.meta
+    │   │   │   │   ├── purchased.rsc
+    │   │   │   │   ├── settings/
+    │   │   │   │   │   ├── page.js
+    │   │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   │   ├── settings.html
+    │   │   │   │   ├── settings.meta
+    │   │   │   │   ├── settings.rsc
+    │   │   │   │   ├── upgrade/
+    │   │   │   │   │   ├── page.js
+    │   │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   │   ├── upgrade.html
+    │   │   │   │   ├── upgrade.meta
+    │   │   │   │   ├── upgrade.rsc
+    │   │   │   │   ├── wallet/
+    │   │   │   │   │   ├── page.js
+    │   │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   │   ├── wallet.html
+    │   │   │   │   ├── wallet.meta
+    │   │   │   │   └── wallet.rsc
+    │   │   │   ├── dashboard.html
+    │   │   │   ├── dashboard.meta
+    │   │   │   ├── dashboard.rsc
+    │   │   │   ├── forgot-password/
+    │   │   │   │   ├── page.js
+    │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   ├── forgot-password.html
+    │   │   │   ├── forgot-password.meta
+    │   │   │   ├── forgot-password.rsc
+    │   │   │   ├── gizlilik-politikasi/
+    │   │   │   │   ├── page.js
+    │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   ├── hakkimizda/
+    │   │   │   │   ├── page.js
+    │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   ├── icon.png/
+    │   │   │   │   ├── route.js
+    │   │   │   │   └── route.js.nft.json
+    │   │   │   ├── icon.png.body
+    │   │   │   ├── icon.png.meta
+    │   │   │   ├── index.html
+    │   │   │   ├── index.meta
+    │   │   │   ├── index.rsc
+    │   │   │   ├── kullanim-kosullari/
+    │   │   │   │   ├── page.js
+    │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   ├── login/
+    │   │   │   │   ├── page.js
+    │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   ├── login.html
+    │   │   │   ├── login.meta
+    │   │   │   ├── login.rsc
+    │   │   │   ├── mesafeli-satis-sozlesmesi/
+    │   │   │   │   ├── page.js
+    │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   ├── page.js
+    │   │   │   ├── page.js.nft.json
+    │   │   │   ├── page_client-reference-manifest.js
+    │   │   │   ├── register/
+    │   │   │   │   ├── page.js
+    │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   ├── register.html
+    │   │   │   ├── register.meta
+    │   │   │   ├── register.rsc
+    │   │   │   ├── robots.txt/
+    │   │   │   │   ├── route.js
+    │   │   │   │   ├── route.js.nft.json
+    │   │   │   │   └── route_client-reference-manifest.js
+    │   │   │   ├── robots.txt.body
+    │   │   │   ├── robots.txt.meta
+    │   │   │   ├── sitemap.xml/
+    │   │   │   │   ├── route.js
+    │   │   │   │   ├── route.js.nft.json
+    │   │   │   │   └── route_client-reference-manifest.js
+    │   │   │   ├── teslimat-ve-iade/
+    │   │   │   │   ├── page.js
+    │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   ├── _not-found/
+    │   │   │   │   ├── page.js
+    │   │   │   │   ├── page.js.nft.json
+    │   │   │   │   └── page_client-reference-manifest.js
+    │   │   │   ├── _not-found.html
+    │   │   │   ├── _not-found.meta
+    │   │   │   └── _not-found.rsc
+    │   │   ├── app-paths-manifest.json
+    │   │   ├── chunks/
+    │   │   │   ├── 180.js
+    │   │   │   ├── 181.js
+    │   │   │   ├── 216.js
+    │   │   │   ├── 331.js
+    │   │   │   ├── 366.js
+    │   │   │   ├── 417.js
+    │   │   │   ├── 42.js
+    │   │   │   ├── 574.js
+    │   │   │   ├── 611.js
+    │   │   │   ├── 692.js
+    │   │   │   ├── 777.js
+    │   │   │   ├── 8.js
+    │   │   │   └── 991.js
+    │   │   ├── functions-config-manifest.json
+    │   │   ├── interception-route-rewrite-manifest.js
+    │   │   ├── middleware-build-manifest.js
+    │   │   ├── middleware-manifest.json
+    │   │   ├── middleware-react-loadable-manifest.js
+    │   │   ├── next-font-manifest.js
+    │   │   ├── next-font-manifest.json
+    │   │   ├── pages/
+    │   │   │   ├── 404.html
+    │   │   │   ├── 500.html
+    │   │   │   ├── _app.js
+    │   │   │   ├── _app.js.nft.json
+    │   │   │   ├── _document.js
+    │   │   │   ├── _document.js.nft.json
+    │   │   │   ├── _error.js
+    │   │   │   └── _error.js.nft.json
+    │   │   ├── pages-manifest.json
+    │   │   ├── server-reference-manifest.js
+    │   │   ├── server-reference-manifest.json
+    │   │   └── webpack-runtime.js
+    │   ├── static/
+    │   │   ├── 47XLRMCWM8dkvVYKMbZku/
+    │   │   │   ├── _buildManifest.js
+    │   │   │   └── _ssgManifest.js
+    │   │   ├── chunks/
+    │   │   │   ├── 1255-02662dab646776f9.js
+    │   │   │   ├── 1303.56b09726598023ed.js
+    │   │   │   ├── 1451.bc123d254e6f3fb3.js
+    │   │   │   ├── 1503-3748466ae162da6f.js
+    │   │   │   ├── 1646.a93085a0445ba909.js
+    │   │   │   ├── 1782-8973a03877cb6e9a.js
+    │   │   │   ├── 1994.c757ff8f2660f54a.js
+    │   │   │   ├── 2146-e50806ba27236b99.js
+    │   │   │   ├── 2195.b0bb3aaf627632d6.js
+    │   │   │   ├── 2863.0d974cdfaf1c52cf.js
+    │   │   │   ├── 3058.62d2e50d3c2764d0.js
+    │   │   │   ├── 306-f9b06538ab7815f4.js
+    │   │   │   ├── 3085.304a59476cfcd02d.js
+    │   │   │   ├── 3217-fd69cc44ea97df38.js
+    │   │   │   ├── 3753.191a06c93774ea45.js
+    │   │   │   ├── 3837.c06c7d594e831d1b.js
+    │   │   │   ├── 4019-5857fb9cfea950bf.js
+    │   │   │   ├── 4357-80b54145321edfff.js
+    │   │   │   ├── 4619-82a3decd7e1e1665.js
+    │   │   │   ├── 4821-207c6f59ff49e47f.js
+    │   │   │   ├── 4967-ffac8fcfc694f7c4.js
+    │   │   │   ├── 4971-98fbbd0b29709897.js
+    │   │   │   ├── 4bd1b696-100b9d70ed4e49c1.js
+    │   │   │   ├── 5-b1a9c4bfceedd1ad.js
+    │   │   │   ├── 5139.e4ff9cc3669129ed.js
+    │   │   │   ├── 5393-f8727cc3f3cf8cfc.js
+    │   │   │   ├── 5455.1d244041a521d557.js
+    │   │   │   ├── 5689-222e576350cb82f3.js
+    │   │   │   ├── 5892-34b1e22f86208562.js
+    │   │   │   ├── 6093-b6f5252c60388a8a.js
+    │   │   │   ├── 6332-13eec97f32fa1816.js
+    │   │   │   ├── 6824.251af55f3aed2a09.js
+    │   │   │   ├── 7072.29650f1aa95e4b83.js
+    │   │   │   ├── 7332.598ec6dc1d7e714b.js
+    │   │   │   ├── 8028-859c7cbb21dbbf25.js
+    │   │   │   ├── 8101.5647a6eb4566fa62.js
+    │   │   │   ├── 8293-098f0d73a3bfe46c.js
+    │   │   │   ├── 8486-54b79652da8e74b5.js
+    │   │   │   ├── 8805-86827ad2075fa1ef.js
+    │   │   │   ├── 8832.cee53bdb0d89f355.js
+    │   │   │   ├── 9188-d2dee1fbe5b3bf20.js
+    │   │   │   ├── 94.d9f9cf01d09125c0.js
+    │   │   │   ├── 9972-f22cdff56dc5cf05.js
+    │   │   │   ├── app/
+    │   │   │   │   ├── auth/
+    │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   └── page-072f0f16feb10c15.js
+    │   │   │   │   ├── dashboard/
+    │   │   │   │   │   ├── chat/
+    │   │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   │   └── page-a287fb9cf71e9bce.js
+    │   │   │   │   │   ├── chatbots/
+    │   │   │   │   │   │   ├── create/
+    │   │   │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   │   │   └── page-591a984439ded278.js
+    │   │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   │   └── page-fbdf6bb391d20fad.js
+    │   │   │   │   │   ├── checkout/
+    │   │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   │   └── page-e78ac9dd0b0091e1.js
+    │   │   │   │   │   ├── explore/
+    │   │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   │   └── page-1943fea4c9c15c85.js
+    │   │   │   │   │   ├── following/
+    │   │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   │   └── page-7a2c129d2286c4ec.js
+    │   │   │   │   │   ├── history/
+    │   │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   │   └── page-3a24e85f805c46e9.js
+    │   │   │   │   │   ├── layout-ca5011c41e598fb2.js
+    │   │   │   │   │   ├── list/
+    │   │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   │   └── page-04990517440367a9.js
+    │   │   │   │   │   ├── notes/
+    │   │   │   │   │   │   └── page-531645e05d7318ae.js
+    │   │   │   │   │   ├── page-9ef0fda0e1a93af9.js
+    │   │   │   │   │   ├── purchased/
+    │   │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   │   └── page-94b51d7abd168beb.js
+    │   │   │   │   │   ├── settings/
+    │   │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   │   └── page-44f64f6c99b731e7.js
+    │   │   │   │   │   ├── upgrade/
+    │   │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   │   └── page-5c57f577bdc94add.js
+    │   │   │   │   │   └── wallet/
+    │   │   │   │   │       ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │       └── page-125265b65eef02b7.js
+    │   │   │   │   ├── forgot-password/
+    │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   └── page-bd2907df4bc5f73e.js
+    │   │   │   │   ├── gizlilik-politikasi/
+    │   │   │   │   │   └── page-072f0f16feb10c15.js
+    │   │   │   │   ├── hakkimizda/
+    │   │   │   │   │   └── page-072f0f16feb10c15.js
+    │   │   │   │   ├── kullanim-kosullari/
+    │   │   │   │   │   └── page-072f0f16feb10c15.js
+    │   │   │   │   ├── layout-1e4645c0ab8a5a94.js
+    │   │   │   │   ├── login/
+    │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   └── page-83f4b7843899f04e.js
+    │   │   │   │   ├── mesafeli-satis-sozlesmesi/
+    │   │   │   │   │   └── page-072f0f16feb10c15.js
+    │   │   │   │   ├── not-found-072f0f16feb10c15.js
+    │   │   │   │   ├── page-46b5beef57e631dc.js
+    │   │   │   │   ├── register/
+    │   │   │   │   │   ├── layout-072f0f16feb10c15.js
+    │   │   │   │   │   └── page-072f0f16feb10c15.js
+    │   │   │   │   ├── robots.txt/
+    │   │   │   │   │   └── route-072f0f16feb10c15.js
+    │   │   │   │   ├── sitemap.xml/
+    │   │   │   │   │   └── route-072f0f16feb10c15.js
+    │   │   │   │   ├── teslimat-ve-iade/
+    │   │   │   │   │   └── page-072f0f16feb10c15.js
+    │   │   │   │   └── _not-found/
+    │   │   │   │       └── page-072f0f16feb10c15.js
+    │   │   │   ├── framework-d7945a8ad0653f37.js
+    │   │   │   ├── main-35775953d8526e85.js
+    │   │   │   ├── main-app-01db10e8c60b6005.js
+    │   │   │   ├── pages/
+    │   │   │   │   ├── _app-e8b861c87f6f033c.js
+    │   │   │   │   └── _error-c8f84f7bd11d43d4.js
+    │   │   │   ├── polyfills-42372ed130431b0a.js
+    │   │   │   └── webpack-49e847c708085cf0.js
+    │   │   ├── css/
+    │   │   │   ├── 23f350d5604495b7.css
+    │   │   │   └── 4417f86cf475ddfb.css
+    │   │   └── media/
+    │   │       ├── avatar-bot.0ce040b1.jpg
+    │   │       ├── bot-image.7dcca006.png
+    │   │       ├── Digital-7.20c235aa.woff
+    │   │       ├── Digital-7.2ab97e89.woff2
+    │   │       ├── Digital-7Italic.154d40ad.woff2
+    │   │       ├── Digital-7Italic.b141ff62.woff
+    │   │       ├── Digital-7Mono.240f5ccb.woff
+    │   │       ├── Digital-7Mono.642f4bbe.woff2
+    │   │       ├── Digital-7MonoItalic.bdebdfd9.woff
+    │   │       ├── Digital-7MonoItalic.d149701e.woff2
+    │   │       └── header-logo-icon.92bc99f3.png
+    │   ├── trace
+    │   └── types/
+    │       ├── app/
+    │       │   ├── auth/
+    │       │   │   ├── layout.ts
+    │       │   │   └── page.ts
+    │       │   ├── dashboard/
+    │       │   │   ├── chat/
+    │       │   │   │   ├── layout.ts
+    │       │   │   │   └── page.ts
+    │       │   │   ├── chatbots/
+    │       │   │   │   ├── create/
+    │       │   │   │   │   ├── layout.ts
+    │       │   │   │   │   └── page.ts
+    │       │   │   │   ├── layout.ts
+    │       │   │   │   └── page.ts
+    │       │   │   ├── checkout/
+    │       │   │   │   ├── layout.ts
+    │       │   │   │   └── page.ts
+    │       │   │   ├── explore/
+    │       │   │   │   ├── layout.ts
+    │       │   │   │   └── page.ts
+    │       │   │   ├── following/
+    │       │   │   │   ├── layout.ts
+    │       │   │   │   └── page.ts
+    │       │   │   ├── history/
+    │       │   │   │   ├── layout.ts
+    │       │   │   │   └── page.ts
+    │       │   │   ├── list/
+    │       │   │   │   ├── layout.ts
+    │       │   │   │   └── page.ts
+    │       │   │   ├── notes/
+    │       │   │   │   └── page.ts
+    │       │   │   ├── page.ts
+    │       │   │   ├── purchased/
+    │       │   │   │   ├── layout.ts
+    │       │   │   │   └── page.ts
+    │       │   │   ├── settings/
+    │       │   │   │   ├── layout.ts
+    │       │   │   │   └── page.ts
+    │       │   │   ├── upgrade/
+    │       │   │   │   ├── layout.ts
+    │       │   │   │   └── page.ts
+    │       │   │   └── wallet/
+    │       │   │       ├── layout.ts
+    │       │   │       └── page.ts
+    │       │   ├── forgot-password/
+    │       │   │   ├── layout.ts
+    │       │   │   └── page.ts
+    │       │   ├── gizlilik-politikasi/
+    │       │   │   └── page.ts
+    │       │   ├── hakkimizda/
+    │       │   │   └── page.ts
+    │       │   ├── kullanim-kosullari/
+    │       │   │   └── page.ts
+    │       │   ├── login/
+    │       │   │   ├── layout.ts
+    │       │   │   └── page.ts
+    │       │   ├── mesafeli-satis-sozlesmesi/
+    │       │   │   └── page.ts
+    │       │   ├── page.ts
+    │       │   ├── register/
+    │       │   │   ├── layout.ts
+    │       │   │   └── page.ts
+    │       │   └── teslimat-ve-iade/
+    │       │       └── page.ts
+    │       ├── cache-life.d.ts
+    │       ├── package.json
+    │       ├── routes.d.ts
+    │       └── validator.ts
     ├── components.json
     ├── eslint.config.mjs
     ├── jsconfig.json

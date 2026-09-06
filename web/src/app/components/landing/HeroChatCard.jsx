@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Code, Send, Sparkles } from "lucide-react";
+import { Bot, Code, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 /**
@@ -16,8 +16,11 @@ import { useEffect, useRef, useState } from "react";
 const RESPONSES = [
   "Platformumuzda, dilediğiniz her konuda özel olarak eğitilmiş yapay zekâ içeriklerine erişebilirsiniz:",
   "Dokümanlarınızı veya web sitenizi yükleyerek kendi kişiselleştirilmiş asistanınızı dakikalar içinde oluşturun:",
-  "Özelleştirdiğiniz bu modelleri paylaşarak gelir elde etme fırsatını yakalayın:",
-  "Lumanoris, yapay zekâ ile değer katmak ve değer kazanmak için tasarlandı:",
+  // COMP-006: "gelir elde etme fırsatını yakalayın" bir kazanç vaadiydi;
+  // yerine ne yapıldığını anlatan olgusal ifade kondu. Pazaryeri hâlâ
+  // anlatılıyor, ama "fırsat" dili kaldırıldı (BLOCKERS B3).
+  "Özelleştirdiğiniz bu modelleri pazaryerinde dilediğiniz fiyattan satışa sunabilirsiniz:",
+  "Lumanoris, yapay zekâ ile üretmek ve ürettiğinizi paylaşmak için tasarlandı:",
 ];
 
 const PROGRESS_ITEMS = [
@@ -197,11 +200,7 @@ export default function HeroChatCard() {
         </div>
       </div>
 
-      {/* Yüzen öğeler */}
-      <div className="absolute -top-4 -right-4 h-12 w-12 rounded-xl bg-fuchsia-500/20 ring-1 ring-fuchsia-400/30 flex items-center justify-center backdrop-blur-sm">
-        <Sparkles className="h-5 w-5 text-fuchsia-400" strokeWidth={1.5} />
-      </div>
-
+      {/* Yüzen öğe */}
       <div className="absolute -bottom-4 -left-4 h-10 w-10 rounded-lg bg-white/10 ring-1 ring-white/20 flex items-center justify-center backdrop-blur-sm">
         <Code className="h-4 w-4 text-white/75" strokeWidth={1.5} />
       </div>

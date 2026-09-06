@@ -241,7 +241,11 @@ export default function OnboardingWalkthrough() {
           </div>
 
           <div className="onboarding-cta-wrap">
-            <Link href="/dashboard/chatbots/create/" className="onboarding-cta-btn">
+            {/* Doğrudan oluşturma sayfasına gidiyordu; oturumsuz ziyaretçi
+                orada panel iskeletini görüp "Oturum kontrol ediliyor…"
+                yazısından sonra login'e atılıyordu. Revize listesi bu
+                düğmenin DOĞRUDAN giriş/kayıt sayfasına gitmesini istiyor. */}
+            <Link href="/login/" className="onboarding-cta-btn">
               <Sparkles className="onboarding-cta-icon-left" width={18} height={18} strokeWidth={2} />
               <span>Yeni Chatbot Oluşturmak İçin Tıkla</span>
               <ArrowRight className="onboarding-cta-icon-right" width={18} height={18} strokeWidth={2} />

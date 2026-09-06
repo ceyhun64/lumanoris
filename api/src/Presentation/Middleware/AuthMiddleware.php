@@ -58,11 +58,11 @@ class AuthMiddleware {
      *    şekilde çıkış yaptığında) durumu fark edebilir.
      */
     private static function tryRememberMe(): ?int {
-        if (!isset($_COOKIE['remember_me'])) {
+        if (!isset($_COOKIE[RememberMeCookie::NAME])) {
             return null;
         }
 
-        $parts = explode(':', $_COOKIE['remember_me'], 2);
+        $parts = explode(':', $_COOKIE[RememberMeCookie::NAME], 2);
         if (count($parts) !== 2) {
             return null;
         }
@@ -104,13 +104,7 @@ class AuthMiddleware {
                 date('Y-m-d H:i:s', time() + $expirySeconds)
             );
 
-            setcookie('remember_me', $newSelector . ':' . $newValidator, [
-                'expires'  => time() + $expirySeconds,
-                'path'     => '/',
-                'httponly' => true,
-                'secure'   => !empty($_SERVER['HTTPS']),
-                'samesite' => 'Strict',
-            ]);
+            RememberMeCookie::issue($newSelector, $newValidator, time() + $expirySeconds);
         } catch (Throwable $e) {
             // Rotasyon başarısız olduysa kullanıcıyı dışarı atmıyoruz; oturum
             // zaten kuruldu. Ama eski token silinmiş olabileceği için çerezi
@@ -124,12 +118,6 @@ class AuthMiddleware {
     }
 
     private static function clearRememberCookie(): void {
-        setcookie('remember_me', '', [
-            'expires'  => time() - 3600,
-            'path'     => '/',
-            'httponly' => true,
-            'secure'   => !empty($_SERVER['HTTPS']),
-            'samesite' => 'Strict',
-        ]);
+        RememberMeCookie::clear();
     }
 }

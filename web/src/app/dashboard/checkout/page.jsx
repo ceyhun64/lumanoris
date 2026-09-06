@@ -193,12 +193,25 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-luma-base max-w-7xl text-zinc-100 selection:bg-fuchsia-500/30 selection:text-fuchsia-200 font-sans relative overflow-x-hidden">
+    <div className="min-h-screen bg-luma-base text-zinc-100 selection:bg-fuchsia-500/30 selection:text-fuchsia-200 font-sans relative overflow-x-hidden">
+      {/* `max-w-7xl` BU div'in üzerindeydi ve aynı div sayfanın arka planını
+          (`bg-luma-base` + `min-h-screen`) taşıyor. Yani arka plan 1280px'de
+          bitiyordu ve `mx-auto` da olmadığı için sola yaslıydı: daha geniş
+          ekranlarda sağda arka planı olmayan bir şerit kalıyordu. Aynı hata
+          ortam ışığını da bozuyordu — `left-1/2` kısıtlanmış kabın ortasına
+          göre hesaplandığı için parıltı ekranın ortasına değil soluna
+          düşüyordu.
+
+          Genişlik sınırı ait olduğu yere, İÇERİK kaplarına taşındı; kök artık
+          tam genişlikte. Kardeş sayfalar (notes, settings) ve bu dosyanın
+          kendi yüklenme iskeleti de tam genişlikte kök + dolgulu içerik
+          deseninde. */}
+
       {/* Background ambient lighting effects */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-b from-fuchsia-600/10 via-violet-600/5 to-transparent blur-3xl pointer-events-none" />
 
       {}
-      <header className="px-6 pt-10 pb-6 flex items-center justify-between relative z-10">
+      <header className="mx-auto max-w-7xl px-6 pt-10 pb-6 flex items-center justify-between relative z-10">
         <button
           type="button"
           onClick={() => (step === 2 ? setStep(1) : window.history.back())}
@@ -215,7 +228,7 @@ export default function Checkout() {
       </header>
 
       {}
-      <main className="px-6 pb-24 relative z-10">
+      <main className="mx-auto max-w-7xl px-6 pb-24 relative z-10">
         <div className="mb-10">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-300 text-xs font-medium mb-3">
             <Sparkles className="w-3.5 h-3.5" />
@@ -532,17 +545,15 @@ export default function Checkout() {
 
             {/* Final Summary Card */}
             <div className="lg:col-span-5 sticky top-6">
-              {/* iyzico rozeti kartın DIŞINDA, üstünde duruyor. Logonun
-                  beyaz varyantı kullanıldığı için koyu zemin üzerinde
-                  ayrıca bir plakaya gerek yok. */}
-              <div className="mb-4 flex items-center justify-center">
-                <img
-                  src="/iyzico_ile_ode_horizontal_white.png"
-                  alt="iyzico ile Öde"
-                  width={1050}
-                  height={155}
-                  className="h-7 w-auto"
-                />
+              {/* COMP-001: "iyzico ile Öde" rozeti buradan KALDIRILDI.
+                  Sağlayıcı markasını geçerli bir üye iş yeri sözleşmesi
+                  olmadan göstermek izinsiz marka kullanımıdır; başvuru
+                  reddedildi (BLOCKERS B3). Sağlayıcı kesinleşene kadar
+                  rozetin yeri boş kalıyor — yerine sağlayıcı adı geçmeyen
+                  nötr bir güvenlik notu konuldu. */}
+              <div className="mb-4 flex items-center justify-center gap-1.5 text-caption text-zinc-500">
+                <Lock className="h-3 w-3" />
+                <span>Kart bilgileriniz sunucularımızda saklanmaz.</span>
               </div>
 
               <div className="rounded-3xl border border-zinc-800/80 bg-zinc-900/60 p-6 backdrop-blur-xl shadow-2xl">

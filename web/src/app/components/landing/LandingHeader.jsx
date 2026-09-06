@@ -16,8 +16,12 @@ import { useVideoModal } from "./VideoModalProvider";
  * Header, `scrollToId` ile sayfa içi anchor'lara yumuşak kaydırma yapıyor:
  * kaynaktaki `html { scroll-behavior: smooth }` kuralı global olduğu için
  * alınmadı, davranışı JS'e taşındı.
+ *
+ * `hideOnScroll`: landing'de header ilk kaydırmada kayboluyor (hero'ya ait bir
+ * öğe olduğu için). İçerik sayfalarında bu davranış gezinmeyi tamamen
+ * erişilemez kılardı; oralar `false` geçiyor.
  */
-export default function LandingHeader() {
+export default function LandingHeader({ hideOnScroll = true }) {
   const { open: openVideo } = useVideoModal();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -52,16 +56,22 @@ export default function LandingHeader() {
 
   // `.is-scrolled` kök `.landing` elemanında olmalı; header onun içinde.
   useEffect(() => {
+    if (!hideOnScroll) return;
     const root = document.querySelector(".landing");
     if (!root) return;
     root.classList.toggle("is-scrolled", scrolled);
     return () => root.classList.remove("is-scrolled");
-  }, [scrolled]);
+  }, [scrolled, hideOnScroll]);
 
+  /* Hedef bu sayfada yoksa (landing dışındaki sayfalar) preventDefault ETMİYORUZ:
+     link `/#pricing`e normal şekilde gidiyor. Aksi hâlde tıklama hiçbir şey
+     yapmayan ölü bir bağlantı olurdu. */
   const scrollToId = (event, id) => {
+    const target = document.getElementById(id);
+    if (!target) return;
     event.preventDefault();
     setMenuOpen(false);
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
@@ -93,7 +103,7 @@ export default function LandingHeader() {
           <Link href="/hakkimizda/" className="site-nav-link">
             Hakkımızda
           </Link>
-          <a href="#pricing" className="site-nav-link" onClick={(e) => scrollToId(e, "pricing")}>
+          <a href="/#pricing" className="site-nav-link" onClick={(e) => scrollToId(e, "pricing")}>
             Fiyatlandırma
           </a>
           <button type="button" className="site-nav-link" onClick={openVideo}>
@@ -136,7 +146,7 @@ export default function LandingHeader() {
           <Link href="/hakkimizda/" onClick={() => setMenuOpen(false)}>
             Hakkımızda
           </Link>
-          <a href="#pricing" onClick={(e) => scrollToId(e, "pricing")}>
+          <a href="/#pricing" onClick={(e) => scrollToId(e, "pricing")}>
             Fiyatlandırma
           </a>
           <button

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/shared/hooks/use-toast";
 import { BirthdatePicker } from "@/shared/ui/birthdate-picker";
+import { MIN_REGISTRATION_AGE, isAtLeastYearsOld } from "@/shared/lib/age";
 import logo from "@/images/header-logo-icon.png";
 
 const CHAT_DEMO_MESSAGES = [
@@ -381,8 +382,19 @@ export default function AuthPage() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    /* COMP-002: bu kontrol artık tek savunma DEĞİL — asıl kapı sunucuda
+       (RegisterUseCase → InputSanitizer::birthDate). Buradaki amaç yalnızca
+       kullanıcıyı formu göndermeden uyarmak; sunucuya doğrudan POST atan biri
+       yine de reddedilir. MIN_REGISTRATION_AGE ile ELLE senkron: sunucu
+       tarafındaki sabit değişirse buradaki 18 de değişmeli. */
     if (!registerData.dogum_tarihi) {
       toast.warning("Lütfen doğum tarihinizi seçin.");
+      return;
+    }
+    if (!isAtLeastYearsOld(registerData.dogum_tarihi, MIN_REGISTRATION_AGE)) {
+      toast.warning(
+        `Bu platformu kullanabilmek için en az ${MIN_REGISTRATION_AGE} yaşında olmalısınız.`
+      );
       return;
     }
     setLoading(true);
@@ -530,7 +542,7 @@ export default function AuthPage() {
                     </span>
                   </div>
                   <div className="text-caption text-white/40">
-                    Gerçek zamanlı LLM yanıt akışı
+                    Gerçek zamanlı yanıt akışı
                   </div>
                 </div>
               </div>
@@ -784,8 +796,14 @@ export default function AuthPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
+                    {/* COMP-002: yaş sınırı kullanıcıya ÖNCEDEN söyleniyor.
+                        Doğum tarihini girip formu gönderdikten sonra
+                        reddedilmek, sınırı hiç yazmamakla aynı kötü deneyim. */}
                     <label className="text-xs font-medium text-white/60 ml-1">
-                      Doğum Tarihi
+                      Doğum Tarihi{" "}
+                      <span className="text-white/35">
+                        ({MIN_REGISTRATION_AGE}+)
+                      </span>
                     </label>
                     <BirthdatePicker
                       value={registerData.dogum_tarihi}

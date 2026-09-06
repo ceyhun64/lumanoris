@@ -234,7 +234,10 @@ function BotQuickDetailModal({ bot, isOpen, onClose, router }) {
           </div>
   
           {/* Technical Specs */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* Üçüncü kutu "Model: GPT-4o Omnimodal" yazıyordu; kaldırıldı.
+              Izgara 3 sütundan 2'ye indi, aksi hâlde kalan iki kutu yarım
+              satırda asılı kalırdı. */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-center">
               <p className="text-caption text-zinc-500 uppercase font-mono">
                 Puan
@@ -250,14 +253,6 @@ function BotQuickDetailModal({ bot, isOpen, onClose, router }) {
               </p>
               <p className="text-sm font-bold text-white mt-0.5">
                 {bot.takipci_sayisi || "1.2k"}
-              </p>
-            </div>
-            <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-center">
-              <p className="text-caption text-zinc-500 uppercase font-mono">
-                Model
-              </p>
-              <p className="text-xs font-bold text-violet-300 mt-0.5">
-                GPT-4o Omnimodal
               </p>
             </div>
           </div>
@@ -347,6 +342,32 @@ export default function Following() {
 
     Promise.all([fetchFollowed, fetchCats]).finally(() => setLoading(false));
   }, [userId]);
+
+  const openChat = (bot) => router.push("/dashboard/chat?botId=" + bot.chatbot_id);
+
+  /* Kartın TAMAMI sohbete götürüyor: "Sohbet Et" kartın birincil eylemi ve
+     ızgara kartı zaten `cursor-pointer` gösteriyordu ama hiçbir onClick'i
+     yoktu — imleç "tıklanabilir" diyor, kart hiçbir şey yapmıyordu. Aynı
+     desen kardeş sayfada da var (dashboard/purchased).
+
+     Kart bir <div> olduğu için klavye erişimi elle veriliyor: role + tabIndex
+     + Enter/Space. Bunlar olmadan fare kullanmayan biri karta hiç ulaşamaz.
+
+     Kartın İÇİNDEKİ kontroller (takibi bırak, başlıktaki hızlı detay) kendi
+     işlerini yapmaya devam ediyor; her biri `stopPropagation` ile olayı
+     durduruyor — aksi hâlde tıklama karta baloncuklanır ve kullanıcıyı
+     istemediği hâlde sohbete fırlatırdı. */
+  const cardNavProps = (bot) => ({
+    role: "button",
+    tabIndex: 0,
+    onClick: () => openChat(bot),
+    onKeyDown: (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openChat(bot);
+      }
+    },
+  });
 
   const handleUnfollow = (botId) => {
     setFollowedBots((prev) => prev.filter((b) => b.id !== botId));
@@ -601,6 +622,7 @@ export default function Following() {
             {filteredBots.map((bot) => (
               <div
                 key={bot.id}
+                {...cardNavProps(bot)}
                 className="group relative rounded-2xl border border-white/[0.08] bg-zinc-900/60 backdrop-blur-xl overflow-hidden hover:border-violet-500/40 hover:bg-zinc-900/90 hover:shadow-[0_0_30px_-5px_rgba(139,92,246,0.15)] hover:-translate-y-0.5 transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between"
               >
                 {/* Top Cover Banner */}
@@ -653,7 +675,10 @@ export default function Following() {
                     </div>
 
                     <h3
-                      onClick={() => setDetailModalBot(bot)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDetailModalBot(bot);
+                      }}
                       className="font-bold text-sm text-white group-hover:text-violet-200 transition-colors line-clamp-1 hover:underline"
                     >
                       {bot.isim}
@@ -673,9 +698,10 @@ export default function Following() {
                   </span>
 
                   <button
-                    onClick={() =>
-                      router.push("/dashboard/chat?botId=" + bot.chatbot_id)
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openChat(bot);
+                    }}
                     className="flex items-center gap-1 text-xs font-bold text-violet-300 group-hover:text-violet-200 cursor-pointer"
                   >
                     <span>Sohbet Et</span>
@@ -691,7 +717,8 @@ export default function Following() {
             {filteredBots.map((bot) => (
               <div
                 key={bot.id}
-                className="group rounded-2xl border border-white/[0.08] bg-zinc-900/60 p-4 hover:border-violet-500/40 hover:bg-zinc-900/90 transition-all duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                {...cardNavProps(bot)}
+                className="group rounded-2xl border border-white/[0.08] bg-zinc-900/60 p-4 hover:border-violet-500/40 hover:bg-zinc-900/90 transition-all duration-200 cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
               >
                 <div className="flex items-center gap-4">
                   <img
@@ -702,7 +729,10 @@ export default function Following() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h4
-                        onClick={() => setDetailModalBot(bot)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDetailModalBot(bot);
+                        }}
                         className="text-sm font-bold text-white group-hover:text-violet-300 transition-colors cursor-pointer hover:underline"
                       >
                         {bot.isim}
@@ -719,7 +749,10 @@ export default function Following() {
 
                 <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 border-white/5 pt-3 sm:pt-0">
                   <button
-                    onClick={() => setUnfollowModalBot(bot)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setUnfollowModalBot(bot);
+                    }}
                     className="p-2 rounded-xl border border-white/10 text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
                     title="Takibi Bırak"
                   >
@@ -727,9 +760,10 @@ export default function Following() {
                   </button>
 
                   <button
-                    onClick={() =>
-                      router.push("/dashboard/chat?botId=" + bot.chatbot_id)
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openChat(bot);
+                    }}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-white transition cursor-pointer"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />

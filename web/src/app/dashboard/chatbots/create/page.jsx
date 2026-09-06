@@ -25,6 +25,7 @@ import {
   Zap,
   Check,
   ChevronRight,
+  ChevronLeft,
   ShieldCheck,
   HelpCircle,
   Info,
@@ -223,7 +224,7 @@ function BuyProducerAccountModal({ isOpen, onClose, userId, onPurchased }) {
                 "5 Adet Herkese Açık Pazaryeri Botu Yayınlama Hakkı",
                 "2 Adet Bağımsız (Özel) Bot Oluşturma Hakkı",
                 "%80 Kazanç Payı ile Doğrudan Banka Hesabınıza Transfer",
-                "Öncelikli Vektör Veritabanı ve GPT-4o İşlem Gücü",
+                "Öncelikli Vektör Veritabanı ve İşlem Gücü",
               ].map((feat, idx) => (
                 <div
                   key={idx}
@@ -345,6 +346,39 @@ function ImagePicker({
   );
 }
 
+/* Sekmeler tek kaynakta: hem üstteki sekme çubuğu hem alttaki "Devam Et"
+   gezinmesi bu diziden besleniyor. Liste JSX'in içinde satır içi duruyordu;
+   ileri/geri hesabı sıranın tek yerden okunabilmesini gerektiriyor. */
+const FORM_TABS = [
+  { id: "general", label: "1. Kimlik & Genel", icon: User },
+  { id: "brain", label: "2. Prompt & Zeka", icon: Cpu },
+  { id: "knowledge", label: "3. Bilgi Bankası", icon: Database },
+  { id: "publish", label: "4. Yayın & Fiyat", icon: Rocket },
+];
+
+/* Hazır rol şablonları. Seçili olanı işaretleyebilmek için liste ile sistem
+   talimatının aynı yerden karşılaştırılabilmesi gerekiyor; JSX'in içinde
+   satır içi durduğu sürece her render'da yeniden üretiliyordu. */
+const ROLE_PRESETS = [
+  {
+    role: "Müşteri Temsilcisi",
+    prompt: "Sen nazik ve çözüm odaklı bir müşteri hizmetleri uzmanısın.",
+  },
+  {
+    role: "Satış Danışmanı",
+    prompt:
+      "Sen ürünlerin avantajlarını öne çıkaran ikna edici bir satış asistanısın.",
+  },
+  {
+    role: "Teknik Destek",
+    prompt: "Sen yazılım ve sistem sorunlarını adım adım çözen bir mühendissin.",
+  },
+  {
+    role: "Eğitmen & Koç",
+    prompt: "Sen karmaşık konuları basitleştirerek anlatan bir eğitmensin.",
+  },
+];
+
 function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
   const router = useRouter();
   const { refetchAccount } = useContext(UserContext);
@@ -356,6 +390,17 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
   );
   const [pricingType, setPricingType] = useState("free");
   const [activeTab, setActiveTab] = useState("general");
+  const tabsRef = useRef(null);
+
+  const activeTabIndex = FORM_TABS.findIndex((t) => t.id === activeTab);
+
+  /* Sekme değişince sekme çubuğuna kaydırıyoruz: "Devam Et" formun EN
+     ALTINDA duruyor, kaydırmadan basıldığında kullanıcı yeni sekmenin
+     ortasına bakıyor ve içeriğin başını kaçırıyordu. */
+  const goToTab = (id) => {
+    setActiveTab(id);
+    tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const [simulatedChat, setSimulatedChat] = useState([
     {
       sender: "bot",
@@ -496,7 +541,25 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
         body: JSON.stringify({ base64Data }),
         credentials: "include",
       });
-      const data = await res.json();
+
+      /* Burada dogrudan res.json() cagriliyordu ve yanit JSON degilse
+         atilan "Unexpected token" hatasi kullaniciya PDF hatasi gibi
+         gosteriliyordu. Bu uc icin onemli: istek govdesi buyuk oldugu icin
+         araya giren bir vekil sunucu (nginx client_max_body_size, Apache
+         LimitRequestBody) HTML bir 413 dondurebiliyor ya da PHP olumcul
+         hatada bos govde birakabiliyor. O hallerde gercek neden HTTP
+         durumunda saklidir; artik onu soyluyoruz. */
+      const rawBody = await res.text();
+      let data = null;
+      try {
+        data = JSON.parse(rawBody);
+      } catch {
+        throw new Error(
+          res.status === 413
+            ? "PDF, sunucunun kabul ettiği istek boyutunu aşıyor. Daha küçük bir dosya deneyin."
+            : `Sunucu beklenmeyen bir yanıt döndürdü (HTTP ${res.status}). Dosya çok büyük olabilir.`,
+        );
+      }
       if (!data?.success)
         throw new Error(data?.message || "PDF ayrıştırılamadı.");
 
@@ -723,17 +786,8 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
       {/* Left Column: Multi-tab Form Controls */}
       <div className="lg:col-span-7 space-y-6">
         {/* Navigation Tabs */}
-        <div className="flex border-b border-white/10 space-x-6">
-          {[
-            { id: "general", label: "1. Kimlik & Genel", icon: User },
-            { id: "brain", label: "2. Prompt & Zeka", icon: Cpu },
-            {
-              id: "knowledge",
-              label: "3. Bilgi Bankası",
-              icon: Database,
-            },
-            { id: "publish", label: "4. Yayın & Fiyat", icon: Rocket },
-          ].map((tab) => {
+        <div ref={tabsRef} className="flex border-b border-white/10 space-x-6">
+          {FORM_TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
@@ -762,7 +816,14 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
         {/* Tab 1: General Info */}
         {activeTab === "general" && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Sutunlar 8fr/5fr, iki kutu ESIT YUKSEKLIKTE dursun diye.
+                Ikisi de kendi en-boy oranini koruyor (kapak 16/10, profil
+                kare); yukseklik de o orandan cikiyor. Esit genislikte
+                (sm:grid-cols-2) kapak w*10/16 = 0.625w yuksekligindeyken
+                kare 1.0w oluyordu — profil gorunur bicimde daha uzundu.
+                8:5 orani bunu esitliyor: kapak 8k genis, 8k*10/16 = 5k
+                yuksek; profil 5k genis, 5k yuksek. */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-[8fr_5fr]">
               <ImagePicker
                 label="Kapak Görseli"
                 hint="16:10 önerilir · maks. 5 MB"
@@ -846,43 +907,58 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
               <label className="block text-xs font-mono text-zinc-300 mb-2">
                 Hazır Rol Şablonu Seçin
               </label>
+              {/* Seçili şablon AYRI bir state'te tutulmuyor, sistem
+                  talimatından türetiliyor. İki yararı var: (a) düzenlenen bir
+                  botun talimatı bir şablonla birebir aynıysa açılışta da
+                  işaretli gelir; (b) kullanıcı talimatı elle değiştirdiği anda
+                  işaret kendiliğinden kalkar — artık o şablon değildir. Ayrı
+                  bir state bu iki durumda da gerçekle çelişirdi. */}
               <div className="grid grid-cols-2 gap-2.5">
-                {[
-                  {
-                    role: "Müşteri Temsilcisi",
-                    prompt:
-                      "Sen nazik ve çözüm odaklı bir müşteri hizmetleri uzmanısın.",
-                  },
-                  {
-                    role: "Satış Danışmanı",
-                    prompt:
-                      "Sen ürünlerin avantajlarını öne çıkaran ikna edici bir satış asistanısın.",
-                  },
-                  {
-                    role: "Teknik Destek",
-                    prompt:
-                      "Sen yazılım ve sistem sorunlarını adım adım çözen bir mühendissin.",
-                  },
-                  {
-                    role: "Eğitmen & Koç",
-                    prompt:
-                      "Sen karmaşık konuları basitleştirerek anlatan bir eğitmensin.",
-                  },
-                ].map((preset, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setSystemPrompt(preset.prompt)}
-                    className="p-3 rounded-xl bg-zinc-900/80 border border-white/5 hover:border-violet-500/30 text-left transition cursor-pointer group"
-                  >
-                    <p className="text-xs font-semibold text-white group-hover:text-violet-300">
-                      {preset.role}
-                    </p>
-                    <p className="text-caption text-zinc-500 truncate mt-0.5">
-                      {preset.prompt}
-                    </p>
-                  </button>
-                ))}
+                {ROLE_PRESETS.map((preset) => {
+                  const isSelected = systemPrompt.trim() === preset.prompt;
+                  return (
+                    <button
+                      key={preset.role}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => setSystemPrompt(preset.prompt)}
+                      className={cn(
+                        "p-3 rounded-xl border text-left transition cursor-pointer group",
+                        isSelected
+                          ? "border-violet-500 bg-violet-500/10 ring-1 ring-violet-500/40"
+                          : "border-white/5 bg-zinc-900/80 hover:border-violet-500/30",
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p
+                          className={cn(
+                            "text-xs font-semibold",
+                            isSelected
+                              ? "text-violet-200"
+                              : "text-white group-hover:text-violet-300",
+                          )}
+                        >
+                          {preset.role}
+                        </p>
+                        {/* Renk tek başına yeterli bir işaret değil; onay
+                            simgesi renk körlüğünde de okunuyor. */}
+                        {isSelected && (
+                          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-violet-500 text-white">
+                            <Check className="h-2.5 w-2.5" />
+                          </span>
+                        )}
+                      </div>
+                      <p
+                        className={cn(
+                          "text-caption truncate mt-0.5",
+                          isSelected ? "text-violet-300/70" : "text-zinc-500",
+                        )}
+                      >
+                        {preset.prompt}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -892,14 +968,9 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
         {activeTab === "brain" && (
           <div className="space-y-4 animate-in fade-in duration-200">
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-mono text-zinc-300">
-                  Sistem Talimatı
-                </label>
-                <span className="text-caption font-mono text-violet-400">
-                  GPT-4o Omnimodal Aktif
-                </span>
-              </div>
+              <label className="mb-1.5 block text-xs font-mono text-zinc-300">
+                Sistem Talimatı
+              </label>
               <textarea
                 rows={6}
                 value={systemPrompt}
@@ -1111,6 +1182,48 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
             </button>
           </div>
         )}
+
+        {/* Sekmeler arası gezinme.
+            Üstteki sekme çubuğu zaten tıklanabilirdi ama form uzun: bir
+            sonraki adıma geçmek için her seferinde sayfanın başına dönmek
+            gerekiyordu.
+
+            Son sekmede "Devam Et" YOK — orada gerçek eylem "Sohbet Botunu
+            Oluştur"; yanına ikinci bir ileri düğmesi koymak hangisinin
+            kaydettiğini belirsizleştirirdi. Aynı şekilde ilk sekmede "Geri"
+            çizilmiyor. İki yan da eşit genişlikte (flex-1) tutulduğu için
+            adım sayacı düğmeler görünüp kayboldukça yerinden oynamıyor. */}
+        <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-5">
+          <div className="flex-1">
+            {activeTabIndex > 0 && (
+              <button
+                type="button"
+                onClick={() => goToTab(FORM_TABS[activeTabIndex - 1].id)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span>Geri</span>
+              </button>
+            )}
+          </div>
+
+          <span className="shrink-0 font-mono text-caption text-zinc-500">
+            Adım {activeTabIndex + 1} / {FORM_TABS.length}
+          </span>
+
+          <div className="flex flex-1 justify-end">
+            {activeTabIndex < FORM_TABS.length - 1 && (
+              <button
+                type="button"
+                onClick={() => goToTab(FORM_TABS[activeTabIndex + 1].id)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-violet-500 cursor-pointer"
+              >
+                <span>Devam Et</span>
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Right Column: Live AI Sandbox Simulator */}
@@ -1282,8 +1395,6 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
     return (
       <div className="space-y-10">
         <PageHeader
-          eyebrow="AI Studio Engine v2.4"
-          eyebrowClassName="text-violet-300"
           title="Yeni Bir Chatbot Yaratın"
           description="Yapay zeka asistanınızı birkaç adımda yayına alın. İlk olarak chatbot'un erişim modelini belirleyin."
         />

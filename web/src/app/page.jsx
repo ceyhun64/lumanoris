@@ -2,11 +2,13 @@ import "./css/landing.css";
 
 import FeaturesSection from "./components/landing/FeaturesSection";
 import HeroSection from "./components/landing/HeroSection";
+import LandingBackdrop from "./components/landing/LandingBackdrop";
 import LandingFooter from "./components/landing/LandingFooter";
 import LandingHeader from "./components/landing/LandingHeader";
 import OnboardingSection from "./components/landing/OnboardingSection";
 import PricingSection from "./components/landing/PricingSection";
 import SectionDivider from "./components/landing/SectionDivider";
+import SessionRedirect from "@/features/auth/SessionRedirect";
 import VideoModalProvider from "./components/landing/VideoModalProvider";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_SOCIALS, absoluteUrl, assetUrl } from "@/shared/config/site";
 import { pageMetadata } from "@/shared/lib/metadata";
@@ -53,10 +55,11 @@ const JSON_LD = {
 export default function Home() {
   return (
     <div className="landing">
-      {/* Kaynaktaki UnicornStudio arka planı üçüncü taraf bir CDN script'iydi;
-          next.config.mjs'teki CSP (`script-src 'self'`) onu zaten engellerdi.
-          Yerine palet içi iki radyal gradient (bkz. landing.css). */}
-      <div className="landing-backdrop" aria-hidden="true" />
+      {/* Tanınan kullanıcı landing'de tutulmuyor, panele gidiyor. Kontrol
+          istemcide ve sayfayı bloklamıyor; gerekçesi bileşenin başında. */}
+      <SessionRedirect />
+
+      <LandingBackdrop />
 
       <VideoModalProvider>
         <LandingHeader />

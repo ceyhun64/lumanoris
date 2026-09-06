@@ -129,6 +129,12 @@ export default function Chat() {
     return img.startsWith("data:") ? img : `data:image/jpeg;base64,${img}`;
   };
 
+  /* Sunucudaki karsiligi: ChatController::MAX_FILE_BYTES. Ikisi elle senkron
+     tutuluyor; buradaki kontrol yalnizca bosuna bir yukleme yapilmasini
+     onlemek icin, gercek kapi sunucuda. */
+  const MAX_CHAT_FILE_BYTES = 4 * 1024 * 1024;
+  const MAX_CHAT_TOTAL_FILE_BYTES = 5 * 1024 * 1024;
+
   const fileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -530,20 +536,67 @@ export default function Chat() {
     console.error("Kullanıcı mesajı DB hatası:", error);
   }
 
-  // Gemini akışını başlat
-  let parts = [{ text: data.text }];
-  if (data.file) {
+  /* Dosya burada base64'e çevrilip `parts` dizisine konuyordu ve o dizi
+     HİÇBİR YERDE OKUNMUYORDU: istek gövdesi yalnızca {chatbot_id, message}
+     taşıyor, dosya çöpe gidiyordu. Kullanıcı mesaj balonunda dosya adını
+     gördüğü için yüklenmiş sanıyor, bot ise dosyadan habersiz cevap
+     veriyordu (AUDIT M-01). Dosya artık isteğe gerçekten biniyor.
+
+     Okuma başarısız olursa mesajı dosyasız GÖNDERMİYORUZ: kullanıcı dosyayı
+     bilerek ekledi, sessizce düşürmek onu yine yanıltırdı. */
+  const pickedFiles = Array.isArray(data.files)
+    ? data.files
+    : data.file
+      ? [data.file]
+      : [];
+
+  let filePayloads = [];
+  if (pickedFiles.length > 0) {
+    const tooBig = pickedFiles.find((f) => f.size > MAX_CHAT_FILE_BYTES);
+    if (tooBig) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          type: "received",
+          text: `"${tooBig.name}" çok büyük (dosya başına maks. ${MAX_CHAT_FILE_BYTES / 1024 / 1024} MB).`,
+        },
+      ]);
+      return;
+    }
+
+    /* Toplam sınır ayrıca kontrol ediliyor: tek tek sınırı geçen beş dosya
+       birlikte istek gövdesini PHP'nin post_max_size'ının üstüne çıkarır ve
+       gövde sessizce atılır (bkz. AUDIT L-01). */
+    const totalBytes = pickedFiles.reduce((sum, f) => sum + f.size, 0);
+    if (totalBytes > MAX_CHAT_TOTAL_FILE_BYTES) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          type: "received",
+          text: `Belgelerin toplam boyutu çok büyük (maks. ${MAX_CHAT_TOTAL_FILE_BYTES / 1024 / 1024} MB).`,
+        },
+      ]);
+      return;
+    }
+
     try {
-      const base64Data = await fileToBase64(data.file);
-      parts.push({
-        inline_data: { mime_type: data.file.type, data: base64Data },
-      });
+      filePayloads = await Promise.all(
+        pickedFiles.map(async (f) => ({
+          mime_type: f.type,
+          data: await fileToBase64(f),
+        })),
+      );
     } catch (err) {
-      console.error("Dosya hatası:", err);
+      console.error("Dosya okunamadı:", err);
+      setMessages((prev) => [
+        ...prev,
+        { type: "received", text: "Belgeler okunamadı, mesaj gönderilmedi." },
+      ]);
+      return;
     }
   }
 
-  await generateReply(data.text);
+  await generateReply(data.text, filePayloads);
 
   if (isNewConversation) {
     setConversationId(currentConvId);
@@ -559,7 +612,7 @@ export default function Chat() {
 // bir hata oluştuğunda (AbortError dahil) "placeholderId is not defined"
 // ReferenceError'ı ile catch'in kendisinin patlamasına ve sahte
 // "yazıyor..." animasyonunun sonsuza kadar ekranda kalmasına yol açıyordu.
-const generateReply = async (userText) => {
+const generateReply = async (userText, filePayloads = []) => {
   const placeholderId = Date.now();
   let timeoutId;
   setMessages((prev) => [...prev, { id: placeholderId, type: "received", text: "" }]);
@@ -581,7 +634,11 @@ const generateReply = async (userText) => {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       signal: controller.signal,
       body: new URLSearchParams({
-        data: JSON.stringify({ chatbot_id: botId, message: userText }),
+        data: JSON.stringify({
+          chatbot_id: botId,
+          message: userText,
+          ...(filePayloads.length ? { files: filePayloads } : {}),
+        }),
       }),
     });
 

@@ -8,10 +8,20 @@ import { toast } from '@/shared/hooks/use-toast';
 // Tarayıcı desteği kontrolü
 const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
 
+/* Bir mesaja eklenebilecek azami belge sayısı.
+
+   Sunucudaki gerçek kapı ChatController::MAX_FILES / MAX_FILE_BYTES /
+   MAX_TOTAL_FILE_BYTES; buradaki sınır yalnızca kullanıcıyı boşuna bir
+   yüklemeye sokmamak için. Üst sınırı belirleyen şey PHP tarafındaki
+   post_max_size (varsayılan 8M) ve base64 kodlamanın ~%33 şişirmesi. */
+const MAX_FILES = 5;
+
 export default function MessageInput({ onSend, onResetChat }) {
     const fileInputRef = useRef(null);
-    const [selectedFileName, setSelectedFileName] = useState('');
-    const [selectedFile, setSelectedFile] = useState(null);
+    /* Tek dosya yerine LİSTE. Eski hâlinde `selectedFile` tek bir dosyaydı ve
+       `handleFileSelect` her seçimde onu EZİYORDU: kullanıcı ikinci belgeyi
+       eklemek istediğinde birincisi sessizce kayboluyordu. */
+    const [selectedFiles, setSelectedFiles] = useState([]);
     const [voiceModalOpen, setVoiceModalOpen] = useState(false);
     const [message, setMessage] = useState('');
     const [isRecording, setIsRecording] = useState(false);
@@ -34,18 +44,19 @@ export default function MessageInput({ onSend, onResetChat }) {
     };
 
     const handleSend = () => {
-        if ((message.trim() || selectedFileName || recordedAudioUrl) && onSend) {
+        if ((message.trim() || selectedFiles.length || recordedAudioUrl) && onSend) {
             onSend({
                 text: message,
-                fileName: selectedFileName,
-                file: selectedFile || null,
+                files: selectedFiles,
+                // Mesaj balonunda gösterilen özet; birden fazla dosyada
+                // hepsini tek satırda saymak yerine ilkini + adedi veriyoruz.
+                fileName: selectedFiles.map((f) => f.name).join(', '),
                 audioUrl: recordedAudioUrl || null
             });
 
             // Temizlik
             setMessage('');
-            setSelectedFileName('');
-            setSelectedFile(null);
+            setSelectedFiles([]);
             setRecordedAudioUrl('');
             resetTextareaHeight();
         }
@@ -60,13 +71,28 @@ export default function MessageInput({ onSend, onResetChat }) {
     };
 
     const handleFileSelect = (e) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setSelectedFileName(file.name);
-            setSelectedFile(file);
-            setRecordedAudioUrl('');
-        }
+        const picked = Array.from(e.target.files || []);
+        if (!picked.length) return;
+
+        setSelectedFiles((prev) => {
+            /* EKLİYORUZ, ezmiyoruz — bildirilen hatanın tam olarak düzeltildiği
+               yer burası. Aynı dosyanın iki kez eklenmesini ad+boyut+tarih
+               üçlüsüyle eliyoruz; File nesnesi kimliği iki ayrı seçimde farklı
+               olduğu için referans karşılaştırması işe yaramaz. */
+            const key = (f) => `${f.name}|${f.size}|${f.lastModified}`;
+            const seen = new Set(prev.map(key));
+            const fresh = picked.filter((f) => !seen.has(key(f)));
+            return [...prev, ...fresh].slice(0, MAX_FILES);
+        });
+        setRecordedAudioUrl('');
+
+        // Aynı dosyayı kaldırıp tekrar seçebilmek için input sıfırlanmalı:
+        // aksi hâlde `change` olayı ikinci kez hiç tetiklenmez.
+        e.target.value = '';
     };
+
+    const removeFileAt = (index) =>
+        setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
 
     const releaseMic = () => {
         streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -185,24 +211,31 @@ export default function MessageInput({ onSend, onResetChat }) {
 
     return (
         <>
-            {(selectedFileName && !recordedAudioUrl) && (
-                <div className="mb-2.5 flex justify-start px-5">
-                    <div className="flex items-center gap-2 rounded-lg border border-fuchsia-400/30 bg-luma-elevated px-3.5 py-2">
-                        <FileText className="h-4 w-4 shrink-0 text-fuchsia-400" />
-                        <span className="max-w-[220px] truncate text-body-sm font-medium text-white/85">
-                            {selectedFileName}
-                        </span>
-                        <button
-                            onClick={() => {
-                                setSelectedFileName('');
-                                setSelectedFile(null);
-                            }}
-                            className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white/45 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            aria-label="Dosyayı kaldır"
+            {(selectedFiles.length > 0 && !recordedAudioUrl) && (
+                <div className="mb-2.5 flex flex-wrap justify-start gap-2 px-5">
+                    {selectedFiles.map((file, index) => (
+                        <div
+                            key={`${file.name}-${file.size}-${file.lastModified}`}
+                            className="flex items-center gap-2 rounded-lg border border-fuchsia-400/30 bg-luma-elevated px-3.5 py-2"
                         >
-                            <X className="h-3.5 w-3.5" />
-                        </button>
-                    </div>
+                            <FileText className="h-4 w-4 shrink-0 text-fuchsia-400" />
+                            <span className="max-w-[180px] truncate text-body-sm font-medium text-white/85">
+                                {file.name}
+                            </span>
+                            <button
+                                onClick={() => removeFileAt(index)}
+                                className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white/45 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label={`${file.name} dosyasını kaldır`}
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </button>
+                        </div>
+                    ))}
+                    {selectedFiles.length >= MAX_FILES && (
+                        <span className="self-center text-caption text-white/40">
+                            En fazla {MAX_FILES} belge
+                        </span>
+                    )}
                 </div>
             )}
 
@@ -211,7 +244,7 @@ export default function MessageInput({ onSend, onResetChat }) {
                 sirasinda, yuvarlak gonder dugmesi. Eski halinde her sey tek
                 sirayla diziliydi ve 67px yukseklige sabitlenmisti. */}
             <div className="relative z-0 w-full">
-                <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} />
+                <input type="file" multiple ref={fileInputRef} className="hidden" onChange={handleFileSelect} />
 
                 <div className="rounded-[26px] bg-gradient-to-br from-fuchsia-500/25 via-violet-500/15 to-white/[0.06] p-px transition-all duration-300 focus-within:from-fuchsia-400/70 focus-within:via-violet-400/40 focus-within:shadow-[0_0_45px_-10px_rgba(217,70,239,0.5)]">
                     <div className="rounded-[25px] bg-[#0a0a12] px-3.5 pb-3 pt-3">
@@ -282,7 +315,7 @@ export default function MessageInput({ onSend, onResetChat }) {
                                             if (skip) startRecording();
                                             else setVoiceModalOpen(true);
                                         }}
-                                        disabled={!!selectedFileName}
+                                        disabled={selectedFiles.length > 0}
                                         className="flex h-8 w-8 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/[0.07] hover:text-fuchsia-300 disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                         aria-label="Sesli mesaj"
                                         title="Sesli mesaj"
@@ -310,11 +343,11 @@ export default function MessageInput({ onSend, onResetChat }) {
                                 </span>
                                 <button
                                     onClick={handleSend}
-                                    disabled={isRecording || !(message.trim() || selectedFileName || recordedAudioUrl)}
+                                    disabled={isRecording || !(message.trim() || selectedFiles.length || recordedAudioUrl)}
                                     aria-label="Gönder"
                                     className={cn(
                                         "flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                                        (isRecording || !(message.trim() || selectedFileName || recordedAudioUrl))
+                                        (isRecording || !(message.trim() || selectedFiles.length || recordedAudioUrl))
                                             ? "cursor-not-allowed bg-white/[0.06] text-white/25"
                                             : "bg-gradient-btn text-white shadow-glow hover:scale-105 active:scale-95",
                                     )}

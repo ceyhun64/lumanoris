@@ -6,6 +6,9 @@ import { UserContext } from "@/shared/contexts/UserContext";
 import owlLogo from "@/images/header-logo-icon.png";
 import MarketplaceControlBar from "@/widgets/MarketplaceControlBar";
 import CategoryBadge from "@/shared/ui/category-badge";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { requireLogin } from "@/shared/lib/auth-guard";
 import { resolveCategory } from "@/shared/lib/categories";
 import {
   Sparkles,
@@ -17,11 +20,12 @@ import {
   X,
   Zap,
   PackageSearch,
-  Cpu,
   ArrowUp,
   Mic,
   Square,
   ChevronDown,
+  Check,
+  Search,
   Bot,
 } from "lucide-react";
 
@@ -283,15 +287,9 @@ function BotDetailModal2026({ bot, onClose }) {
           {/* Modal Info Details */}
           <div className="space-y-6">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                  Bot Hakkında
-                </h4>
-                <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-caption font-semibold text-violet-300">
-                  <Cpu className="h-3 w-3" />
-                  {bot.model || "GPT-5 Turbo Motoru"}
-                </span>
-              </div>
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-zinc-400">
+                Bot Hakkında
+              </h4>
               <p className="text-sm text-zinc-300 leading-relaxed">
                 {bot.description ||
                   "Bu bot için henüz detaylı bir açıklama belirtilmedi."}
@@ -438,8 +436,39 @@ function EmptyState2026({ onClearFilters }) {
  * kullanır: chat sayfası bu metinle yeni bir konuşma açıp ilk mesajı kendisi
  * gönderir.
  */
-function NewChatHero({ bot, value, onChange, onSubmit, loading, onPickBot }) {
+function NewChatHero({
+  bot,
+  value,
+  onChange,
+  onSubmit,
+  loading,
+  purchasedBots,
+  onSelectBot,
+  onBrowseMarketplace,
+}) {
   const textareaRef = useRef(null);
+  const botMenuRef = useRef(null);
+  const [botMenuOpen, setBotMenuOpen] = useState(false);
+
+  /* Menü dışarı tıklamayla ve Esc ile kapanıyor. Bunlar olmadan panel
+     açık kalıp altındaki kompozitörün üstünü örtüyor. */
+  useEffect(() => {
+    if (!botMenuOpen) return;
+
+    const onPointerDown = (event) => {
+      if (!botMenuRef.current?.contains(event.target)) setBotMenuOpen(false);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setBotMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [botMenuOpen]);
   const speechRecognitionRef = useRef(null);
   const [isListening, setIsListening] = useState(false);
   const [voiceError, setVoiceError] = useState("");
@@ -584,46 +613,137 @@ function NewChatHero({ bot, value, onChange, onSubmit, loading, onPickBot }) {
             </div>
 
             <div className="mt-1.5 flex items-center gap-3">
-              {/* Hedef bot artık kutunun altındaki cümle değil, tıklanabilir
-                  bir çip: "aşağıdan seç" demek yerine seçtiren bir düğme. */}
-              <button
-                type="button"
-                onClick={onPickBot}
-                disabled={loading}
-                title="Başka bir bot seç"
-                className="flex min-w-0 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-1 pl-1 pr-2.5 transition-colors hover:border-violet-500/40 hover:bg-white/[0.08] disabled:cursor-default disabled:opacity-60"
-              >
-                {loading ? (
-                  <>
-                    <span className="h-6 w-6 animate-pulse rounded-full bg-white/10" />
-                    <span className="text-xs text-zinc-500">
-                      Botlar yükleniyor…
-                    </span>
-                  </>
-                ) : bot ? (
-                  <>
-                    <img
-                      src={resolveAvatarSrc(bot.avatar)}
-                      alt=""
-                      className="h-6 w-6 rounded-full object-cover"
-                    />
-                    <span className="max-w-[150px] truncate text-xs font-medium text-zinc-200 sm:max-w-[260px]">
-                      {bot.title}
-                    </span>
-                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
-                  </>
-                ) : (
-                  <>
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-zinc-400">
-                      <Bot className="h-3.5 w-3.5" />
-                    </span>
-                    <span className="text-xs font-medium text-zinc-300">
-                      Bot seç
-                    </span>
-                  </>
-                )}
-              </button>
+              {/* Hedef bot çipi artık gerçek bir açılır liste: ChevronDown
+                  zaten bir menü vaat ediyordu ama düğme yalnızca aşağıdaki
+                  pazaryeri aramasına kaydırıyordu. Menü kullanıcının SATIN
+                  ALDIĞI botları listeliyor — "yeni sohbete başla" alanında
+                  hakkı olan botlar bunlar.
 
+                  Süresi dolmuş abonelikler listede kalıyor ama seçilemiyor:
+                  erişim sunucuda `status = 1 AND expiry_date > NOW()` ile
+                  veriliyor, yani seçilebilir bırakmak kullanıcıyı başarısız
+                  olacak bir sohbete sokardı. Görünür durup sebebini söylemesi
+                  listeden tamamen silinmesinden daha yardımcı. */}
+              <div className="relative" ref={botMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setBotMenuOpen((open) => !open)}
+                  disabled={loading}
+                  title="Başka bir bot seç"
+                  aria-haspopup="listbox"
+                  aria-expanded={botMenuOpen}
+                  className="flex min-w-0 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-1 pl-1 pr-2.5 transition-colors hover:border-violet-500/40 hover:bg-white/[0.08] disabled:cursor-default disabled:opacity-60"
+                >
+                  {loading ? (
+                    <>
+                      <span className="h-6 w-6 animate-pulse rounded-full bg-white/10" />
+                      <span className="text-xs text-zinc-500">
+                        Botlar yükleniyor…
+                      </span>
+                    </>
+                  ) : bot ? (
+                    <>
+                      <img
+                        src={resolveAvatarSrc(bot.avatar)}
+                        alt=""
+                        className="h-6 w-6 rounded-full object-cover"
+                      />
+                      <span className="max-w-[150px] truncate text-xs font-medium text-zinc-200 sm:max-w-[260px]">
+                        {bot.title}
+                      </span>
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+                    </>
+                  ) : (
+                    <>
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-zinc-400">
+                        <Bot className="h-3.5 w-3.5" />
+                      </span>
+                      <span className="text-xs font-medium text-zinc-300">
+                        Bot seç
+                      </span>
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+                    </>
+                  )}
+                </button>
+
+                {botMenuOpen && (
+                  <div
+                    role="listbox"
+                    className="absolute bottom-full left-0 z-40 mb-2 max-h-72 w-72 overflow-y-auto rounded-2xl border border-white/10 bg-[#0c0c14]/95 p-1.5 shadow-2xl backdrop-blur-xl"
+                  >
+                    <p className="px-3 py-2 text-caption uppercase tracking-wider text-zinc-500">
+                      Satın Aldıklarım
+                    </p>
+
+                    {purchasedBots.length === 0 ? (
+                      <p className="px-3 pb-2 text-xs leading-relaxed text-zinc-400">
+                        Henüz satın aldığınız bir bot yok. Pazaryerinden bir bot
+                        edindiğinizde burada listelenir.
+                      </p>
+                    ) : (
+                      purchasedBots.map((item) => {
+                        const isCurrent = Number(bot?.id) === Number(item.id);
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            role="option"
+                            aria-selected={isCurrent}
+                            disabled={!item.isActive}
+                            onClick={() => {
+                              onSelectBot(item.id);
+                              setBotMenuOpen(false);
+                            }}
+                            className={cn(
+                              "flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-colors",
+                              !item.isActive
+                                ? "cursor-not-allowed opacity-50"
+                                : isCurrent
+                                  ? "bg-violet-500/15"
+                                  : "hover:bg-white/5",
+                            )}
+                          >
+                            <img
+                              src={resolveAvatarSrc(item.avatar)}
+                              alt=""
+                              className="h-7 w-7 shrink-0 rounded-full object-cover"
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-xs font-medium text-zinc-200">
+                                {item.title}
+                              </span>
+                              {!item.isActive && (
+                                <span className="block text-caption text-amber-400/80">
+                                  Süresi doldu
+                                </span>
+                              )}
+                            </span>
+                            {isCurrent && item.isActive && (
+                              <Check className="h-3.5 w-3.5 shrink-0 text-violet-400" />
+                            )}
+                          </button>
+                        );
+                      })
+                    )}
+
+                    {/* Eski davranış kaybolmasın: çip daha önce pazaryeri
+                        aramasına kaydırıyordu, o eylem buraya taşındı. */}
+                    <div className="mt-1 border-t border-white/5 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBotMenuOpen(false);
+                          onBrowseMarketplace();
+                        }}
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-white/5 hover:text-white"
+                      >
+                        <Search className="h-3.5 w-3.5 text-violet-400" />
+                        Pazaryerinde ara
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             {voiceError && <p className="mt-2 px-2 text-xs text-rose-300">{voiceError}</p>}
           </div>
@@ -633,8 +753,14 @@ function NewChatHero({ bot, value, onChange, onSubmit, loading, onPickBot }) {
   );
 }
 
+/* Kompozitörün varsayılan botu. Ada göre eşleştiriliyor (id değil), çünkü
+   id kuruluma göre değişiyor. Karşılaştırma Türkçe büyük harfe çevrilerek
+   yapılıyor: JS varsayılanında "i" harfi "I" olur, Türkçede "İ". */
+const HOUSE_BOT_NAME = "LUMANORIS AI";
+
 export function MainDashboard2026() {
   const { userId } = useContext(UserContext);
+  const router = useRouter();
 
   // State definitions (preserving exact original business logic)
   const [allBots, setAllBots] = useState([]);
@@ -652,6 +778,9 @@ export function MainDashboard2026() {
   // Anasayfa kompozitörü
   const [heroPrompt, setHeroPrompt] = useState("");
   const [recentBotId, setRecentBotId] = useState(null);
+  const [purchasedBots, setPurchasedBots] = useState([]);
+  // Kullanıcının çipten AÇIKÇA seçtiği bot; her türlü otomatik tahmini ezer.
+  const [pickedBotId, setPickedBotId] = useState(null);
 
   const searchInputRef = useRef(null);
 
@@ -740,7 +869,6 @@ export function MainDashboard2026() {
                 label:
                   bot.durum == 1 ? "Daha Önce Satıldı" : "Doğrulanmış Üretim",
               },
-              model: "GPT-5 Motoru",
               rating: 4.9,
               userLists: Array.isArray(listsData?.lists) ? listsData.lists : [],
             }));
@@ -758,6 +886,42 @@ export function MainDashboard2026() {
       }
     };
     fetchData();
+  }, [userId]);
+
+  /* Çipin açılır listesini besleyen satın alınmışlar. Kaynak, satın
+     alınanlar sayfasının kullandığı uç ile aynı; alanlar burada kompozitörün
+     bot şekline (id/title/avatar) çevriliyor ki menü ile çip aynı dili
+     konuşsun. Hata durumunda liste boş kalıyor: menü kendi boş durumunu
+     gösterir, sayfanın geri kalanı etkilenmez. */
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+
+    fetch(`/api/wallet/getmysubscriptions.php?user_id=${userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (!data?.success || !Array.isArray(data.subscriptions)) {
+          setPurchasedBots([]);
+          return;
+        }
+        setPurchasedBots(
+          data.subscriptions.map((sub) => ({
+            id: sub.chatbot_id,
+            title: sub.isim,
+            avatar: sub.profil_fotografi,
+            isActive: Number(sub.is_active) === 1,
+          })),
+        );
+      })
+      .catch((err) => {
+        console.error("Satın alınanlar yüklenemedi:", err);
+        if (!cancelled) setPurchasedBots([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   // Kompozitörün konuşacağı botu belirlemek için son sohbeti çek.
@@ -853,13 +1017,36 @@ export function MainDashboard2026() {
   // Kompozitörün hedef botu: önce kullanıcının en son konuştuğu bot, o yoksa
   // pazaryerinin en çok diyalog almış botu. İkisi de yoksa gönderim kapalı.
   const heroBot = useMemo(() => {
+    /* Kullanıcının menüden seçtiği her şeyden önce gelir. Satın alınan bot
+       pazaryeri listesinde bulunmayabilir (yayından kaldırılmış olabilir),
+       o yüzden önce satın alınanlarda aranıyor. */
+    if (pickedBotId !== null) {
+      const picked =
+        purchasedBots.find((b) => Number(b.id) === Number(pickedBotId)) ||
+        allBots.find((b) => Number(b.id) === Number(pickedBotId));
+      if (picked) return picked;
+    }
+
     if (!allBots.length) return null;
+
+    /* Varsayılan artık LUMANORIS AI — platformun kendi asistanı. Eskiden
+       "son konuştuğun bot, o da yoksa en çok diyalog almış bot" seçiliyordu;
+       yani kullanıcı hiçbir şey seçmeden rastgele bir satıcının botuyla
+       konuşmaya başlıyordu. Kimliğe göre değil ADA göre arıyoruz: id
+       kurulumdan kuruluma değişir, tohum verideki 5 numara başka bir
+       veritabanında başka bir bota ait olabilir. */
+    const house = allBots.find(
+      (b) => (b.title || "").trim().toLocaleUpperCase("tr-TR") === HOUSE_BOT_NAME,
+    );
+    if (house) return house;
+
+    // Ev botu bulunamazsa (silinmiş/yayından kalkmış) eski davranış devrede.
     const recent = allBots.find((b) => Number(b.id) === recentBotId);
     if (recent) return recent;
     return [...allBots].sort(
       (a, b) => (Number(b.dialogues) || 0) - (Number(a.dialogues) || 0),
     )[0];
-  }, [allBots, recentBotId]);
+  }, [allBots, recentBotId, pickedBotId, purchasedBots]);
 
   // Kompozitördeki bot çipi buraya bağlı: aşağıdaki pazaryeri aramasına
   // kaydırıp odaklanır, böylece "başka bir bot için aşağıdan seç" cümlesi
@@ -874,6 +1061,10 @@ export function MainDashboard2026() {
   const startHeroChat = () => {
     const text = heroPrompt.trim();
     if (!text || !heroBot) return;
+    /* Misafir sohbete başlayamaz — sohbet kişisel veri üretir ve mesaj hakkı
+       tüketir. Doğrudan girişe yönlendiriyoruz; aksi hâlde /dashboard/chat'e
+       gidip orada panel iskeletiyle karşılaşıp login'e atılırdı. */
+    if (!requireLogin(userId, router)) return;
     try {
       localStorage.setItem("chatTitle", heroBot.title);
       localStorage.setItem("chatId", heroBot.id);
@@ -899,7 +1090,9 @@ export function MainDashboard2026() {
           onChange={setHeroPrompt}
           onSubmit={startHeroChat}
           loading={loading}
-          onPickBot={focusBotSearch}
+          purchasedBots={purchasedBots}
+          onSelectBot={setPickedBotId}
+          onBrowseMarketplace={focusBotSearch}
         />
 
         <MarketplaceControlBar

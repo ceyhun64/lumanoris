@@ -22,6 +22,7 @@ import {
   Search,
   MessageSquare,
   BookOpen,
+  UserRound,
   ShieldAlert,
   X,
   AlertCircle,
@@ -44,7 +45,22 @@ const resolveAvatarSrc = (seed) => {
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
-function DialogueModal({ isOpen, onClose, selectedHistory }) {
+/**
+ * Paylasilan diyalogun baglantisi.
+ *
+ * Onceki bicim `/dialogue/<id>` idi ve iki yonden bozuktu: (a) uygulamada
+ * `/dialogue` diye bir route YOK, bagalanti 404 donuyordu; (b) kart menusu
+ * oraya diyalog id'si degil `conversation_chatbot_id` (bot id'si)
+ * geciriyordu. Artik baglanti dogrudan bu diyalogun acildigi yere gidiyor:
+ * notlar sayfasi `?dialog=` parametresini okuyup ilgili modali aciyor.
+ */
+const dialogueShareUrl = (dialogId) =>
+  `${typeof window !== "undefined" ? window.location.origin : ""}/dashboard/notes/?dialog=${dialogId}`;
+
+/** Bir kullanicinin herkese acik profili. */
+const userProfileUrl = (userId) => `/dashboard/user/?id=${userId}`;
+
+function DialogueModal({ isOpen, onClose, selectedHistory, onShare }) {
   if (!isOpen || !selectedHistory) return null;
 
   return (
@@ -53,13 +69,27 @@ function DialogueModal({ isOpen, onClose, selectedHistory }) {
         <div className="relative flex max-h-[85vh] w-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0c0c14]/95 shadow-2xl shadow-fuchsia-950/30">
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10 bg-white/[0.02]">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400">
-              <MessageSquare className="h-5 w-5" />
-            </div>
+            {/* Genel bir mesaj ikonu yerine botun kendi profil fotoğrafı:
+                diyaloğun hangi bota ait olduğu başlıkta yazıyla zaten var,
+                görselle birlikte bir bakışta anlaşılıyor. Fotoğraf yoksa
+                eski ikona düşüyoruz — kırık bir <img> göstermek yerine. */}
+            {selectedHistory.chatbot_profil_fotografi ? (
+              <img
+                src={resolveAvatarSrc(selectedHistory.chatbot_profil_fotografi).src}
+                alt=""
+                className="h-10 w-10 shrink-0 rounded-2xl object-cover ring-1 ring-fuchsia-500/20"
+              />
+            ) : (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400">
+                <MessageSquare className="h-5 w-5" />
+              </div>
+            )}
             <div>
               <DialogTitle className="text-base font-semibold tracking-tight text-white">
                 {selectedHistory.title || "Diyalog Detayı"}
               </DialogTitle>
+              {/* `owner_kullanici_adi` BOTUN sahibi; diyalogu paylasan
+                  ayri bir kisi (asagidaki satir). Ikisi ayni sanilmasin. */}
               <DialogDescription className="text-xs text-white/40">
                 {selectedHistory.chatbot_isim} •{" "}
                 {selectedHistory.owner_kullanici_adi}
@@ -94,7 +124,35 @@ function DialogueModal({ isOpen, onClose, selectedHistory }) {
           </div>
         </div>
 
-        <div className="flex items-center justify-end px-6 py-4 border-t border-white/10 bg-white/[0.02]">
+        <div className="flex flex-col gap-3 border-t border-white/10 bg-white/[0.02] px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Profil, diyalogu PAYLASAN kullaniciya gidiyor (udb.user_id) —
+              yukaridaki alt basliktaki bot sahibine degil. Kullanici adi
+              gelmediginde (silinmis hesap) dugme hic cizilmiyor: bos bir
+              profile goturen olu bir baglanti birakmiyoruz. */}
+          <div className="flex flex-wrap items-center gap-2">
+            {selectedHistory.user_id ? (
+              <a
+                href={userProfileUrl(selectedHistory.user_id)}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <UserRound className="h-4 w-4 text-fuchsia-400" />
+                <span className="max-w-[12rem] truncate">
+                  {selectedHistory.sharer_kullanici_adi
+                    ? `@${selectedHistory.sharer_kullanici_adi}`
+                    : "Profil"}
+                </span>
+              </a>
+            ) : null}
+
+            <button
+              onClick={() => onShare?.(selectedHistory)}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <Share2 className="h-4 w-4 text-fuchsia-400" />
+              Paylaş
+            </button>
+          </div>
+
           <button
             onClick={onClose}
             className="rounded-xl bg-white/10 px-5 py-2.5 text-xs font-medium text-white hover:bg-white/15 transition-colors"
@@ -108,11 +166,11 @@ function DialogueModal({ isOpen, onClose, selectedHistory }) {
   );
 }
 
-function ShareModal({ isOpen, urlId, onClose }) {
+function ShareModal({ isOpen, dialogId, onClose }) {
   const [copied, setCopied] = useState(false);
   if (!isOpen) return null;
 
-  const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/dialogue/${urlId || "share"}`;
+  const shareUrl = dialogueShareUrl(dialogId);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -217,7 +275,9 @@ export default function DialoguePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filtered, setFiltered] = useState("Tümü");
   const [tab, setTab] = useState("all");
-  const [selectedChatbotId, setSelectedChatbotId] = useState(null);
+  // Paylasilan sey diyalogun KENDISI; eskiden buraya botun id'si
+  // yaziliyordu ve uretilen baglanti yanlis kaynagi gosteriyordu.
+  const [shareDialogId, setShareDialogId] = useState(null);
   const [selectedHistory, selectHistory] = useState(null);
   const [hiddenBotIds, setHiddenBotIds] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -272,6 +332,32 @@ export default function DialoguePage() {
       }
     });
   }, [userId]);
+
+  /* Paylasilan baglanti (`?dialog=<id>`) dogrudan o diyalogun modalini
+     acar — paylas dugmesinin vaadi bu. Diyaloglar yuklendikten SONRA
+     calisiyor, cunku aranan kayit `histories` icinde.
+
+     Filtrelenmis listede degil ham `histories` icinde ariyoruz: paylasilan
+     diyalog aliciinin aktif sekmesine ya da kategori filtresine uymayabilir,
+     ama baglantiya tiklayan onu yine de gormeli.
+
+     Bir kez calisir: modal kapatildiktan sonra parametre hala URL'de oldugu
+     icin tekrar acilmasin diye `opened` bayragi tutuluyor. */
+  const [sharedDialogOpened, setSharedDialogOpened] = useState(false);
+
+  useEffect(() => {
+    if (sharedDialogOpened || histories.length === 0) return;
+
+    const wanted = new URLSearchParams(window.location.search).get("dialog");
+    if (!wanted) return;
+
+    const match = histories.find((h) => String(h.id) === String(wanted));
+    setSharedDialogOpened(true);
+    if (!match) return;
+
+    selectHistory({ ...match, title: match.name || "Yeni Diyalog" });
+    setIsModalOpen(true);
+  }, [histories, sharedDialogOpened]);
 
   const filteredCards = useMemo(() => {
     let sourceCards = histories.filter(
@@ -487,9 +573,7 @@ export default function DialoguePage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedChatbotId(
-                                card.conversation_chatbot_id,
-                              );
+                              setShareDialogId(card.id);
                               setShareOpen(true);
                             }}
                             className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-white/80 hover:bg-white/5 hover:text-white transition-colors"
@@ -514,9 +598,7 @@ export default function DialoguePage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedChatbotId(
-                                card.conversation_chatbot_id,
-                              );
+                              setShareDialogId(card.id);
                               setShareOpen(true);
                             }}
                             className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-white/80 hover:bg-white/5 hover:text-white transition-colors"
@@ -559,14 +641,18 @@ export default function DialoguePage() {
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           selectedHistory={selectedHistory}
+          onShare={(dialogue) => {
+            setShareDialogId(dialogue.id);
+            setShareOpen(true);
+          }}
         />
 
         <ShareModal
           isOpen={shareOpen}
-          urlId={selectedChatbotId}
+          dialogId={shareDialogId}
           onClose={() => {
             setShareOpen(false);
-            setSelectedChatbotId(null);
+            setShareDialogId(null);
           }}
         />
 

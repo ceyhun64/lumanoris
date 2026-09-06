@@ -12,17 +12,36 @@ const CURSOR_STOPS = [
 const NAV_ITEMS = ["Genel Bakış", "Ödemeler", "Bakiyem", "İşlem Geçmişi"];
 
 /** Modal üç aşamada da aynı; fark yalnızca durum sınıflarında. */
-function WithdrawalModal({ stateClass = "", checked = false, pressed = false }) {
+function WithdrawalModal({
+  stateClass = "",
+  checked = false,
+  pressed = false,
+}) {
   return (
     <>
       <div className="luma-withdrawal-overlay" />
       <div className={`luma-withdrawal-modal${stateClass}`} aria-live="polite">
         <label className="luma-amount-field">
           <span className="luma-field-label">Çekmek İstediğiniz Tutar</span>
-          <input type="text" defaultValue="1.000 ₺" readOnly tabIndex={-1} aria-label="Çekmek istediğiniz tutar" />
+          <input
+            type="text"
+            defaultValue="1.000 ₺"
+            readOnly
+            tabIndex={-1}
+            aria-label="Çekmek istediğiniz tutar"
+          />
         </label>
-        <label className={`luma-full-amount${checked ? " is-checked" : ""}`} data-luma-checkbox-label>
-          <input type="checkbox" defaultChecked={checked} data-luma-checkbox aria-label="Tümünü çek" tabIndex={-1} />
+        <label
+          className={`luma-full-amount${checked ? " is-checked" : ""}`}
+          data-luma-checkbox-label
+        >
+          <input
+            type="checkbox"
+            defaultChecked={checked}
+            data-luma-checkbox
+            aria-label="Tümünü çek"
+            tabIndex={-1}
+          />
           <span className="luma-checkbox-box" aria-hidden="true" />
           <span>Tümünü Çek</span>
         </label>
@@ -40,51 +59,65 @@ function WithdrawalModal({ stateClass = "", checked = false, pressed = false }) 
 }
 
 export default function WalletPreview() {
-  const cardRef = useHoverAnimation(async ({ preview, wait, moveCursor, press, isHovering, isCancelled }) => {
-    const q = (sel) => preview.querySelector(sel);
-    const stages = [...preview.querySelectorAll("[data-animation-stage]")];
-    const stepLabel = q("[data-luma-step]");
-    const balanceButton = q("[data-luma-balance-action]");
-    const submitButton = q("[data-animation-stage='luma-modal'] [data-luma-submit]");
-    const checkbox = q("[data-animation-stage='luma-modal'] [data-luma-checkbox]");
-    const checkboxLabel = q("[data-animation-stage='luma-modal'] [data-luma-checkbox-label]");
-    if (!balanceButton) return;
+  const cardRef = useHoverAnimation(
+    async ({ preview, wait, moveCursor, press, isHovering, isCancelled }) => {
+      const q = (sel) => preview.querySelector(sel);
+      const stages = [...preview.querySelectorAll("[data-animation-stage]")];
+      const stepLabel = q("[data-luma-step]");
+      const balanceButton = q("[data-luma-balance-action]");
+      const submitButton = q(
+        "[data-animation-stage='luma-modal'] [data-luma-submit]",
+      );
+      const checkbox = q(
+        "[data-animation-stage='luma-modal'] [data-luma-checkbox]",
+      );
+      const checkboxLabel = q(
+        "[data-animation-stage='luma-modal'] [data-luma-checkbox-label]",
+      );
+      if (!balanceButton) return;
 
-    const showStage = (name, step) => {
-      stages.forEach((stage) => stage.classList.toggle("is-active", stage.dataset.animationStage === name));
-      if (stepLabel) stepLabel.textContent = `${String(step).padStart(2, "0")} / 03`;
-      if (!isHovering()) return;
-      if (name === "luma-balance") moveCursor(balanceButton);
-      else if (name === "luma-modal") moveCursor(checkboxLabel);
-    };
+      const showStage = (name, step) => {
+        stages.forEach((stage) =>
+          stage.classList.toggle(
+            "is-active",
+            stage.dataset.animationStage === name,
+          ),
+        );
+        if (stepLabel)
+          stepLabel.textContent = `${String(step).padStart(2, "0")} / 03`;
+        if (!isHovering()) return;
+        if (name === "luma-balance") moveCursor(balanceButton);
+        else if (name === "luma-modal") moveCursor(checkboxLabel);
+      };
 
-    const toggleCheckbox = (next) => {
-      if (!checkbox || !checkboxLabel) return;
-      checkbox.checked = next;
-      checkboxLabel.classList.toggle("is-checked", next);
-    };
+      const toggleCheckbox = (next) => {
+        if (!checkbox || !checkboxLabel) return;
+        checkbox.checked = next;
+        checkboxLabel.classList.toggle("is-checked", next);
+      };
 
-    while (!isCancelled()) {
-      toggleCheckbox(false);
-      showStage("luma-balance", 1);
-      await wait(850);
-      await moveCursor(balanceButton);
-      press(balanceButton);
-      await wait(260);
+      while (!isCancelled()) {
+        toggleCheckbox(false);
+        showStage("luma-balance", 1);
+        await wait(850);
+        await moveCursor(balanceButton);
+        press(balanceButton);
+        await wait(260);
 
-      showStage("luma-modal", 2);
-      await wait(560);
-      await moveCursor(checkboxLabel);
-      toggleCheckbox(true);
-      press(checkboxLabel);
-      await moveCursor(submitButton);
-      press(submitButton);
-      await wait(240);
+        showStage("luma-modal", 2);
+        await wait(560);
+        await moveCursor(checkboxLabel);
+        toggleCheckbox(true);
+        press(checkboxLabel);
+        await moveCursor(submitButton);
+        press(submitButton);
+        await wait(240);
 
-      showStage("luma-success", 3);
-      await wait(2600);
-    }
-  });
+        showStage("luma-success", 3);
+        await wait(2600);
+      }
+    },
+  );
 
   return (
     <div
@@ -93,15 +126,22 @@ export default function WalletPreview() {
       data-hover-animation
     >
       <div className="relative">
-        <h3 className="text-xl font-display font-semibold text-white mb-4">Bakiyeni Çek</h3>
+        <h3 className="text-xl font-display font-semibold text-white mb-4">
+          Bakiyeni Çek
+        </h3>
         <p className="text-white/75 leading-relaxed mb-6">
-          Kazancınızı Bakiyem sayfasından anlık olarak izleyin; çekmek istediğiniz tutarı belirleyip tek
-          tıkla hesabınıza aktarın.
+          Kazancınızı Bakiyem sayfasından anlık olarak izleyin; çekmek
+          istediğiniz tutarı belirleyip tek tıkla hesabınıza güvenle hızlıca
+          aktarın.
         </p>
       </div>
 
       <div className="relative">
-        <div className="luma-coin-preview" data-luma-builder data-animation-preview>
+        <div
+          className="luma-coin-preview"
+          data-luma-builder
+          data-animation-preview
+        >
           <div className="luma-coin-grid" aria-hidden="true" />
           <div className="luma-coin-topbar">
             <span>
@@ -110,7 +150,10 @@ export default function WalletPreview() {
             <b data-luma-step>01 / 03</b>
           </div>
 
-          <div className="luma-coin-stage" data-animation-stage="luma-dashboard">
+          <div
+            className="luma-coin-stage"
+            data-animation-stage="luma-dashboard"
+          >
             <div className="luma-dashboard-shell" aria-label="Bakiyem menüsü">
               <aside className="luma-sidebar" aria-label="Sidebar">
                 <span className="luma-sidebar-brand">Luma</span>
@@ -139,18 +182,29 @@ export default function WalletPreview() {
             </div>
           </div>
 
-          <div className="luma-coin-stage is-active" data-animation-stage="luma-balance">
+          <div
+            className="luma-coin-stage is-active"
+            data-animation-stage="luma-balance"
+          >
             <div className="luma-balance-panel">
               <div className="luma-balance-amount">
                 1.000 <span>₺</span>
               </div>
-              <button type="button" className="luma-withdrawal-button" data-luma-balance-action tabIndex={-1}>
+              <button
+                type="button"
+                className="luma-withdrawal-button"
+                data-luma-balance-action
+                tabIndex={-1}
+              >
                 Hesabınıza Aktarın
               </button>
             </div>
           </div>
 
-          <div className="luma-coin-stage" data-animation-stage="luma-button-click">
+          <div
+            className="luma-coin-stage"
+            data-animation-stage="luma-button-click"
+          >
             <div className="luma-balance-panel">
               <div className="luma-balance-amount">
                 1.000 <span>₺</span>
@@ -188,8 +242,8 @@ export default function WalletPreview() {
                 <strong>Tebrikler!</strong>
               </div>
               <p>
-                Bakiyenizi çekmek için talebiniz alındı. İşleminiz 1-7 iş günü içerisinde
-                tamamlanacaktır.
+                Bakiyenizi çekmek için talebiniz alındı. İşleminiz 1-7 iş günü
+                içerisinde tamamlanacaktır.
               </p>
             </div>
           </div>

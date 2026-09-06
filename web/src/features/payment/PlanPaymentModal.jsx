@@ -121,7 +121,10 @@ export default function PlanPaymentModal({
 
           <p className="mt-3 flex items-center justify-center gap-1.5 text-caption text-zinc-500">
             <Lock className="h-3 w-3" />
-            Ödeme iyzico altyapısı üzerinden alınır. Kart bilgileriniz
+            {/* COMP-001: sağlayıcı adı kullanıcıya gösterilen metinden
+                çıkarıldı — geçerli üye iş yeri sözleşmesi olmadan sağlayıcı
+                markasını kullanmıyoruz (BLOCKERS B3). */}
+            Ödeme, lisanslı ödeme altyapımız üzerinden alınır. Kart bilgileriniz
             sunucularımızda saklanmaz.
           </p>
         </DialogContent>

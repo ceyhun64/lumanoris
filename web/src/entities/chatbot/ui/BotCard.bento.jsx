@@ -1,5 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { useRouter } from "next/navigation";
+import { UserContext } from "@/shared/contexts/UserContext";
+import { requireLogin } from "@/shared/lib/auth-guard";
 import {
   Tag,
   Bookmark,
@@ -44,13 +47,21 @@ export default function BotCard({
   selected = false,
   onToggleSelect,
 }) {
+  const { userId } = useContext(UserContext) || {};
+  const router = useRouter();
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [likesCount, setLikesCount] = useState(bot.likes || 0);
   const category = resolveCategory(bot.kategori_id);
 
+  /* Beğenme ve kaydetme oturum ister: misafir artık panelde gezinebiliyor ve
+     bu düğmeler onun için sessizce hiçbir şey yapmamalı — girişe götürmeli.
+     (Bu iki eylem bugün yalnızca yerel state değiştiriyor, sunucuya hiç
+     yazmıyor; kapıyı yine de buraya koyuyoruz ki kalıcı hâle geldiğinde
+     misafir yolu zaten kapalı olsun.) */
   const toggleLike = (e) => {
     e.stopPropagation();
+    if (!requireLogin(userId, router)) return;
     if (isLiked) {
       setIsLiked(false);
       setLikesCount((prev) => prev - 1);
@@ -62,6 +73,7 @@ export default function BotCard({
 
   const toggleSave = (e) => {
     e.stopPropagation();
+    if (!requireLogin(userId, router)) return;
     setIsSaved(!isSaved);
   };
 

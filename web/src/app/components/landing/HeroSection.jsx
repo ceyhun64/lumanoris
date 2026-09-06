@@ -1,4 +1,4 @@
-import { ArrowRight, Play, Sparkles } from "lucide-react";
+import { ArrowRight, Play, Sparkles, Compass } from "lucide-react";
 import Link from "next/link";
 import HeroChatCard from "./HeroChatCard";
 import WatchVideoButton from "./WatchVideoButton";
@@ -37,8 +37,12 @@ export default function HeroSection() {
               </h1>
 
               <p className="text-lg sm:text-xl text-white/75 leading-relaxed max-w-2xl mb-8">
+                {/* COMP-006: "gelir elde edebildiği" → "paylaşabildiği".
+                    Vizyon cümlesinin öznesi üretim; kazanç bir sonuç, vaat
+                    değil. Pazaryeri ve komisyon modeli aşağıdaki fiyat ve
+                    satıcı bölümlerinde olgusal olarak anlatılıyor. */}
                 LUMANORIS olarak vizyonumuz, yapay zekâyı yalnızca kullanılan bir teknoloji olmaktan
-                çıkarıp herkesin üretebildiği, geliştirebildiği ve gelir elde edebildiği küresel bir
+                çıkarıp herkesin üretebildiği, geliştirebildiği ve paylaşabildiği küresel bir
                 dijital ekonominin temeline dönüştürmektir.
               </p>
 
@@ -53,6 +57,17 @@ export default function HeroSection() {
                 >
                   Hemen Başla
                   <ArrowRight className="ml-2 h-4 w-4" strokeWidth={1.5} />
+                </Link>
+                {/* "Hemen Keşfet": kayıt İSTEMEDEN pazaryerine götürüyor.
+                    "Hemen Başla" kayda gidiyor; ikisi bilerek ayrı, çünkü
+                    revize listesinin amacı kullanıcının siteyi görmeden
+                    kişisel verisini paylaşmak zorunda kalmaması. */}
+                <Link
+                  href="/dashboard/"
+                  className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white/85 hover:text-white bg-white/5 hover:bg-white/10 ring-1 ring-white/20 rounded-lg transition"
+                >
+                  Hemen Keşfet
+                  <Compass className="ml-2 h-4 w-4" strokeWidth={1.5} />
                 </Link>
                 <WatchVideoButton className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white/85 hover:text-white bg-white/5 hover:bg-white/10 ring-1 ring-white/20 rounded-lg transition">
                   Nasıl Çalışır?

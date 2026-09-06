@@ -293,7 +293,7 @@ export default function SatinAldiklarim() {
               Tipi
             </p>
             <p className="text-sm font-semibold text-zinc-200 mt-1">
-              Gelişmiş RAG + GPT-4o
+              Gelişmiş RAG
             </p>
           </div>
         </div>

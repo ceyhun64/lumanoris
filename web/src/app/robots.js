@@ -21,8 +21,9 @@ export default function robots() {
         // /dashboard/* oturum arkasında ve ilk HTML'de yalnızca "Oturum
         // kontrol ediliyor..." kabuğu var; /api ve /admin zaten sayfa değil.
         //
-        // /docs/ — web/public/docs/ altındaki .docx sözleşme kaynakları ve
-        // iyzico logo paketi. public/ altındaki her şey site kökünden
+        // /docs/ — web/public/docs/ altındaki .docx sözleşme kaynakları.
+        // (Yorumda geçen iyzico logo paketi COMP-001 ile silindi; klasörde
+        // artık yalnızca .docx dosyaları var.) public/ altındaki her şey kökten
         // servis edildiği için bunlar /docs/... adresinden indirilebiliyor ve
         // Google .docx dosyalarını indeksler: aynı sözleşme metni hem
         // /kullanim-kosullari/ hem de bir Word dosyası olarak indekse girer,

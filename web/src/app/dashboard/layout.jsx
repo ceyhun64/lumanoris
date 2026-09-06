@@ -18,23 +18,68 @@ export default function DashboardLayout({ children }) {
     // pattern) — no main nav sidebar/mobile navbar while paying.
     const hideNav = pathname?.startsWith('/dashboard/checkout');
 
+    /* Misafir gezinme.
+     *
+     * Eskiden oturumu olmayan HERKES koşulsuz /login'e atılıyordu. Bunun iki
+     * sonucu vardı: (a) kullanıcı siteyi görmeden kayıt olmak zorundaydı,
+     * (b) bileşenlerde yazılmış olan `requireLogin()` eylem kapıları hiç
+     * çalışmıyordu — misafir zaten içeri giremediği için ulaşılamaz kodlardı.
+     *
+     * Artık yalnızca GEZİNME yüzeyleri misafire açık. Cüzdan, ayarlar,
+     * sohbet, bot yönetimi gibi doğası gereği kişisel olan rotalar eskisi
+     * gibi girişe zorluyor — bunları açmak, boş/401 dolu ekranlar göstermek
+     * olurdu.
+     *
+     * Beyaz liste ROTA BAZLI ve kapalı uçlu: listede olmayan her şey korumalı
+     * kabul ediliyor. Yeni bir özel sayfa eklendiğinde kimsenin bir şey
+     * yapması gerekmiyor; açılması gereken sayfa bilinçli olarak buraya
+     * eklenir. */
+    const guestAllowed =
+        pathname === "/dashboard" ||
+        pathname === "/dashboard/" ||
+        pathname?.startsWith("/dashboard/explore");
+
     useEffect(() => {
+        let cancelled = false;
+
         async function checkSession() {
             try {
                 const res = await fetch("/api/auth/sessioncheck.php", { credentials: "include" });
                 const result = await res.json();
+                if (cancelled) return;
+
                 if (result.authenticated) {
                     setUserId(result.user_id);
                     setAuthReady(true);
-                } else {
-                    router.replace("/login");
+                    return;
                 }
+                if (guestAllowed) {
+                    // userId null kalıyor: sayfalar kişisel istekleri zaten
+                    // `if (!userId) return` ile atlıyor, eylemler de
+                    // requireLogin() ile girişe yönlendiriyor.
+                    setUserId(null);
+                    setAuthReady(true);
+                    return;
+                }
+                router.replace("/login");
             } catch (err) {
+                if (cancelled) return;
+                // Ağ hatasında misafir sayfalarını da kilitlemiyoruz; kişisel
+                // veri zaten sunucu tarafında korunuyor.
+                if (guestAllowed) {
+                    setUserId(null);
+                    setAuthReady(true);
+                    return;
+                }
                 router.replace("/login");
             }
         }
+
         checkSession();
-    }, [router]);
+        return () => {
+            cancelled = true;
+        };
+    }, [router, guestAllowed]);
 
     if (!authReady) {
         return (

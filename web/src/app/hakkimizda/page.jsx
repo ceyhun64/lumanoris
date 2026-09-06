@@ -1,3 +1,7 @@
+/* Landing kabuğunun (navbar + footer) stilleri; hepsi `.landing` altında
+   kapsanmış olduğu için yalnızca bu route'un CSS chunk'ına giriyor. */
+import '../css/landing.css';
+
 import LegalPage from '@/widgets/info/LegalPage';
 import { LEGAL_DOCS } from '@/shared/config/legal-docs';
 import { pageMetadata } from '@/shared/lib/metadata';
@@ -19,5 +23,8 @@ export const metadata = pageMetadata({
 });
 
 export default function Page() {
-  return <LegalPage docKey={DOC} />;
+  /* Diğer dört sözleşme sayfasından farkı: bu sayfa kurumsal bir tanıtım
+     sayfası, hukuki bir metin değil. Ana sayfanın navbar'ı ve footer'ı ile
+     gösteriliyor ki ziyaretçi buradan siteye devam edebilsin. */
+  return <LegalPage docKey={DOC} chrome="landing" />;
 }
