@@ -42,7 +42,29 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
                     </div>
 
                     <div class="flex justify-between gap-2 pt-4">
-                        <button type="button" id="new" class="flex-1 hidden bg-gray-200 text-indigo-600 font-semibold px-4 py-2 rounded-lg hover:bg-gray-300 active:bg-gray-400 active:scale-95 transition duration-150">Yeni Ekle</button>
+                        <!--
+                          G-05 — "Yeni Ekle" KALDIRILDI; bu ekran artık
+                          salt-düzenleme.
+
+                          Formda şifre alanı yoktu ve `ajax/create.php`
+                          `kullanicilar`'a `sifre` OLMADAN insert ediyordu
+                          (sütun DEFAULT NULL). Üretilen hesap işe yaramaz:
+                          `password_verify()` boş hash'e karşı her zaman
+                          false döner (H-09), yani o kullanıcı hiçbir zaman
+                          giriş yapamaz.
+
+                          Forma şifre alanı EKLENMEDİ, çünkü bu sayfa
+                          tablodan bağımsız genel CRUD ucunu kullanıyor:
+                          gönderilen `sifre` doğrudan sütuna, HASH'LENMEDEN
+                          yazılırdı. Parola belirleme yolu `password_hash()`
+                          kullanan özel bir uç olmak zorunda
+                          (`ajax/adminler.php` bunu doğru yapıyor). Genel uç
+                          artık bu sütunları toptan reddediyor
+                          (`functions/crud_guard.php`).
+
+                          Kullanıcılar zaten kendileri kayıt oluyor; panelin
+                          işi mevcut kaydı incelemek ve düzeltmek.
+                        -->
                         <!--
                           G-03 — bu butonun başlangıç sınıf listesinde `hidden`
                           vardı ve kodun HİÇBİR yeri onu kaldırmıyordu (kardeş
@@ -64,7 +86,7 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
     document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById("kullaniciForm");
         const saveOrUpdateBtn = document.getElementById("saveOrUpdate");
-        const newBtn = document.getElementById("new");
+        // G-05: `new` butonu kaldırıldı — bu ekran salt-düzenleme.
         const deleteBtn = document.getElementById("delete");
         const dataUl = document.getElementById("kategoriUl");
 
@@ -109,7 +131,6 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
                         li.classList.add("bg-white", "text-black", "pointer-events-none", "shadow-inner");
 
                         saveOrUpdateBtn.textContent = "Güncelle";
-                        newBtn.classList.remove("hidden");
                         deleteBtn.classList.remove("hidden");
                     } else {
                         new Notification({
@@ -129,22 +150,24 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
             });
         });
 
-        newBtn.addEventListener("click", () => {
-            form.reset();
-            form.id.value = "0";
-            saveOrUpdateBtn.textContent = "Kaydet";
-            newBtn.classList.add("hidden");
-            deleteBtn.classList.add("hidden");
-
-            dataUl.querySelectorAll("li").forEach(item => {
-                item.classList.remove("bg-white", "text-black", "pointer-events-none", "shadow-inner");
-                item.classList.add("bg-gray-100", "hover:bg-gray-200");
-            });
-        });
+        // G-05: "Yeni Ekle" akışı kaldırıldı (bkz. formdaki açıklama).
 
         saveOrUpdateBtn.addEventListener("click", async (event) => {
             event.preventDefault();
             const id = form.id.value;
+
+            // G-05: bu ekran salt-düzenleme. Kullanıcı seçilmeden Kaydet'e
+            // basmak eskiden create.php'ye gidip ŞİFRESİZ bir hesap
+            // açıyordu — o hesap hiçbir zaman giriş yapamıyordu.
+            if (!id || id === "0") {
+                new Notification({
+                    text: "Önce soldaki listeden bir kullanıcı seçin.",
+                    type: "warning",
+                    position: "top-right",
+                    autoClose: 3000
+                });
+                return;
+            }
 
             const formData = new FormData();
             formData.append("table", "kullanicilar");
@@ -222,7 +245,6 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
                                 });
 
                                 saveOrUpdateBtn.textContent = "Güncelle";
-                                newBtn.classList.remove("hidden");
                                 deleteBtn.classList.remove("hidden");
                             } else {
                                 new Notification({
@@ -303,7 +325,6 @@ $kullanicilar = $database->selectMulti("* FROM kullanicilar");
                         form.reset();
                         form.id.value = "0";
                         saveOrUpdateBtn.textContent = "Kaydet";
-                        newBtn.classList.add("hidden");
                         deleteBtn.classList.add("hidden");
 
                         // Aktif stilini temizleme

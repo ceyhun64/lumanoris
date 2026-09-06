@@ -9,6 +9,7 @@ if (empty($_SESSION['admin'])) {
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     require_once __DIR__ . '/../../functions/db.php';
     require_once __DIR__ . '/../functions/upload_guard.php';
+    require_once __DIR__ . '/../functions/crud_guard.php';
     $database = Database::getInstance();
     $conn = $database->getConnection();
 
@@ -34,6 +35,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     try {
         Database::assertAllowedAdminTable($table);
+        // G-05: tablo beyaz listesi HANGİ TABLO sorusunu yanıtlıyor; bu da
+        // hangi SÜTUNLARIN bu genel uçtan yazılamayacağını.
+        admin_assert_no_sensitive_columns($table, $data);
         Database::assertSafeWhereFragment($where);
 
         // Buradaki `SELECT * FROM $table WHERE $where LIMIT 1` KALDIRILDI:
