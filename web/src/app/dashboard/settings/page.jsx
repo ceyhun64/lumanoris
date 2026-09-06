@@ -265,7 +265,9 @@ function EditableField({ fields, onSubmit }) {
               {field.placeholder}
             </label>
             <input
-              type="text"
+              // B-07: parola alanı için `type` gerekiyor; varsayılan "text".
+              type={field.type || "text"}
+              autoComplete={field.autoComplete}
               value={values[field.name] || ""}
               onChange={(e) =>
                 setValues({ ...values, [field.name]: e.target.value })
@@ -374,9 +376,16 @@ function EmailEditor({ userId }) {
   }, [userId]);
 
   const handleSubmit = async (data) => {
+    // B-07: sunucu mevcut parolayı zorunlu tutuyor. Oturumu ele geçiren
+    // biri e-postayı kendine çevirip "şifremi unuttum" ile hesabı kalıcı
+    // olarak devralabiliyordu; parola kapısı o zinciri kesiyor.
+    if (!data.current_password) {
+      return { error: "Mevcut parolanızı girin." };
+    }
     try {
       const formData = new FormData();
       formData.append("email", data.email);
+      formData.append("current_password", data.current_password);
       const res = await fetch("/api/user/updateuseremail.php", {
         method: "POST",
         body: formData,
@@ -396,6 +405,13 @@ function EmailEditor({ userId }) {
       <EditableField
         fields={[
           { name: "email", value: email, placeholder: "E-posta Adresi" },
+          {
+            name: "current_password",
+            value: "",
+            placeholder: "Mevcut Parolanız",
+            type: "password",
+            autoComplete: "current-password",
+          },
         ]}
         onSubmit={handleSubmit}
       />

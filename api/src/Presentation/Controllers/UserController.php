@@ -164,14 +164,68 @@ class UserController {
         JsonResponse::success(['id' => $user['id'], 'email' => $user['eposta']]);
     }
 
+    /**
+     * B-07 — e-posta değiştirme.
+     *
+     * Eskiden bu uç nokta yalnızca oturum istiyordu: ne mevcut parolayı
+     * soruyor, ne yeni adrese doğrulama gönderiyor, ne de hız sınırı
+     * uyguluyordu. Sömürü zinciri kısa ve KALICI:
+     *   1. Saldırgan bir oturumu ele geçirir (XSS, ödünç alınmış cihaz,
+     *      açık kalmış tarayıcı).
+     *   2. Tek bir POST ile hesabın e-postasını kendi adresine çevirir.
+     *   3. "Şifremi unuttum" akışını çalıştırır, sıfırlama kodu ONA gider.
+     *   4. Parola değişir — gerçek sahip artık kendi hesabına giremez.
+     * Oturum sonlandırmak bile yetmez, çünkü hesap artık saldırganın
+     * e-postasına bağlıdır.
+     *
+     * Mevcut parola bu zinciri 2. adımda kesiyor: oturumu çalan kişi
+     * parolayı bilmiyor.
+     *
+     * ⚠️ EKSİK KALAN YARIM (BLOCKERS B5): yeni adrese doğrulama kodu
+     * gönderme adımı EKLENMEDİ. Gerekçe blocker: SMTP hesabı yok, yani
+     * kod gönderilemez. Gönderime bağlı bir akış eklemek, bugün çalışan
+     * e-posta değiştirmeyi tamamen kırardı. B5 kapandığında bu metot
+     * `password_resets` desenindeki gibi iki adımlı hâle getirilmeli:
+     * (a) talep + koda gönderim, (b) kod doğrulanınca yazma. O adım
+     * kullanıcının SAHİP OLMADIĞI bir adresi hesabına bağlamasını
+     * engeller — parola kapısı bunu kapsamıyor.
+     */
     public static function updateUserEmail(): void {
         require_method('POST');
         $userId   = AuthMiddleware::requireAuth();
         $newEmail = InputSanitizer::email($_POST['email'] ?? '');
+        $password = (string) ($_POST['current_password'] ?? '');
 
         if (!$newEmail) JsonResponse::error('Yeni e-posta adresi zorunludur!', 400, AppConfig::ERR_VALIDATION);
         if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
             JsonResponse::error('Geçerli bir e-posta adresi girin.', 400, AppConfig::ERR_VALIDATION);
+        }
+
+        $db = Database::getInstance();
+        // Parola denemesi içeren her uç nokta gibi sınırlı: kaba kuvvetle
+        // parola tahmini bu kapıdan da yapılabilirdi.
+        checkRateLimit($db, 'changeemail:' . $userId, 5, 900);
+
+        $user = (new UserRepository())->findById($userId);
+        if (!$user) {
+            JsonResponse::error('Kullanıcı bulunamadı.', 404, AppConfig::ERR_NOT_FOUND);
+        }
+
+        // Google ile açılmış hesapta `sifre` NULL olabilir — o hesapların
+        // doğrulayacak bir parolası yok. Sessizce geçmek kapıyı anlamsız
+        // kılardı; kullanıcıya ne yapması gerektiği söyleniyor.
+        $storedHash = (string) ($user['sifre'] ?? '');
+        if ($storedHash === '') {
+            JsonResponse::error(
+                'Bu hesap Google ile açıldığı için parolası yok. E-posta adresini değiştirmeden '
+                . 'önce "Şifremi unuttum" akışıyla bir parola belirleyin.',
+                422,
+                AppConfig::ERR_VALIDATION
+            );
+        }
+
+        if ($password === '' || !password_verify($password, $storedHash)) {
+            JsonResponse::error('Mevcut parolanız hatalı.', 403, AppConfig::ERR_PERMISSION);
         }
 
         // F-02 — `eposta` UNIQUE; çakışma yakalanmadığı için başkasının
