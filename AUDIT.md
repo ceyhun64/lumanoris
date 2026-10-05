@@ -846,3 +846,154 @@ Bir önceki turda "karar gerekiyor" diye açık bırakılan maddeler için kulla
 | `011_user_plan_expiry.sql` | `user_plan_selection.expires_at` + index | **Uygulanmalı.** Uygulanana kadar üyelik paketi süresiz yazılmaya devam eder (fail-safe, log'a düşüyor). |
 
 İkisi de yazıldı, **uygulanmadı** (CLAUDE.md `--apply` yasağı; deploy sırasında elle çalıştırılacak).
+
+---
+
+# Pazaryeri revizyonu (2026-10-05) — `docs/prompts/11-pazaryeri-revizyon.md`
+
+Kaynak: müşteri revizesi (`PAZARYERİ SİSTEM DÜZENLEMESİ.pdf`). Faz 0 (salt okuma) tamamlandı; bu bölüm Faz 0 kararlarını, Faz 0'da bulunan yeni maddeleri (N serisi) ve Faz 1 sonuçlarını tutar.
+
+## Faz 0 karar kaydı
+
+| # | Konu | Durum |
+|---|---|---|
+| K-1 | S1–S11 ve devamı (paket limitleri, Elmas fiyatı, Satın Aldıklarım, takip edilen bot seçimi, "Satın Al" butonları, defter profil butonu, belge türleri/sınırı) | Müşteriye soruldu (2026-10-05). **Cevap bekleniyor.** Bu sorulara bağlı hiçbir kod yazılmayacak. |
+| K-2 | Yayınlanan bağımsız bot **herkese açık bot hakkından** sayılır, bağımsız hakkı boşalır; herkese açık hakkı doluysa yayınlanamaz. | Bugünkü kod davranışı (`ChatbotRepository::countByOwner` anlık duruma göre sayıyor, `publishChatbot` public limitini kontrol ediyor). Müşteriye bu şekilde anlatıldı; **müşteri onayı bekleniyor.** |
+| K-3 | Yayınlanmış bir botu geri özele çekmek **bağımsız bot limitine takılmaz**, yalnızca "özel yapma hakkı"ndan düşer. Yayınlanmamış bağımsız bot hak kullanmadan sahibine özel kalır. | Kullanıcı kararı; **müşteri onayı BEKLİYOR. Bu kurala bağlı kod yazılmayacak** (N-07 de bu nedenle açık bırakıldı). |
+| K-4 | Faz 1 (Madde 0: M0-2 → M0-1 → M0-3 → M0-4) başlatıldı. | Kullanıcı onayı (2026-10-05). |
+
+## Faz 0'da bulunan, bu turda düzeltilmeyen maddeler
+
+| ID | Sev | Dosya | Problem | Durum |
+|---|---|---|---|---|
+| **N-07** | P2 | `ChatbotController::unpublishChatbot`, `ChatbotRepository::unpublish` | Yayından kaldırma botu `is_independent=1` yapıyor ve bağımsız bot limitini hiç kontrol etmiyor: ücretsiz plandaki kullanıcı 1 bağımsız + 2 yayından kaldırılmış = 3 bağımsız bota ulaşabilir. | Açık — doğru davranış K-3'e (müşteri onayı) bağlı. |
+| **N-08** | P1 | `ChatbotController::updateChatbotPrice` | Satıcı durumu kontrolü yok; aktif satıcı olmayan kullanıcı kendi botuna fiyat yazabiliyor. Bugün `publishChatbot` B1 yüzünden kapalı olduğu için fiyatlı bot pazaryerine çıkamıyor, ama kontrol tek savunma hattına bağlı. | Açık — Faz 4 kapsamında (ortak yayın akışı). |
+| **N-09** | P2 | `SocialController::getBotsOfList` | `param_marketplace_sellers.status='active'` INNER JOIN'i: B1 açıkken listeye eklenen hiçbir bot listede görünmüyor. | **B1 bekliyor** — Faz 4 diff önerisine dahil edilecek. |
+| **N-10** | P1 | `web/src/app/components/landing/PricingSection.jsx` | Paket fiyatları ve limitleri sabit kodlu dördüncü kopya: Gümüş 0 ₺ / Altın 750 ₺ / Elmas 1.850 ₺; `plans` seed'i 149/299/599, müşteri 149/299/849. Ana sayfa ile yükseltme sayfası farklı fiyat gösteriyor. | Açık — Faz 3 (paket değerleri müşteriden bekleniyor). |
+| **N-11** | P3 | `features/chatbot-mgmt/ChatbotForm.jsx`, `features/notes/DialogueModal.jsx`, `features/wallet/BankInfo.jsx`, `entities/chatbot/ui/{ChatbotCard,BotCard,MarketplaceListCard,SuggestedCard}.jsx`, `app/dashboard/chat/page.jsx:12` (`WithdrawalModal` importu) | `web/src` içinde importu olmayan dosyalar / kullanılmayan import (JSX olduğu için `api/admin` ve `router.php` aramaları uygulanamaz). | Ölü kod adayı — silinmedi. |
+| **N-12** | P3 | `ChatController::generateReply` (API anahtarı yok dalı) | Anahtar yoksa yalnızca mesajın hakkı iade ediliyor (`refundMessage($allowanceSource)`); aynı istekte belgeler için düşülen ek haklar (`$fileAllowanceSources`) iade edilmiyor. Belgeli mesajda kullanıcı cevap almadan coin kaybediyor. | Açık — Faz 1 sırasında görüldü, kapsam dışı (06 kuralı: yeni problem → yeni ID, düzeltme yok). |
+
+## Faz 1 — Madde 0 (önceki toplantı eksikleri)
+
+Tüm değişiklikler frontend'de. **Davranış testi yazılamadı:** `web/` altında test çalıştırıcısı yok (package.json'da `test` betiği / jest / vitest yok); bunu kurmak yeni bağımlılık kararıdır. Bu yüzden "önce kırmızı test" adımı uygulanamadı. Doğrulama: kök neden kod okumayla kanıtlandı, değişiklikler `npm run lint` + `NEXT_DIST_DIR=.next-verify npm run build` ile doğrulandı. **Tarayıcıda uçtan uca denenmedi.**
+
+| ID | Madde | Kök neden (kanıt) | Değişiklik | Durum |
+|---|---|---|---|---|
+| **N-01** | M0-2 | `chatbots/components/ChatbotCard.jsx`'te kartın hiçbir alanı sohbete bağlı değildi; tek bağlantı "Yönet" (`/dashboard/chatbots/create?id=`). Bilinçli bir kapatma izi yok. Sohbet tarafı engel değil: kartı listeleyen `getMenuItems()` yalnızca sahibi olunan ya da aktif aboneliği olan botları döndürüyor, ve `userHasAccess('full')` sahibi koşulsuz kabul ediyor — yayınlanmamış bağımsız bot dahil. | Kapak ve başlık/avatar satırı `/dashboard/chat?botId=<id>` bağlantısı (diğer sayfalardaki desen). Alt düğmeler (Sil / Yayınla / Fiyat / Yönet) değişmedi. | **Kapandı (kod).** Eğitimin modele gittiği kod yoluyla izlendi: `ChatController::generateReply` `LEFT(training_prompt, 60000)` okuyup `[BİLGİ KAYNAĞI]` olarak system instruction'ın ilk parçasına koyuyor. **Çalışma zamanı kanıtı YOK** — aşağıya bakın. |
+| **N-02** | M0-1 | Bilgi Bankası sekmesinde "önce botu kaydedin" kapısı zaten VARDI ama `!botId` ile kontrol ediliyordu; yeni botta `botId = -1` (truthy) olduğu için kapı hiç kapanmıyordu. Yükleme `update_training_chunk.php`'ye `id:-1` gönderiyor, `positiveInt(-1) = 0`, `findByIdAndOwner(0)` null → **"Bu chatbot üzerinde yetkiniz yok."** (ekran görüntüsündeki mesaj). **İlk hipotez kısmen yanlıştı:** URL yolu metni yerel state'te tutmuyor, aynı `appendToCorpus()` → aynı çağrıyı yapıyor; kaydedilmemiş botta URL de aynı hatayı verir. Müşterinin "URL çalışıyor" gözlemi büyük olasılıkla kayıtlı bir bot üzerindeydi. | Kapı `isSavedBot` ile (dosyada zaten tanımlı, önizleme aynı kontrolü kullanıyor); `refreshCorpus` da `-1` için istek atmıyor. Yeni botta sekme artık "önce botu kaydedin" diyor. | **Kapandı (kod)** — yanıltıcı yetki mesajı yolu kapandı. **Açık kalanlar (müşteri sorusu, K-1):** (1) Kayıttan sonra kullanıcı `/dashboard/chatbots`'a yönleniyor, bilgi bankası için "Yönet" ile geri dönmesi gerekiyor — sihirbaz içinde yükleme isteniyorsa metni kayda kadar yerel state'te tutmak gerekir (daha büyük değişiklik). (2) Yalnızca PDF destekleniyor; görsel/OCR canlı sihirbazda yok (`tesseract.js` yalnızca kullanılmayan `ChatbotForm.jsx`'te). (3) UI "maks. 15 MB" diyor, fiili sınır `post_max_size`'a bağlı (8M'de ~6 MB, bkz. L-01). Sınırlar: parça 8.000 karakter (istemci), toplam 60.000 karakter (`MAX_TRAINING_CHARS`), taranmış PDF metin vermez ve kullanıcı ayrıştırma hatası görür. |
+| **N-03** | M0-3 (a) | **Kök neden kanıtlanamadı** — yerel `user_lists` tablosunda `color`/`description` var ve `getUserLists` sorgusu yerelde hatasız çalışıyor (ölçüldü). Daraltma: hiç listesi olmayan kullanıcıda frontend yalnızca `getuserlists.php`'yi çağırıyor (`getbotsoflist.php` liste başına çağrılıyor), o da tek bir `SELECT id, name, color, description FROM user_lists`. Bu sorgunun 500 vermesinin kodla uyumlu tek açıklaması şema farkı: **K-01** (migration 009 uygulanmamış → 1054) ya da tablo yok. | Yok. | **Canlı veri bekliyor.** Gerekli: canlıda `php api/database/migrate.php --status` çıktısı ya da Liste açıldığı andaki `storage/logs/php-error.log` satırı. 009 eksikse çözüm operasyonel (`--apply` — Claude için yasak). |
+| **N-04** | M0-3 (b) | `dashboard/list/page.jsx`'te yükleme durumu yoktu ve hata dalı `setListData([])` yapıyordu: hata bandının ALTINDA "Koleksiyon Bulunamadı / İlk Listenizi Oluşturun" ve "Toplam Koleksiyon: 0" çiziliyordu (ekran görüntüsündeki birliktelik). | Ayrı yükleme / hata / boş durumları; hata durumunda boş durum ve sayaç ("—") gösterilmiyor, "Tekrar dene" düğmesi var; her denemede önceki hata temizleniyor. | **Kapandı (kod).** |
+| **N-05** | M0-4 | Canlı popup `dashboard/notes/page.jsx` içindeki yerel `DialogueModal` (ayrı `features/notes/DialogueModal.jsx` kullanılmıyor, N-11). Düğme **bilinçli olarak** diyalogu paylaşanın profiline (`/dashboard/user/?id=<udb.user_id>`) gidiyordu ve etiketi paylaşanın kullanıcı adıydı. | Ana düğme `/dashboard/chat?botId=<udb.chatbot_id>` ("<bot adı> ile sohbet et"); bot silinmişse çizilmiyor. Paylaşanın profili ikincil metin bağlantısı olarak kaldı (müşteriye soruldu). | **Kapandı (kod)** — N-06 ile birlikte geçerli. Not: ücretli/başkasının bağımsız botuna giden kullanıcı sohbet edemez (`userHasAccess`), bu bugünkü erişim kuralı. |
+| **N-06** | M0-4 | `chat/page.jsx` `DialogNotebookModal`'a `botId={conversationId}` geçiyordu; modal bunu `user_dialog_books.chatbot_id` olarak yazıyor, `NoteController::getDialogues` ise sütunu gerçek bot id'si sayıp `chatbotlar`'a JOIN'liyor. Sonuç: yeni kayıtlar yanlış bota (ya da hiçbir bota) bağlanıyor; N-05 düzeltmesi tek başına yanlış botun sohbetini açardı. Ayrıca konuşma henüz oluşmamışken (`conversationId = -1`) kayıt `chatbot_id gereklidir` ile reddediliyordu. | `botId={botId}`. | **Kapandı (kod, yeni kayıtlar için).** **Mevcut kayıtlar onarılmadı:** yerel veritabanında 3 satır var; 6 ve 7 numaralı satırların değeri BAŞKA bir kullanıcının konuşma id'siyle çakışıyor, yani "değer bir konuşma id'siyse düzelt" diyen kör bir backfill doğru satırları bozardı. Güvenli ayırt edici `cc.id = udb.chatbot_id AND cc.user_id = udb.user_id` (konuşma diyalogu kaydedenin olmalı) — yerelde 0 satır eşleşiyor. Canlıda bu SELECT ile sayılmadan migration yazılmayacak. |
+
+### Faz 1'de yapılamayan: eğitimin çalışma zamanı kanıtı
+
+Yerel veritabanında bilgi bankası kaynağı (`### Kaynak:` başlığı) taşıyan **hiç bot yok** (ölçüldü). Kanıt için iki test botu oluşturmak (URL ile ve PDF ile), `update_training_chunk.php` ile yazmak ve `generatereply.php`'yi çağırmak gerekiyor. Bu (a) yerel veritabanına kalıcı satır yazar — `DELETE FROM` yasağı nedeniyle temizlik yalnızca uygulamanın kendi silme uç noktasıyla yapılabilir, (b) yerelde Gemini anahtarı tanımlı olduğu için gerçek bir dış API çağrısı yapar. İkisi de kullanıcı onayı bekliyor. Alternatif: B4 dalı (anahtarsız) payload'ı oluşturmadan çıkıyor, yani "payload'ı logla" ancak geçici bir log satırı eklenerek yapılabilir.
+
+## Faz 1 — kullanıcı kararları ve ek değişiklikler (2026-10-05)
+
+| # | Karar | Uygulama |
+|---|---|---|
+| F1-1 | Eğitimin çalışma zamanı kanıtı: kullanıcı tarayıcıda elle test edecek. Gerekirse geçici log (eğitim metni loglanmadan) aynı oturumda kaldırılacak. | Gerekmedi; **log satırı eklenmedi.** Yukarıdaki "yapılamayan" bölümü bu kararla kapandı. |
+| F1-2 | İlk kayıttan sonra sihirbaz yeni id ile aynı sayfada kalsın, URL `?id=N` olsun, Bilgi Bankası hemen açılsın. | **Uygulandı (N-02 devamı).** `ChatbotForm` sunucunun döndürdüğü id'yi kendi state'inde tutuyor (`createdBotId`); bileşen yeniden mount edilmiyor (form durumu korunuyor), `history.replaceState` ile URL `?id=N`, sekme `knowledge`. Sonraki kayıtlar `updatechatbot.php`'ye gidiyor ve `is_independent` göndermiyor; yüklenen görsel dosyaları ikinci kez gönderilmesin diye temizleniyor. Düzenleme yolu (mevcut bot) değişmedi: kaydedince listeye dönüyor. |
+| F1-3 | Bilgi bankası PDF sınırı 5 MB (S21). | **Uygulandı.** `TrainingController::MAX_PDF_BYTES` 15 MB → 5 MB (hata mesajı sabitten türüyor); arayüzde `KB_MAX_PDF_BYTES` / "maks. 5 MB". 5 MB ≈ 6,7 MB base64 gövde, `post_max_size=8M` altında. Görsel/OCR desteği yok (müşteri sorusu açık). |
+| F1-4 | N-06 bozuk kayıtları için canlıda çalıştırılacak salt okunur SELECT; migration yazılmayacak. | **Yazıldı** (aşağıda). Yerelde çalıştırıldı: 3 kaydın 3'ü `DOGRU_GORUNUYOR`, üçünde de diyalog mesajı saklanan botun sohbet geçmişinde bulundu. |
+| F1-5 | N-03 canlıdan `migrate.php --status` gelene kadar açık. | Açık. |
+| F1-6 | N-12 Faz 3'e kadar açık. | Açık. |
+
+### N-06 teşhis sorguları (salt okunur)
+
+Sınıflar:
+
+- `DOGRU_GORUNUYOR` — saklanan değer var olan bir bot ve kaydedenin aynı id'li bir konuşması yok. Dokunulmaz.
+- `ZATEN_AYNI` — saklanan değer kaydedenin bir konuşmasının id'si, ama o konuşmanın botu da aynı id. Değişiklik gerekmez.
+- `GUVENLI_ESLENIR` — saklanan değer kaydedenin kendi konuşmasının id'si ve (a) bu id'de hiç bot yok, ya da (b) diyalogun `input_message`'ı konuşmanın botuyla olan sohbet geçmişinde var, saklanan botla olanda yok. Önerilen hedef `konusmanin_botu`.
+- `BELIRSIZ` — kaydedenin konuşma id'si AYNI ZAMANDA var olan bir bot id'si ve mesaj kanıtı karar vermiyor. Elle bakılmalı.
+- `YETIM` — saklanan değer ne bot ne kaydedenin konuşması, ya da konuşmanın botu silinmiş. Eşlenemez.
+
+Mesaj karşılaştırması birebir eşitlik (`utf8mb4_general_ci`); sohbet geçmişi silinmiş kayıtlar kanıt üretmez ve `BELIRSIZ`e düşer — yani sınıflama ihtiyatlı tarafta hata yapar.
+
+Detay:
+
+```sql
+-- N-06 — user_dialog_books.chatbot_id teşhisi. SALT OKUNUR: yalnızca SELECT.
+SELECT t.*,
+  CASE
+    WHEN t.konusma_id IS NULL AND t.saklanan_bot_var = 1 THEN 'DOGRU_GORUNUYOR'
+    WHEN t.konusma_id IS NULL                            THEN 'YETIM'
+    WHEN t.konusmanin_botu = t.saklanan_id               THEN 'ZATEN_AYNI'
+    WHEN t.konusmanin_bot_var = 0                        THEN 'YETIM'
+    WHEN t.saklanan_bot_var = 0                          THEN 'GUVENLI_ESLENIR'
+    WHEN t.mesaj_konusma_botunda = 1 AND t.mesaj_saklanan_botta = 0 THEN 'GUVENLI_ESLENIR'
+    ELSE 'BELIRSIZ'
+  END AS sinif
+FROM (
+  SELECT
+    udb.id                     AS kayit_id,
+    udb.user_id,
+    udb.created_at,
+    udb.chatbot_id             AS saklanan_id,
+    (c_s.id IS NOT NULL)       AS saklanan_bot_var,
+    c_s.isim                   AS saklanan_bot_adi,
+    cc.id                      AS konusma_id,
+    cc.chatbot_id              AS konusmanin_botu,
+    (c_t.id IS NOT NULL)       AS konusmanin_bot_var,
+    c_t.isim                   AS konusmanin_bot_adi,
+    EXISTS (SELECT 1 FROM chatbot_chats ch
+            WHERE ch.chatbot_id = cc.chatbot_id AND ch.user_id = udb.user_id
+              AND ch.message COLLATE utf8mb4_general_ci = udb.input_message COLLATE utf8mb4_general_ci
+           ) AS mesaj_konusma_botunda,
+    EXISTS (SELECT 1 FROM chatbot_chats ch
+            WHERE ch.chatbot_id = udb.chatbot_id AND ch.user_id = udb.user_id
+              AND ch.message COLLATE utf8mb4_general_ci = udb.input_message COLLATE utf8mb4_general_ci
+           ) AS mesaj_saklanan_botta
+  FROM user_dialog_books udb
+  LEFT JOIN chatbotlar c_s            ON c_s.id = udb.chatbot_id
+  LEFT JOIN chatbot_conversations cc  ON cc.id = udb.chatbot_id AND cc.user_id = udb.user_id
+  LEFT JOIN chatbotlar c_t            ON c_t.id = cc.chatbot_id
+) t
+ORDER BY sinif, t.kayit_id;
+```
+
+Özet (sınıf başına kayıt sayısı):
+
+```sql
+-- N-06 özet. SALT OKUNUR.
+SELECT x.sinif, COUNT(*) AS kayit FROM (
+SELECT t.*,
+  CASE
+    WHEN t.konusma_id IS NULL AND t.saklanan_bot_var = 1 THEN 'DOGRU_GORUNUYOR'
+    WHEN t.konusma_id IS NULL                            THEN 'YETIM'
+    WHEN t.konusmanin_botu = t.saklanan_id               THEN 'ZATEN_AYNI'
+    WHEN t.konusmanin_bot_var = 0                        THEN 'YETIM'
+    WHEN t.saklanan_bot_var = 0                          THEN 'GUVENLI_ESLENIR'
+    WHEN t.mesaj_konusma_botunda = 1 AND t.mesaj_saklanan_botta = 0 THEN 'GUVENLI_ESLENIR'
+    ELSE 'BELIRSIZ'
+  END AS sinif
+FROM (
+  SELECT
+    udb.id                     AS kayit_id,
+    udb.user_id,
+    udb.created_at,
+    udb.chatbot_id             AS saklanan_id,
+    (c_s.id IS NOT NULL)       AS saklanan_bot_var,
+    c_s.isim                   AS saklanan_bot_adi,
+    cc.id                      AS konusma_id,
+    cc.chatbot_id              AS konusmanin_botu,
+    (c_t.id IS NOT NULL)       AS konusmanin_bot_var,
+    c_t.isim                   AS konusmanin_bot_adi,
+    EXISTS (SELECT 1 FROM chatbot_chats ch
+            WHERE ch.chatbot_id = cc.chatbot_id AND ch.user_id = udb.user_id
+              AND ch.message COLLATE utf8mb4_general_ci = udb.input_message COLLATE utf8mb4_general_ci
+           ) AS mesaj_konusma_botunda,
+    EXISTS (SELECT 1 FROM chatbot_chats ch
+            WHERE ch.chatbot_id = udb.chatbot_id AND ch.user_id = udb.user_id
+              AND ch.message COLLATE utf8mb4_general_ci = udb.input_message COLLATE utf8mb4_general_ci
+           ) AS mesaj_saklanan_botta
+  FROM user_dialog_books udb
+  LEFT JOIN chatbotlar c_s            ON c_s.id = udb.chatbot_id
+  LEFT JOIN chatbot_conversations cc  ON cc.id = udb.chatbot_id AND cc.user_id = udb.user_id
+  LEFT JOIN chatbotlar c_t            ON c_t.id = cc.chatbot_id
+) t
+) x GROUP BY x.sinif ORDER BY x.sinif;
+```
