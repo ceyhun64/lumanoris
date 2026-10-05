@@ -966,7 +966,10 @@ const handleRetryReply = (retryText) => {
 
       <DialogNotebookModal
         userId={userId}
-        botId={conversationId}
+        // N-06 (M0-4) — burada `conversationId` geçiliyordu; modal onu
+        // `user_dialog_books.chatbot_id` olarak yazıyor, sunucu da
+        // (NoteController::getDialogues) o sütunu gerçek bot id'si sayıyor.
+        botId={botId}
         inputMessage={activeDialog.input}
         outputMessage={activeDialog.output}
         isOpen={isDialogModalOpen}
