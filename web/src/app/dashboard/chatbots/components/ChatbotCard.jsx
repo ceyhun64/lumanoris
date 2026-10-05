@@ -37,9 +37,20 @@ export default function ChatbotCard({
   const coverSrc = normalizeImagePath(image);
   const avatarSrc = normalizeImagePath(profileImage);
 
+  // N-01 (M0-2) — kartın hiçbir yeri sohbete gitmiyordu; tek bağlantı
+  // "Yönet"ti (düzenleme). Bu listedeki her bot (getMenuItems: sahibi
+  // olunan ya da aktif abonelik) userHasAccess('full')'u geçer, yani
+  // yayınlanmamış bağımsız bot da sohbette açılır. Kapak ve başlık
+  // sohbete gidiyor; alttaki düğmeler kendi işlerini yapmaya devam ediyor.
+  const chatHref = `/dashboard/chat?botId=${id}`;
+
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0c0c10]/90 backdrop-blur-2xl transition-all duration-300 ease-out hover:border-violet-500/40 hover:shadow-[0_10px_40px_rgba(0,0,0,0.5)] hover:-translate-y-0.5">
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-violet-950/40 to-slate-900/60">
+      <Link
+        href={chatHref}
+        aria-label={`${title || "İsimsiz Bot"} ile sohbet et`}
+        className="relative block aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-violet-950/40 to-slate-900/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400"
+      >
         {coverSrc ? (
           <img
             src={coverSrc}
@@ -55,10 +66,13 @@ export default function ChatbotCard({
         <div className="absolute top-3 right-3 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 text-caption font-semibold backdrop-blur-md">
           {status}
         </div>
-      </div>
+      </Link>
 
       <div className="flex flex-col flex-1 p-5 gap-4">
-        <div className="flex items-center gap-3">
+        <Link
+          href={chatHref}
+          className="flex items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+        >
           <div className="h-10 w-10 overflow-hidden rounded-xl border border-white/10 bg-white/5 flex items-center justify-center shrink-0">
             {avatarSrc ? (
               <img
@@ -76,7 +90,7 @@ export default function ChatbotCard({
             </h3>
             <p className="text-xs text-luma-muted">ID: #{id}</p>
           </div>
-        </div>
+        </Link>
 
         <div className="grid grid-cols-2 gap-2 py-2 border-y border-white/[0.06] text-xs text-white/60">
           <div className="flex items-center gap-1.5">
