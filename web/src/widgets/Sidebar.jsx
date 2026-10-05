@@ -4,6 +4,7 @@ import QuitModal from "@/features/auth/QuitModal";
 import logo from "@/images/header-logo-icon.png";
 import { Lumacoin } from "@/shared/ui/lumacoin";
 import { FREE_PLAN_NAME, isPaidPlan } from "@/shared/lib/pricing";
+import useMarketplaceRegistration from "@/shared/hooks/useMarketplaceRegistration";
 import {
   Plus,
   TrendingUp,
@@ -103,6 +104,8 @@ export function Sidebar({
   // görünüp kaybolmasından iyi). İstek başarısız olursa öğe GÖSTERİLİR:
   // bir ağ hatası kullanıcının satın aldıklarına giden yolu saklamamalı.
   const [hasPurchases, setHasPurchases] = useState(null);
+  // Madde 4 / GK-5 — kaydı olmayana bakiye tutarı gösterilmez.
+  const registration = useMarketplaceRegistration(userId);
   useEffect(() => {
     if (!userId) {
       setHasPurchases(false);
@@ -357,7 +360,7 @@ export function Sidebar({
               <ul className="space-y-1 list-none p-0 m-0">
                 {exploreItems.map((item) =>
                   renderNavItem(
-                    item.href === "/dashboard/wallet"
+                    item.href === "/dashboard/wallet" && registration.registered
                       ? { ...item, pill: formatCurrency(account.balance) }
                       : item,
                     "explore",

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import QuitModal from "@/features/auth/QuitModal";
 import { formatCurrency } from "@/shared/lib/format";
 import { isPaidPlan } from "@/shared/lib/pricing";
+import useMarketplaceRegistration from "@/shared/hooks/useMarketplaceRegistration";
 import {
   Search,
   Bell,
@@ -127,7 +128,7 @@ function NotificationPopup({ onClose, notifications, loading, onMarkAllRead }) {
   );
 }
 
-function ProfilePopup({ user, profileImage, onLogout, onClose, onNavigate }) {
+function ProfilePopup({ user, profileImage, onLogout, onClose, onNavigate, showBalance }) {
   const go = (href) => {
     onClose();
     onNavigate(href);
@@ -213,9 +214,12 @@ function ProfilePopup({ user, profileImage, onLogout, onClose, onNavigate }) {
         >
           <Wallet className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
           <span className="truncate">Bakiye &amp; Ödemeler</span>
-          <span className="ml-auto shrink-0 text-caption font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-            {formatCurrency(user.balance ?? 0)}
-          </span>
+          {/* Madde 4 / GK-5 — kaydı olmayana bakiye tutarı gösterilmez. */}
+          {showBalance && (
+            <span className="ml-auto shrink-0 text-caption font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+              {formatCurrency(user.balance ?? 0)}
+            </span>
+          )}
         </button>
         <button
           type="button"
@@ -257,6 +261,7 @@ export default function Header({
 }) {
   const router = useRouter();
   const navigate = onNavigate || ((href) => router.push(href));
+  const registration = useMarketplaceRegistration(userId);
   const [showProfile, setShowProfile] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
@@ -607,6 +612,7 @@ export default function Header({
                     onLogout={handleLogout}
                     onClose={closeProfile}
                     onNavigate={navigate}
+                    showBalance={registration.registered}
                   />
                 )}
               </div>
