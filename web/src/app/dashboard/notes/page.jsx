@@ -125,21 +125,33 @@ function DialogueModal({ isOpen, onClose, selectedHistory, onShare }) {
         </div>
 
         <div className="flex flex-col gap-3 border-t border-white/10 bg-white/[0.02] px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* Profil, diyalogu PAYLASAN kullaniciya gidiyor (udb.user_id) —
-              yukaridaki alt basliktaki bot sahibine degil. Kullanici adi
-              gelmediginde (silinmis hesap) dugme hic cizilmiyor: bos bir
-              profile goturen olu bir baglanti birakmiyoruz. */}
+          {/* N-05 (M0-4) — bu düğme diyalogu PAYLASAN kullanicinin
+              profiline gidiyordu; musteri beklentisi diyalogun ait oldugu
+              botun SOHBET sayfasi. `chatbot_isim` LEFT JOIN'den geliyor:
+              bot silinmisse null, o zaman olu bir sohbete goturmemek icin
+              dugme cizilmiyor. Paylasanin profili ikincil bir metin
+              baglantisi olarak korunuyor — kalip kalmayacagi musteriye
+              soruldu (Faz 0 karar kaydi K-1). */}
           <div className="flex flex-wrap items-center gap-2">
-            {selectedHistory.user_id ? (
+            {selectedHistory.chatbot_id && selectedHistory.chatbot_isim ? (
               <a
-                href={userProfileUrl(selectedHistory.user_id)}
+                href={`/dashboard/chat?botId=${selectedHistory.chatbot_id}`}
                 className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
               >
-                <UserRound className="h-4 w-4 text-fuchsia-400" />
+                <MessageSquare className="h-4 w-4 text-fuchsia-400" />
                 <span className="max-w-[12rem] truncate">
-                  {selectedHistory.sharer_kullanici_adi
-                    ? `@${selectedHistory.sharer_kullanici_adi}`
-                    : "Profil"}
+                  {selectedHistory.chatbot_isim} ile sohbet et
+                </span>
+              </a>
+            ) : null}
+            {selectedHistory.user_id && selectedHistory.sharer_kullanici_adi ? (
+              <a
+                href={userProfileUrl(selectedHistory.user_id)}
+                className="inline-flex items-center gap-1.5 px-1.5 py-2.5 text-xs text-white/45 transition-colors hover:text-white/80"
+              >
+                <UserRound className="h-3.5 w-3.5" />
+                <span className="max-w-[10rem] truncate">
+                  @{selectedHistory.sharer_kullanici_adi}
                 </span>
               </a>
             ) : null}
