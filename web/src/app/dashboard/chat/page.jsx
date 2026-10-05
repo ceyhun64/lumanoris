@@ -9,8 +9,6 @@ import { useSearchParams } from "next/navigation";
 
 // Only loaded when the user actually opens one of these modals, instead of
 // shipping their code with every chat page load.
-const WithdrawalModal = dynamic(() => import("@/features/wallet/WithdrawalModal"), { ssr: false });
-const BuyModal = dynamic(() => import("@/features/purchasing/BuyModal"), { ssr: false });
 const DialogNotebookModal = dynamic(() => import("@/features/notes/DialogNotebookModal"), { ssr: false });
 import ReactMarkdown from "react-markdown";
 import { useRouter } from "next/navigation";
@@ -39,7 +37,6 @@ export default function Chat() {
   // Sohbet Luma Coini: mesaj hakkı tükendiğinde mesaj kutusunun yerini alan
   // "Sınır Aşıldı" bandı.
   const [limitReached, setLimitReached] = useState(false);
-  const [showLimitBuyModal, setShowLimitBuyModal] = useState(false);
   const [coinsRemaining, setCoinsRemaining] = useState(null);
   const [retryAt, setRetryAt] = useState(null);
 
@@ -927,7 +924,7 @@ const handleRetryReply = (retryText) => {
               <p className="text-body-sm leading-snug text-white/80">
                 Günlük mesajlaşma limitine ulaştınız.
                 <br className="hidden sm:block" />
-                Chatbotu satın alarak daha fazla mesaj limitine erişebilirsiniz.
+                Paketinizi yükselterek daha fazla günlük mesaj hakkı alabilirsiniz.
                 {retryCountdownLabel && (
                   <>
                     <br className="hidden sm:block" />
@@ -939,11 +936,13 @@ const handleRetryReply = (retryText) => {
                 )}
               </p>
             </div>
+            {/* GK-14 — sohbet sayfasındaki dört "Satın Al" kaldırıldı;
+                limit bandındaki eylem artık paket yükseltme. */}
             <Button
-              onClick={() => setShowLimitBuyModal(true)}
+              onClick={() => router.push("/dashboard/upgrade")}
               className="h-auto shrink-0 px-5 py-2.5 text-body-sm"
             >
-              Satın Al
+              Paketini yükselt
             </Button>
           </div>
         ) : (
@@ -978,12 +977,6 @@ const handleRetryReply = (retryText) => {
         }}
       />
 
-      <BuyModal
-        isOpen={showLimitBuyModal}
-        onClose={() => setShowLimitBuyModal(false)}
-        botData={bot}
-        userId={userId}
-      />
     </div>
   );
 }

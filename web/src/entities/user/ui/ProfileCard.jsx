@@ -6,7 +6,6 @@ import {
     Bell, BellOff, ThumbsUp, ThumbsDown, Share2, MessageCircle, ListPlus,
     ShoppingCart, EyeOff, Flag, ArrowRight, ChevronRight, Check,
 } from 'lucide-react';
-import { formatCurrency } from '@/shared/lib/format';
 import CategoryBadge from '@/shared/ui/category-badge';
 import { cn } from '@/lib/utils';
 import { toast } from '@/shared/hooks/use-toast';
@@ -22,7 +21,6 @@ const ReportModal = dynamic(() => import('@/features/moderation/ReportModal'), {
 const AddToListModal = dynamic(() => import('@/features/lists/AddToListModal'), { ssr: false });
 const BlockModal = dynamic(() => import('@/features/moderation/BlockModal'), { ssr: false });
 const CommentModal = dynamic(() => import('@/features/comments/CommentModal'), { ssr: false });
-const BuyModal = dynamic(() => import('@/features/purchasing/BuyModal'), { ssr: false });
 const DeleteConfirmModal = dynamic(() => import('@/shared/ui/DeleteConfirmModal'), { ssr: false });
 
 function formatCompact(n) {
@@ -47,7 +45,7 @@ function formatCompact(n) {
  * Sayaçlar (beğeni/yorum sayısı) yazı DEĞİL veri olduğu için duruyor.
  *
  * `showLabel` yalnızca yazının kendisi bilgi taşıdığı yerlerde açılıyor —
- * bugün tek örneği fiyatı gösteren "Satın Al" düğmesi.
+ * bugün kullanan yer yok (fiyatlı "Satın Al" hapı GK-14 ile kaldırıldı).
  */
 function ActionPill({ icon: Icon, label, count, active, activeTone = 'fuchsia', tone = 'default', disabled, onClick, className, showLabel = false }) {
     const hasCount = typeof count === 'number';
@@ -104,9 +102,7 @@ export default function ProfileCard({bot, comments}) {
     const [userLists, setUserLists] = useState([]);
     const [commentCount, setCommentCount] = useState(comments.length);
     const [pastConversations, setPastConversations] = useState([]);
-    const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
     const [notInterestedConfirmOpen, setNotInterestedConfirmOpen] = useState(false);
-    const [cartDurationWeeks, setCartDurationWeeks] = useState(null);
     const [infoOpen, setInfoOpen] = useState(false);
     const [profile, setProfile] = useState({
         id: null,
@@ -182,7 +178,6 @@ export default function ProfileCard({bot, comments}) {
                     const existing = data.cart.find(item => Number(item.chatbot_id) === Number(profile.id));
                     if (existing) {
                         setIsInCart(true);
-                        setCartDurationWeeks(existing.order_weeks ? parseInt(existing.order_weeks, 10) : 4);
                     }
                 }
             } catch (error) {
@@ -321,13 +316,6 @@ export default function ProfileCard({bot, comments}) {
         }
     }, [profile?.id, profile?.title, profile?.author, cartAdded]);
 
-    // Satın al fonksiyonu
-    const handleBuy = (e) => {
-        e?.stopPropagation && e.stopPropagation();
-        if (!requireLogin(userId, router)) return;
-        setIsBuyModalOpen(true); // Modalı aç
-    };
-
     const handleNotInterested = () => {
         if (!requireLogin(userId, router)) return;
         setNotInterestedConfirmOpen(true);
@@ -370,7 +358,6 @@ export default function ProfileCard({bot, comments}) {
     };
 
     const avatarSrc = profile.image || resolveAvatarSrc(null);
-    const isPaidAndUnowned = Number(bot.ucret_haftalik) > 0 && !isInCart;
 
     const followToggle = async () => {
         if (!requireLogin(userId, router)) return;
@@ -482,15 +469,6 @@ export default function ProfileCard({bot, comments}) {
                     </button>
 
                     <div className="flex shrink-0 items-center gap-2">
-                        {isPaidAndUnowned && (
-                            <button
-                                className="hidden h-9 shrink-0 items-center justify-center rounded-full bg-gradient-btn px-4 font-display text-label font-semibold text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex"
-                                onClick={handleBuy}
-                            >
-                                Satın Al · {formatCurrency(bot.ucret_haftalik)}
-                            </button>
-                        )}
-
                         <button
                             onClick={followToggle}
                             className={cn(
@@ -508,19 +486,6 @@ export default function ProfileCard({bot, comments}) {
 
                 {/* Eskiden "…" menüsünün içindekilerin tamamı */}
                 <div className="scrollbar-none flex items-center gap-1.5 overflow-x-auto px-4 pb-2.5 pt-2.5 md:px-16">
-                    {isPaidAndUnowned && (
-                        <ActionPill
-                            icon={ShoppingCart}
-                            label={`Satın Al · ${formatCurrency(bot.ucret_haftalik)}`}
-                            // Tek istisna: buradaki yazı FİYATI taşıyor, ikonun
-                            // anlatamayacağı bir bilgi. Üstelik bu düğme
-                            // `sm:hidden` — yani mobilde fiyatın göründüğü tek
-                            // yer burası, gizlemek onu tamamen kaybettirirdi.
-                            showLabel
-                            onClick={handleBuy}
-                            className="border-fuchsia-400/40 bg-fuchsia-500/[0.12] text-fuchsia-200 sm:hidden"
-                        />
-                    )}
                     <ActionPill icon={ThumbsUp} label="Beğen" count={likeCount} active={liked} onClick={toggleLike} />
                     <ActionPill icon={ThumbsDown} label="Beğenme" count={dislikeCount} active={disliked} activeTone="rose" onClick={toggleDislike} />
                     <ActionPill icon={MessageCircle} label="Yorumlar" count={commentCount} onClick={() => setCommentOpen(true)} />
@@ -588,14 +553,6 @@ export default function ProfileCard({bot, comments}) {
                         </div>
                     )}
 
-                    {isPaidAndUnowned && (
-                        <button
-                            className="flex h-11 w-full items-center justify-center rounded-xl bg-gradient-btn font-display text-body-sm font-semibold text-white shadow-glow transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            onClick={() => { setInfoOpen(false); handleBuy(); }}
-                        >
-                            Satın Al · {formatCurrency(bot.ucret_haftalik)}
-                        </button>
-                    )}
                 </DialogContent>
             </Dialog>
 
@@ -632,14 +589,6 @@ export default function ProfileCard({bot, comments}) {
                     }
                 }}
                 />
-
-            <BuyModal
-                isOpen={isBuyModalOpen}
-                onClose={() => setIsBuyModalOpen(false)}
-                botData={bot} // Bot verisi modalda fiyat hesaplama için kullanılıyor
-                userId={userId}
-                initialDurationWeeks={cartDurationWeeks}
-            />
 
             <BlockModal isOpen={blockOpen} onClose={() => setBlockOpen(false)} />
             <ShareModal isOpen={shareOpen} onClose={() => setShareOpen(false)} />
