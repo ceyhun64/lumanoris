@@ -346,6 +346,11 @@ function ImagePicker({
   );
 }
 
+/* Bilgi bankası PDF tavanı — TrainingController::MAX_PDF_BYTES ile ELLE
+   senkron (S21 kararı, 2026-10-05: 15 MB → 5 MB). */
+const KB_MAX_PDF_MB = 5;
+const KB_MAX_PDF_BYTES = KB_MAX_PDF_MB * 1024 * 1024;
+
 /* Sekmeler tek kaynakta: hem üstteki sekme çubuğu hem alttaki "Devam Et"
    gezinmesi bu diziden besleniyor. Liste JSX'in içinde satır içi duruyordu;
    ileri/geri hesabı sıranın tek yerden okunabilmesini gerektiriyor. */
@@ -538,8 +543,8 @@ function ChatbotForm({
       setKbError("Yalnızca PDF dosyası yükleyebilirsiniz.");
       return;
     }
-    if (file.size > 15 * 1024 * 1024) {
-      setKbError("PDF çok büyük (maks. 15 MB).");
+    if (file.size > KB_MAX_PDF_BYTES) {
+      setKbError(`PDF çok büyük (maks. ${KB_MAX_PDF_MB} MB).`);
       return;
     }
 
@@ -1078,7 +1083,7 @@ function ChatbotForm({
                   </span>
                   <span className="block text-caption text-zinc-500">
                     Sıkça sorulan sorular, kataloglar veya şirket içi kılavuzlar
-                    (maks. 15 MB)
+                    (maks. {KB_MAX_PDF_MB} MB)
                   </span>
                 </button>
                 <input
