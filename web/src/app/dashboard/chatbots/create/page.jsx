@@ -457,7 +457,8 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
   const kbFileRef = useRef(null);
 
   const refreshCorpus = async () => {
-    if (!botId) return;
+    // N-02: yeni botun id'si -1 (truthy) — `!botId` onu yakalamıyordu.
+    if (!botId || botId === -1) return;
     try {
       const res = await fetch(
         `/api/training/get_training_chunks.php?botId=${botId}&offset=0`,
@@ -993,10 +994,17 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
         {/* Tab 3: RAG Knowledge */}
         {activeTab === "knowledge" && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            {!botId ? (
+            {!isSavedBot ? (
               /* training_prompt bir bot satirina yazilir; kaydedilmemis botun
                  id'si yok. Eskiden bu alan her durumda tiklanabilir gorunuyordu
-                 ama hicbir sey yapmiyordu. */
+                 ama hicbir sey yapmiyordu.
+
+                 N-02 (M0-1) — bu kapı `!botId` ile kontrol ediliyordu, ama
+                 yeni botta botId -1 (truthy) olduğu için kapı HİÇ kapanmıyordu:
+                 yükleme `update_training_chunk.php`'ye id:-1 gönderiyor,
+                 sunucu `positiveInt(-1)=0` ile sahiplik kontrolünü düşürüp
+                 "Bu chatbot üzerinde yetkiniz yok." diyordu. URL yolu da
+                 aynı çağrıyı yaptığı için kaydedilmemiş botta o da bozuktu. */
               <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
                 <p className="text-xs leading-relaxed text-amber-200/80">
