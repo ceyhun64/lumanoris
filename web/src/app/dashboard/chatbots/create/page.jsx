@@ -379,7 +379,23 @@ const ROLE_PRESETS = [
   },
 ];
 
-function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
+function ChatbotForm({
+  selectedCard,
+  bot,
+  botId: initialBotId,
+  userId,
+  independentMode,
+}) {
+  /* N-02 devamı — ilk kayıttan sonra kullanıcı /dashboard/chatbots'a
+     atılıyordu; Bilgi Bankası'na ulaşmak için listeden "Yönet" ile geri
+     dönmesi gerekiyordu. Artık sunucunun döndürdüğü id burada tutuluyor ve
+     form aynı bileşende "kayıtlı bot" olarak devam ediyor. Bileşen yeniden
+     mount EDİLMİYOR (dış sayfanın id'yi yeniden okuması iskelet gösterip
+     form durumunu sıfırlardı); URL yalnızca history ile ?id=N yapılıyor,
+     yani yenilemede normal düzenleme yolu açılıyor. */
+  const [createdBotId, setCreatedBotId] = useState(null);
+  const botId = createdBotId ?? initialBotId;
+  const isPersisted = Boolean(bot) || createdBotId !== null;
   const router = useRouter();
   const { refetchAccount } = useContext(UserContext);
   const [botName, setBotName] = useState(bot?.chatbot?.isim || "");
@@ -625,14 +641,14 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
     setIsBuilding(true);
     try {
       const chatbotData = {
-        id: bot ? botId : -1,
+        id: isPersisted ? botId : -1,
         isim: botName.trim(),
         aciklama: description,
         style_prompt: systemPrompt,
         sohbet_basi_mesaj: "",
       };
       if (categoryId) chatbotData.kategori_id = Number(categoryId);
-      if (!bot) {
+      if (!isPersisted) {
         chatbotData.is_independent = independentMode ? 1 : 0;
       }
       const formData = new FormData();
@@ -641,11 +657,26 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
       if (coverFile) formData.append("coverImage_file", coverFile);
       if (profileFile) formData.append("profileImage_file", profileFile);
       const res = await fetch(
-        bot ? "/api/chatbot/updatechatbot.php" : "/api/chatbot/savechatbot.php",
+        isPersisted
+          ? "/api/chatbot/updatechatbot.php"
+          : "/api/chatbot/savechatbot.php",
         { method: "POST", body: formData, credentials: "include" },
       );
       const result = await res.json();
-      if (result.success) {
+      if (result.success && !isPersisted && result.id) {
+        // İlk kayıt: listeye atma, aynı sihirbazda Bilgi Bankası'nı aç.
+        refetchAccount();
+        setCreatedBotId(Number(result.id));
+        // Görseller yüklendi; sonraki "Kaydet" onları yeniden göndermesin.
+        setCoverFile(null);
+        setProfileFile(null);
+        window.history.replaceState(
+          null,
+          "",
+          `${window.location.pathname}?id=${result.id}`,
+        );
+        goToTab("knowledge");
+      } else if (result.success) {
         refetchAccount();
         router.push("/dashboard/chatbots");
       } else {
@@ -1181,7 +1212,7 @@ function ChatbotForm({ selectedCard, bot, botId, userId, independentMode }) {
                 <>
                   <Rocket className="w-4 h-4" />
                   <span>
-                    {bot
+                    {isPersisted
                       ? "Değişiklikleri Kaydet & Güncelle"
                       : "Sohbet Botunu Oluştur & Yayına Al"}
                   </span>
