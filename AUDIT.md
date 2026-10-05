@@ -857,9 +857,9 @@ Kaynak: müşteri revizesi (`PAZARYERİ SİSTEM DÜZENLEMESİ.pdf`). Faz 0 (salt
 
 | # | Konu | Durum |
 |---|---|---|
-| K-1 | S1–S11 ve devamı (paket limitleri, Elmas fiyatı, Satın Aldıklarım, takip edilen bot seçimi, "Satın Al" butonları, defter profil butonu, belge türleri/sınırı) | Müşteriye soruldu (2026-10-05). **Cevap bekleniyor.** Bu sorulara bağlı hiçbir kod yazılmayacak. |
-| K-2 | Yayınlanan bağımsız bot **herkese açık bot hakkından** sayılır, bağımsız hakkı boşalır; herkese açık hakkı doluysa yayınlanamaz. | Bugünkü kod davranışı (`ChatbotRepository::countByOwner` anlık duruma göre sayıyor, `publishChatbot` public limitini kontrol ediyor). Müşteriye bu şekilde anlatıldı; **müşteri onayı bekleniyor.** |
-| K-3 | Yayınlanmış bir botu geri özele çekmek **bağımsız bot limitine takılmaz**, yalnızca "özel yapma hakkı"ndan düşer. Yayınlanmamış bağımsız bot hak kullanmadan sahibine özel kalır. | Kullanıcı kararı; **müşteri onayı BEKLİYOR. Bu kurala bağlı kod yazılmayacak** (N-07 de bu nedenle açık bırakıldı). |
+| K-1 | S1–S11 ve devamı (paket limitleri, Elmas fiyatı, Satın Aldıklarım, takip edilen bot seçimi, "Satın Al" butonları, defter profil butonu, belge türleri/sınırı) | Müşteriye soruldu (2026-10-05), cevap gelmedi. **Geliştirici kararıyla kapatıldı (müşteri onayı yok, 2026-10-05)** — bkz. GK-1…GK-16. |
+| K-2 | Yayınlanan bağımsız bot **herkese açık bot hakkından** sayılır, bağımsız hakkı boşalır; herkese açık hakkı doluysa yayınlanamaz. | Bugünkü kod davranışı (`ChatbotRepository::countByOwner` anlık duruma göre sayıyor, `publishChatbot` public limitini kontrol ediyor). **Geliştirici kararı (müşteri onayı yok, 2026-10-05)** — GK-1. |
+| K-3 | Yayınlanmış bir botu geri özele çekmek **bağımsız bot limitine takılmaz**, yalnızca "özel yapma hakkı"ndan düşer. Yayınlanmamış bağımsız bot hak kullanmadan sahibine özel kalır. | **Geliştirici kararı (müşteri onayı yok, 2026-10-05)** — GK-3. Artık bu kurala bağlı kod yazılabilir (N-07, Faz 3). |
 | K-4 | Faz 1 (Madde 0: M0-2 → M0-1 → M0-3 → M0-4) başlatıldı. | Kullanıcı onayı (2026-10-05). |
 
 ## Faz 0'da bulunan, bu turda düzeltilmeyen maddeler
@@ -997,3 +997,26 @@ FROM (
 ) t
 ) x GROUP BY x.sinif ORDER BY x.sinif;
 ```
+
+## Geliştirici kararları (müşteri onayı yok, 2026-10-05)
+
+Müşteriye gönderilen sorulara cevap gelmedi; aşağıdaki kararları geliştirici verdi. **Müşteri farklı cevap verirse** "Etkilenen iş" sütunundaki maddeler yeniden açılmalı. Bu kararlara dayanan her commit mesajında ilgili GK numarası geçer.
+
+| # | Karar | Etkilenen iş |
+|---|---|---|
+| GK-1 | Bağımsız bot "Yayınla" ile herkese açılır; yayınlanınca herkese açık bot sayılır (bugünkü sayım davranışı). | Madde 10 (Faz 4), K-2 |
+| GK-2 | Herkese açık botlar ücretsiz kullanılır; mesajlar kullanıcının günlük coin'inden düşer; ana sayfa/Keşfet'te "Ücretsiz" rozetiyle görünür. | Madde 10 (Faz 4: `userHasAccess`, `getPublished`), madde 6 seçicisinin erişim tanımı |
+| GK-3 | Özel bot yalnızca sahibine görünür, link ile açılmaz (aboneler süreleri bitene kadar erişir). Ücretsiz plandaki 1 özel yapma hakkı toplamda bir kez. Yayınlanmamış bot hak kullanmadan özel kalır; hak yalnızca yayınlanmış botu geri özele çekerken düşer. Özele çekme bağımsız bot limitine takılmaz (K-3). | Madde 11 (Faz 3), N-07 |
+| GK-4 | Paketlerdeki "yayından kaldırma hakkı" = özel yapma hakkı; "yayına alma hakkı" = herkese açık bot limiti. | Paketler (Faz 3) |
+| GK-5 | Başvuru yapmış olmak Bakiyem'i açar; sınırsız hak yalnızca onaylanmış (`active`) satıcıya. | Madde 4 (Faz 2), madde 2 (Faz 3), Faz 5 helper'ı |
+| GK-6 | Sınırsız hak yalnızca herkese açık botlar için. | Madde 2 (Faz 3) |
+| GK-7 | Başvuru alanları: unvan, vergi no, vergi dairesi, MERSİS no, yetkili ad/soyad/doğum tarihi, IBAN, il/ilçe/adres. Belge yükleme bu turda YOK. | Madde 3 (Faz 2 iskelet, Faz 5 backend) |
+| GK-8 | Şahıs şirketleri başvurabilir; vergi kaydı olmayan bireyler başvuramaz. | Madde 1, madde 3 |
+| GK-9 | Onay admin panelde "Başvurular" sayfasından; onay "incelendi" yazar, `active` yazmaz. | Faz 5 |
+| GK-10 | Eski bireysel satıcı kayıtlarına dokunulmaz; yeni bireysel başvuru yapılamaz. | Madde 1 (Faz 2), Faz 5 |
+| GK-11 | Paketi biten kullanıcının mevcut botları korunur, yalnızca yenisi açılamaz. | Paketler (Faz 3) |
+| GK-12 | Satın Aldıklarım yalnızca en az bir aboneliği (süresi dolmuşlar dahil) olana görünür. | Madde 5 (Faz 2) |
+| GK-13 | Ana sayfa seçici: takip edilen ve erişimi olan botlar seçilebilir; erişimsizler kilitli ve "Profili gör" ile; hiç takip yoksa varsayılan Lumanoris AI + boş durum + Keşfet linki. | Madde 6 (Faz 2) |
+| GK-14 | Sohbet sayfasındaki dört "Satın Al" da kaldırılır; limit bandında yerine "Paketini yükselt". | Madde 9 (Faz 2) |
+| GK-15 | Defter popup'ında paylaşan kişi linki kalır. | N-05 (değişiklik gerekmiyor) |
+| GK-16 | Belge eğitimi: yalnızca PDF, OCR yok, sınır 5 MB. | N-02 / F1-3 (değişiklik gerekmiyor) |
