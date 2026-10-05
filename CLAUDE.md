@@ -31,6 +31,21 @@ Monorepo: `web/` (Next.js 15 App Router, React 19, Tailwind 3) + `api/` (PHP 8.1
 
 ## Otonomi sözleşmesi
 
+### Faz içi çalışma akışı (kalıcı kural)
+
+Bir faz başladıktan sonra adımları sormadan, sırayla yap: kod değişikliği → yerel doğrulama → madde başına commit → `revize/pazaryeri`'ye push → yerel veritabanında `migrate.php --apply` (aşağıdaki Migration kurallarıyla). Her fazın sonunda **tek bir özet** ver; ara onay isteme.
+
+Yalnızca şu durumlarda dur ve sor:
+
+- Canlı/uzak veritabanına veya sunucuya dokunacak bir işlem
+- Git geçmişini yeniden yazma, `main`'e push/merge
+- Veri silen ya da mevcut veriyi güncelleyen migration (`UPDATE`/`DELETE`)
+- Ödeme yolu (iyzico, `upgradeplan`, checkout)
+- `AUDIT.md`'de "müşteri onayı BEKLİYOR" olan bir karara bağlı iş
+- Bir madde 3 denemede kapanmıyorsa
+
+Bu liste aşağıdaki "Authorization — kademeli" ve "Önce raporla, onay bekle" kurallarını kaldırmaz; o maddeler (şema tasarımı, kırıcı API contract değişikliği, birden fazla endpoint'i etkileyen yetki yaması, belirsiz iş kuralı) için diff önerip beklemeye devam et.
+
 ### Sormadan yap
 
 syntax/lint hatası · eksik error handling · eksik input validation · frontend loading/error/empty state · bozuk `fetch` hata yolu · eksik rate limit (mevcut `checkRateLimit()` desenini kullanarak) · dokümantasyon · test yazımı · geri alınabilir izole refactor · kanıtlanmış ölü kod (aşağıdaki 3'lü çağıran araması yapılmışsa)
@@ -49,11 +64,28 @@ Eksik ownership/auth kontrolü bulduğunda sırayla:
 
 - Ödeme yolları: `IyzicoClient.php`, `checkout_payments.php`, `api/marketplace/createsubscription.php` — canlı anahtarla gerçek para hareket ediyor.
 - Veritabanı şeması · API contract'ında kırıcı değişiklik · bilinmeyen dış sağlayıcı entegrasyonu · iş kuralı belirsizse doğru davranışa kendin karar verme
+- Veri düzeltme migration'ları (mevcut satırı değiştiren `UPDATE`/`DELETE` içerenler, ör. N-06 onarımı) — **yerelde de** uygulamadan önce onay.
+
+### Git
+
+- Commit edebilirsin, yalnızca `revize/pazaryeri` branch'inde. `main` üzerindeysen önce o branch'e geç; `main`'e commit atma.
+- Her madde/AUDIT ID'si için ayrı commit; mesaj ID ile başlar (ör. `N-02: …`).
+- Commit'ten önce üçü de geçmiş olmalı: `npm run lint`, verify build, `php -l` (bkz. Doğrulama komutları). Biri kırmızıysa commit yok.
+- Dosyaları adıyla ekle (`git add -A` / `git add .` değil); senin değiştirmediğin, çalışma ağacında bekleyen dosyalar commit'e girmez.
+- Push yalnızca `git push origin revize/pazaryeri`. `main`'e push, merge ve force push **asla**.
+
+### Migration
+
+- `migrate.php --apply` yalnızca **YEREL** veritabanında. Çalıştırmadan önce `api/.env`'deki `DB_HOST`'un yerel olduğunu doğrula (değeri basmadan).
+- Sıra: `--status` çıktısını göster → uygulanacak dosyaları listele → `--apply` → tekrar `--status` göster.
+- `--apply` bekleyen tüm yıkıcı olmayan dosyaları birlikte uygular, tek dosya seçilemez. `migrate.php`'nin yıkıcılık kontrolü `UPDATE`'i yakalamaz. Bu yüzden `migrations/` altında onay bekleyen bir veri düzeltme dosyası varken `--apply` çalıştırma; o dosyayı onaya kadar `migrations/` dışında tut.
+- Bu izin yalnızca var olan migration'ı **uygulamayı** kapsar; yeni şema tasarımı hâlâ "önce raporla" kapsamında.
+- Canlı/uzak veritabanı için: uygulama sırasını ve her dosya için geri alma notunu yaz (DDL örtük commit yapar; geri alma ayrı bir ters migration demektir). Çalıştırmayı kullanıcı yapar.
 
 ### Asla yapma
 
-`migrate.php --apply` · `--allow-destructive` · `db_backup.php mode=restore` · `mysqldump` restore · `DROP`/`TRUNCATE`/`DELETE FROM` · gerçek ödeme çağrısı · production deploy · secret rotasyonu · git geçmişi yeniden yazma
-Migration dosyası **yazabilirsin**, **uygulayamazsın**.
+Canlı/uzak veritabanına bağlanmak ya da orada `migrate.php --apply` · `--allow-destructive` (yerelde de) · `db_backup.php mode=restore` · `mysqldump` restore · elle `DROP`/`TRUNCATE`/`DELETE FROM` · gerçek ödeme çağrısı · production deploy · secret rotasyonu · git geçmişi yeniden yazma (`commit --amend`, rebase, reset) · `main`'e commit/push/merge · force push
+Migration dosyası **yazabilirsin**; yalnızca yerelde ve yukarıdaki Migration kurallarıyla **uygulayabilirsin**.
 
 ## BLOCKERS.md
 
