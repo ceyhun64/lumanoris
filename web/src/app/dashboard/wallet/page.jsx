@@ -17,23 +17,13 @@ export default function Wallet() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const balance = account.balance;
   const balanceTx = account.transactions;
-  const [payments, setPayments] = useState([
-    {
-      order_id: "ORD-9821",
-      total_amount: 450,
-      status: "completed",
-      created_at: "2026-06-20 16:45:00",
-      chatbot_title: "Aura Architect Prime",
-    },
-    {
-      order_id: "ORD-7634",
-      total_amount: 280,
-      status: "completed",
-      created_at: "2026-06-18 12:20:00",
-      chatbot_title: "Verba SEO & Content Titan",
-    },
-  ]);
-  const [loading, setLoading] = useState(false);
+  // N-13 — bu state iki UYDURMA siparişle başlıyordu ("Aura Architect
+  // Prime" 450 ₺, "Verba SEO & Content Titan" 280 ₺): istek sürerken gerçek
+  // kayıt gibi listeleniyor, istek başarısız olursa ekranda kalıyor ve
+  // "toplam harcama"ya ekleniyordu. Boş başlıyor; yükleme ve hata ayrı.
+  const [payments, setPayments] = useState([]);
+  const [paymentsError, setPaymentsError] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -41,13 +31,23 @@ export default function Wallet() {
       setLoading(false);
       return;
     }
+    setLoading(true);
+    setPaymentsError(null);
     fetch(`/api/wallet/getmypayments.php?user_id=${userId}`)
       .then((r) => r.json())
       .then((data) => {
-        if (data?.success && Array.isArray(data.payments))
+        if (data?.success && Array.isArray(data.payments)) {
           setPayments(data.payments);
+        } else {
+          setPayments([]);
+          setPaymentsError(data?.message || "Harcama geçmişi yüklenemedi.");
+        }
       })
-      .catch((err) => console.error("Ödemeler yüklenemedi:", err))
+      .catch((err) => {
+        console.error("Ödemeler yüklenemedi:", err);
+        setPayments([]);
+        setPaymentsError("Sunucuya bağlanılamadı; harcama geçmişi gösterilemiyor.");
+      })
       .finally(() => setLoading(false));
   }, [userId]);
 
@@ -139,6 +139,12 @@ export default function Wallet() {
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
           />
+
+          {paymentsError && activeTab !== "bakiye" && (
+            <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-300">
+              {paymentsError}
+            </div>
+          )}
 
           <TransactionsPanel loading={loading} transactions={filteredTransactions} />
         </section>
