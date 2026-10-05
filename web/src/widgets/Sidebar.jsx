@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import QuitModal from "@/features/auth/QuitModal";
 import logo from "@/images/header-logo-icon.png";
@@ -95,6 +95,41 @@ export function Sidebar({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [isQuitModalOpen, setIsQuitModalOpen] = useState(false);
+
+  // Madde 5 / GK-12 — "Satın Aldıklarım" yalnızca en az bir aboneliği
+  // (süresi dolmuşlar dahil) olan kullanıcıya görünür. Kaynak mevcut
+  // getmysubscriptions.php (tam satın alma geçmişini döndürüyor); yeni uç
+  // nokta yok. null = henüz bilinmiyor → öğe gizli (sonradan belirmesi,
+  // görünüp kaybolmasından iyi). İstek başarısız olursa öğe GÖSTERİLİR:
+  // bir ağ hatası kullanıcının satın aldıklarına giden yolu saklamamalı.
+  const [hasPurchases, setHasPurchases] = useState(null);
+  useEffect(() => {
+    if (!userId) {
+      setHasPurchases(false);
+      return;
+    }
+    let cancelled = false;
+    fetch("/api/wallet/getmysubscriptions.php", { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        setHasPurchases(
+          data?.success && Array.isArray(data.subscriptions)
+            ? data.subscriptions.length > 0
+            : true,
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setHasPurchases(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  const exploreItems = EXPLORE_ITEMS.filter(
+    (item) => item.href !== "/dashboard/purchased" || hasPurchases === true,
+  );
 
   const displayName = account.fullname || account.username || "Kullanıcı";
   const avatarLetter = (account.fullname || account.username || "?")
@@ -320,7 +355,7 @@ export function Sidebar({
                 </div>
               )}
               <ul className="space-y-1 list-none p-0 m-0">
-                {EXPLORE_ITEMS.map((item) =>
+                {exploreItems.map((item) =>
                   renderNavItem(
                     item.href === "/dashboard/wallet"
                       ? { ...item, pill: formatCurrency(account.balance) }
