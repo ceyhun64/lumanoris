@@ -1020,3 +1020,27 @@ Müşteriye gönderilen sorulara cevap gelmedi; aşağıdaki kararları gelişti
 | GK-14 | Sohbet sayfasındaki dört "Satın Al" da kaldırılır; limit bandında yerine "Paketini yükselt". | Madde 9 (Faz 2) |
 | GK-15 | Defter popup'ında paylaşan kişi linki kalır. | N-05 (değişiklik gerekmiyor) |
 | GK-16 | Belge eğitimi: yalnızca PDF, OCR yok, sınır 5 MB. | N-02 / F1-3 (değişiklik gerekmiyor) |
+
+---
+
+# Faz 2 — Düşük riskli arayüz değişiklikleri (2026-10-05)
+
+Dayanak: GK-1…GK-16 (geliştirici kararı, müşteri onayı yok). Her madde ayrı commit, `revize/pazaryeri`'ye push edildi. Doğrulama her maddede: `npm run lint` + `NEXT_DIST_DIR=.next-verify npm run build`. Faz 2'de migration yazılmadı, `migrate --apply` gerekmedi. **Tarayıcıda uçtan uca denenmedi.**
+
+| Madde | Commit | Ne yapıldı | Durum |
+|---|---|---|---|
+| 3 (iskelet) | `b8199c2` | `/dashboard/pazaryeri-basvurusu`: şahıs/kurumsal hesap türü, bireysel "Yakında" (seçilemez), GK-7 alanları. Gönder düğmesi devre dışı ve nedenini söylüyor; sahte başarı yok, veri saklanmıyor. | Tamam (iskelet). Backend Faz 5. |
+| 1 | — | Başvuru sayfasında bireysel seçenek "Yakında" (yukarıdaki commit). **Eski kayıt sihirbazındaki (`features/seller/SellerOnboardingWizard.jsx`) "Bireysel" seçeneği DEĞİŞTİRİLMEDİ:** dosyanın hesap türü/doğrulama kısmını okuyan komut, oturumun otomatik izin sınıflandırıcısı tarafından reddedildi; dosya okunmadan düzenlenmedi. Eski kayıt ekranının route'u yok (sihirbaz bir modal; `create/page.jsx` ve `PublishModal.jsx` içinden açılıyor), yani `notFound()`/yönlendirme seçeneği uygulanamaz. | **Açık — kullanıcı izni bekliyor.** |
+| 7 | `e87ca55` | Ayarlar → "Ödeme Bilgileri" sekmesi başvuru sayfasına gidiyor; `?tab=security` derin bağlantısı da yönlendiriliyor. Kullanılmayan yerel IBAN/vergi no formu kaldırıldı; para çekme modallarının "Ayarlar > Banka Bilgileri" metni güncellendi. | Tamam. **Yan etki:** Faz 5'e kadar yeni IBAN yalnızca eski satıcı sihirbazından kaydedilebilir (`save_bank_info.php`); mevcut kayıtlı IBAN'lar duruyor ve çekim onları kullanıyor. |
+| 9 | `b39d267` | Sohbet sayfasındaki dört "Satın Al" kaldırıldı (`ProfileCard`: masaüstü düğme, mobil hap, Bot Hakkında dialogu; sohbet limit bandı). Limit bandı "Paketini yükselt" → `/dashboard/upgrade`. "Sepete Ekle" duruyor. `chat/page.jsx`'teki kullanılmayan `WithdrawalModal` importu kaldırıldı (N-11). | Tamam. `BuyModal`'ın tek importeri artık kullanılmayan `entities/chatbot/ui/ChatbotCard.jsx` → ölü kod adayı (N-11'e eklendi), silinmedi. |
+| 5 | `d8cd024` | Kenar çubuğunda "Satın Aldıklarım" yalnızca `getmysubscriptions.php` en az bir satır (süresi dolmuşlar dahil) döndürürse görünüyor; bilinmezken gizli, istek başarısızsa görünüyor. Yeni uç nokta yok. | Tamam. B1+B3 yüzünden bugün satın alma yapılamadığı için pratikte menü kimsede görünmez. |
+| 4 | `b3e8e70` | `useMarketplaceRegistration` hook'u (tek kaynak). Kaydı olmayan Bakiyem'de yalnızca "Bakiyenize erişebilmek için pazaryeri kaydı gerekmektedir." + başvuru bağlantısı görüyor; kenar çubuğu ve başlıktaki bakiye tutarı da gizli. **Sunucu yetkisi değişmedi** (wallet uç noktaları yalnızca `requireAuth`). | Tamam. **Varsayım (GK-5 uygulaması):** başvuru tablosu Faz 5'e kadar yok; bugün "başvuru yapmış" = `param_marketplace_sellers.status ∈ {pending, active, suspended, rejected}` (eski akışta başvuru denemesi yapılmış). `not_started`/`kyc_filled` sayılmaz. Müşteri "yalnızca onaylı" derse liste daraltılır. |
+| 6 | `9212cbf` | Ana sayfa seçicisi takip edilen botlardan (`getfollowedbots.php`); erişim kümesi `getchatbotsmenu.php` (sahip + aktif abonelik = `userHasAccess('full')`). Erişimsiz takip kilitli + "Profili gör"; platform botu dışında takip yoksa boş durum + Keşfet; yükleniyor/hata durumları. Pazaryeri listesi boşken (B1) varsayılan bot takip listesindeki Lumanoris AI. | Tamam. GK-2 (ücretsiz herkese açık) Faz 4'te erişim kümesini sunucudan genişletecek. |
+| 8 | — | Kod değişikliği yok. Kanıt: `AppConfig::DAILY_FREE_MESSAGES = 10`; `plans` tablosunda Ücretsiz plan `daily_message_limit = 10` (varsayılan plan, yerelde ölçüldü); `fallbackPlan()` 10; planı olmayan bir kullanıcı için `getDailyMessageLimit()` = 10 (yerelde ölçüldü, `user_plan_selection` 0 satır). `coin_engine.php` ve `pricing.js` bu değerin KOPYASINI tutmuyor (motor plandan okuyor) — CLAUDE.md'deki "üç kopya" uyarısı bu sabit için geçerli değil. | Doğrulandı, değişmedi. |
+
+## Faz 2'de bulunan yeni maddeler
+
+| ID | Sev | Dosya | Problem | Durum |
+|---|---|---|---|---|
+| **N-13** | P2 | `app/dashboard/wallet/page.jsx` | `payments` state'i iki UYDURMA siparişle başlıyordu ("Aura Architect Prime" 450 ₺, "Verba SEO & Content Titan" 280 ₺); yükleme sırasında gerçek kayıt gibi listeleniyor, istek başarısız olunca ekranda kalıyor ve "toplam harcama"ya ekleniyordu. | **Kapandı** (`c021e5f`) — boş başlangıç, yükleme ve hata durumu. |
+| **N-14** | Şüphe | `ChatbotRepository::userHasAccess`, platform botu | Ana sayfa ve takip listesi Lumanoris AI'yı herkese varsayılan bot olarak sunuyor (sunucu onu örtük takip olarak ekliyor), ama `userHasAccess('full')` yalnızca sahip/abone kabul ediyor; platform botu `SYSTEM` kullanıcısına ait. Kullanıcıların bu bota erişimi başka bir yoldan (ör. kayıtta abonelik satırı) verilmiyorsa sohbet 403 döner. **Kanıtlanamadı:** yerelde `SYSTEM` sahipli "Lumanoris AI" yok, kayıt akışında abonelik yazan kod görülmedi. | Açık — canlı veriyle doğrulanmalı; Faz 4'te GK-2 ile birlikte ele alınabilir. |
