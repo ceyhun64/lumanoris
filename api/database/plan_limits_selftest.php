@@ -58,12 +58,15 @@ try {
     exit($fail > 0 ? 1 : 0);
 }
 
-// Plan seçmemiş (ya da süresi dolmuş) bir kullanıcı varsayılan plana düşer.
+// Plan seçmemiş (ya da süresi dolmuş) ve onaylı satıcı OLMAYAN bir kullanıcı
+// varsayılan plana düşer. Onaylı satıcının herkese açık hakkı sınırsız
+// (madde 2 / GK-6) — o ayrı kontrol ediliyor (A2).
 $noPlanUser = $db->selectSingle(
-    'k.id FROM kullanicilar k
+    "k.id FROM kullanicilar k
      LEFT JOIN user_plan_selection s ON s.user_id = k.id
-     WHERE s.user_id IS NULL
-     ORDER BY k.id LIMIT 1'
+     LEFT JOIN param_marketplace_sellers pms ON pms.user_id = k.id AND pms.status = 'active'
+     WHERE s.user_id IS NULL AND pms.user_id IS NULL
+     ORDER BY k.id LIMIT 1"
 );
 
 if (!$noPlanUser) {
@@ -78,6 +81,22 @@ if (!$noPlanUser) {
         (string) getPublicBotLimit($db, $uid));
     check('plansız kullanıcı: günlük 10 mesaj', getDailyMessageLimit($db, $uid) === 10,
         (string) getDailyMessageLimit($db, $uid));
+}
+
+echo "\n=== A2) MADDE 2 — onaylı satıcıya sınırsız herkese açık hak (GK-5/GK-6) ===\n\n";
+
+$activeSeller = $db->selectSingle("user_id FROM param_marketplace_sellers WHERE status = 'active' ORDER BY user_id LIMIT 1");
+if (!$activeSeller) {
+    echo "  (onaylı satıcı yok — B1 açıkken beklenen; kontrol atlandı)\n";
+} else {
+    $sid = (int) $activeSeller['user_id'];
+    check('onaylı satıcı: herkese açık hak sınırsız', isUnlimitedBotLimit(getPublicBotLimit($db, $sid)));
+    check('onaylı satıcı: bağımsız hak plandan (sınırsız değil)', !isUnlimitedBotLimit(getIndependentBotLimit($db, $sid)));
+}
+$unapproved = $db->selectSingle("user_id FROM param_marketplace_sellers WHERE status IN ('pending', 'rejected') ORDER BY user_id LIMIT 1");
+if ($unapproved) {
+    check('onaysız başvuru: herkese açık hak sınırsız DEĞİL',
+        !isUnlimitedBotLimit(getPublicBotLimit($db, (int) $unapproved['user_id'])));
 }
 
 echo "\n=== B) MÜŞTERİ PAKET TABLOSU — paket migration'ı uygulanana kadar KIRMIZI ===\n\n";

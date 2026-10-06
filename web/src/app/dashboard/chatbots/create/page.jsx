@@ -348,6 +348,16 @@ function ImagePicker({
 
 /* Bilgi bankası PDF tavanı — TrainingController::MAX_PDF_BYTES ile ELLE
    senkron (S21 kararı, 2026-10-05: 15 MB → 5 MB). */
+/* Kota kartlarındaki "Kapasite" satırı. Eskiden limit yoksa sabit
+   "1/2 Kullanıldı" / "0/5 Kullanıldı" yazıyordu — kullanıcının gerçek
+   sayısıyla ilgisi yoktu. Sınırsız kota (madde 2: onaylı satıcının herkese
+   açık hakkı) sunucudan `*_unlimited: true` olarak geliyor. */
+function capacityLabel(used, limit, unlimited) {
+  if (unlimited) return `${Number(used) || 0} / Sınırsız`;
+  if (limit === null || limit === undefined || limit === "—") return "—";
+  return `${Number(used) || 0} / ${limit}`;
+}
+
 const KB_MAX_PDF_MB = 5;
 const KB_MAX_PDF_BYTES = KB_MAX_PDF_MB * 1024 * 1024;
 
@@ -1505,7 +1515,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
 
             <div className="pt-6 mt-6 border-t border-white/5 flex items-center justify-between relative z-10">
               <span className="text-xs font-mono text-zinc-400">
-                Kapasite: {limits.independent_limit || "1/2 Kullanıldı"}
+                Kapasite: {capacityLabel(limits.independent_used, limits.independent_limit, limits.independent_unlimited)}
               </span>
               <span className="text-xs font-semibold text-violet-300 group-hover:translate-x-1 transition-transform flex items-center gap-1">
                 Seç ve Devam Et <ArrowRight className="w-4 h-4" />
@@ -1550,7 +1560,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
 
             <div className="pt-6 mt-6 border-t border-white/5 flex items-center justify-between relative z-10">
               <span className="text-xs font-mono text-zinc-400">
-                Kapasite: {limits.public_limit || "0/5 Kullanıldı"}
+                Kapasite: {capacityLabel(limits.public_used, limits.public_limit, limits.public_unlimited)}
               </span>
               <span className="text-xs font-semibold text-fuchsia-300 group-hover:translate-x-1 transition-transform flex items-center gap-1">
                 Seç ve Devam Et <ArrowRight className="w-4 h-4" />

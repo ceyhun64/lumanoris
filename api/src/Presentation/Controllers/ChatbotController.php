@@ -492,11 +492,19 @@ class ChatbotController {
         $independentLimit = getIndependentBotLimit($db, $userId);
         $publicLimit      = getPublicBotLimit($db, $userId);
 
+        // Madde 2 — sınırsız kota sayısal olarak PHP_INT_MAX; istemciye bu
+        // devasa sayıyı göstermek yerine `*_limit: null` + `*_unlimited: true`
+        // (eklemeli alan; mevcut alanların sonlu kotalarda anlamı aynı).
+        $independentUnlimited = isUnlimitedBotLimit($independentLimit);
+        $publicUnlimited      = isUnlimitedBotLimit($publicLimit);
+
         JsonResponse::success([
             'independent_used'       => $counts['independent'],
-            'independent_limit'      => $independentLimit,
+            'independent_limit'      => $independentUnlimited ? null : $independentLimit,
+            'independent_unlimited'  => $independentUnlimited,
             'public_used'            => $counts['public'],
-            'public_limit'           => $publicLimit,
+            'public_limit'           => $publicUnlimited ? null : $publicLimit,
+            'public_unlimited'       => $publicUnlimited,
             'can_create_independent' => $counts['independent'] < $independentLimit,
             'can_create_public'      => $counts['public'] < $publicLimit,
         ]);
