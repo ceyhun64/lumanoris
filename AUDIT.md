@@ -1229,3 +1229,15 @@ ORDER BY c.id;
 | `note/adddialogbook.php` | yalnızca oturum | İlgisiz. |
 
 Sonuç: full isteyen ve sohbeti kıran tek uç nokta `generatereply.php` (yamada düzeldi); `getchatbot.php` ücretsiz bota 404 veriyordu (yamada düzeldi) ve personayı abonelere de döndürüyordu (sahiple sınırlandı). Yama `8ebb757` ile uygulandı; yeni `access_selftest.php` 21/0 (eski kodla 4 hata).
+
+## GK-18 ve N-14 (2026-10-06)
+
+| # | Karar | Etkilenen iş |
+|---|---|---|
+| GK-18 | **Geliştirici kararı (müşteri onayı yok, 2026-10-06):** platform botu "Lumanoris AI" ücretsiz herkese açık olur (fiyatı kaldırılır); herkes sohbet eder, mesaj kullanıcının günlük coin'inden düşer. | N-14, ana sayfa varsayılan botu (GK-13) |
+
+**N-14 — kapandı (yerel).** `015_house_bot_free.sql` yerelde uygulandı (öncesi/sonrası `--status`; DB_HOST yerel). Önceki fiyat (geri alma için): bot #5, haftalık **50,00 ₺**, aylık **150,00 ₺**. Sonra: sahibi/abonesi olmayan kullanıcı `chat = EVET`, `full = hayır`, vitrinde. Migration yalnızca tam olarak BİR "LUMANORIS AI" herkese açık bot varsa günceller. Canlıda uygulamadan önce aynı `SELECT` ile eski fiyat not alınmalı; aktif abonelikler dokunulmadan sürer.
+
+Koşullu 014 (öneri) platform botunu hariç tutacak şekilde güncellendi: aksi hâlde yazarı aktif satıcı olmayan bir kurulumda 015'in ücretsiz yaptığı platform botunu özele çekerdi.
+
+Doğrulama notu: bu turda iyzico öz-testinin B bölümü (sandbox ağ çağrısı) bir kez `Could not resolve host` ile düştü (aynı anda git push da DNS hatası verdi); kural gereği commit beklendi, yeniden çalıştırmada 77/0.

@@ -27,11 +27,15 @@ LEFT JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id
 SET c.is_independent = 1
 WHERE c.is_independent = 0
   AND COALESCE(c.ucret_haftalik, 0) = 0 AND COALESCE(c.ucret_aylik, 0) = 0
-  AND COALESCE(pms.status, '') <> 'active';
+  AND COALESCE(pms.status, '') <> 'active'
+  -- Platform botu (N-14 / GK-18, 015) bilerek ücretsiz herkese açık; hariç.
+  AND UPPER(TRIM(c.isim)) <> 'LUMANORIS AI';
 
 -- Doğrulama: aynı ölçütle kalan bot 0 olmalı.
 SELECT COUNT(*) AS kalan FROM chatbotlar c
 LEFT JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id
 WHERE c.is_independent = 0
   AND COALESCE(c.ucret_haftalik, 0) = 0 AND COALESCE(c.ucret_aylik, 0) = 0
-  AND COALESCE(pms.status, '') <> 'active';
+  AND COALESCE(pms.status, '') <> 'active'
+  -- Platform botu (N-14 / GK-18, 015) bilerek ücretsiz herkese açık; hariç.
+  AND UPPER(TRIM(c.isim)) <> 'LUMANORIS AI';
