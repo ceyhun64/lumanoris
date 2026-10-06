@@ -472,7 +472,13 @@ class ChatController {
 
         $apiKey = AppConfig::googleGeminiApiKey();
         if (!$apiKey) {
+            // N-12 — burada yalnızca mesajın hakkı iade ediliyordu; belgeler
+            // için düşülen ek haklar kayboluyordu. Kardeş dallar (hak yetmedi,
+            // upstream hatası) hepsini iade ediyor; bu dal da aynı.
             refundMessage($db, $userId, $chatbotId, $allowanceSource);
+            foreach ($fileAllowanceSources as $source) {
+                refundMessage($db, $userId, $chatbotId, $source);
+            }
             JsonResponse::error('Yapay zeka servisi yapılandırılmamış.', 500, AppConfig::ERR_SERVER);
         }
 
