@@ -1080,10 +1080,44 @@ Doğrulama: her PHP değişikliğinde `php -l`, PHP değişikliğinde iyzico öz
 | Madde 11 + Elmas sınırsız kodu | — | **012 onayına bağlı, yazılmadı.** Plan: `AppConfig::FREE_PRIVACY_RIGHT_LIMIT = 1` (fallback); `getIndependentBotLimit`/`getPublicBotLimit` NULL → `BOT_LIMIT_UNLIMITED`; `getPrivacyRightLimit()` + kullanım sayımı; `unpublishChatbot` yayınlanmış botu özele çekerken hakkı tüketir (aynı kilit altında `user_privacy_right_usage` satırı), bağımsız limitine takılmaz (GK-3 → N-07'yi kapatır); `getchatbotlimits`/`getPricing` hak ve sınırsız bilgisi; admin Abonelik formuna hak alanı ve "sınırsız" seçeneği; oluştur/chatbotlar ekranında kalan hak. **Uygulama sırası:** NULL'a dayanıklı kod → 012 → 013. |
 | Oluştur sayfasındaki 750 ₺ "Üretici Limitinizi Yükseltin" kartı (B2) | — | **Soru:** paket tablosuyla çelişen ayrı bir teklif (5 herkese açık + 2 bağımsız). Satışı zaten kapalı (`buyProducerAccount` fail-closed). Kaldırılsın mı / yükseltme sayfasına mı yönlensin? B2 iş kararı olduğu için dokunulmadı. |
 
-### Canlı için uygulama sırası (kullanıcı çalıştırır)
+### Canlı için uygulama sırası (kullanıcı çalıştırır) — ESKİ, aşağıdaki "Faz 3 — canlı uygulama sırası (güncel)" bölümü geçerli
 
 1. Faz 3 kodunu (NULL'a dayanıklı sürüm, onaydan sonra) deploy et.
 2. `010_notification_message_columns.sql`, `011_user_plan_expiry.sql` (canlıda bekliyorsa) — `--apply`.
 3. 012'yi `migrations/`'a taşı → `--apply`. Geri alma: dosya başlığındaki ters ifadeler.
 4. 013'ü `migrations/`'a taşı → `--apply --allow-destructive` (ya da değerleri admin panelinden gir). Geri alma: 007'deki değerler ve özellik satırları.
 5. `php api/database/plan_limits_selftest.php` → B bölümü yeşil olmalı.
+
+## Faz 3 — kararlar sonrası yapılanlar (2026-10-06)
+
+| İş | Commit | Not |
+|---|---|---|
+| Doğrulama çıkış kodu kuralı (`pipefail`) CLAUDE.md'ye eklendi; plan testinin B bölümü çıkış kodunu bozmuyor (`--strict` ile dahil) | `ef88145` | |
+| S14 — 750 ₺ Üretici kartı, modalı, iki uç nokta, `producer_plan.php`, `PRODUCER_*` kaldırıldı | `f4e0560` | Üç yerde çağıran araması yapıldı; README ve BLOCKERS B2 (bulgu, kapatılmadı) güncellendi |
+| Madde 11 + NULL = sınırsız kodu (önce kırmızı test → uygulama → yeşil) | `cd02a62` | **N-07 kapandı** (özele çekme bağımsız limitine takılmıyor, özel yapma hakkından düşüyor). Chatbotlarım kartına "Özel Yap" düğmesi eklendi (canlı arayüzde yayından kaldırma yoktu). |
+| 012 onaylandı, `migrations/`'a taşındı, **yerelde uygulandı** | `c260b8b` | Plan testi C (kullanım sayımı, rollback'li) yeşil |
+| 013 DELETE'siz yeniden yazıldı | `f8e4e89` | **Hâlâ onay bekliyor** (plan değerlerini UPDATE ediyor). `pending/` altında. |
+
+## Faz 3 — canlı uygulama sırası (güncel)
+
+Ön koşul: canlı veritabanının yedeği alınmış olmalı (admin panel → yedek). Tüm adımları kullanıcı çalıştırır; Claude canlıya bağlanmaz.
+
+**Adım 1 — Kod deploy** (`revize/pazaryeri`, en az `f8e4e89`). Bu kod 012 olmadan da çalışır (NULL'a dayanıklı, hak tablosu yoksa eski davranış + log).
+- `php api/database/migrate.php --status` → 010 / 011 bekliyorsa ikisi koşullu ALTER'dır, adım 2 ile birlikte uygulanabilir.
+- Kontrol: site ve `/dashboard` açılıyor; `/api/wallet/getpricing.php` 200 dönüyor; `/api/chatbot/getchatbotlimits.php` yanıtında `privacy_limit: 1`, `privacy_used: null` var.
+- Kontrol: `php api/database/plan_limits_selftest.php` → A/A2/C **0 başarısız** (C'nin kullanım sayımı "012 uygulanmamış" diye atlanır).
+- Bilinen geçici durum: 012 gelene kadar "Özel Yap" hak saymaz; `storage/logs/php-error.log`'da `[unpublishChatbot] user_privacy_right_usage yok` satırı görünür. Adım 2'yi bekletmeyin.
+
+**Adım 2 — 012 (şema)**
+- `--status` → `012_plan_privacy_right_and_unlimited.sql bekliyor` (⚠ VERİ SİLER işareti OLMAMALI) → `--apply` → `--status` "Her şey güncel".
+- Kontrol: `plans.independent_bot_limit` / `public_bot_limit` `IS_NULLABLE = YES`; `plans.privacy_right_limit` var (varsayılan 1); `user_privacy_right_usage` tablosu var (dosyanın sonundaki doğrulama SELECT'leri).
+- Kontrol: plan testi C bölümü artık kullanım sayımını çalıştırır ve yeşil; admin → Abonelik'te "Özel yapma hakkı (toplam)" alanı görünür; `getchatbotlimits.php` `privacy_used: 0`.
+- Geri alma: dosya başlığındaki ters ifadeler (`DROP COLUMN privacy_right_limit`, `DROP TABLE user_privacy_right_usage`; NULL'ı sıkılaştırmadan önce NULL satırlar sayıya güncellenmeli). DDL örtük commit yapar.
+
+**Adım 3 — 013 (paket verisi) — onaydan sonra**
+- Önce: canlıda plan başına özellik satırı sayısını ölç (`SELECT p.name_tr, COUNT(pi.id) FROM plans p LEFT JOIN plan_icerikler pi ON pi.plan_id = p.id GROUP BY p.id`). Yeni liste 4/5/6/6; bir plan bundan fazla satıra sahipse fazlası dokunulmadan kalır ve doğrulama 2 onları listeler.
+- Önce: canlıda admin panelden plan fiyat/limitleri elle değiştirildiyse 013 onların üzerine yazar — beklenen bu.
+- Dosyayı `pending/` → `migrations/` taşı (commit) → `--status` → `013_plan_catalog_2026_10.sql bekliyor` (⚠ VERİ SİLER işareti OLMAMALI; `--allow-destructive` GEREKMEZ) → `--apply` → `--status`.
+- Kontrol: doğrulama 1 paket tablosuyla birebir (Elmas `independent/public = NULL`, haklar 1/3/5/20, Elmas 849); doğrulama 2 **boş**.
+- Kontrol: `php api/database/plan_limits_selftest.php --strict` → **çıkış 0** (B bölümü yeşil); `/dashboard/upgrade` ve ana sayfa fiyatları 0 / 149 / 299 / 849 ₺; Elmas planındaki bir kullanıcının `getchatbotlimits.php` yanıtında `*_unlimited: true`.
+- Geri alma: plan değerleri için 007'deki değerlerle UPDATE (`privacy_right_limit = 1`); özellik metinleri için 007 BÖLÜM 3 metinleri ilk satırlara yazılır; 013'ün EKLEDİĞİ satırları kaldırmak silme gerektirir (yıkıcı, kullanıcı çalıştırır).
