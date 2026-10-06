@@ -1008,28 +1008,9 @@ class MarketplaceController {
         JsonResponse::success(['message' => 'Abonelik güncellendi.', 'id' => $id]);
     }
 
-    public static function buyProducerAccount(): void {
-        require_method('POST');
-        $userId = AuthMiddleware::requireAuth();
-        require_once __DIR__ . '/../../../functions/ParamPosMarketplace.php';
-        require_once __DIR__ . '/../../../functions/checkout_payments.php';
-        require_once __DIR__ . '/../../../functions/producer_plan.php';
-
-        $data = json_decode($_POST['data'] ?? '', true) ?? null;
-        if (!$data) JsonResponse::error('Eksik veri.', 400, AppConfig::ERR_VALIDATION);
-
-        $data['user_id'] = $userId;
-        $status = buyProducerAccount(Database::getInstance(), $data);
-        echo json_encode($status, JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    public static function getProducerPlanStatus(): void {
-        require_once __DIR__ . '/../../../functions/producer_plan.php';
-        $userId = AuthMiddleware::requireAuth();
-
-        $status = getProducerPlanStatus(Database::getInstance(), $userId);
-        echo json_encode(array_merge(['success' => true], $status));
-        exit;
-    }
+    // S14 (2026-10-06) — "Üretici hesabı" (750 ₺) kaldırıldı: buyProducerAccount
+    // ve getProducerPlanStatus uç noktaları, functions/producer_plan.php ve
+    // AppConfig::PRODUCER_* sabitleri silindi. Satış zaten fail-closed'du ve
+    // teklif üyelik paketleriyle çelişiyordu. producer_plans /
+    // producer_self_use_credits tabloları şemada duruyor (silmek yıkıcı).
 }

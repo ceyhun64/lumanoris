@@ -12,18 +12,13 @@ final class AppConfig {
     const FREE_INDEPENDENT_BOT_LIMIT = 1;
     const FREE_PUBLIC_BOT_LIMIT      = 2;
 
-    // ── Producer-plan bot limits ───────────────────────────────────────────
-    // H-10 — buradaki yorum güncelliğini yitirmişti ("chatbot_limits.php only
-    // ever applies the FREE_* limits"), iki farklı gerçeği tek cümlede
-    // birleştiriyordu. Doğrusu ikiye ayrılmış hâli:
+    // H-10 — FREE_* bir FALLBACK'tir, ölü değil: `plans.php` canlı kotaları
+    // `plans` tablosundan okuyor, tablo yoksa/plan bulunamazsa
+    // `fallbackPlan()` bu sabitlere düşüyor.
     //
-    //   • FREE_* bir FALLBACK'tir, ölü değil: `plans.php` canlı kotaları
-    //     `plans` tablosundan okuyor, tablo yoksa/plan bulunamazsa
-    //     `fallbackPlan()` bu sabitlere düşüyor.
-    //   • PRODUCER_* gerçekten ÖLÜ: üretici planı akışı kapalı (D-07,
-    //     `producer_plan.php`), bu iki sabiti hiçbir kod okumuyor.
-    const PRODUCER_INDEPENDENT_LIMIT = 10;
-    const PRODUCER_PUBLIC_LIMIT      = 20;
+    // S14 (2026-10-06) — kullanılmayan PRODUCER_INDEPENDENT_LIMIT /
+    // PRODUCER_PUBLIC_LIMIT sabitleri, üretici hesabı akışıyla birlikte
+    // kaldırıldı.
 
     // ── Eğitim metni tavanı ────────────────────────────────────────────────
     // B-13 — okuma tarafı (ChatController, Gemini'ye giden bağlam) 60.000

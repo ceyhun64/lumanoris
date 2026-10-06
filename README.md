@@ -23,8 +23,9 @@ answer on a single origin (`http://localhost:3000` by default in development).
 > live keys in `api/.env`, checkout moves real money. `IYZICO_BASE_URL` defaults to the **sandbox**
 > host, and with no keys at all every payment path fails closed. See [Payments](#payments).
 >
-> Two subsystems are still explicitly labelled **development stubs** in their own source files: the
-> Param POS marketplace client (seller KYC / sub-merchant registration) and producer-plan purchase.
+> One subsystem is still explicitly labelled a **development stub** in its own source file: the
+> Param POS marketplace client (seller KYC / sub-merchant registration). Producer-plan purchase was
+> removed (S14, 2026-10-06).
 > See [Development stubs](#development-stubs) before assuming seller onboarding works end to end.
 > Payment charging, transactional email and plan-based chatbot limits were previously stubs and are
 > now real implementations.
@@ -593,8 +594,6 @@ static content popups in `web/src/widgets/info/`.
 | `/api/marketplace/createsubscription.php` | POST | user |
 | `/api/marketplace/updatesubscription.php` | POST | user |
 | `/api/marketplace/deletesubscription.php` | POST | user |
-| `/api/marketplace/buyproduceraccount.php` | POST | user |
-| `/api/marketplace/getproducerplanstatus.php` | GET/POST | user |
 | `/api/marketplace/buychatbot.php` | GET/POST | none — retired, always returns `410` |
 
 ### social
@@ -1029,10 +1028,9 @@ dropping them silently. `BaseRepository` validates every column name against
 | `REMEMBER_ME_DAYS` | 30 | Remember-me lifetime |
 
 > [!NOTE]
-> `PRODUCER_INDEPENDENT_LIMIT`, `PRODUCER_PUBLIC_LIMIT`, `SERVICE_FEE_PERCENT`,
-> `SERVICE_FEE_EXEMPT_ABOVE` and `DEFAULT_PAGE_LIMIT` are declared but read by no code. In
+> `SERVICE_FEE_PERCENT`, `SERVICE_FEE_EXEMPT_ABOVE` and `DEFAULT_PAGE_LIMIT` are declared but read by no code. In
 > particular **no service fee is charged anywhere** — do not assume one is applied because the
-> constants exist. The producer limits are superseded by the `plans` table.
+> constants exist.
 
 `web/src/shared/lib/pricing.js` deliberately mirrors the pricing values for client-side validation,
 and `api/functions/coin_engine.php` mirrors the bonus-credit tiers used by
@@ -1065,7 +1063,6 @@ Each one says so in its own header comment.
 | File | Stubbed behaviour |
 | --- | --- |
 | `api/functions/ParamPosMarketplace.php` | Every sub-merchant and province/district method returns a failure or an empty list. This is fail-closed by design, but the practical consequence is that on a clean install **nobody can become a seller**, so no bot can be published. Personal data in call logs is redacted. Note this is *seller KYC only* — buyer-side charging does not go through this class. |
-| `api/functions/producer_plan.php` | `buyProducerAccount()` always fails; `getProducerPlanStatus()` always reports no plan. **The blocker is no longer payment.** Charging works, but nothing reads the `producer_plans` row: bot limits come only from `user_plan_selection` + `plans` via `functions/plans.php`, and `AppConfig::PRODUCER_*_LIMIT` is read by no code. Enabling the charge today would take 750 ₺ and grant nothing. The file header lists the three changes needed to open it. |
 
 > [!NOTE]
 > `api/functions/checkout_payments.php`, `api/functions/phpmailer.php` and

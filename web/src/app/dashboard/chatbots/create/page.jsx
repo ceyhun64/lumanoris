@@ -1,5 +1,4 @@
 ﻿"use client";
-import { ModalPortal } from "@/shared/ui/modal-portal";
 
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { UserContext } from "@/shared/contexts/UserContext";
@@ -18,7 +17,6 @@ import {
   Globe2,
   Sparkles,
   ArrowRight,
-  Crown,
   FileText,
   Rocket,
   Bot,
@@ -37,8 +35,6 @@ import {
   Cpu,
   Star,
   RefreshCw,
-  X,
-  CreditCard,
   User,
   Plus,
   Send,
@@ -141,135 +137,6 @@ function Skeleton({ className = "" }) {
     <div
       className={cn("animate-pulse rounded-xl bg-white/[0.06]", className)}
     />
-  );
-}
-
-function BuyProducerAccountModal({ isOpen, onClose, userId, onPurchased }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  if (!isOpen) return null;
-
-  const handleBuy = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const formData = new FormData();
-      formData.append("data", JSON.stringify({}));
-      const res = await fetch("/api/marketplace/buyproduceraccount.php", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
-      const result = await res.json();
-      if (result.success) {
-        if (onPurchased) onPurchased();
-        onClose();
-      } else {
-        setError(result.message || "Satın alma işlemi tamamlanamadı.");
-      }
-    } catch (err) {
-      console.error("Buy producer account error:", err);
-      setError("Sunucuya bağlanılamadı.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <ModalPortal onClose={onClose}>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-        <div className="relative w-full  rounded-2xl bg-zinc-900 border border-fuchsia-500/30 p-6 shadow-2xl shadow-fuchsia-950/50 space-y-6 overflow-hidden max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
-          {/* Glow ambient */}
-          <div className="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-fuchsia-500/20 blur-3xl" />
-  
-          <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20">
-                <Crown className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">
-                  Üretici Hesabı Satın Al
-                </h3>
-                <p className="text-xs text-zinc-400">
-                  Sınırsız AI kapasitesi ve pazaryeri satıcı hakları
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-  
-          <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-zinc-950/60 border border-white/5 space-y-3">
-              <div className="flex items-baseline justify-between">
-                <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider">
-                  Tek Seferlik Lisans
-                </span>
-                <span className="text-2xl font-black text-white">750 ₺</span>
-              </div>
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                Bu lisans ile hesabınıza kalıcı üretici hakları tanımlanır. Ek
-                olarak yeni yayın hakları kazanırsınız.
-              </p>
-            </div>
-  
-            <div className="space-y-2.5">
-              {[
-                "5 Adet Herkese Açık Pazaryeri Botu Yayınlama Hakkı",
-                "2 Adet Bağımsız (Özel) Bot Oluşturma Hakkı",
-                "%80 Kazanç Payı ile Doğrudan Banka Hesabınıza Transfer",
-                "Öncelikli Vektör Veritabanı ve İşlem Gücü",
-              ].map((feat, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-2.5 text-xs text-zinc-300"
-                >
-                  <div className="p-0.5 rounded-full bg-emerald-500/20 text-emerald-400">
-                    <Check className="w-3.5 h-3.5" />
-                  </div>
-                  <span>{feat}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-  
-          {error && (
-            <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3">
-              {error}
-            </p>
-          )}
-  
-          <div className="flex items-center gap-3 pt-2">
-            <button
-              onClick={onClose}
-              className="flex-1 py-3 rounded-xl border border-white/10 text-xs font-semibold text-zinc-300 hover:bg-white/5 transition cursor-pointer"
-            >
-              Vazgeç
-            </button>
-            <button
-              onClick={handleBuy}
-              disabled={loading}
-              className="flex-1 py-3 rounded-xl bg-gradient-btn text-xs font-semibold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <CreditCard className="w-4 h-4" />
-                  <span>Ödemeyi Tamamla (750 ₺)</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    </ModalPortal>
   );
 }
 
@@ -1389,8 +1256,6 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
     isEditing ? (bot.chatbot?.is_independent ? "independent" : "public") : null,
   );
   const [limits, setLimits] = useState(null);
-  const [planActive, setPlanActive] = useState(null);
-  const [showBuyPlan, setShowBuyPlan] = useState(false);
 
   const fetchLimits = () => {
     if (!userId) return;
@@ -1420,12 +1285,6 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
   useEffect(() => {
     if (isEditing || !userId) return;
     fetchLimits();
-    fetch(`/api/marketplace/getproducerplanstatus.php?user_id=${userId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setPlanActive(!!data.active);
-      })
-      .catch(() => setPlanActive(false));
   }, [isEditing, userId]);
 
   if (!userId || (!isEditing && !limits)) {
@@ -1442,10 +1301,6 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
 
   // State 1: New Chatbot and no selection made yet
   if (!isEditing && choice === null) {
-    const canBuyPlan =
-      (!limits.can_create_independent || !limits.can_create_public) &&
-      planActive === false;
-
     return (
       <div className="space-y-10">
         <PageHeader
@@ -1569,33 +1424,6 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
           </GlassCard>
         </div>
 
-        {/* Upgrade Callout Banner */}
-        {canBuyPlan && (
-          <div className="relative overflow-hidden rounded-2xl border border-fuchsia-500/30 bg-gradient-to-r from-fuchsia-950/40 via-violet-950/30 to-zinc-900 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 shrink-0">
-                <Crown className="w-7 h-7" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-base font-bold text-white">
-                  Üretici Limitinizi Yükseltin
-                </h4>
-                <p className="text-xs text-zinc-400 max-w-md">
-                  750₺ karşılığında 5 adet Herkese Açık ve 2 adet Bağımsız Bot
-                  oluşturma hakkını anında aktifleştirin.
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowBuyPlan(true)}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-btn text-xs font-bold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer shrink-0"
-            >
-              Şimdi Satın Al
-            </button>
-          </div>
-        )}
-
         {/* Visual Workflow Steps Preview */}
         <div className="pt-4 border-t border-white/10 space-y-4">
           <p className="text-xs font-mono font-semibold uppercase tracking-widest text-zinc-400">
@@ -1630,15 +1458,6 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
           </div>
         </div>
 
-        <BuyProducerAccountModal
-          isOpen={showBuyPlan}
-          onClose={() => setShowBuyPlan(false)}
-          userId={userId}
-          onPurchased={() => {
-            setPlanActive(true);
-            fetchLimits();
-          }}
-        />
       </div>
     );
   }
