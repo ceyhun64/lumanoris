@@ -2,36 +2,35 @@
 import { useCallback, useEffect, useState } from "react";
 
 /**
- * "Pazaryeri kaydı var mı?" — madde 4 (Bakiyem kapısı) için TEK kaynak.
+ * "Pazaryeri kaydı var mı?" — madde 4 (Bakiyem kapısı) ve başvuru sayfası
+ * için TEK kaynak.
  *
- * GK-5: başvuru yapmış olmak Bakiyem'i açar; sınırsız bot hakkı ise yalnızca
- * onaylanmış (`active`) satıcıya verilir — o ikinci kural sunucuda, Faz 3'te.
+ * GK-22 (Faz 5): karar artık SUNUCUDA, `application_status.php` yanıtındaki
+ * `registered` alanında (`hasMarketplaceRegistration()`): yeni başvuru
+ * tablosunda submitted/reviewed VEYA eski param_marketplace_sellers'ta
+ * active/suspended.
  *
- * BUGÜNKÜ VERİ KAYNAĞI GEÇİCİ: başvuruları saklayan tablo Faz 5'te gelecek.
- * O zamana kadar "başvuru yapmış" = `param_marketplace_sellers` satırı olan
- * ve durumu `pending | active | suspended | rejected` olan kullanıcı
- * (eski kayıt akışında bir başvuru denemesi yapılmış). `not_started` ve
- * yalnızca banka bilgisi doldurulmuş (`kyc_filled`) başvuru sayılmaz.
- * Faz 5'te bu hook yeni başvuru durumunu da okuyacak; çağıranlar değişmez.
+ * DAVRANIŞ DEĞİŞİKLİĞİ: Faz 2 sürümü eski tablodaki `pending` ve `rejected`
+ * durumlarını da "kayıtlı" sayıyordu. `rejected` B1 yüzünden otomatik
+ * yazılan bir ret olduğu için artık sayılmıyor; o kullanıcılar Bakiyem'i
+ * görmek için yeni başvuru yapmalı.
  *
- * Bu bir ARAYÜZ kapısıdır; wallet uç noktalarının sunucu yetkisi
- * değiştirilmedi (bkz. 11-pazaryeri-revizyon.md, Faz 2 madde 4).
+ * Bu bir ARAYÜZ kapısıdır; wallet uç noktalarının sunucu yetkisi değişmedi.
  *
- * Aynı sayfada kenar çubuğu, başlık ve Bakiyem aynı anda soruyor; istek
- * kullanıcı başına bir kez atılıyor (modül düzeyinde önbellek).
+ * Kenar çubuğu, başlık ve sayfa aynı anda soruyor; istek kullanıcı başına bir
+ * kez atılıyor (modül düzeyinde önbellek). Başvuru gönderilince `refetch()`.
  */
-const REGISTERED_STATUSES = ["pending", "active", "suspended", "rejected"];
-const cache = new Map(); // userId -> Promise<{status}>
+const cache = new Map(); // userId -> Promise<{registered, application}>
 
 function loadStatus(userId) {
   if (!cache.has(userId)) {
-    const p = fetch("/api/seller/submerchant_status.php", { credentials: "include" })
+    const p = fetch("/api/seller/application_status.php", { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         if (!data || data.success === false) {
           throw new Error(data?.message || "Pazaryeri kaydı durumu alınamadı.");
         }
-        return { status: data.status ?? null };
+        return { registered: data.registered === true, application: data.application ?? null };
       })
       .catch((err) => {
         cache.delete(userId); // hata önbelleğe alınmasın, tekrar denenebilsin
@@ -46,36 +45,26 @@ export function useMarketplaceRegistration(userId) {
   const [state, setState] = useState({
     loading: true,
     registered: false,
-    status: null,
+    application: null,
     error: null,
   });
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!userId) {
-      setState({ loading: false, registered: false, status: null, error: null });
+      setState({ loading: false, registered: false, application: null, error: null });
       return;
     }
     let cancelled = false;
     setState((prev) => ({ ...prev, loading: true, error: null }));
     loadStatus(userId)
-      .then(({ status }) => {
+      .then(({ registered, application }) => {
         if (cancelled) return;
-        setState({
-          loading: false,
-          registered: REGISTERED_STATUSES.includes(status),
-          status,
-          error: null,
-        });
+        setState({ loading: false, registered, application, error: null });
       })
       .catch((err) => {
         if (cancelled) return;
-        setState({
-          loading: false,
-          registered: false,
-          status: null,
-          error: err.message || String(err),
-        });
+        setState({ loading: false, registered: false, application: null, error: err.message || String(err) });
       });
     return () => {
       cancelled = true;
