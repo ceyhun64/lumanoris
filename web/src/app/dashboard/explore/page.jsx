@@ -226,7 +226,8 @@ export default function Explore() {
       type: bot.durum == 0 ? "sold" : "produced",
       label: bot.durum == 1 ? "Daha Önce Satıldı" : "Doğrulanmış Üretim",
     },
-    rating: 4.9,
+    // N-15: puan verisi yok (API döndürmüyor); sabit 4.9 uydurmaydı.
+    rating: null,
   }));
 
   let filteredBots = mappedBots;

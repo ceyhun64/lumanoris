@@ -153,12 +153,16 @@ export default function BotCard({
 
         {/* Price & Rating Tag */}
         <div className="absolute bottom-3 right-3 left-3 flex items-center justify-between">
-          <div className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-950/80 px-2 py-0.5 text-caption font-semibold text-amber-300 backdrop-blur-md">
-            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-            <span>{bot.rating || "4.9"}</span>
-          </div>
+          {/* N-15 — puanı olmayan botta sabit "4.9" gösteriliyordu (uydurma
+              veri). Puan yalnızca gerçekten varsa çiziliyor. */}
+          {bot.rating != null && (
+            <div className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-950/80 px-2 py-0.5 text-caption font-semibold text-amber-300 backdrop-blur-md">
+              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+              <span>{bot.rating}</span>
+            </div>
+          )}
 
-          <div className="rounded-xl border border-white/15 bg-zinc-950/90 px-3 py-1 text-xs font-bold font-mono text-white backdrop-blur-md shadow-xl">
+          <div className="ml-auto rounded-xl border border-white/15 bg-zinc-950/90 px-3 py-1 text-xs font-bold font-mono text-white backdrop-blur-md shadow-xl">
             {bot.weeklyPrice > 0 ? (
               <span className="text-emerald-400">
                 ₺{bot.weeklyPrice}

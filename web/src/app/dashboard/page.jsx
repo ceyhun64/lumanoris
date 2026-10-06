@@ -913,7 +913,8 @@ export function MainDashboard2026() {
                 label:
                   bot.durum == 1 ? "Daha Önce Satıldı" : "Doğrulanmış Üretim",
               },
-              rating: 4.9,
+              // N-15: puan verisi yok; sabit 4.9 uydurmaydı.
+              rating: null,
               userLists: Array.isArray(listsData?.lists) ? listsData.lists : [],
             }));
           setAllBots(mapped);

@@ -237,22 +237,26 @@ function BotQuickDetailModal({ bot, isOpen, onClose, router }) {
           {/* Üçüncü kutu "Model: GPT-4o Omnimodal" yazıyordu; kaldırıldı.
               Izgara 3 sütundan 2'ye indi, aksi hâlde kalan iki kutu yarım
               satırda asılı kalırdı. */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-center">
-              <p className="text-caption text-zinc-500 uppercase font-mono">
-                Puan
-              </p>
-              <p className="text-sm font-bold text-amber-400 flex items-center justify-center gap-1 mt-0.5">
-                <Star className="w-3.5 h-3.5 fill-amber-400" />{" "}
-                {bot.puan || "4.9"}
-              </p>
-            </div>
+          {/* N-15 — puanı olmayan botta sabit "4.9", takipçisi olmayanda
+              "1.2k" yazıyordu (uydurma veri). Puan kutusu yalnızca puan varsa. */}
+          <div className={bot.puan != null ? "grid grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
+            {bot.puan != null && (
+              <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-center">
+                <p className="text-caption text-zinc-500 uppercase font-mono">
+                  Puan
+                </p>
+                <p className="text-sm font-bold text-amber-400 flex items-center justify-center gap-1 mt-0.5">
+                  <Star className="w-3.5 h-3.5 fill-amber-400" />{" "}
+                  {bot.puan}
+                </p>
+              </div>
+            )}
             <div className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 text-center">
               <p className="text-caption text-zinc-500 uppercase font-mono">
                 Takipçi
               </p>
               <p className="text-sm font-bold text-white mt-0.5">
-                {bot.takipci_sayisi || "1.2k"}
+                {Number(bot.takipci_sayisi) || 0}
               </p>
             </div>
           </div>
@@ -668,10 +672,12 @@ export default function Following() {
                         <Zap className="w-3 h-3" />#
                         {bot.kategori_adi || "AI Bot"}
                       </span>
-                      <span className="flex items-center gap-1 text-amber-400">
-                        <Star className="w-3 h-3 fill-amber-400" />
-                        {bot.puan || "4.9"}
-                      </span>
+                      {bot.puan != null && (
+                        <span className="flex items-center gap-1 text-amber-400">
+                          <Star className="w-3 h-3 fill-amber-400" />
+                          {bot.puan}
+                        </span>
+                      )}
                     </div>
 
                     <h3
@@ -694,7 +700,7 @@ export default function Following() {
                 <div className="p-4 pt-2 border-t border-white/[0.06] mt-2 flex items-center justify-between">
                   <span className="text-caption font-mono text-zinc-500 flex items-center gap-1">
                     <Users className="w-3 h-3 text-zinc-600" />
-                    {bot.takipci_sayisi || "1.2k"} Takipçi
+                    {Number(bot.takipci_sayisi) || 0} Takipçi
                   </span>
 
                   <button
