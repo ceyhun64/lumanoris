@@ -1121,3 +1121,61 @@ Doğrulama: her PHP değişikliğinde `php -l`, PHP değişikliğinde iyzico öz
 - Kontrol: doğrulama 1 paket tablosuyla birebir (Elmas `independent/public = NULL`, haklar 1/3/5/20, Elmas 849); doğrulama 2 **boş**.
 - Kontrol: `php api/database/plan_limits_selftest.php --strict` → **çıkış 0** (B bölümü yeşil); `/dashboard/upgrade` ve ana sayfa fiyatları 0 / 149 / 299 / 849 ₺; Elmas planındaki bir kullanıcının `getchatbotlimits.php` yanıtında `*_unlimited: true`.
 - Geri alma: plan değerleri için 007'deki değerlerle UPDATE (`privacy_right_limit = 1`); özellik metinleri için 007 BÖLÜM 3 metinleri ilk satırlara yazılır; 013'ün EKLEDİĞİ satırları kaldırmak silme gerektirir (yıkıcı, kullanıcı çalıştırır).
+
+---
+
+# Faz 4 — Bağımsız chatbot yayınlama (madde 10) — ÖNERİ, ONAY BEKLİYOR (2026-10-06)
+
+Sunucu değişikliği **uygulanmadı**. Tam diff: `docs/proposals/faz4-erisim-listeleme.patch` (4 dosya, +94/−24; `git apply --check` temiz). Öncesinde yerelde 013 uygulandı (plan testi `--strict` 44/0) ve B2 kullanıcı talimatıyla kapatıldı.
+
+**Tasarım (GK-1, GK-2):** "ücretsiz herkese açık bot" = `is_independent = 0` ve iki fiyat da boş/0. Fiyat yalnızca `publishChatbot`/`updateChatbotPrice` ile ve en az 100 ₺ yazılabildiği için fiyatlı bir bot bu tanıma giremez. Yeni bir erişim amacı eklenir — `userHasAccess('chat')` = sahip/abone **veya** ücretsiz herkese açık. `'full'` (persona `style_prompt`, eğitim metni `get_training_chunks`) **değişmez**: ücretsiz botların personası ve eğitim metni yalnızca sahip/aboneye kalır.
+
+## Ölçülen önce/sonra matrisi
+
+Kullanıcı U = sahip değil, aktif aboneliği yok. Yerelde ölçüldü (`f4_matrix.php`). Senaryo verisi transaction içinde kuruldu, ROLLBACK yapıldı; kalıcı yazma yok.
+
+| Bot | Vitrin (getPublished) | preview | **chat** (sohbet) | full (persona/eğitim) | getDetail persona |
+|---|---|---|---|---|---|
+| Özel (`is_independent=1`) | hayır → hayır | hayır → hayır | hayır → hayır | hayır → hayır | yok → yok |
+| Ücretsiz herkese açık, yazar satıcı DEĞİL | hayır → **EVET** | hayır → **EVET** | hayır → **EVET** | hayır → hayır | yok → **gizli** |
+| Fiyatlı, satıcı aktif | EVET → EVET | EVET → EVET | hayır → hayır | hayır → hayır | gizli → gizli |
+| Fiyatlı, satıcı pasif | hayır → hayır | hayır → hayır | hayır → hayır | hayır → hayır | yok → yok |
+| Sahibin kendi özel botu (sahip olarak) | — | — | EVET → EVET | EVET → EVET | görünür → görünür |
+
+## Kural bazında önce/sonra
+
+| Kural / uç nokta | Önce | Sonra |
+|---|---|---|
+| `userHasAccess('preview')` | sahip/abone + (yayında **ve** satıcı aktif) | sahip/abone + yayında **ve** (ücretsiz **veya** satıcı aktif) |
+| `userHasAccess('chat')` (yeni) | yok — `generateReply` `'full'` kullanıyordu | sahip/abone + ücretsiz herkese açık. `generateReply` artık bunu kullanıyor |
+| `userHasAccess('full')` | sahip/abone | **değişmedi** |
+| `getPublished` / `countPublished` / `getSuggested` | yalnızca satıcısı aktif yazarın yayındaki botları (INNER JOIN) | ücretsiz herkese açık (her yazar) + fiyatlı yalnızca satıcı aktifse (LEFT JOIN + koşul) |
+| `getBotsOfList` (N-09) | listede yalnızca satıcısı aktif botlar | vitrinle aynı görünürlük |
+| `publishChatbot` | fiyat zorunlu (≥100 ₺) + aktif satıcı | fiyatsız → ücretsiz herkese açık, satıcı şartı YOK; fiyatlı → eskisi gibi (fiyat aralığı + aktif satıcı). Herkese açık limiti ikisinde de kilit altında |
+| `saveChatbot` (herkese açık oluşturma) | aktif satıcı şartı | şart yok — oluşturulan herkese açık bot her zaman ücretsiz (fiyat alanları burada zaten reddediliyor) |
+| `updateChatbotPrice` (N-08) | yalnızca sahiplik | sahiplik + **aktif satıcı** |
+| `getDetail` (`getchatbot.php`) | `has_access` = full | `has_access` = chat; `style_prompt` yalnızca full'de |
+
+## Sömürü / kötüye kullanım senaryoları
+
+| # | Senaryo | Sonuç |
+|---|---|---|
+| E1 | Özel botun sızması: U, özel bir botun id'siyle `getchatbot`/`generatereply` çağırır. | Engelli. Yeni dalların hepsi `is_independent = 0` şartını taşıyor; matriste özel bot her sütunda "hayır". |
+| E2 | Fiyatlı botu ücretsiz kullanmak: U, fiyatlı bir botla abonelik olmadan sohbet etmeye çalışır. | Engelli. `chat` dalı iki fiyatın da 0/boş olmasını istiyor; fiyat <100 ₺ yazılamıyor (`assertValidPrice`). Matriste "Fiyatlı, satıcı aktif" → chat hayır. |
+| E3 | Ücretsiz botun persona/eğitim metnini çekmek: U, ücretsiz bir botun `style_prompt`'unu `getchatbot.php`'den, eğitim metnini `get_training_chunks.php`'den ister. | Engelli. İkisi de `'full'`'e bağlı ve `'full'` değişmedi (matris: persona gizli, full hayır). Ücretsiz botu `'full'`'e eklemek bu iki sızıntıyı açardı; ayrı `'chat'` amacının nedeni bu. |
+| E4 | Satıcı olmayanın fiyat ataması (N-08): ücretsiz botuna fiyat yazıp publish'in satıcı şartını dolaylı atlamak. | Kapanıyor: `updateChatbotPrice` aktif satıcı istiyor. |
+| E5 | Limit aşımı: herkese açık limitini ücretsiz yayınla aşmak. | Engelli. Ücretsiz yayın da `getPublicBotLimit` + C-01 kilidinden geçiyor; `saveChatbot` da aynı. |
+| E6 | Bedava sınırsız sohbet: ücretsiz bot üzerinden coin harcamadan model kullanmak. | Engelli. `generateReply`'de `consumeMessage` erişim kontrolünden sonra her mesajda çalışıyor; ücretsiz botta kullanıcının günlük coin'i düşüyor (GK-2). |
+| E7 | İçerik/spam: satıcı olmayan herkes vitrine bot koyabilir. | **Yeni risk.** `ContentPolicy::assertClean` kayıtta çalışıyor, bildir/gizle var; ama ön moderasyon yok. Herkese açık limiti (ücretsiz plan 2) yığılmayı sınırlıyor. |
+| E8 | Ücretsiz bota sepet/abonelik: satıcısı aktif bir yazarın fiyatsız botunu sepete ekleyip 0 ₺ abonelik oluşturmak. | **Kapsam dışı, açık** (ödeme yolu: `addToCart`/`createSubscription`). Bugün `addToCart` yalnızca satıcı aktifliğine bakıyor, fiyata bakmıyor. Öneri ayrı onayla: `addToCart`'ta `ucret_haftalik <= 0` → "Bu bot ücretsiz" reddi; arayüzde ücretsiz botta "Sepete Ekle" gizlenir. |
+
+## Henüz yazılmayan arayüz işleri (sunucu onayından sonra)
+
+- **Madde 2 — oluştur sayfası:** "Pazaryerinde Yayınla" kartının yerine "Herkese Açık Chatbot Oluştur" (ücretsiz, satıcı şartı yok); seller-wizard'lı "State 2" kalkar; "Pazaryerine Kaydet" küçük bağlantı → başvuru sayfası.
+- **Madde 10 — `PublishModal`:** iki seçenek. **Yayınla** = fiyatsız `publishChatbot`. **Pazaryerine Kaydet** = "pazaryerinde satış için şirket başvurusu gerekiyor" açıklamalı pop-up → `/dashboard/pazaryeri-basvurusu`. Satıcı durumu yaratmaz, B1'i örtmez.
+- **Madde 1 (sihirbaz):** bu iki değişiklikten sonra `SellerOnboardingWizard` hiçbir yerden çağrılmaz (bugün tek çağıranları `create/page.jsx` ve `PublishModal.jsx`). Sihirbazı düzenlemek yerine üç yerde çağıran araması yapılıp ölü kod olarak silinir. Bireysel kayıt yalnızca başvuru sayfasındaki "Yakında" kartı olarak kalır.
+- **Vitrin/profil:** fiyatsız bota "Ücretsiz" rozeti; ücretsiz botta "Sepete Ekle" gizli (E8'in arayüz yarısı).
+
+## N-14 — ölçüm
+
+Yerelde platform botu "LUMANORIS AI" (#5) herkese açık ama **50 ₺ fiyatlı** (sahibi `lumanoris`). Matristeki "Fiyatlı, satıcı aktif" satırı bu bot: abonesi olmayan kullanıcı bugün sohbet edemiyor (**şüphe yerelde doğrulandı**) ve önerilen yamadan sonra da edemez. Ana sayfa ise onu herkese varsayılan bot olarak sunuyor. Çözüm bir veri kararı: platform botunun fiyatı kaldırılırsa (`ucret_haftalik/aylik = NULL`) yamadan sonra ücretsiz herkese açık olur ve herkes sohbet edebilir. Bu bir UPDATE, onay gerektirir; canlıdaki durum kullanıcıdan bekleniyor.
