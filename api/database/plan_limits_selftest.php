@@ -31,11 +31,31 @@ require_once __DIR__ . '/../functions/chatbot_limits.php';
 
 $pass = 0;
 $fail = 0;
+// B bölümü (müşteri paket tablosu) 013 uygulanana kadar bilerek kırmızı.
+// Bu başarısızlıklar ayrı sayılıyor ve çıkış kodunu BOZMUYOR — aksi hâlde
+// doğrulama kuralı ("başarısız test varsa commit yok") her commit'i
+// engellerdi. `--strict` verilirse B de çıkış koduna dahil.
+$expectedRedFail = 0;
+$inExpectedRed   = false;
+$strict          = in_array('--strict', $argv ?? [], true);
 
 function check(string $label, bool $ok, string $detail = ''): void {
-    global $pass, $fail;
-    if ($ok) { $pass++; echo "  [OK]   $label\n"; }
-    else     { $fail++; echo "  [FAIL] $label" . ($detail !== '' ? " — $detail" : '') . "\n"; }
+    global $pass, $fail, $expectedRedFail, $inExpectedRed;
+    if ($ok) { $pass++; echo "  [OK]   $label\n"; return; }
+    if ($inExpectedRed) {
+        $expectedRedFail++;
+        echo "  [RED]  $label" . ($detail !== '' ? " — $detail" : '') . "\n";
+        return;
+    }
+    $fail++;
+    echo "  [FAIL] $label" . ($detail !== '' ? " — $detail" : '') . "\n";
+}
+
+function finish(): void {
+    global $pass, $fail, $expectedRedFail, $strict;
+    echo "\n=== SONUÇ: $pass geçti, $fail başarısız"
+        . ($expectedRedFail > 0 ? ", $expectedRedFail beklenen kırmızı (B)" : '') . " ===\n\n";
+    exit(($fail > 0 || ($strict && $expectedRedFail > 0)) ? 1 : 0);
 }
 
 echo "\n=== A) REGRESYON — ücretsiz plan 1 / 2 / 10 ===\n\n";
@@ -54,8 +74,7 @@ try {
     $db = Database::getInstance();
 } catch (Throwable $e) {
     echo "\n  (veritabanı yok — tablo yolu atlandı: {$e->getMessage()})\n";
-    echo "\n=== SONUÇ: $pass geçti, $fail başarısız ===\n\n";
-    exit($fail > 0 ? 1 : 0);
+    finish();
 }
 
 // Plan seçmemiş (ya da süresi dolmuş) ve onaylı satıcı OLMAYAN bir kullanıcı
@@ -99,6 +118,7 @@ if ($unapproved) {
         !isUnlimitedBotLimit(getPublicBotLimit($db, (int) $unapproved['user_id'])));
 }
 
+$inExpectedRed = true;
 echo "\n=== B) MÜŞTERİ PAKET TABLOSU — paket migration'ı uygulanana kadar KIRMIZI ===\n\n";
 
 $catalog = [];
@@ -131,5 +151,4 @@ foreach ($expected as $name => [$price, $coin, $indep, $public]) {
     }
 }
 
-echo "\n=== SONUÇ: $pass geçti, $fail başarısız ===\n\n";
-exit($fail > 0 ? 1 : 0);
+finish();

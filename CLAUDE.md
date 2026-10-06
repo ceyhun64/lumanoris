@@ -102,9 +102,12 @@ cd web && NEXT_DIST_DIR=.next-verify npm run build
 cd web && npm run lint
 find api -name "*.php" -not -path "*/vendor/*" -print0 | xargs -0 -n1 php -l
 php api/database/iyzico_selftest.php     # A bölümü anahtarsız da geçmeli
+php api/database/plan_limits_selftest.php # A/A2/C yeşil olmalı; B paket verisine bağlı
 ```
 
 Bir değişiklik bunlardan birini bozuyorsa geri al ve nedenini raporla.
+
+**Çıkış kodu kuralı:** Doğrulama çıktısını `tail`/`head`/`grep` ile kısaltıyorsan zincirin başına `set -o pipefail` koy ya da komutun çıkış kodunu ayrıca kontrol et (`cmd > log; echo $?`). Aksi hâlde borunun sonundaki komut başarısızlığı yutar ve zincir "geçti" gibi devam eder. Doğrulamalardan biri başarısızsa (çıkış kodu ≠ 0 ya da çıktıda `FAIL`/`error`) **commit atılmaz**.
 
 ## Her turun sonunda
 
