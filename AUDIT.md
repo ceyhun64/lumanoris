@@ -1331,3 +1331,142 @@ Kod yazılmadı. Şema: `api/database/pending/016_marketplace_applications.sql` 
 | GK-24 (S-6) | Şahısta vergi no TCKN (11) veya VKN (10); MERSİS kurumsalda zorunlu, şahısta isteğe bağlı. | submit doğrulaması |
 | GK-25 (S-7) | Uygulama içi bildirim altyapısı VAR (`notifications` tablosu + başlıktaki bildirim kutusu): inceleme sonucu kullanıcıya oraya yazılır; ayrıca başvuru sayfasında durum gösterilir. Yeni sistem kurulmadı. | admin durum ucu, başvuru sayfası |
 | GK-26 (S-8) | Admin Başvurular sayfasında tam IBAN ve doğum tarihi görünür; yalnızca admin oturumu; dışa aktarma yok. | admin Başvurular |
+
+## Faz 5 — yapılanlar (2026-10-06)
+
+| İş | Commit | Not |
+|---|---|---|
+| 016 uygulandı (yerel) | `ef2e002` | `marketplace_applications` |
+| Başvuru backend: doğrulama, kayıt, "kaydı var" | `e7991b6` | `application_selftest.php` önce kırmızı (dosya yok), sonra 30/0 |
+| Başvuru sayfası backend'e bağlı; hook sunucu kuralına (GK-22) | `8e50e96` | **Davranış değişikliği:** eski tablodaki `pending`/`rejected` artık "kaydı var" sayılmıyor |
+| Admin Başvurular | `7fefa7a` | GK-23 IBAN aktarımı **kapalı** — 017 onay bekliyor |
+| README | `429d83d` | aşağıda Faz 6 madde 4 |
+| 017 admin işlem logu önerisi | bu commit | `api/database/pending/017_admin_audit_log.sql` — UYGULANMADI |
+
+---
+
+# Faz 6 — Kapanış raporu (2026-10-06)
+
+## 1. Doğrulama komutları (CLAUDE.md, son çalıştırma)
+
+`npm run lint` ✔ · `NEXT_DIST_DIR=.next-verify npm run build` ✔ · `php -l` (tüm api) ✔ · `iyzico_selftest.php` 77/0 · `plan_limits_selftest.php --strict` 44/0 · `access_selftest.php` 21/0 · `application_selftest.php` 30/0. Hepsi çıkış kodu 0. **Tarayıcıda uçtan uca test yapılmadı** — kullanıcı tüm fazları elle test edecek.
+
+## 2. Madde bazında durum
+
+Durumlar: **tamam** · **onay bekliyor** · **blocker'a bağlı (Bn)** · **veri bekliyor**. Blocker'a bağlı madde "çalışıyor" ilan edilmedi.
+
+| Madde | Durum | Not |
+|---|---|---|
+| M0-1 belge ile eğitim | tamam | N-02, sihirbazda kalma, PDF 5 MB. Sohbetin gerçek cevabı **B4**'e (Gemini prod anahtarı) bağlı. |
+| M0-2 bağımsız bota tıklayınca sohbet | tamam | N-01 |
+| M0-3 Liste sayfası 500 | (b) tamam · (a) **veri bekliyor** | N-04 hata/boş durum ayrımı; 500'ün kök nedeni (N-03, büyük olasılıkla migration 009) canlı `migrate.php --status` bekliyor. |
+| M0-4 defter profil butonu | tamam | N-05, N-06; mevcut bozuk kayıtlar için salt okunur teşhis SELECT'i AUDIT'te, onarım yapılmadı. |
+| 1 Bireysel kayıt "Yakında" | tamam | Başvuru sayfasında "Yakında"; eski sihirbaz silindi. |
+| 2 Herkese Açık Chatbot Oluştur | tamam · sınırsız hak **B1** | Kart + sunucu limiti; onaylı satıcıya sınırsız hak B1 açıkken kimseye uygulanamıyor. |
+| 3 Pazaryeri Başvurusu | tamam · IBAN aktarımı **onay bekliyor** · satış **B1** | Başvuru/inceleme çalışıyor; "incelendi" satıcıyı aktif yapmaz (GK-9). GK-23 IBAN aktarımı 017'ye bağlı. |
+| 4 Bakiyem kapısı | tamam | GK-22 kuralı sunucuda; yalnızca arayüz kapısı. |
+| 5 Satın Aldıklarım görünürlüğü | tamam · pratikte **B1/B3** | Satın alma B1 ve B3 yüzünden yapılamadığı için menü kimsede görünmez. |
+| 6 Ana sayfa seçici | tamam | Erişimsiz bot kilitli; platform botu ücretsiz (N-14, 015). |
+| 7 Ayarlar → Banka → Başvuru | tamam | Yeni IBAN girişi başvuruda; çekime aktarım GK-23/017'ye bağlı. |
+| 8 Günlük 10 coin | doğrulandı | Değişmedi. |
+| 9 Sohbet sayfası "Satın Al" | tamam | Limit bandında "Paketini yükselt". |
+| 10 Yayınla / Pazaryerine Kaydet | tamam · ücretli satış **B1** | Ücretsiz herkese açık yayın çalışıyor. |
+| 11 Özel yapma hakkı | tamam | 012 + kod; N-07 kapandı. |
+| P Paketler | tamam · satın alma **B3** | 013 kataloğu; paket satın alma ödeme yolu B3 (iyzico reddi). |
+
+Açık: N-03 (veri bekliyor), N-06 mevcut kayıt onarımı (karar bekliyor), N-11 kalan ölü kod adayları, 017 (onay bekliyor). Kapanan: N-01, N-02, N-04, N-05, N-06 (yeni kayıtlar), N-07, N-08, N-09, N-10, N-12, N-13, N-14 (yerel), N-15. N-16 yanlış bulguydu.
+
+## 3. Uygulanmamış migration'lar ve canlı sırası
+
+Yerelde uygulananlar: 010, 011, 012, 013, 015, 016. Canlıda hiçbiri uygulanmadı (Claude canlıya bağlanmaz).
+
+| Sıra | Dosya | Tür | Ne zaman / kontrol |
+|---|---|---|---|
+| 0 | yedek | — | Canlı veritabanının yedeği. |
+| 1 | `pending/014_unlist_free_public_drafts.sql` | veri (UPDATE), **koşullu** | Yalnızca "Faz 4 — kontrol A" sorgusu satır döndürür ve onaylanırsa; **koddan ÖNCE**. Kontrol: `kalan = 0`. |
+| 2 | 015 öncesi not | — | Platform botunun mevcut fiyatı (geri alma için). |
+| 3 | **Kod deploy** | — | `faz4-tamam` etiketi Faz 5'i İÇERMEZ; Faz 5 dahil alınacaksa yeni etiket gerekir. Kontrol: dört öz-test 0 başarısız (`plan_limits --strict` 013'ten önce B'de kırmızı verir — normal). |
+| 4 | `010_…`, `011_…` | şema (koşullu ALTER) | Canlıda bekliyorsa. |
+| 5 | `012_plan_privacy_right_and_unlimited.sql` | şema | Koddan SONRA. Kontrol: kolonlar, `user_privacy_right_usage`. |
+| 6 | `013_plan_catalog_2026_10.sql` | veri (UPDATE + INSERT; DELETE yok) | Kontrol: `plan_limits_selftest.php --strict` çıkış 0; doğrulama 2 boş. |
+| 7 | `015_house_bot_free.sql` | veri (UPDATE) | Kontrol: `eslesen = 1`; sıradan hesapla Lumanoris AI sohbeti. |
+| 8 | `016_marketplace_applications.sql` | şema | Kontrol: `application_selftest.php` 30/0; başvuru sayfası 503 vermiyor. |
+| — | `pending/017_admin_audit_log.sql` | şema, **onay bekliyor** | Onaylanırsa 016'dan sonra + IBAN aktarım kodu. |
+
+Geri alma notları her dosyanın başlığında. Hiçbiri `--allow-destructive` gerektirmez.
+
+## 4. README kontrolü
+
+Güncellendi (`429d83d`): rota tablosu (`/dashboard/pazaryeri-basvurusu`), seller API tablosu (2 yeni uç), hız sınırı (`mapp_submit`), çağıransız uçlar (`submerchant_register.php`), yetkilendirme (`full` / `chat` / `preview`, persona yalnızca sahibe), admin Başvurular, `MIN_WEEKLY_PRICE` (README 1 ₺ diyordu, kod 100 ₺), `FREE_PRIVACY_RIGHT_LIMIT`, paket kataloğu + NULL = sınırsız + özel yapma hakkı, migration aralığı 001–016 + `pending/`, yeni öz-testler, coin kademeleri atfı (`BuyModal` → `pricing.js`). Üretici paketi satırları S14'te kaldırılmıştı.
+
+## 5. Değiştirilen dosyalar (main..revize/pazaryeri)
+
+| Dosya | Ne değişti | Madde / ID | Doğrulama |
+|---|---|---|---|
+| `.claude/settings.json` | allow (git add, revize push, migrate) + deny listesi; parolalı kural silindi | kural | geçerli JSON |
+| `AUDIT.md` | Faz 0–6 kayıtları, GK-1…26, N-01…N-16 | kayıt | elle |
+| `BLOCKERS.md` | B1 notları, B2 kapandı (kullanıcı talimatı) | B1, B2 | elle |
+| `CLAUDE.md` | git/migration/faz akışı kuralları, pipefail, öz-test listesi | kural | elle |
+| `README.md` | bkz. madde 4 | Faz 6 | elle |
+| `api/admin/abonelik.php` | özel yapma hakkı alanı, boş kota = sınırsız | M11 | php -l |
+| `api/admin/ajax/basvurular.php` | yeni: başvuru listesi + incele/reddet + bildirim | M3, GK-21/23/25/26 | php -l; oturumsuz 403 |
+| `api/admin/basvurular.php` | yeni: admin Başvurular sayfası | M3 | php -l |
+| `api/admin/index.php` | `/admin/basvurular` rotası | M3 | php -l |
+| `api/admin/partials/_sidebar.php` | Başvurular bağlantısı | M3 | php -l |
+| `api/api/marketplace/buyproduceraccount.php` | silindi | S14 | 3'lü çağıran araması |
+| `api/api/marketplace/getproducerplanstatus.php` | silindi | S14 | 3'lü çağıran araması |
+| `api/api/seller/application_status.php` | yeni uç | M3 | php -l; oturumsuz 401 |
+| `api/api/seller/application_submit.php` | yeni uç | M3 | php -l; oturumsuz 401, GET 405 |
+| `api/database/access_selftest.php` | yeni: erişim/listeleme matrisi testi | M10 | 21/0 (eski kodla 4 hata) |
+| `api/database/application_selftest.php` | yeni: başvuru testi | M3 | 30/0 (önce kırmızı) |
+| `api/database/migrations/012_…` | şema: NULL = sınırsız, hak kolonu/tablosu | M11 | yerelde uygulandı |
+| `api/database/migrations/013_…` | paket verisi (DELETE'siz) | P | yerelde uygulandı; plan --strict 44/0 |
+| `api/database/migrations/015_house_bot_free.sql` | platform botu ücretsiz | N-14, GK-18 | yerelde uygulandı |
+| `api/database/migrations/016_…` | başvuru tablosu | M3, GK-19 | yerelde uygulandı |
+| `api/database/pending/014_…` | koşullu özele çekme | Faz 4 kontrol A | yazıldı, uygulanmadı |
+| `api/database/pending/017_admin_audit_log.sql` | admin işlem logu önerisi | GK-23 | yazıldı, uygulanmadı |
+| `api/database/plan_limits_selftest.php` | yeni: plan/kota testi | P, M2, M11 | 44/0 `--strict` |
+| `api/functions/chatbot_limits.php` | onaylı satıcıya sınırsız, NULL = sınırsız, hak yardımcıları | M2, M11 | php -l; plan testi |
+| `api/functions/marketplace_application.php` | yeni: doğrulama / kayıt / "kaydı var" | M3, GK-20…24 | application_selftest |
+| `api/functions/plans.php` | hak geri düşüşü | M11 | plan testi |
+| `api/functions/producer_plan.php` | silindi | S14 | 3'lü çağıran araması |
+| `api/src/Infrastructure/Repositories/ChatbotRepository.php` | `chat` erişimi, vitrin görünürlüğü, persona yalnızca sahibe | M10, N-09 | access 21/0 |
+| `api/src/Presentation/Controllers/ChatController.php` | `chat` erişimi; anahtar yokken belge hakkı iadesi | M10, N-12 | php -l; access |
+| `api/src/Presentation/Controllers/ChatbotController.php` | ücretsiz yayın, oluşturmada satıcı şartı yok, fiyata satıcı şartı, özel yapma hakkı, limit yanıtı | M2, M10, M11, N-07, N-08 | php -l; plan + access |
+| `api/src/Presentation/Controllers/MarketplaceApplicationController.php` | yeni: submit / status | M3 | application_selftest; 401/405 |
+| `api/src/Presentation/Controllers/MarketplaceController.php` | üretici metotları silindi; ücretsiz bot sepete eklenmez; ücretsizleşmiş bot mesajı | S14, E8, N-16 | php -l; iyzico 77/0 |
+| `api/src/Presentation/Controllers/SocialController.php` | listelerde vitrin görünürlüğü | N-09 | php -l |
+| `api/src/Presentation/Controllers/TrainingController.php` | PDF sınırı 5 MB | F1-3 | php -l |
+| `api/src/Presentation/Controllers/WalletController.php` | getPricing NULL'a dayanıklı + hak | M11 | php -l |
+| `api/src/Shared/Constants/AppConfig.php` | PRODUCER_* silindi; hak ve tablo sabitleri | S14, M11 | php -l |
+| `docs/prompts/11-pazaryeri-revizyon.md` | görev prompt'u | — | — |
+| `docs/proposals/faz4-erisim-listeleme.patch` | Faz 4 onaylı diff (tarihçe) | M10 | git apply --check |
+| `web/src/app/components/landing/PricingSection.jsx` | fiyatlar getpricing'den; yıllık indirim kaldırıldı | N-10 | lint + build |
+| `web/src/app/dashboard/chat/page.jsx` | deftere bot id; "Paketini yükselt"; ölü importlar | N-06, M9 | lint + build |
+| `web/src/app/dashboard/chatbots/components/ChatbotCard.jsx` | sohbete bağlantı, "Özel Yap", fiyat düzenleme yalnızca fiyatlıda | N-01, M11, M10 | lint + build |
+| `web/src/app/dashboard/chatbots/create/page.jsx` | KB kapısı, sihirbazda kalma, 5 MB, kapasite, Üretici kartı ve State 2 silindi, Herkese Açık kartı | N-02, F1-2/3, M2, S14, M10 | lint + build |
+| `web/src/app/dashboard/explore/page.jsx` | uydurma puan kaldırıldı | N-15 | lint + build |
+| `web/src/app/dashboard/following/page.jsx` | uydurma puan/takipçi kaldırıldı | N-15 | lint + build |
+| `web/src/app/dashboard/list/page.jsx` | yükleme / hata / boş durum | N-04 | lint + build |
+| `web/src/app/dashboard/notes/page.jsx` | profil butonu → sohbet | N-05 | lint + build |
+| `web/src/app/dashboard/page.jsx` | takip edilenlerden seçici; uydurma puan | M6, N-15 | lint + build |
+| `web/src/app/dashboard/pazaryeri-basvurusu/layout.jsx` | yeni rota | M3 | build |
+| `web/src/app/dashboard/pazaryeri-basvurusu/page.jsx` | başvuru formu backend'e bağlı | M1, M3 | lint + build |
+| `web/src/app/dashboard/settings/page.jsx` | Ödeme Bilgileri → başvuru | M7 | lint + build |
+| `web/src/app/dashboard/wallet/components/WithdrawalModal.jsx` | IBAN yönlendirme metni | M7 | lint + build |
+| `web/src/app/dashboard/wallet/page.jsx` | uydurma sipariş kaldırıldı; Bakiyem kapısı | N-13, M4 | lint + build |
+| `web/src/entities/chatbot/ui/BotCard.bento.jsx` | uydurma puan kaldırıldı | N-15 | lint + build |
+| `web/src/entities/user/ui/ProfileCard.jsx` | "Satın Al" kaldırıldı; Ücretsiz rozeti; sepet gizli | M9, M10 | lint + build |
+| `web/src/features/chatbot-mgmt/PublishModal.jsx` | Yayınla / Pazaryerine Kaydet | M10 | lint + build |
+| `web/src/features/purchasing/BuyProducerAccountModal.jsx` | silindi | S14 | 3'lü çağıran araması |
+| `web/src/features/seller/SellerOnboardingWizard.jsx` | silindi | M1 | 3'lü çağıran araması |
+| `web/src/features/wallet/BankInfo.jsx` | silindi (ölü) | N-11 | 3'lü çağıran araması |
+| `web/src/features/wallet/WithdrawalModal.jsx` | IBAN yönlendirme metni | M7 | lint + build |
+| `web/src/shared/hooks/useMarketplaceRegistration.js` | yeni → sunucu kuralı (GK-22) | M4, M3 | lint + build |
+| `web/src/shared/hooks/useSellerStatus.js` | silindi | N-11 | 3'lü çağıran araması |
+| `web/src/widgets/DashboardHeader.jsx` | kayıtsıza bakiye gizli | M4 | lint + build |
+| `web/src/widgets/Sidebar.jsx` | Satın Aldıklarım kapısı; kayıtsıza bakiye gizli | M5, M4 | lint + build |
+
+Not: git bu dalda silinen iki üretici ucunu iki yeni seller ucuyla "yeniden adlandırma" olarak eşleştiriyor; gerçekte ayrı silme + ekleme.
+
+Gözlem (yeni değil): admin sayfa parçaları (`/admin/parcekme.php` dahil) `php -S` geliştirme sunucusunda doğrudan çağrılınca 500 veriyor ve statik HTML'in başını basıyor (veri yok). Mevcut tüm parçalarda aynı; Apache `.htaccess` altındaki davranış ayrıca kontrol edilmedi.
