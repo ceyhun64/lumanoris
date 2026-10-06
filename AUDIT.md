@@ -1280,3 +1280,41 @@ Doğrulama her commit'te: lint, verify build, php -l, iyzico 77/0, `plan_limits_
 | **N-11** (kısmi) | `cfd7554` | `useSellerStatus.js` ve tek kullanıcısı ölü `features/wallet/BankInfo.jsx` silindi (üç yerde çağıran araması). `submerchant_register.php` kullanıcı kararıyla kaldı; BLOCKERS B1'e not. Kalan N-11 adayları: `ChatbotForm.jsx`, `features/notes/DialogueModal.jsx`, `entities/chatbot/ui/{ChatbotCard,BotCard,MarketplaceListCard,SuggestedCard}.jsx`, `features/purchasing/BuyModal.jsx` (tek importeri ölü `entities/chatbot/ui/ChatbotCard.jsx`). |
 
 **Etiket:** `faz4-tamam` bu commit'ten sonra atıldı. Canlıya bu etiket alınacak; uygulama sırası Faz 3 + Faz 4 "canlı uygulama sırası" bölümlerinde (madde 5 — N-16 sepet kontrolü — artık gerekmiyor, yalnızca kullanıcıya açık mesaj için bilgi amaçlı).
+
+---
+
+# Faz 5 — Pazaryeri Başvurusu backend (madde 3) — ŞEMA + API SÖZLEŞMESİ ÖNERİSİ, ONAY BEKLİYOR (2026-10-06)
+
+Kod yazılmadı. Şema: `api/database/pending/016_marketplace_applications.sql` (uygulanmadı).
+
+## Şema özeti
+
+`marketplace_applications`: kullanıcı başına tek satır (`UNIQUE user_id`, FK `kullanicilar` ON DELETE CASCADE). Alanlar GK-7 (unvan, vergi no, vergi dairesi, MERSİS, yetkili ad/soyad/doğum tarihi, IBAN, il/ilçe/adres) + `account_type` (`sahis` / `kurumsal`, GK-8) + `status` (`submitted` → `reviewed` | `rejected`) + `review_note`, `reviewed_by_admin_id`, `reviewed_at`. `active` bu tabloda yok — satıcı aktifliği `param_marketplace_sellers`'ta ve B1'e bağlı (GK-9).
+
+## API sözleşmesi (yeni, geriye dönük kırıcı değişiklik yok)
+
+| Uç nokta | Yetki | İstek | Yanıt |
+|---|---|---|---|
+| `POST /api/seller/application_submit.php` | kullanıcı oturumu; `checkRateLimit('mapp_submit:<uid>', 5, 3600)` | `FormData data` = JSON `{account_type, company_title, tax_number, tax_office, mersis_no?, authorized_first_name, authorized_last_name, authorized_birth_date (YYYY-AA-GG), iban, il, ilce, address}`. `InputSanitizer::pickAllowed` beyaz listesi; listede olmayan alan → 400. | `{success, application:{status:"submitted", submitted_at}}`. Hatalar: 400 doğrulama (alan bazında mesaj), 409 durum `reviewed` iken yeniden gönderim (S-3), 429 hız sınırı. |
+| `GET /api/seller/application_status.php` | kullanıcı oturumu | — | `{success, application: null \| {status, account_type, company_title, iban_masked:"TR** **** … 1234", submitted_at, reviewed_at, review_note}}`. Doğum tarihi, tam IBAN, vergi no **dönmez**. |
+| `/admin/basvurular` (sayfa) | `_guard.php` admin oturumu | liste (durum filtresi) + detay (tam alanlar) | — |
+| `POST /admin/ajax/basvuru_durum.php` | admin + CSRF (`parcekme` deseni) | `{id, status: "reviewed" \| "rejected", review_note}` | `{success}`. Genel CRUD (`update.php`) bu tabloya açılmaz — tablo `assertAllowedAdminTable` beyaz listesine EKLENMEZ. |
+
+**Doğrulama:** `account_type ∈ {sahis, kurumsal}`. Vergi no: kurumsal → `BankIdentity::normalizeVkn` (10 hane); şahıs → 11 haneyse `normalizeTckn`, 10 haneyse `normalizeVkn` (S-6). MERSİS: 16 hane rakam. IBAN: `BankIdentity::normalizeIban` (TR + mod97). Doğum tarihi geçerli tarih ve ≥ `AppConfig::MIN_REGISTRATION_AGE` (18). Metin alanları `InputSanitizer::text` + uzunluk sınırı. `ContentPolicy` uygulanmaz (ticari kimlik verisi). Hata log'larında alan değerleri yazılmaz.
+
+**Tek "kaydı var mı" kaynağı:** `useMarketplaceRegistration` (Faz 2) artık `application_status.php`'yi de okur. Kayıt sayılan: başvuru durumu S-4'teki küme **veya** eski `param_marketplace_sellers` durumları (`pending/active/suspended/rejected`, geriye uyum). Sunucuda karşılığı `hasMarketplaceRegistration(Database, int): bool` (`functions/` altında), endpoint ve ileride sunucu kapıları aynı yerden okur.
+
+**Arayüz:** Faz 2 iskeleti bu uca bağlanır: gönder düğmesi açılır, gönderim sonrası "Başvurunuz alındı / inceleniyor" (sahte başarı yok; yanıt gelmeden mesaj yok). Mevcut başvuru varsa form salt-okunur özet + durum gösterir; `rejected` ise gerekçe + yeniden gönderim. README API tablosuna iki uç nokta eklenir.
+
+## Karar soruları
+
+| # | Soru | Kodun ima ettiği / önerim |
+|---|---|---|
+| S-1 | Şema (016) ve yukarıdaki API sözleşmesi onaylı mı? | — |
+| S-2 | Başvuru geçmişi tutulsun mu? | Öneri: hayır — kullanıcı başına tek satır, yeniden gönderim üzerine yazar (`updated_at`). Geçmiş gerekirse ayrı log tablosu (ek şema). |
+| S-3 | `reviewed` ("incelendi") olan başvuru kullanıcı tarafından değiştirilebilir mi? | Öneri: hayır (409, "değişiklik için destekle iletişime geçin"); yalnızca `submitted` ve `rejected` yeniden gönderilebilir. |
+| S-4 | GK-5 "başvuru yapmış" — `rejected` başvuru Bakiyem'i açar mı? | Öneri: `submitted` ve `reviewed` açar, `rejected` açmaz. |
+| S-5 | Başvurudaki IBAN para çekmede kullanılsın mı? Bugün çekim yalnızca `banka_bilgileri.iban`'a yapılabiliyor (COMP-005b) ve M7 sonrası kullanıcının IBAN girebileceği arayüz yok. | Öneri: admin "incelendi" dediği anda başvurudaki IBAN `banka_bilgileri.iban`'a yazılsın (gönderimde değil — incelenmemiş IBAN'a para gitmesin). Bu, mevcut `banka_bilgileri` satırının üzerine yazmak demek. |
+| S-6 | Şahıs şirketinde vergi no: TCKN (11) mi, VKN (10) mu? MERSİS şahısta zorunlu mu? | Öneri: şahısta ikisi de kabul; MERSİS kurumsalda zorunlu, şahısta isteğe bağlı (ticaret siciline kayıtlı olmayan şahıs işletmesi var). |
+| S-7 | Başvuru sonucu kullanıcıya nasıl bildirilsin? | Öneri: uygulama içi bildirim (`notifications` tablosu mevcut); e-posta B5 (SMTP) açık olduğu için yok. |
+| S-8 | Admin "Başvurular" sayfasında tam IBAN / doğum tarihi görünsün mü? | Öneri: evet (inceleme için gerekli), ama sayfa erişimi yalnızca admin oturumu; dışa aktarma yok. |
