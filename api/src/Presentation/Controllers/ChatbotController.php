@@ -472,8 +472,64 @@ class ChatbotController {
             JsonResponse::error('Bu chatbot üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
         }
 
-        $repo->unpublish($id);
-        JsonResponse::success(['message' => 'Chatbot yayından kaldırıldı.']);
+        // Madde 11 / GK-3 — yalnızca YAYINLANMIŞ bir bot özele çekilir ve hak
+        // düşer. Zaten özel olan bot için hak harcatılmaz (eskiden bu çağrı
+        // sessizce is_independent=1'i tekrar yazıyordu).
+        if ((int) $bot['is_independent'] === 1) {
+            JsonResponse::error('Bu chatbot zaten özel.', 400, AppConfig::ERR_DUPLICATE);
+        }
+
+        require_once __DIR__ . '/../../../functions/chatbot_limits.php';
+        $db   = Database::getInstance();
+        $conn = $db->getConnection();
+
+        // C-01 deseni: hak sayımı ile yazma arasında yarış olmasın — aynı
+        // kullanıcının iki eşzamanlı isteği aynı "kalan hak"ı okuyamasın.
+        $lock = self::acquireBotLimitLock($conn, $userId);
+
+        // N-07 — özele çekme bağımsız bot limitine TAKILMAZ (GK-3); bilinçli
+        // olarak burada bağımsız limiti kontrolü yok. Sınır özel yapma hakkı.
+        $tableReady = privacyUsageTableReady($db);
+        $limit      = getPrivacyRightLimit($db, $userId);
+        if ($tableReady && countPrivacyRightUsage($db, $userId) >= $limit) {
+            JsonResponse::error(
+                sprintf(
+                    '%s planınızdaki %d yayından kaldırma (özel yapma) hakkınızı kullandınız.',
+                    getUserPlanName($db, $userId),
+                    $limit
+                ),
+                422,
+                AppConfig::ERR_LIMIT_REACHED,
+                ['privacy_limit' => $limit, 'privacy_remaining' => 0]
+            );
+        }
+        if (!$tableReady) {
+            // Migration 012 uygulanmamış: hak sayılamıyor. Özele çekmeyi kırmak
+            // yerine eski davranış (sınırsız) — ama görünür olsun.
+            error_log('[unpublishChatbot] user_privacy_right_usage yok (migration 012); hak sayılmadan özele çekildi. bot=' . $id);
+        }
+
+        $conn->beginTransaction();
+        try {
+            $repo->unpublish($id);
+            if ($tableReady) {
+                recordPrivacyRightUsage($db, $userId, $id);
+            }
+            $conn->commit();
+        } catch (Throwable $e) {
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
+            self::releaseBotLimitLock($conn, $lock);
+            throw $e;
+        }
+        self::releaseBotLimitLock($conn, $lock);
+
+        JsonResponse::success([
+            'message'           => 'Chatbot özel yapıldı (yayından kaldırıldı).',
+            'privacy_limit'     => $limit,
+            'privacy_remaining' => $tableReady ? privacyRightsRemaining($db, $userId) : null,
+        ]);
     }
 
     public static function getChatbotsMenu(): void {
@@ -507,6 +563,11 @@ class ChatbotController {
             'public_unlimited'       => $publicUnlimited,
             'can_create_independent' => $counts['independent'] < $independentLimit,
             'can_create_public'      => $counts['public'] < $publicLimit,
+            // Madde 11 — yayından kaldırma (özel yapma) hakkı, toplam.
+            // privacy_used/remaining null = sayım yok (migration 012 eksik).
+            'privacy_limit'          => getPrivacyRightLimit($db, $userId),
+            'privacy_used'           => privacyUsageTableReady($db) ? countPrivacyRightUsage($db, $userId) : null,
+            'privacy_remaining'      => privacyUsageTableReady($db) ? privacyRightsRemaining($db, $userId) : null,
         ]);
     }
 

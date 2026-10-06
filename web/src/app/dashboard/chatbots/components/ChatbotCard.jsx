@@ -1,7 +1,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Bot, MessageSquare, Heart, Trash2, Rocket, ExternalLink } from "lucide-react";
+import { Bot, MessageSquare, Heart, Trash2, Rocket, ExternalLink, Lock } from "lucide-react";
+import { toast } from "@/shared/hooks/use-toast";
 import CategoryBadge from "@/shared/ui/category-badge";
 import { normalizeImagePath } from "@/shared/lib/image";
 
@@ -31,6 +32,39 @@ export default function ChatbotCard({
   const [publishOpen, setPublishOpen] = useState(false);
   const [priceOpen, setPriceOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [privateConfirmOpen, setPrivateConfirmOpen] = useState(false);
+
+  // Madde 11 / GK-3 — yayınlanmış botu geri özele çekmek bir "yayından
+  // kaldırma (özel yapma) hakkı" harcar; hak sayımı ve limit sunucuda
+  // (unpublishChatbot). Bağımsız bot limitine takılmaz.
+  const makePrivate = async () => {
+    setPrivateConfirmOpen(false);
+    try {
+      const body = new FormData();
+      body.append("data", JSON.stringify({ id }));
+      const res = await fetch("/api/chatbot/unpublishchatbot.php", {
+        method: "POST",
+        body,
+        credentials: "include",
+      });
+      const result = await res.json();
+      if (!result?.success) {
+        toast({ variant: "destructive", title: "Özel yapılamadı", description: result?.message || "İşlem tamamlanamadı." });
+        return;
+      }
+      toast({
+        variant: "success",
+        title: "Bot artık özel",
+        description:
+          typeof result.privacy_remaining === "number"
+            ? `Kalan özel yapma hakkınız: ${result.privacy_remaining}`
+            : result.message,
+      });
+      onChanged?.();
+    } catch {
+      toast({ variant: "destructive", title: "Özel yapılamadı", description: "Sunucuya bağlanılamadı." });
+    }
+  };
 
   // F-01: sunucu goreli yol donuyor (`assets/kapak_fotografi/...`); duz bir
   // <img src> bunu bulundugu sayfaya gore cozup 404 veriyordu.
@@ -137,6 +171,16 @@ export default function ChatbotCard({
                 <span>Fiyat Düzenle</span>
               </button>
             ) : null}
+            {isOwn && !isIndependent && (
+              <button
+                onClick={() => setPrivateConfirmOpen(true)}
+                className="flex h-8 items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-xs font-medium text-white/70 transition-all hover:bg-white/[0.08] hover:text-white"
+                title="Yayından kaldır ve yalnızca kendine özel yap"
+              >
+                <Lock className="h-3 w-3" />
+                <span>Özel Yap</span>
+              </button>
+            )}
             <Link
               href={`/dashboard/chatbots/create?id=${id}`}
               className="flex h-8 items-center gap-1 rounded-xl bg-gradient-btn px-3.5 text-xs font-semibold text-white shadow-glow transition-all hover:brightness-110"
@@ -162,6 +206,22 @@ export default function ChatbotCard({
         botId={id}
         weeklyPrice={weeklyPrice}
         monthlyPrice={monthlyPrice}
+      />
+      <DeleteConfirmModal
+        isOpen={privateConfirmOpen}
+        onClose={() => setPrivateConfirmOpen(false)}
+        onConfirm={makePrivate}
+        title="Bu botu özel yapmak istiyor musunuz?"
+        description={
+          <>
+            Bot yayından kalkar ve yalnızca size görünür. Bu işlem 1 yayından
+            kaldırma (özel yapma) hakkı kullanır; haklar toplamdır, yenilenmez.
+            <br />
+            Botu daha önce satın alan kullanıcılar süreleri bitene kadar
+            erişmeye devam eder.
+          </>
+        }
+        confirmLabel="Özel Yap"
       />
       <DeleteConfirmModal
         isOpen={confirmDeleteOpen}

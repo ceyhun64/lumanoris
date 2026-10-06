@@ -393,10 +393,13 @@ class WalletController {
                     'is_current'    => $isCurrent,
                     // Pazarlama metni yerine gerçek kotalar — istemci
                     // isterse "3 bot / 50 mesaj" diye gösterebilir.
+                    // Migration 012: bot limitleri NULL = sınırsız. `(int)`
+                    // NULL'ı 0'a çevirirdi; sınırsız artık `null` olarak gidiyor.
                     'limits'        => [
-                        'independent_bots' => (int) $p['independent_bot_limit'],
-                        'public_bots'      => (int) $p['public_bot_limit'],
+                        'independent_bots' => $p['independent_bot_limit'] === null ? null : (int) $p['independent_bot_limit'],
+                        'public_bots'      => $p['public_bot_limit'] === null ? null : (int) $p['public_bot_limit'],
                         'daily_messages'   => (int) $p['daily_message_limit'],
+                        'privacy_rights'   => (int) ($p['privacy_right_limit'] ?? AppConfig::FREE_PRIVACY_RIGHT_LIMIT),
                     ],
                 ];
             }

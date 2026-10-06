@@ -118,6 +118,49 @@ if ($unapproved) {
         !isUnlimitedBotLimit(getPublicBotLimit($db, (int) $unapproved['user_id'])));
 }
 
+echo "\n=== C) MADDE 11 + SINIRSIZ — özel yapma hakkı (GK-3, GK-17) ve NULL = sınırsız ===\n\n";
+
+// Fonksiyonlar yoksa ölümcül hata yerine okunur bir FAIL üret (kırmızı test).
+$need = ['normalizeBotLimit', 'getPrivacyRightLimit', 'countPrivacyRightUsage',
+         'privacyRightsRemaining', 'recordPrivacyRightUsage', 'privacyUsageTableReady'];
+$missing = array_values(array_filter($need, fn($f) => !function_exists($f)));
+check('madde 11 yardımcıları tanımlı', $missing === [], 'eksik: ' . implode(', ', $missing));
+
+if ($missing === []) {
+    check('NULL limit = sınırsız', isUnlimitedBotLimit(normalizeBotLimit(null)));
+    check('sayısal limit korunur (3)', normalizeBotLimit(3) === 3);
+    check('metin limit sayıya çevrilir ("5")', normalizeBotLimit('5') === 5);
+
+    check('AppConfig::FREE_PRIVACY_RIGHT_LIMIT = 1',
+        defined('AppConfig::FREE_PRIVACY_RIGHT_LIMIT') && AppConfig::FREE_PRIVACY_RIGHT_LIMIT === 1);
+    check('fallbackPlan özel yapma hakkı 1', (int) (fallbackPlan()['privacy_right_limit'] ?? -1) === 1);
+
+    if ($noPlanUser) {
+        $uid = (int) $noPlanUser['id'];
+        check('plansız kullanıcı: 1 özel yapma hakkı (toplam)', getPrivacyRightLimit($db, $uid) === 1,
+            (string) getPrivacyRightLimit($db, $uid));
+
+        if (!privacyUsageTableReady($db)) {
+            echo "  (user_privacy_right_usage yok — 012 uygulanmamış; kullanım sayımı atlandı)\n";
+        } else {
+            // Yazma testi TRANSACTION içinde, sonunda ROLLBACK: hiçbir satır kalmaz.
+            $conn   = $db->getConnection();
+            $before = countPrivacyRightUsage($db, $uid);
+            $bot    = $db->selectSingle('id FROM chatbotlar ORDER BY id LIMIT 1');
+            $conn->beginTransaction();
+            try {
+                recordPrivacyRightUsage($db, $uid, (int) ($bot['id'] ?? 1));
+                check('hak kullanımı sayılır (+1)', countPrivacyRightUsage($db, $uid) === $before + 1);
+                check('kalan hak = limit − kullanılan',
+                    privacyRightsRemaining($db, $uid) === max(0, getPrivacyRightLimit($db, $uid) - ($before + 1)));
+            } finally {
+                $conn->rollBack();
+            }
+            check('rollback sonrası kullanım değişmedi', countPrivacyRightUsage($db, $uid) === $before);
+        }
+    }
+}
+
 $inExpectedRed = true;
 echo "\n=== B) MÜŞTERİ PAKET TABLOSU — paket migration'ı uygulanana kadar KIRMIZI ===\n\n";
 
@@ -126,16 +169,18 @@ foreach (getPlanCatalog($db) as $p) {
     $catalog[$p['name_tr']] = $p;
 }
 
-// name => [aylık fiyat, günlük coin, bağımsız, herkese açık] — null = bu
-// bölümde test edilmiyor (sınırsız; şema kararı bekliyor).
+// name => [aylık fiyat, günlük coin, bağımsız, herkese açık, özel yapma hakkı]
+// Bot kotasında null = SINIRSIZ (migration 012: kolon NULL).
 $expected = [
-    'Ücretsiz' => [0.0,   10,  1,    2],
-    'Gümüş'    => [149.0, 50,  3,    5],
-    'Altın'    => [299.0, 100, 5,    10],
-    'Elmas'    => [849.0, 200, null, null],
+    'Ücretsiz' => [0.0,   10,  1,    2,    1],
+    'Gümüş'    => [149.0, 50,  3,    5,    3],
+    'Altın'    => [299.0, 100, 5,    10,   5],
+    'Elmas'    => [849.0, 200, null, null, 20],
 ];
 
-foreach ($expected as $name => [$price, $coin, $indep, $public]) {
+$botLimitLabel = fn($v) => $v === null ? 'sınırsız' : (string) $v;
+
+foreach ($expected as $name => [$price, $coin, $indep, $public, $privacy]) {
     if (!isset($catalog[$name])) {
         check("$name planı katalogda var", false, 'plans tablosunda yok');
         continue;
@@ -143,12 +188,15 @@ foreach ($expected as $name => [$price, $coin, $indep, $public]) {
     $p = $catalog[$name];
     check("$name: aylık $price ₺", abs((float) $p['monthly_price'] - $price) < 0.001, (string) $p['monthly_price']);
     check("$name: günlük $coin coin", (int) $p['daily_message_limit'] === $coin, (string) $p['daily_message_limit']);
-    if ($indep !== null) {
-        check("$name: $indep bağımsız", (int) $p['independent_bot_limit'] === $indep, (string) $p['independent_bot_limit']);
-    }
-    if ($public !== null) {
-        check("$name: $public herkese açık", (int) $p['public_bot_limit'] === $public, (string) $p['public_bot_limit']);
-    }
+    check("$name: " . $botLimitLabel($indep) . ' bağımsız',
+        normalizeBotLimit($p['independent_bot_limit']) === normalizeBotLimit($indep),
+        $botLimitLabel($p['independent_bot_limit']));
+    check("$name: " . $botLimitLabel($public) . ' herkese açık',
+        normalizeBotLimit($p['public_bot_limit']) === normalizeBotLimit($public),
+        $botLimitLabel($p['public_bot_limit']));
+    check("$name: $privacy özel yapma hakkı",
+        array_key_exists('privacy_right_limit', $p) && (int) $p['privacy_right_limit'] === $privacy,
+        array_key_exists('privacy_right_limit', $p) ? (string) $p['privacy_right_limit'] : 'kolon yok (012)');
 }
 
 finish();
