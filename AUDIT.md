@@ -1241,3 +1241,32 @@ Sonuç: full isteyen ve sohbeti kıran tek uç nokta `generatereply.php` (yamada
 Koşullu 014 (öneri) platform botunu hariç tutacak şekilde güncellendi: aksi hâlde yazarı aktif satıcı olmayan bir kurulumda 015'in ücretsiz yaptığı platform botunu özele çekerdi.
 
 Doğrulama notu: bu turda iyzico öz-testinin B bölümü (sandbox ağ çağrısı) bir kez `Could not resolve host` ile düştü (aynı anda git push da DNS hatası verdi); kural gereği commit beklendi, yeniden çalıştırmada 77/0.
+
+## Faz 4 — yapılanlar (2026-10-06)
+
+| İş | Commit | Not |
+|---|---|---|
+| Kontrol A/B | `5be4668` | A yerelde 0 satır; B: sohbeti kıran tek uç nokta `generatereply.php` |
+| Erişim/listeleme yaması + persona yalnızca sahibe | `8ebb757` | **N-08, N-09 kapandı.** `access_selftest.php` 21/0 (eski kodla 4 hata) |
+| N-14 — platform botu ücretsiz (GK-18, 015) | `908f452` | **N-14 kapandı (yerel).** Eski fiyat 50/150 ₺ kayıtlı |
+| E8 — `addToCart` ücretsiz bot reddi | `ceedebf` | Ödeme yolu, kullanıcı talimatıyla |
+| Arayüz: Herkese Açık kartı, PublishModal iki seçenek, Ücretsiz rozeti, Sepete Ekle gizli | `7c1a301` | Madde 2 kartı + madde 10 |
+| Madde 1 — `SellerOnboardingWizard` silindi | `03f1a9d` | **Madde 1 tamam.** Üç yerde çağıran araması |
+
+Doğrulama her commit'te: lint, verify build, php -l, iyzico 77/0, `plan_limits_selftest --strict` 44/0, `access_selftest` 21/0. **Tarayıcıda denenmedi** — kullanıcı tüm fazları Faz 4 sonunda tek seferde elle test edecek.
+
+### Faz 4'te bulunan / açık kalan
+
+| ID | Sev | Dosya | Problem | Durum |
+|---|---|---|---|---|
+| **N-15** | P3 | `entities/chatbot/ui/BotCard.bento.jsx:158` | Puanı olmayan her bota sabit **"4.9"** yıldız gösteriliyor (`bot.rating \|\| "4.9"`) — uydurma veri (N-13 ile aynı aile). | Açık — Faz 4'te görüldü, kapsam dışı. |
+| **N-16** | P2 | `MarketplaceController::createSubscription` (ödeme yolu) | Fiyatı sonradan kaldırılan bir bot (ör. 015 sonrası platform botu) eski bir sepet satırında kalmışsa `createSubscription` onu güncel fiyattan (0 ₺) işleyebilir. `addToCart` artık ücretsiz botu reddediyor ama mevcut sepet satırlarını kapsamıyor. Yerelde ücretsiz bot içeren sepet satırı yok; canlıda olabilir (platform botu 50 ₺'yken sepete eklenmiş olanlar). | **Açık — ödeme yolu, onay gerekiyor.** Öneri: `createSubscription`'da fiyatı 0 olan kalemi sepetten düşüp reddetmek. |
+| N-11 (ek) | P3 | `shared/hooks/useSellerStatus.js`, `api/api/seller/submerchant_register.php` | Sihirbaz silindikten sonra hook'un tek kullanıcısı zaten ölü `features/wallet/BankInfo.jsx`; `submerchant_register.php`'nin web'den çağıranı kalmadı. | Ölü kod adayı — silinmedi. |
+
+### Canlı uygulama sırası (Faz 4) — Faz 3 sırasının devamı
+
+1. **Kontrol A** (AUDIT "Faz 4 — kontrol A ve B" sorgusu) canlıda çalıştırılır. Satır dönerse ve taslaksa: `014_unlist_free_public_drafts.sql` `pending/` → `migrations/`, **kod deploy'undan ÖNCE** `--apply`. Kontrol: dosya sonundaki `kalan = 0`.
+2. **015 öncesi not:** `SELECT id, ucret_haftalik, ucret_aylik FROM chatbotlar WHERE UPPER(TRIM(isim)) = 'LUMANORIS AI'` çıktısı saklanır (geri alma).
+3. **Kod deploy** (en az `03f1a9d`). Kontrol: `php api/database/access_selftest.php` 0 başarısız; ücretsiz herkese açık bir bot sahibi/abonesi olmayan hesapla açılıp mesaj gönderilebiliyor ve coin düşüyor; fiyatlı bot abonelik olmadan sohbet etmiyor; `getchatbot.php` yanıtında sahibi olmayan için `style_prompt` yok.
+4. **015** `--apply`. Kontrol: doğrulama SELECT'inde `eslesen = 1`, fiyat NULL; sıradan hesapla Lumanoris AI sohbeti çalışıyor (N-14).
+5. **N-16 kararı** verilene kadar: canlıda `SELECT uc.* FROM user_cart uc JOIN chatbotlar c ON c.id = uc.chatbot_id WHERE c.is_independent = 0 AND COALESCE(c.ucret_haftalik,0) = 0 AND COALESCE(c.ucret_aylik,0) = 0` ile ücretsiz botu tutan sepet satırları kontrol edilmeli.
