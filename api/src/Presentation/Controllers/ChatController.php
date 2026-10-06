@@ -330,7 +330,8 @@ class ChatController {
             JsonResponse::error('Chatbot ID gerekli.', 400, AppConfig::ERR_VALIDATION);
         }
 
-        if (!(new ChatbotRepository())->userHasAccess($chatbotId, $userId, 'full')) {
+        // Faz 4 / GK-2 — 'chat' = sahip/abone + ücretsiz herkese açık bot.
+        if (!(new ChatbotRepository())->userHasAccess($chatbotId, $userId, 'chat')) {
             JsonResponse::error(
                 'Bu chatbot ile sohbet edebilmek için aktif bir aboneliğiniz olmalı.',
                 403,

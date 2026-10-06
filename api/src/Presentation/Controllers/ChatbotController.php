@@ -59,12 +59,11 @@ class ChatbotController {
             );
         }
 
-        if (!$isIndependent) {
-            $sellerStatus = $repo->getSellerStatus($authorUserId);
-            if ($sellerStatus !== 'active') {
-                JsonResponse::error('Önce Pazaryeri satıcı kaydınızı tamamlayın.', 422, AppConfig::ERR_SELLER_INACTIVE);
-            }
-        }
+        // Faz 4 / madde 2 / GK-2 — herkese açık bot oluşturmak artık satıcı
+        // kaydı İSTEMİYOR. Burada fiyat yazılamıyor (pickAllowed ücret
+        // alanlarını reddediyor), yani oluşturulan herkese açık bot her zaman
+        // ÜCRETSİZ herkese açık bottur. Fiyatlı satış hâlâ publishChatbot /
+        // updateChatbotPrice'ta aktif satıcı şartına (B1) bağlı.
 
         $data['owner_user_id'] = $data['author_user_id'];
 
@@ -420,8 +419,18 @@ class ChatbotController {
         if (!$data || !$id) {
             JsonResponse::error('Eksik veri!', 400, AppConfig::ERR_VALIDATION);
         }
-        self::assertValidPrice($weekly, 'Haftalık', AppConfig::MAX_WEEKLY_PRICE, AppConfig::MIN_WEEKLY_PRICE);
-        self::assertValidPrice($monthly, 'Aylık', AppConfig::MAX_WEEKLY_PRICE * 4, round(AppConfig::MIN_WEEKLY_PRICE * 4 * AppConfig::DISCOUNT_MONTHLY_FACTOR));
+
+        // Faz 4 / madde 10 / GK-1 / GK-2 — iki yayın biçimi:
+        //   • fiyatsız ("Yayınla"): ücretsiz herkese açık; satıcı ŞARTI YOK.
+        //   • fiyatlı (pazaryeri satışı): eskisi gibi fiyat aralığı + aktif
+        //     satıcı (B1). Arayüz bu yolu bugün açmıyor ("Pazaryerine Kaydet"
+        //     yalnızca başvuru sayfasına götürür), ama sunucu sözleşmesi korunuyor.
+        // Geriye uyum: fiyat gönderen eski çağıran aynı davranışı alır.
+        $isPaid = $weekly > 0;
+        if ($isPaid) {
+            self::assertValidPrice($weekly, 'Haftalık', AppConfig::MAX_WEEKLY_PRICE, AppConfig::MIN_WEEKLY_PRICE);
+            self::assertValidPrice($monthly, 'Aylık', AppConfig::MAX_WEEKLY_PRICE * 4, round(AppConfig::MIN_WEEKLY_PRICE * 4 * AppConfig::DISCOUNT_MONTHLY_FACTOR));
+        }
 
         $repo = new ChatbotRepository();
         $bot  = $repo->findById($id);
@@ -445,14 +454,25 @@ class ChatbotController {
             JsonResponse::error(sprintf('%s planınızdaki %d herkese açık chatbot hakkınızı kullandınız.', getUserPlanName($db, $userId), $publicLimit), 422, AppConfig::ERR_LIMIT_REACHED);
         }
 
-        $sellerStatus = $repo->getSellerStatus($userId);
-        if ($sellerStatus !== 'active') {
-            JsonResponse::error('Önce Pazaryeri satıcı kaydınızı tamamlayın.', 422, AppConfig::ERR_SELLER_INACTIVE);
+        if ($isPaid) {
+            $sellerStatus = $repo->getSellerStatus($userId);
+            if ($sellerStatus !== 'active') {
+                JsonResponse::error('Önce Pazaryeri satıcı kaydınızı tamamlayın.', 422, AppConfig::ERR_SELLER_INACTIVE);
+            }
         }
 
-        $repo->updateById($id, ['is_independent' => 0, 'ucret_haftalik' => $weekly, 'ucret_aylik' => $monthly]);
+        $repo->updateById($id, [
+            'is_independent' => 0,
+            'ucret_haftalik' => $isPaid ? $weekly : null,
+            'ucret_aylik'    => $isPaid ? $monthly : null,
+        ]);
         self::releaseBotLimitLock($db->getConnection(), $limitLock);
-        JsonResponse::success(['message' => 'Chatbot herkese açık olarak yayınlandı!']);
+        JsonResponse::success([
+            'message' => $isPaid
+                ? 'Chatbot pazaryerinde satışa açıldı!'
+                : 'Chatbot herkese açık olarak yayınlandı! Herkes ücretsiz sohbet edebilir.',
+            'free'    => !$isPaid,
+        ]);
     }
 
     public static function unpublishChatbot(): void {
@@ -627,6 +647,15 @@ class ChatbotController {
         // chatbot's id could change its price.
         if (!$repo->findByIdAndOwner($id, $userId)) {
             JsonResponse::error('Bu chatbot üzerinde yetkiniz yok.', 403, AppConfig::ERR_PERMISSION);
+        }
+
+        // N-08 / Faz 4 — fiyat yalnızca aktif pazaryeri satıcısı tarafından
+        // atanabilir. Eskiden bu uçta satıcı kontrolü yoktu: satıcı olmayan
+        // kullanıcı ücretsiz herkese açık botuna fiyat yazarak onu vitrinden
+        // ve ücretsiz erişimden çıkarabiliyor, publishChatbot'un satıcı
+        // şartını da dolaylı yoldan atlıyordu.
+        if ($repo->getSellerStatus($userId) !== 'active') {
+            JsonResponse::error('Fiyat belirlemek için pazaryeri kaydınızın onaylanmış olması gerekir.', 422, AppConfig::ERR_SELLER_INACTIVE);
         }
 
         $ok   = $repo->updatePrice($id, $weekly, $monthly);

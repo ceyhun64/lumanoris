@@ -336,9 +336,12 @@ class SocialController {
              COUNT(DISTINCT cc.id) AS toplam_chats
              FROM chatbot_in_list cil
              JOIN chatbotlar c ON c.id = cil.chatbot_id
-             INNER JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id AND pms.status = 'active'
+             LEFT JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id AND pms.status = 'active'
              LEFT JOIN chatbot_chats cc ON cc.chatbot_id = c.id
-             WHERE cil.list_id = ? AND c.is_independent = 0
+             -- Faz 4 / N-09: vitrinle aynı görünürlük (ChatbotRepository::PUBLIC_VISIBLE_SQL)
+             WHERE cil.list_id = ?
+               AND c.is_independent = 0
+               AND (COALESCE(c.ucret_haftalik, 0) = 0 AND COALESCE(c.ucret_aylik, 0) = 0 OR pms.user_id IS NOT NULL)
              GROUP BY c.id",
             [$listId]
         );

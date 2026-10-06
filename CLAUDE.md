@@ -102,7 +102,8 @@ cd web && NEXT_DIST_DIR=.next-verify npm run build
 cd web && npm run lint
 find api -name "*.php" -not -path "*/vendor/*" -print0 | xargs -0 -n1 php -l
 php api/database/iyzico_selftest.php     # A bölümü anahtarsız da geçmeli
-php api/database/plan_limits_selftest.php # A/A2/C yeşil olmalı; B paket verisine bağlı
+php api/database/plan_limits_selftest.php --strict  # plan/kota (013 uygulanmış kurulumda tamamen yeşil)
+php api/database/access_selftest.php      # erişim/listeleme matrisi (Faz 4)
 ```
 
 Bir değişiklik bunlardan birini bozuyorsa geri al ve nedenini raporla.
