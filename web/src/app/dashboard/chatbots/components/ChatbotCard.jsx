@@ -162,7 +162,9 @@ export default function ChatbotCard({
                 <span>Yayınla</span>
                 <Rocket className="h-3 w-3" />
               </button>
-            ) : isOwn ? (
+            ) : isOwn && Number(weeklyPrice) > 0 ? (
+              /* Faz 4 — fiyat düzenleme yalnızca fiyatlı (pazaryeri) botta; ücretsiz
+                 herkese açık bota fiyat atamak aktif satıcı ister (N-08). */
               <button
                 onClick={() => setPriceOpen(true)}
                 className="flex h-8 items-center gap-1 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-3 text-xs font-medium text-amber-300/90 transition-all hover:bg-amber-500/15 hover:border-amber-500/40"

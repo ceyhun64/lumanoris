@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { UserContext } from "@/shared/contexts/UserContext";
 import { useRouter } from "next/navigation";
-import useSellerStatus from "@/shared/hooks/useSellerStatus";
 import {
   Select,
   SelectTrigger,
@@ -11,7 +10,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/shared/ui/select";
-import SellerOnboardingWizard from "@/features/seller/SellerOnboardingWizard";
+import Link from "next/link";
 import {
   Lock,
   Globe2,
@@ -1068,12 +1067,12 @@ function ChatbotForm({
                 Erişim Türü:{" "}
                 {independentMode
                   ? "Bağımsız (Özel)"
-                  : "Herkese Açık (Pazaryeri)"}
+                  : "Herkese Açık (Ücretsiz)"}
               </h4>
               <p className="text-xs text-zinc-400 leading-relaxed">
                 {independentMode
                   ? "Bu bot sadece sizin hesabınızda kalacaktır. İstediniz an sitenize widget olarak ekleyebilirsiniz."
-                  : "Bu bot Pazaryerinde listelenecek ve diğer kullanıcılar tarafından jeton karşılığı kullanılabilecektir."}
+                  : "Bu bot Keşfet'te listelenecek; herkes ücretsiz sohbet edebilir, mesajlar kullanıcıların günlük Luma Coin'inden düşer."}
               </p>
             </div>
 
@@ -1250,7 +1249,6 @@ function ChatbotForm({
 }
 
 function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
-  const seller = useSellerStatus(userId);
   const isEditing = !!bot;
   const [choice, setChoice] = useState(
     isEditing ? (bot.chatbot?.is_independent ? "independent" : "public") : null,
@@ -1378,7 +1376,8 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
             </div>
           </GlassCard>
 
-          {/* Card 2: Marketplace / Public */}
+          {/* Card 2: Herkese Açık (madde 2 / GK-2) — ücretsiz, satıcı kaydı gerekmez.
+              Fiyatlı pazaryeri satışı ayrı: şirket başvurusu (madde 3), aşağıdaki bağlantı. */}
           <GlassCard
             interactive={limits.can_create_public}
             disabled={!limits.can_create_public}
@@ -1396,19 +1395,19 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
                   variant={limits.can_create_public ? "fuchsia" : "destructive"}
                 >
                   {limits.can_create_public
-                    ? "%80 Gelir Payı"
+                    ? "Ücretsiz"
                     : `Hakkınız Doldu (${limits.public_limit ?? "—"})`}
                 </Badge>
               </div>
 
               <div>
                 <h3 className="text-xl font-bold text-white group-hover:text-fuchsia-200 transition-colors">
-                  Pazaryerinde Yayınla
+                  Herkese Açık Chatbot Oluştur
                 </h3>
                 <p className="text-xs sm:text-sm text-zinc-400 mt-2 leading-relaxed">
-                  Chatbotunuz platform vitrininde yayınlanır. Binlerce kullanıcı
-                  tarafından keşfedilir ve jeton başına pasif gelir elde
-                  edersiniz.
+                  Chatbotunuz Keşfet'te herkese açık yayınlanır. Herkes ücretsiz
+                  sohbet edebilir; mesajlar kullanıcıların günlük Luma
+                  Coin'inden düşer.
                 </p>
               </div>
             </div>
@@ -1423,6 +1422,17 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
             </div>
           </GlassCard>
         </div>
+
+        {/* Madde 10 — pazaryerinde ücretli satış şirket başvurusu ister. */}
+        <p className="text-xs text-zinc-400">
+          Botunuzu pazaryerinde ücretli satmak mı istiyorsunuz?{" "}
+          <Link
+            href="/dashboard/pazaryeri-basvurusu"
+            className="font-semibold text-fuchsia-300 hover:text-fuchsia-200"
+          >
+            Pazaryeri Başvurusu
+          </Link>
+        </p>
 
         {/* Visual Workflow Steps Preview */}
         <div className="pt-4 border-t border-white/10 space-y-4">
@@ -1442,7 +1452,7 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
               },
               {
                 title: "3. Yayına Al",
-                desc: "Bağımsız özel bot olarak kullan veya Pazaryerinde satışa aç.",
+                desc: "Bağımsız özel bot olarak kullan ya da herkese açık yayınla.",
               },
             ].map((st, i) => (
               <div
@@ -1464,24 +1474,8 @@ function CreateChatbotInner({ userId, bot, botId, selectedCard }) {
 
   const independentMode = choice === "independent";
 
-  // State 2: Marketplace mode selected but seller registration pending
-  if (!independentMode && !seller.loading && seller.status !== "active") {
-    return (
-      <div className="space-y-8">
-        <PageHeader
-          eyebrow="Pazaryeri Doğrulaması"
-          eyebrowClassName="text-fuchsia-300"
-          title="Satıcı Profilinizi Tamamlayın"
-          description="Pazaryerinde yayınlanacak botlardan ödeme alabilmeniz için son bir adım kaldı."
-        />
-        <SellerOnboardingWizard
-          userId={userId}
-          initialStatus={seller}
-          onComplete={() => seller.refetch()}
-        />
-      </div>
-    );
-  }
+  // Faz 4 — eski "State 2" (herkese açık için satıcı sihirbazı) kaldırıldı:
+  // herkese açık bot artık satıcı kaydı istemiyor (M10).
 
   // State 3: Ready to create or edit chatbot form
   return (

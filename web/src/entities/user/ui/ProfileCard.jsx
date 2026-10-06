@@ -358,6 +358,13 @@ export default function ProfileCard({bot, comments}) {
     };
 
     const avatarSrc = profile.image || resolveAvatarSrc(null);
+    // Faz 4 / GK-2 — ücretsiz herkese açık bot: herkes sohbet eder, satın
+    // alınmaz (sunucu addToCart'ta da reddediyor). Rozet gösterilir,
+    // "Sepete Ekle" gizlenir.
+    const isFreePublic =
+        Number(bot.is_independent) === 0 &&
+        !(Number(bot.ucret_haftalik) > 0) &&
+        !(Number(bot.ucret_aylik) > 0);
 
     const followToggle = async () => {
         if (!requireLogin(userId, router)) return;
@@ -457,6 +464,11 @@ export default function ProfileCard({bot, comments}) {
                         <div className="min-w-0">
                             <p className="flex items-center gap-1 truncate font-display text-body font-bold text-white">
                                 {profile.title || bot.isim || "Chatbot"}
+                                {isFreePublic && (
+                                    <span className="ml-1 shrink-0 rounded-full border border-violet-400/30 bg-violet-500/10 px-2 py-0.5 text-[10px] font-semibold text-violet-300">
+                                        Ücretsiz
+                                    </span>
+                                )}
                                 <ChevronRight className="h-3.5 w-3.5 shrink-0 text-white/30 transition-transform group-hover:translate-x-0.5" />
                             </p>
                             <p className="flex items-center gap-2 truncate text-label text-white/45">
@@ -491,13 +503,15 @@ export default function ProfileCard({bot, comments}) {
                     <ActionPill icon={MessageCircle} label="Yorumlar" count={commentCount} onClick={() => setCommentOpen(true)} />
                     <ActionPill icon={Share2} label="Paylaş" onClick={() => setShareOpen(true)} />
                     <ActionPill icon={ListPlus} label="Listeye Ekle" onClick={() => setModalVisible(true)} />
-                    <ActionPill
-                        icon={ShoppingCart}
-                        label={isInCart ? "Sepette" : "Sepete Ekle"}
-                        active={isInCart}
-                        disabled={isInCart}
-                        onClick={handleAddToCart}
-                    />
+                    {!isFreePublic && (
+                        <ActionPill
+                            icon={ShoppingCart}
+                            label={isInCart ? "Sepette" : "Sepete Ekle"}
+                            active={isInCart}
+                            disabled={isInCart}
+                            onClick={handleAddToCart}
+                        />
+                    )}
                     <ActionPill
                         icon={notificationsEnabled ? Bell : BellOff}
                         label={notificationsEnabled ? "Bildirimler Açık" : "Bildirimler Kapalı"}
