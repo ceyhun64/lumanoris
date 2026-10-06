@@ -1270,3 +1270,13 @@ Doğrulama her commit'te: lint, verify build, php -l, iyzico 77/0, `plan_limits_
 3. **Kod deploy** (en az `03f1a9d`). Kontrol: `php api/database/access_selftest.php` 0 başarısız; ücretsiz herkese açık bir bot sahibi/abonesi olmayan hesapla açılıp mesaj gönderilebiliyor ve coin düşüyor; fiyatlı bot abonelik olmadan sohbet etmiyor; `getchatbot.php` yanıtında sahibi olmayan için `style_prompt` yok.
 4. **015** `--apply`. Kontrol: doğrulama SELECT'inde `eslesen = 1`, fiyat NULL; sıradan hesapla Lumanoris AI sohbeti çalışıyor (N-14).
 5. **N-16 kararı** verilene kadar: canlıda `SELECT uc.* FROM user_cart uc JOIN chatbotlar c ON c.id = uc.chatbot_id WHERE c.is_independent = 0 AND COALESCE(c.ucret_haftalik,0) = 0 AND COALESCE(c.ucret_aylik,0) = 0` ile ücretsiz botu tutan sepet satırları kontrol edilmeli.
+
+## Faz 4 kapanış düzeltmeleri (2026-10-06)
+
+| ID | Commit | Durum |
+|---|---|---|
+| **N-16** | `1351119` | **Bulgu YANLIŞTI — düzeltme.** `createSubscription` kalem fiyatı `<= 0` ise ödemeyi zaten reddediyordu ("Bu chatbot için geçerli bir fiyat tanımlanmamış."); 0 ₺ işleme riski yoktu. Bulgu o satır okunmadan yazılmıştı. Yapılan: ücretsizleşmiş bot için mesaj netleştirildi ("… artık ücretsiz; … sepetinizden çıkarın"). |
+| **N-15** | `d8f3ff4` | **Kapandı.** Uydurma puan beş yerdeydi: ana sayfa + Keşfet eşlemesi (`rating: 4.9`), bento kart ve Takip Edilenler (iki yer) `|| "4.9"`. Aynı ailede Takip Edilenler takipçi sayısı `|| "1.2k"` (iki yer). Hiçbir API puan döndürmüyor; puan yalnızca varsa çiziliyor, takipçi gerçek değer. Not: Takip Edilenler'deki "puana göre sırala" seçeneği veri olmadığı için etkisiz kalıyor. |
+| **N-11** (kısmi) | `cfd7554` | `useSellerStatus.js` ve tek kullanıcısı ölü `features/wallet/BankInfo.jsx` silindi (üç yerde çağıran araması). `submerchant_register.php` kullanıcı kararıyla kaldı; BLOCKERS B1'e not. Kalan N-11 adayları: `ChatbotForm.jsx`, `features/notes/DialogueModal.jsx`, `entities/chatbot/ui/{ChatbotCard,BotCard,MarketplaceListCard,SuggestedCard}.jsx`, `features/purchasing/BuyModal.jsx` (tek importeri ölü `entities/chatbot/ui/ChatbotCard.jsx`). |
+
+**Etiket:** `faz4-tamam` bu commit'ten sonra atıldı. Canlıya bu etiket alınacak; uygulama sırası Faz 3 + Faz 4 "canlı uygulama sırası" bölümlerinde (madde 5 — N-16 sepet kontrolü — artık gerekmiyor, yalnızca kullanıcıya açık mesaj için bilgi amaçlı).
