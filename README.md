@@ -193,9 +193,11 @@ lumanoris-dashboard/
     ├── assets/               # user-uploaded images (.htaccess disables script execution)
     ├── database/
     │   ├── schema.sql        #   50 tables, utf8mb4_general_ci throughout
-    │   ├── migrations/       #   001–009 (incl. 002b), applied in filename order
+    │   ├── migrations/       #   001–016 (incl. 002b), applied in filename order
+│   ├── pending/          #   proposed migrations awaiting approval — NOT applied by migrate.php
     │   ├── migrate.php       #   runner: dry-run by default, records schema_migrations
     │   ├── iyzico_selftest.php #  payment integration self-test (offline + sandbox)
+│   ├── plan_limits_selftest.php, access_selftest.php, application_selftest.php # read-only/rolled-back self-tests
     │   └── seed_contracts.*  #   seeds legal contract texts into global_vars
     ├── functions/            # bootstrap, env, logging, db, rate limit, mailer, SMTP, coin engine, plans, payments
     ├── src/                  # Presentation / Application / Domain / Infrastructure / Shared
@@ -449,7 +451,7 @@ touching PHP.
 | `/login` | Public — login and register tabs, plus Google sign-in |
 | `/register` | Redirects to `/login?tab=register` |
 | `/forgot-password` | Public — email code request, then password reset |
-| `/dashboard` and `/dashboard/{chat, chatbots, chatbots/create, checkout, explore, following, history, list, notes, purchased, settings, upgrade, wallet}` | Guarded by `web/src/app/dashboard/layout.jsx` |
+| `/dashboard` and `/dashboard/{chat, chatbots, chatbots/create, checkout, explore, following, history, list, notes, pazaryeri-basvurusu, purchased, settings, upgrade, wallet}` | Guarded by `web/src/app/dashboard/layout.jsx` |
 | `/auth`, `/dashboard/market` | Retired — return 404 |
 | `/admin` | Proxied to the PHP admin panel |
 
@@ -659,6 +661,8 @@ static content popups in `web/src/widgets/info/`.
 | `/api/seller/submerchant_register.php` | POST | user |
 | `/api/seller/submerchant_resubmit.php` | GET/POST | user — delegates to `register()`, which requires POST + auth |
 | `/api/seller/submerchant_status.php` | GET | user |
+| `/api/seller/application_submit.php` | POST | user — marketplace application (company only); field-level validation errors in `errors` |
+| `/api/seller/application_status.php` | GET | user — own application (IBAN masked; no birth date / tax no) and `registered`, the single "has marketplace registration" flag |
 | `/api/seller/submerchant_list.php` | GET | admin |
 | `/api/seller/submerchant_list_remote.php` | GET/POST | admin |
 | `/api/seller/submerchant_update.php` | POST | admin |
@@ -678,7 +682,7 @@ Verified by diffing every `/api/**.php` literal in `web/src` against the files u
 `marketplace/updatesubscription.php`, `marketplace/deletesubscription.php`,
 `message/consumemessage.php`, `notification/createnotification.php`, `social/diduserlike.php`,
 `social/diduserdislike.php`, `social/diduserfollow.php`, `wallet/list_withdrawals.php`,
-`wallet/update_withdrawal_status.php`, and every admin-only `seller/*` endpoint.
+`wallet/update_withdrawal_status.php`, `seller/submerchant_register.php` (kept for the real sub-merchant integration, BLOCKERS B1), and every admin-only `seller/*` endpoint.
 
 `consumemessage.php` is unused because message consumption moved server-side into
 `generatereply.php`; the admin-only endpoints are driven from the PHP admin panel, not the Next.js
@@ -702,6 +706,7 @@ Fixed-window counters in the `rate_limits` table, applied via `checkRateLimit()`
 | `checkout:<user>` | 5 per min |
 | `readurl:<user>` | 15 per 5 min |
 | `readpdf:<user>` | 10 per 5 min |
+| `mapp_submit:<user>` | 5 per hour |
 | `parampos_cb:<ip>` | 60 per min |
 
 The admin login path uses the non-throwing `rateLimitHit()` variant instead: 5 per account and 20 per
@@ -863,7 +868,13 @@ data, and renaming means a migration plus every read path. The meanings are prov
 php api/database/iyzico_selftest.php
 ```
 
-Part A runs offline and needs no keys: it proves the signature scheme, the amount formatting and the
+Other self-tests (no persistent writes — scenario data is created inside a transaction and rolled
+back): `plan_limits_selftest.php --strict` (plan catalogue, free-plan regression, make-private rights),
+`access_selftest.php` (who can list / preview / chat / read persona per bot type) and
+`application_selftest.php` (marketplace application validation, resubmission rules and the
+"has registration" rule). All are listed in `CLAUDE.md` → Doğrulama komutları.
+
+In `iyzico_selftest.php`, part A runs offline and needs no keys: it proves the signature scheme, the amount formatting and the
 basket-total equality rule. Part B runs only when `IYZICO_API_KEY`/`IYZICO_SECRET_KEY` are present —
 it charges a sandbox test card and then cancels it. No real money moves on the sandbox host.
 
@@ -919,9 +930,12 @@ that is the authoritative one.
 ### Authorization
 
 There is no role system for end users. Access is checked per resource, most notably
-`ChatbotRepository::userHasAccess()`, which grants access when the caller is the bot's author, when
-the bot is non-independent and its author is an active marketplace seller, or when the caller holds a
-live `user_subscriptions` row for it. Ownership checks are also inlined in controllers (for example
+`ChatbotRepository::userHasAccess($bot, $user, $purpose)`. `full` (persona and training text) = the bot's
+author/owner or a live `user_subscriptions` row. `chat` (used by `generatereply.php`) = `full` **or** a
+free public bot (published, both prices empty/0) — anyone signed in may chat, spending their daily
+coins. `preview` (marketplace card) = `full`, a free public bot, or a priced bot whose author is an
+active seller. Private (`is_independent = 1`) bots match no public branch. `getchatbot.php` returns
+`style_prompt` only to the bot's owner. `api/database/access_selftest.php` locks this matrix. Ownership checks are also inlined in controllers (for example
 `ChatController::updateConversation` and `TrainingController::updateTrainingChunk`).
 
 ### Admins
@@ -934,6 +948,11 @@ admin AJAX endpoint includes `admin/ajax/_guard.php`, which rejects non-admins w
 requires a CSRF token (`csrf_token` field or `X-CSRF-Token` header) on every non-`GET` request.
 `AuthMiddleware::requireAdmin()` reads the same `$_SESSION['admin']` flag for the JSON API and
 returns `403` with `PERMISSION_DENIED` when absent.
+
+Marketplace applications are reviewed at `/admin/basvurular` (`admin/ajax/basvurular.php`, guarded as
+above). Marking one "reviewed" does **not** make the user an active seller (that depends on BLOCKERS B1)
+and notifies the user through the `notifications` table. Copying the application IBAN into
+`banka_bilgileri` is disabled until an admin audit log exists (AUDIT.md GK-23).
 
 **Where the account comes from** is decided by `ADMIN_USERNAME` in `api/.env`:
 
@@ -1020,10 +1039,11 @@ dropping them silently. `BaseRepository` validates every column name against
 | --- | --- | --- |
 | `DAILY_FREE_MESSAGES` | 10 | Fallback daily message quota. Used only when the `plans` table is unavailable — see [Plans and quotas](#plans-and-quotas). |
 | `FREE_INDEPENDENT_BOT_LIMIT` / `FREE_PUBLIC_BOT_LIMIT` | 1 / 2 | Fallback free-plan bot limits, same condition. |
+| `FREE_PRIVACY_RIGHT_LIMIT` | 1 | Fallback total "make private" (unpublish) rights, same condition. |
 | `SUBSCRIPTION_WEEKLY` / `SUBSCRIPTION_MONTHLY` | 7 / 30 days | Subscription durations |
 | `DISCOUNT_MONTHLY_FACTOR` | 0.9 | Applied exactly once, when a seller sets a price: `ucret_aylik = round(weekly × 4 × 0.9)`. Everything downstream uses the stored value as-is. |
 | `SELLER_COMMISSION_WEEKLY` / `SELLER_COMMISSION_MONTHLY` | 0.85 / 0.80 | Seller's share of a sale |
-| `MIN_WEEKLY_PRICE` / `MAX_WEEKLY_PRICE` | 1 / 5000 ₺ | Enforced by `ChatbotController::assertValidPrice()` on publish and on price update, for both the weekly and the derived monthly figure. The source marks both as placeholder values pending product/finance confirmation. |
+| `MIN_WEEKLY_PRICE` / `MAX_WEEKLY_PRICE` | 100 / 5000 ₺ | Enforced by `ChatbotController::assertValidPrice()` on a priced publish and on price update, for both the weekly and the derived monthly figure. A publish without a price makes a free public bot. |
 | `MAX_UPLOAD_SIZE_BYTES` | 5 MB | Upload cap, enforced in `ChatbotController::handleImageUploads()` |
 | `REMEMBER_ME_DAYS` | 30 | Remember-me lifetime |
 
@@ -1033,8 +1053,8 @@ dropping them silently. `BaseRepository` validates every column name against
 > constants exist.
 
 `web/src/shared/lib/pricing.js` deliberately mirrors the pricing values for client-side validation,
-and `api/functions/coin_engine.php` mirrors the bonus-credit tiers used by
-`web/src/features/purchasing/BuyModal.jsx`. **Both sides must be edited together — nothing enforces
+and `api/functions/coin_engine.php` mirrors the bonus-credit tiers in
+`web/src/shared/lib/pricing.js` (`COIN_TIER_*`). **Both sides must be edited together — nothing enforces
 that they agree.**
 
 ### Plans and quotas
@@ -1045,6 +1065,22 @@ that they agree.**
 the `plans` table is missing, has no quota columns (migration `007_plan_limits.sql` not applied), or
 is empty, `fallbackPlan()` returns the `AppConfig` values above — so behaviour is unchanged on an
 un-migrated database.
+
+Current catalogue (migration `013_plan_catalog_2026_10.sql`; editable in the admin Subscription page):
+
+| Plan | Monthly | Daily coins | Private bots | Public bots | Make-private rights (total) |
+| --- | --- | --- | --- | --- | --- |
+| Ücretsiz | 0 ₺ | 10 | 1 | 2 | 1 |
+| Gümüş | 149 ₺ | 50 | 3 | 5 | 3 |
+| Altın | 299 ₺ | 100 | 5 | 10 | 5 |
+| Elmas | 849 ₺ | 200 | unlimited | unlimited | 20 |
+
+Since migration `012`, a `NULL` bot limit means unlimited (`chatbot_limits.php` maps it to
+`BOT_LIMIT_UNLIMITED`). An **active marketplace seller** additionally gets unlimited public bots.
+Publishing a bot does not use a right; pulling a published bot back to private
+(`unpublishchatbot.php`) uses one make-private right (counted in `user_privacy_right_usage`, never
+renewed) and is not limited by the private-bot quota. `api/database/plan_limits_selftest.php --strict`
+checks the catalogue.
 
 ### Design tokens
 
