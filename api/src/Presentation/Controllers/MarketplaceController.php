@@ -655,8 +655,21 @@ class MarketplaceController {
 
             // An absent price is an unpriced bot, not a free one — refuse it
             // rather than recording a 0,00 TL sale.
+            //
+            // N-16 (Faz 4) — bu kapı fiyatı SONRADAN kaldırılmış (ücretsiz
+            // herkese açık olmuş, ör. 015 sonrası platform botu) ve eski bir
+            // sepet satırında kalmış botu da zaten durduruyordu; yalnızca mesaj
+            // kullanıcıya ne yapacağını söylemiyordu.
             if ($price <= 0) {
-                $failCheckout('Bu chatbot için geçerli bir fiyat tanımlanmamış.', AppConfig::ERR_VALIDATION);
+                $isFreePublic = (int) $bot['is_independent'] === 0
+                    && (float) $bot['ucret_haftalik'] <= 0
+                    && (float) $bot['ucret_aylik'] <= 0;
+                $failCheckout(
+                    $isFreePublic
+                        ? sprintf('"%s" artık ücretsiz; satın almadan sohbet edebilirsiniz. Lütfen sepetinizden çıkarın.', $bot['isim'])
+                        : 'Bu chatbot için geçerli bir fiyat tanımlanmamış.',
+                    AppConfig::ERR_VALIDATION
+                );
             }
 
             $days       = $isMonthly ? AppConfig::SUBSCRIPTION_MONTHLY : $durationWeeks * AppConfig::SUBSCRIPTION_WEEKLY;
