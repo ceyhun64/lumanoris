@@ -1,7 +1,7 @@
 -- 016 — Pazaryeri başvuruları (madde 3, Faz 5)
 --
--- DURUM: ÖNERİ, ONAY BEKLİYOR — UYGULANMADI. Şema tasarımı (CLAUDE.md "Önce
--- raporla"). Onaya kadar `api/database/pending/` altında.
+-- DURUM: ONAYLANDI (GK-19, 2026-10-06).
+--
 --
 -- Bağlam: GK-7 (alanlar), GK-8 (şahıs + kurumsal; bireysel yok), GK-9 (onay
 -- admin panelinden, "incelendi" yazar, satıcıyı `active` YAPMAZ), GK-5
