@@ -12,6 +12,21 @@ class MarketplaceController {
         }
 
         $db          = Database::getInstance();
+
+        // Faz 4 / E8 — ücretsiz herkese açık bot (iki fiyat da boş/0) satın
+        // alınmaz: herkes zaten sohbet edebilir. Bu kapı yokken satıcısı aktif
+        // bir yazarın fiyatsız botu sepete girip 0 ₺'lik abonelik/sipariş
+        // üretebiliyordu. Satıcı kontrolünden ÖNCE: ücretsiz bot için doğru
+        // mesaj "satıcı kaydı eksik" değil, "bu bot ücretsiz".
+        $priceRow = $db->selectSingle(
+            'COALESCE(ucret_haftalik, 0) AS weekly, COALESCE(ucret_aylik, 0) AS monthly
+             FROM chatbotlar WHERE id = ? AND is_independent = 0',
+            [$chatbotId]
+        );
+        if ($priceRow && (float) $priceRow['weekly'] <= 0 && (float) $priceRow['monthly'] <= 0) {
+            JsonResponse::error('Bu chatbot ücretsiz; satın almadan sohbet edebilirsiniz.', 422, AppConfig::ERR_VALIDATION);
+        }
+
         $sellerCheck = $db->selectSingle(
             "pms.status FROM param_marketplace_sellers pms
              JOIN chatbotlar c ON c.author_user_id = pms.user_id
