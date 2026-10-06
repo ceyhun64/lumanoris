@@ -1063,3 +1063,27 @@ Bugünkü `plans` seed'iyle (007) farklar: Altın 10/15/200 → 5/10/100, Elmas 
 | # | Karar | Etkilenen iş |
 |---|---|---|
 | GK-17 | **Geliştirici kararı (müşteri onayı yok, 2026-10-06):** paketlerdeki yayından kaldırma (özel yapma) hakları da ücretsizdeki gibi **toplam** sayılır, aylık yenilenmez. | Madde 11 sayaç tasarımı, paket metinleri |
+
+## Faz 3 — yapılanlar ve onay bekleyenler
+
+Doğrulama: her PHP değişikliğinde `php -l`, PHP değişikliğinde iyzico öz-testi, her web değişikliğinde lint + verify build; yeni `api/database/plan_limits_selftest.php` (salt okunur). **Tarayıcıda denenmedi.**
+
+| İş | Commit | Durum |
+|---|---|---|
+| Ücretsiz plan regresyon testi + müşteri paket tablosu testi | `a1a76b3` (+ `e59b502`) | A (regresyon) ve A2 (madde 2) yeşil; B (paket tablosu) **5 kırmızı** — 013 uygulanana kadar beklenen. |
+| N-12 — anahtar yokken belge haklarının iadesi | `64d1409` | **Kapandı.** Otomatik test yok: dal yalnızca anahtar yokken çalışıyor, `googleGeminiApiKey()` `admin/.env`'ye düştüğü için CLI'da tetiklenemiyor. |
+| Madde 2 — onaylı satıcıya sınırsız herkese açık hak (GK-5/GK-6) | `e59b502` | **Sunucu tarafı tamam.** `getPublicBotLimit()` `active` satıcıya `BOT_LIMIT_UNLIMITED`; `getchatbotlimits.php`'ye eklemeli `*_unlimited` alanları; oluştur sayfasındaki sabit "1/2 Kullanıldı"/"0/5 Kullanıldı" metinleri gerçek değerle değişti. **"Herkese Açık Chatbot Oluştur" kartı EKLENMEDİ:** herkese açık bot oluşturmak bugün aktif satıcı istiyor (`saveChatbot`), ücretsiz herkese açık bot (GK-2) için bu şartın kalkması Faz 4'teki yayın/satış ayrıştırmasının parçası (birden fazla uç nokta + `userHasAccess` + listeleme → diff önerisi). Kart Faz 4 onayıyla birlikte eklenecek; aksi hâlde her tıklama `SELLER_NOT_ACTIVE` ile biten bir akış olurdu. |
+| N-10 — ana sayfa fiyatları | `f0e168f` | **Kapandı.** `getpricing.php`'den okuyor; satılmayan yıllık %20 indirim kaldırıldı. |
+| Yerel `migrate --apply` | — | `010_notification_message_columns.sql` ve `011_user_plan_expiry.sql` yerelde uygulandı (öncesi/sonrası `--status` alındı; ikisi de koşullu ALTER, veri ifadesi yok; DB_HOST yerel doğrulandı). |
+| 012 — şema: sınırsız = NULL, `plans.privacy_right_limit`, `user_privacy_right_usage` | `api/database/pending/012_…` | **Yazıldı, ONAY BEKLİYOR** (şema tasarımı). migrate.php yıkıcı saymıyor. |
+| 013 — paket verisi (UPDATE + `plan_icerikler` DELETE/INSERT) | `api/database/pending/013_…` | **Yazıldı, ONAY BEKLİYOR** (veri güncelleyen/silen). migrate.php yıkıcı sayıyor → `--allow-destructive` gerekir; Claude çalıştıramaz, kullanıcı uygular. Alternatif: değerler admin panelinden girilebilir (yalnızca NULL ve hak kolonu 012 ister). |
+| Madde 11 + Elmas sınırsız kodu | — | **012 onayına bağlı, yazılmadı.** Plan: `AppConfig::FREE_PRIVACY_RIGHT_LIMIT = 1` (fallback); `getIndependentBotLimit`/`getPublicBotLimit` NULL → `BOT_LIMIT_UNLIMITED`; `getPrivacyRightLimit()` + kullanım sayımı; `unpublishChatbot` yayınlanmış botu özele çekerken hakkı tüketir (aynı kilit altında `user_privacy_right_usage` satırı), bağımsız limitine takılmaz (GK-3 → N-07'yi kapatır); `getchatbotlimits`/`getPricing` hak ve sınırsız bilgisi; admin Abonelik formuna hak alanı ve "sınırsız" seçeneği; oluştur/chatbotlar ekranında kalan hak. **Uygulama sırası:** NULL'a dayanıklı kod → 012 → 013. |
+| Oluştur sayfasındaki 750 ₺ "Üretici Limitinizi Yükseltin" kartı (B2) | — | **Soru:** paket tablosuyla çelişen ayrı bir teklif (5 herkese açık + 2 bağımsız). Satışı zaten kapalı (`buyProducerAccount` fail-closed). Kaldırılsın mı / yükseltme sayfasına mı yönlensin? B2 iş kararı olduğu için dokunulmadı. |
+
+### Canlı için uygulama sırası (kullanıcı çalıştırır)
+
+1. Faz 3 kodunu (NULL'a dayanıklı sürüm, onaydan sonra) deploy et.
+2. `010_notification_message_columns.sql`, `011_user_plan_expiry.sql` (canlıda bekliyorsa) — `--apply`.
+3. 012'yi `migrations/`'a taşı → `--apply`. Geri alma: dosya başlığındaki ters ifadeler.
+4. 013'ü `migrations/`'a taşı → `--apply --allow-destructive` (ya da değerleri admin panelinden gir). Geri alma: 007'deki değerler ve özellik satırları.
+5. `php api/database/plan_limits_selftest.php` → B bölümü yeşil olmalı.
