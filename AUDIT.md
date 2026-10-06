@@ -1044,3 +1044,22 @@ Dayanak: GK-1…GK-16 (geliştirici kararı, müşteri onayı yok). Her madde ay
 |---|---|---|---|---|
 | **N-13** | P2 | `app/dashboard/wallet/page.jsx` | `payments` state'i iki UYDURMA siparişle başlıyordu ("Aura Architect Prime" 450 ₺, "Verba SEO & Content Titan" 280 ₺); yükleme sırasında gerçek kayıt gibi listeleniyor, istek başarısız olunca ekranda kalıyor ve "toplam harcama"ya ekleniyordu. | **Kapandı** (`c021e5f`) — boş başlangıç, yükleme ve hata durumu. |
 | **N-14** | Şüphe | `ChatbotRepository::userHasAccess`, platform botu | Ana sayfa ve takip listesi Lumanoris AI'yı herkese varsayılan bot olarak sunuyor (sunucu onu örtük takip olarak ekliyor), ama `userHasAccess('full')` yalnızca sahip/abone kabul ediyor; platform botu `SYSTEM` kullanıcısına ait. Kullanıcıların bu bota erişimi başka bir yoldan (ör. kayıtta abonelik satırı) verilmiyorsa sohbet 403 döner. **Kanıtlanamadı:** yerelde `SYSTEM` sahipli "Lumanoris AI" yok, kayıt akışında abonelik yazan kod görülmedi. | Açık — canlı veriyle doğrulanmalı; Faz 4'te GK-2 ile birlikte ele alınabilir. |
+
+---
+
+# Faz 3 — Limitler, gizlilik hakkı ve paketler (2026-10-06)
+
+## Paket tablosu (müşteri PDF'i, teyitli — Elmas 849 ₺ dahil)
+
+| Paket | Fiyat | Günlük coin | Bağımsız | Herkese açık | Yayından kaldırma (özel yapma) hakkı | Yalnızca metin |
+|---|---|---|---|---|---|---|
+| Ücretsiz | 0 | 10 | 1 | 2 | 1 (toplam) | – |
+| Gümüş | 149 ₺/ay | 50 | 3 | 5 | 3 | Diğer tüm özelliklerde sınırsız deneyim |
+| Altın | 299 ₺/ay | 100 | 5 | 10 | 5 | Öncelikli destek, tüm Lumanoris deneyimlerine erişim |
+| Elmas | 849 ₺/ay | 200 | sınırsız | sınırsız | 20 | 7/24 VIP destek, yeni özelliklere erken erişim |
+
+Bugünkü `plans` seed'iyle (007) farklar: Altın 10/15/200 → 5/10/100, Elmas 599 ₺ 50/50/1000 → 849 ₺ sınırsız/sınırsız/200. Ücretsiz ve Gümüş fiyat/limitleri aynı (Gümüş coin 50, 3/5 — değişmiyor). "Yayından kaldırma hakkı" kolonu bugün yok.
+
+| # | Karar | Etkilenen iş |
+|---|---|---|
+| GK-17 | **Geliştirici kararı (müşteri onayı yok, 2026-10-06):** paketlerdeki yayından kaldırma (özel yapma) hakları da ücretsizdeki gibi **toplam** sayılır, aylık yenilenmez. | Madde 11 sayaç tasarımı, paket metinleri |
