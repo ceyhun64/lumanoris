@@ -1318,3 +1318,16 @@ Kod yazılmadı. Şema: `api/database/pending/016_marketplace_applications.sql` 
 | S-6 | Şahıs şirketinde vergi no: TCKN (11) mi, VKN (10) mu? MERSİS şahısta zorunlu mu? | Öneri: şahısta ikisi de kabul; MERSİS kurumsalda zorunlu, şahısta isteğe bağlı (ticaret siciline kayıtlı olmayan şahıs işletmesi var). |
 | S-7 | Başvuru sonucu kullanıcıya nasıl bildirilsin? | Öneri: uygulama içi bildirim (`notifications` tablosu mevcut); e-posta B5 (SMTP) açık olduğu için yok. |
 | S-8 | Admin "Başvurular" sayfasında tam IBAN / doğum tarihi görünsün mü? | Öneri: evet (inceleme için gerekli), ama sayfa erişimi yalnızca admin oturumu; dışa aktarma yok. |
+
+## Faz 5 kararları — geliştirici kararı (müşteri onayı yok, 2026-10-06)
+
+| # | Karar | Etkilenen iş |
+|---|---|---|
+| GK-19 (S-1) | 016 şeması ve API sözleşmesi onaylandı; 016 yerelde uygulanır. | Faz 5 |
+| GK-20 (S-2) | Başvuru geçmişi tutulmaz; kullanıcı başına tek satır, yeniden gönderim üzerine yazar. | 016, submit ucu |
+| GK-21 (S-3) | `reviewed` başvuru kullanıcı tarafından değiştirilemez (409); yalnızca `submitted` / `rejected` yeniden gönderilir. | submit ucu |
+| GK-22 (S-4) | "Kaydı var" tek kaynağı = yeni tabloda `submitted` / `reviewed` **VEYA** eski `param_marketplace_sellers`'ta `active` / `suspended`. Eski tablodaki `rejected` (B1 kaynaklı otomatik ret) ve `pending` SAYILMAZ. **Davranış değişikliği:** Faz 2'deki hook `pending` ve `rejected`'ı da sayıyordu. | `useMarketplaceRegistration`, `hasMarketplaceRegistration`, Bakiyem kapısı (madde 4) |
+| GK-23 (S-5) | Admin "incelendi" dediğinde başvurudaki IBAN `banka_bilgileri.iban`'a yazılır. Şartlar: onay ekranında mevcut ve yeni IBAN yan yana; kullanıcının `beklemede` para çekme talebi varsa IBAN güncellemesi engellenir ve admin'e nedeni gösterilir; IBAN değişikliği (kim, ne zaman, eski/yeni maskeli) kalıcı kayda geçer. **Mevcut bir admin işlem logu YOK** (iade denetimi bile yalnızca `error_log`'da) → yeni tablo önerisi, **onay bekliyor**; onaya kadar IBAN aktarımı yapılmaz. | admin Başvurular, 017 (öneri) |
+| GK-24 (S-6) | Şahısta vergi no TCKN (11) veya VKN (10); MERSİS kurumsalda zorunlu, şahısta isteğe bağlı. | submit doğrulaması |
+| GK-25 (S-7) | Uygulama içi bildirim altyapısı VAR (`notifications` tablosu + başlıktaki bildirim kutusu): inceleme sonucu kullanıcıya oraya yazılır; ayrıca başvuru sayfasında durum gösterilir. Yeni sistem kurulmadı. | admin durum ucu, başvuru sayfası |
+| GK-26 (S-8) | Admin Başvurular sayfasında tam IBAN ve doğum tarihi görünür; yalnızca admin oturumu; dışa aktarma yok. | admin Başvurular |
