@@ -1179,3 +1179,53 @@ Kullanıcı U = sahip değil, aktif aboneliği yok. Yerelde ölçüldü (`f4_mat
 ## N-14 — ölçüm
 
 Yerelde platform botu "LUMANORIS AI" (#5) herkese açık ama **50 ₺ fiyatlı** (sahibi `lumanoris`). Matristeki "Fiyatlı, satıcı aktif" satırı bu bot: abonesi olmayan kullanıcı bugün sohbet edemiyor (**şüphe yerelde doğrulandı**) ve önerilen yamadan sonra da edemez. Ana sayfa ise onu herkese varsayılan bot olarak sunuyor. Çözüm bir veri kararı: platform botunun fiyatı kaldırılırsa (`ucret_haftalik/aylik = NULL`) yamadan sonra ücretsiz herkese açık olur ve herkes sohbet edebilir. Bu bir UPDATE, onay gerektirir; canlıdaki durum kullanıcıdan bekleniyor.
+
+## Faz 4 — kontrol A ve B (2026-10-06)
+
+**A — yamadan sonra vitrine yeni çıkacak botlar.** Yerelde **0 satır** (ölçüt: yayında, iki fiyat da boş/0, yazarı aktif satıcı değil). Canlı için salt okunur sorgu aşağıda. Satır dönerse ve bunlar sahiplerinin taslağıysa `api/database/pending/014_unlist_free_public_drafts.sql` (öneri, **uygulanmadı**) onları özele çeker; Faz 4 kodundan ÖNCE çalışmalı, özel yapma hakkı düşmez.
+
+```sql
+-- Faz 4 / kontrol A — yamadan sonra vitrine YENİ çıkacak botlar. SALT OKUNUR.
+-- Ölçüt: yayında (is_independent = 0), iki fiyat da boş/0 ve bugün listelenmiyor
+-- (yazarı aktif satıcı değil). Yazarı aktif satıcı olan fiyatsız botlar bugün de
+-- listeleniyor; onlar ayrıca ikinci sorguda.
+SELECT c.id, c.isim, c.author_user_id, u.kullanici_adi AS yazar,
+       COALESCE(pms.status, 'kayit_yok') AS satici_durumu,
+       c.yayimlanma_tarih, c.edit_tarih,
+       CHAR_LENGTH(COALESCE(c.training_prompt, '')) AS egitim_karakter,
+       (SELECT COUNT(*) FROM chatbot_chats ch WHERE ch.chatbot_id = c.id) AS mesaj,
+       (SELECT COUNT(*) FROM user_subscriptions us WHERE us.chatbot_id = c.id) AS abonelik
+FROM chatbotlar c
+LEFT JOIN kullanicilar u ON u.id = c.author_user_id
+LEFT JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id
+WHERE c.is_independent = 0
+  AND COALESCE(c.ucret_haftalik, 0) = 0 AND COALESCE(c.ucret_aylik, 0) = 0
+  AND COALESCE(pms.status, '') <> 'active'
+ORDER BY c.id;
+
+-- Bilgi: bugün DE listelenen fiyatsız botlar (yazar aktif satıcı) — davranışları
+-- değişmez ama yamadan sonra herkes ücretsiz sohbet edebilir.
+SELECT c.id, c.isim, u.kullanici_adi AS yazar
+FROM chatbotlar c
+JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id AND pms.status = 'active'
+LEFT JOIN kullanicilar u ON u.id = c.author_user_id
+WHERE c.is_independent = 0
+  AND COALESCE(c.ucret_haftalik, 0) = 0 AND COALESCE(c.ucret_aylik, 0) = 0
+ORDER BY c.id;
+```
+
+**B — sohbet sayfasının çağırdığı uç noktalar** (sayfa + ProfileCard + DialogNotebookModal, 21 uç nokta). Ücretsiz herkese açık bot için:
+
+| Uç nokta | Erişim kontrolü (önce) | Sonuç |
+|---|---|---|
+| `chatbot/getchatbot.php` | `getDetail`: full veya preview (preview satıcı aktif istiyordu) | Bugün ücretsiz bota **404** → sayfa açılmıyordu. Yamayla preview/chat. Persona artık **yalnızca sahibine** (sohbet persona kullanmıyor; tek okuyan oluştur/düzenle sayfası). |
+| `chat/generatereply.php` | `userHasAccess(full)` | Sohbeti **kırıyordu** → yamada `chat`. Persona/eğitim metni yalnızca sunucuda modele gidiyor, istemciye dönmüyor. |
+| `chat/getchat.php`, `getconversation.php`, `addconversation.php`, `addchat.php`, `gethistory.php` | yalnızca oturum; satırlar `user_id` ile kapsanıyor | Erişim türü istemiyor; sohbeti kırmıyor. Persona dönmüyor. |
+| `message/checkmessageallowance.php` | yalnızca oturum | Coin bakiyesi; sorun yok. |
+| `wallet/getsubscription.php` | yalnızca oturum, kullanıcının kendi aboneliği | Sayfadaki `hasSubscription` kapısı yorum satırında; sohbeti engellemiyor. |
+| `content/getadcounts.php`, `auth/sessioncheck.php` | herkese açık / oturum | İlgisiz. |
+| ProfileCard: `getcart`, `getuserlists`, `getuserbotstatus`, `like/dislike/follow/addcomment/adduninterest` | oturum, kullanıcıya kapsanmış | İlgisiz; persona dönmüyor. |
+| ProfileCard: `marketplace/addtocart.php` | satıcı aktif mi | E8 → adım 4 (ücretsiz bot reddi). |
+| `note/adddialogbook.php` | yalnızca oturum | İlgisiz. |
+
+Sonuç: full isteyen ve sohbeti kıran tek uç nokta `generatereply.php` (yamada düzeldi); `getchatbot.php` ücretsiz bota 404 veriyordu (yamada düzeldi) ve personayı abonelere de döndürüyordu (sahiple sınırlandı). Yama `8ebb757` ile uygulandı; yeni `access_selftest.php` 21/0 (eski kodla 4 hata).
