@@ -1,7 +1,7 @@
 -- 012 — Paket şeması: "sınırsız" kota ve yayından kaldırma (özel yapma) hakkı
 --
--- DURUM: ONAY BEKLİYOR. Şema tasarımı (CLAUDE.md "Önce raporla"). Onaya kadar
--- `api/database/pending/` altında; onaylanınca `migrations/` altına taşınır.
+-- DURUM: ONAYLANDI (kullanıcı, 2026-10-06). Önce NULL'a dayanıklı kod (cd02a62),
+-- sonra bu migration.
 --
 -- Bağlam: AUDIT.md Faz 3 paket tablosu, GK-3, GK-4, GK-17.
 --
