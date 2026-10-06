@@ -1,8 +1,8 @@
 -- 013 — Paket kataloğu: müşteri paket tablosu (AUDIT.md, Faz 3)
 --
--- DURUM: ONAY BEKLİYOR. Mevcut veriyi GÜNCELLEYEN migration (CLAUDE.md: veri
--- düzeltme migration'ı yerelde de onay ister). Onaya kadar
--- `api/database/pending/` altında.
+-- DURUM: ONAYLANDI (kullanıcı, 2026-10-06). Mevcut veriyi GÜNCELLEYEN migration;
+-- onay alındı.
+--
 --
 -- 012'ye BAĞIMLI (privacy_right_limit kolonu ve NULL = sınırsız).
 --
