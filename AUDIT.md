@@ -1586,7 +1586,7 @@ Kaynak ve servis eşlemesi: `docs/proposals/hoppa-gecis-kesif.md` §0.2. Hoppa s
 
 | ID | Sev | Dosya | Problem | Durum |
 |---|---|---|---|---|
-| **N-19** | P2 | Hoppa üye işyeri ayarı (kod değil); paket fiyatının gösterildiği ekranlar | **Test üye işyerinde komisyon alıcıya yansıtılıyor.** 149,00 ₺'lik siparişte Hoppa ödeme sayfası "151,25 TRY ÖDEME YAP" gösterdi ve karttan 151,25 çekildi (`COMMISSION=2,25`, `COMMISSION_RATE=1,490`). Bizim ekranımız 149 ₺ gösteriyor. Canlı hesapta da böyle olursa kullanıcı ödeme sayfasında ilk kez daha yüksek bir tutar görür. Bu, fiyat gösterimi açısından (tüketici mevzuatı: toplam fiyat) sorun olabilir. Kod tarafında kesinleştirme her iki modeli de kabul ediyor: çekilen tutar sipariş tutarına eşitse **ya da** çekilen tutar eksi komisyon sipariş tutarına eşitse ödeme geçerli. | **Açık — Hoppa'ya soruldu** (`docs/hoppa-sorular.md` #3). Canlı ödeme açılmadan önce komisyonun kimde kalacağına müşteri karar vermeli; alıcıya yansıyacaksa fiyat ekranları bunu göstermeli. |
+| **N-19** | P2 | Hoppa üye işyeri ayarı (kod değil); paket fiyatının gösterildiği ekranlar | **Test üye işyerinde komisyon alıcıya yansıtılıyor.** 149,00 ₺'lik siparişte Hoppa ödeme sayfası "151,25 TRY ÖDEME YAP" gösterdi ve karttan 151,25 çekildi (`COMMISSION=2,25`, `COMMISSION_RATE=1,490`). Bizim ekranımız 149 ₺ gösteriyor. Canlı hesapta da böyle olursa kullanıcı ödeme sayfasında ilk kez daha yüksek bir tutar görür. Bu, fiyat gösterimi açısından (tüketici mevzuatı: toplam fiyat) sorun olabilir. Kod tarafında kesinleştirme her iki modeli de kabul ediyor: çekilen tutar sipariş tutarına eşitse **ya da** çekilen tutar eksi komisyon sipariş tutarına eşitse ödeme geçerli. | **Açık — Hoppa'ya soruldu** (`docs/hoppa-sorular.md` #3: hesap ayarı mı); **müşteriye soruldu** (`docs/musteri-ozet-2026-10.md` B, öneri: komisyonu müşteri karşılasın). Canlı ödeme açılmadan önce komisyonun kimde kalacağına müşteri karar vermeli; alıcıya yansıyacaksa fiyat ekranları bunu göstermeli. |
 
 ## Faz 7a — Paket ödemesi Hoppa ile (yalnızca TEST ortamı, 2026-10-07)
 
@@ -1609,7 +1609,7 @@ Kaynak ve servis eşlemesi: `docs/proposals/hoppa-gecis-kesif.md` §0.2. Hoppa s
 
 | ID | Sev | Dosya | Problem | Durum |
 |---|---|---|---|---|
-| **N-20** | P2 | `WalletController::startHostedPlanPayment` | **Hoppa alıcının il, ilçe ve adresini zorunlu istiyor; kayıtta bu bilgiler yok.** Şu an Hoppa'nın kendi örneğindeki gibi `"-"` gönderiliyor; telefon yoksa o da `"-"`. Doküman "fraud önleme için tüm parametrelerin eksiksiz gönderilmesi gerekir" diyor. Test ortamı `"-"`'yi kabul etti; canlıda kabul edilip edilmeyeceği ve adres toplanıp toplanmayacağı (KVKK, kayıt formu) **müşteri kararı**. | **Açık — karar bekliyor.** Canlı ödeme açılmadan önce: ya Hoppa `"-"`'yi canlıda kabul ettiğini teyit eder, ya da ödeme öncesi adres alanı eklenir. |
+| **N-20** | P2 | `WalletController::startHostedPlanPayment` | **Hoppa alıcının il, ilçe ve adresini zorunlu istiyor; kayıtta bu bilgiler yok.** Şu an Hoppa'nın kendi örneğindeki gibi `"-"` gönderiliyor; telefon yoksa o da `"-"`. Doküman "fraud önleme için tüm parametrelerin eksiksiz gönderilmesi gerekir" diyor. Test ortamı `"-"`'yi kabul etti; canlıda kabul edilip edilmeyeceği ve adres toplanıp toplanmayacağı (KVKK, kayıt formu) **müşteri kararı**. | **Açık — karar bekliyor.** Müşteriye (`musteri-ozet-2026-10.md` B) ve Hoppa'ya (`hoppa-sorular.md` #17: canlıda `"-"` kabul ediliyor mu) soruldu. Canlı ödeme açılmadan önce: ya Hoppa `"-"`'yi canlıda kabul ettiğini teyit eder, ya da ödeme öncesi adres alanı eklenir. |
 
 ### Faz 7a'da yapılmayanlar (açık)
 
@@ -1619,3 +1619,43 @@ Kaynak ve servis eşlemesi: `docs/proposals/hoppa-gecis-kesif.md` §0.2. Hoppa s
 - **AUTH_HASH doğrulanmıyor** (algoritma belgelenmemiş, Hoppa sorusu #2); güven yalnızca sunucudan yapılan ProcessQuery'de.
 - **Komisyon alıcıya yansıyor** (N-19) — kesinleştirme iki modeli de kabul ediyor.
 - `iyzico` kodu ve pazaryeri satışı değiştirilmedi.
+
+## Faz 7a-2 — Canlı öncesi tamamlayıcılar (yalnızca TEST ortamı, 2026-10-07)
+
+Faz 7a'nın "yapılmayanlar" listesindeki mutabakat, iade ve hatırlatma maddeleri kapandı. Kod: `api/functions/hosted_plan_payments.php`, `api/cron/plan_payments.php`. Selftest: `hoppa_selftest.php` B2 (sahte sağlayıcı, ROLLBACK) + C (`--e2e`, gerçek test ortamı).
+
+### 1. Mutabakat işi (`php api/cron/plan_payments.php`, önerilen 5 dakikada bir)
+
+| Sipariş durumu | Ne zaman sorulur | Sonuç |
+|---|---|---|
+| `hoppa_pending` | oluşturulduktan **15 dk** sonra, her turda | ödendi → paket tanımlanır (`finalizeHostedPlanPayment`; aynı sipariş iki kez işlenmez) · reddedildi → `hoppa_failed` · ödenmemiş → beklemede kalır |
+| `hoppa_pending`, **24 saatten** eski ve Hoppa'da hâlâ ödenmemiş | — | `hoppa_expired` |
+| `hoppa_expired` | ilk **7 gün** boyunca en fazla **6 saatte bir** | ödenmiş çıkarsa paket tanımlanır (geç dönüş kaçmasın); değilse bekler |
+| `hoppa_expired`, 7 günden eski | **artık sorulmaz** | Bu noktada ödeme çıkarsa ancak Hoppa panelinden ya da destekten öğrenilir; sipariş numarasıyla `hoppa_return`/mutabakat elle tetiklenebilir. |
+| `unknown` (tutar uyuşmazlığı, paket yazılamadı, sorgu hatası) | her turda | satır `hoppa_pending` kalır, `error_log`'a yazılır — insan incelemesi gerekir |
+
+**Neden 24 saat / 7 gün:** Hoppa ödeme sayfasının ne kadar açık kaldığı belgelenmemiş (`hoppa-sorular.md` #5). 24 saat, kullanıcının sayfayı açık bırakıp sonra ödemesine yetecek kadar uzun. `hoppa_expired` son durum değil: sonradan ödeme görülürse `paid` olur. Hoppa cevap verince bu süreler gerekirse kısaltılır.
+
+Kilit: aynı anda iki tur çalışmaz (`GET_LOCK('cron_plan_payments')`, alınamazsa tur atlanır). `PAYMENT_PROVIDER=none` iken mutabakat atlanır, hatırlatma çalışır. `api/cron/` dizini üç denylist'e de eklendi (`api/.htaccess`, `api/admin/.htaccess`, `api/router.php`), betik ayrıca CLI dışından çağrılırsa 404 döner (`php -S` ile doğrulandı). Sunucuda cron kurulumu kullanıcıda (README → *Plan purchases*).
+
+### 2. Hoppa iadesi
+
+- **Admin iade ekranı BULUNAMADI.** Mevcut tek iade yolu admin oturumu isteyen `POST /api/seller/marketplace_refund.php` (`SellerController::refund`); onu ne `api/admin`, ne `web/src`, ne `router.php` çağırıyor. Hoppa iadesi bu uca bağlandı: satır Hoppa paketi ise `hostedPlanRefund()`'a, değilse eskisi gibi `processRefund()`'a (iyzico, değişmedi) gider. **Admin panelinde iade düğmesi/ekranı yok** — eklenmesi ayrı iş (karar senin).
+- **Tam iade, kısmi yok:** tutar istekten okunmaz; Hoppa'nın kayıtlı çekim tutarı iade edilir (komisyon alıcıya yansıdıysa o da dahil — testte 151,25). `amount`/`items`/`partial` gönderen istek 422.
+- **Akış:** iyzico yoluyla aynı kilit (`refund_payment_<id>`) → satır yeniden okunur (yalnızca `paid` iade edilir; `refunded` → 409) → ProcessQuery → OrderReturn (`SYNC_WITH_POS=true`) → **ProcessQuery ile doğrulama** (iptal/iade görülmeden satır `refunded` yapılmaz, paket alınmaz) → durum + paket geri alma tek transaction'da. Hoppa'da zaten iade edilmişse (panelden) istek gönderilmez, yalnızca eşitlenir.
+- **Paket iptali** (`revokeRefundedPlan`, iyzico'daki D-03 erişim geri alma kuralının paket karşılığı): kullanıcı varsayılan plana (Ücretsiz, süresiz) döner. `user_plan_selection` sipariş bağı tutmadığı için iki durumda **paket alınmaz** ve nedeni yanıtta + log'da görünür: kullanıcının bu ödemeden sonra ödenmiş başka paket ödemesi varsa, ya da şu anki paketi iade edilen paket değilse.
+- **Kayıt:** her deneme (reddedilen, başarısız, doğrulanamayan, tamamlanan) `admin_audit_log`'a `action='hoppa_plan_refund'` ile yazılır: admin, sipariş, sebep, tutar, Hoppa yanıtı (müşteri alanları ayıklanmış), önceki/sonraki durum, paket sonucu. Tablo yoksa (017 uygulanmamış) iade **hiç başlatılmaz** (503). `param_marketplace_refunds`'a yazılmıyor: `detail_id` NOT NULL + FK ve paket ödemesinin detay satırı yok.
+- **Test ortamında gerçek iade (2026-10-07):** başarılı test ödemesi (151,25) → OrderReturn → `İŞLEM İPTAL EDİLDİ`, ProcessQuery `ORDER_CANCEL` (aynı gün iade iptal olarak işleniyor) → satır `refunded`, paket Ücretsiz'e döndü, audit `tamamlandi`; ikinci iade 409. Ertesi gün yapılan iadenin `İade - Başarılı` (STATUS_ID 7) döneceği dokümandan; sınıflandırıcı ikisini de tanıyor ama 7 gerçek ortamda görülmedi.
+- Uç yönlendirmesi CLI'dan admin oturumu taklidiyle denendi: Hoppa satırı Hoppa yoluna gitti (iyzico'ya değil).
+
+### 3. Yenileme hatırlatması (GK-27)
+
+Bitişe **3 gün** kala uygulama içi bildirim (`notifications`, `type='plan_renewal_reminder'`): "Paketiniz otomatik yenilenmez; Paketler sayfasından yenileyebilirsiniz." **Aynı dönem için bir kez:** dönemin penceresi `[bitiş − 3 gün, bitiş)`; pencere içinde bu türde bildirim varsa yenisi yazılmaz. Yenileme bitişi 30 gün ileri taşıdığı için yeni dönemde yeniden gönderilir. Şema değişikliği yok. Süresiz (ücretsiz) ve süresi geçmiş paketlere gönderilmez. Aynı cron'dan çalışır.
+
+### 4. Müşteri ve Hoppa soruları
+
+N-19 (komisyon) ve N-20 (adres) `musteri-ozet-2026-10.md` B bölümüne sade dille, `hoppa-sorular.md`'ye teknik haliyle eklendi (#3 güncellendi, #17 yeni; mevcut numaralar korunuyor çünkü belgelerde ve kodda atıf var).
+
+### Hâlâ açık (canlıdan önce)
+
+N-19, N-20 (müşteri + Hoppa cevabı), AUTH_HASH algoritması (#2), Hoppa ödeme sayfası geçerlilik süresi (#5 — 24 saat/7 gün varsayımı), admin iade ekranı yok, erken yenilemede kalan günlerin devri (iş kuralı, karar yok), pazaryeri Hoppa entegrasyonu (bölüştürme, #1).
