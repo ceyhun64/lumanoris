@@ -887,7 +887,10 @@ Each run (skipped if the previous one still holds the lock):
 **Refunds** — `POST /api/seller/marketplace_refund.php` (admin session) routes Hoppa plan rows to
 `hostedPlanRefund()` (`OrderReturn`, full refund only, verified with `ProcessQuery`, plan reverted to
 the default plan, every attempt in `admin_audit_log`); all other rows still go to iyzico's
-`processRefund()`. There is no admin-panel screen for refunds yet.
+`processRefund()`. The admin panel screen **Paket Ödemeleri** (`/admin/odemeler`, `admin/ajax/odemeler.php`,
+admin session + CSRF) lists only Hoppa plan payments (filter by status and user e-mail) and refunds a
+`paid` row after a confirmation dialog; it calls the same `hostedPlanRefund()` directly instead of the
+API endpoint, because that endpoint has no CSRF check.
 
 Still open before going live (AUDIT.md, Faz 7a-2): commission shown to the buyer (N-19), buyer address
 placeholders (N-20), `AUTH_HASH` algorithm, hosted-page lifetime.

@@ -52,6 +52,8 @@ $adminRoutes = [
     '/admin/parcekme'           => 'parcekme.php',
     // Faz 5 / madde 3 — pazaryeri başvuruları (GK-9, GK-23, GK-26).
     '/admin/basvurular'         => 'basvurular.php',
+    // Faz 7a-3 — Hoppa paket ödemeleri ve iade.
+    '/admin/odemeler'           => 'odemeler.php',
     '/admin/odemeentegrasyon'   => 'odemeentegrasyon.php',
     '/admin/anasayfa'           => 'anasayfa.php',
     '/admin/hakkinda'           => 'hakkinda.php',
