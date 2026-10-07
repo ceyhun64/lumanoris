@@ -679,7 +679,7 @@ static content popups in `web/src/widgets/info/`.
 | `/api/seller/submerchant_list_remote.php` | GET/POST | admin |
 | `/api/seller/submerchant_update.php` | POST | admin |
 | `/api/seller/submerchant_delete.php` | POST | admin |
-| `/api/seller/marketplace_refund.php` | POST | admin |
+| `/api/seller/marketplace_refund.php` | — | **retired — always `410`** (N-22: admin-session endpoint without CSRF). Refunds are done only from the admin panel, see [Plan purchases — Hoppa](#plan-purchases--hoppa-hosted-payment-page). |
 | `/api/seller/marketplace_reconcile.php` | GET/POST | shared secret — `PARAM_RECONCILE_SECRET`, compared with `hash_equals` |
 | `/api/seller/parampos_callback.php` | POST | none — payment-gateway callback, gated by `PARAM_CALLBACK_SECRET` |
 | `/api/seller/list_iller.php`, `list_ilceler.php` | GET/POST | none — province/district lookups, cached 15 min as JSON in the system temp dir; `?nocache` bypasses it |
@@ -884,13 +884,14 @@ Each run (skipped if the previous one still holds the lock):
 2. **Renewal reminder** (GK-27, no automatic renewal) — in-app notification 3 days before
    `user_plan_selection.expires_at`, once per period (`type = plan_renewal_reminder`).
 
-**Refunds** — `POST /api/seller/marketplace_refund.php` (admin session) routes Hoppa plan rows to
-`hostedPlanRefund()` (`OrderReturn`, full refund only, verified with `ProcessQuery`, plan reverted to
-the default plan, every attempt in `admin_audit_log`); all other rows still go to iyzico's
-`processRefund()`. The admin panel screen **Paket Ödemeleri** (`/admin/odemeler`, `admin/ajax/odemeler.php`,
-admin session + CSRF) lists only Hoppa plan payments (filter by status and user e-mail) and refunds a
-`paid` row after a confirmation dialog; it calls the same `hostedPlanRefund()` directly instead of the
-API endpoint, because that endpoint has no CSRF check.
+**Refunds** — only from the admin panel screen **Paket Ödemeleri** (`/admin/odemeler`,
+`admin/ajax/odemeler.php`; admin session + CSRF like every admin AJAX endpoint). It lists only Hoppa
+plan payments (filter by status and user e-mail) and refunds a `paid` row after a confirmation dialog via
+`hostedPlanRefund()`: `OrderReturn`, full refund only, verified with `ProcessQuery`, plan reverted to the
+default plan, every attempt in `admin_audit_log`. If the plan is not reverted (a later paid plan
+exists, or the user's current plan differs) the reason is shown on screen. The old API endpoint
+`/api/seller/marketplace_refund.php` is retired (`410`, N-22) because it checked only the admin session
+and no CSRF token. iyzico's `processRefund()` stays in the code but currently has no entry point.
 
 Still open before going live (AUDIT.md, Faz 7a-2): commission shown to the buyer (N-19), buyer address
 placeholders (N-20), `AUTH_HASH` algorithm, hosted-page lifetime.
@@ -900,7 +901,7 @@ Provider details and observed test responses: `docs/proposals/hoppa-gecis-kesif.
 
 | Operation | Endpoint | Notes |
 | --- | --- | --- |
-| Refund | `/api/seller/marketplace_refund.php` (admin) | Only a `paid` row can be refunded; `refunded` returns `409`, any other status `422`. Without stored `itemTransactions` it refuses and tells the operator to refund from the iyzico panel. |
+| Refund | none since N-22 (the former `/api/seller/marketplace_refund.php` returns `410`); `processRefund()` is kept | Only a `paid` row can be refunded; `refunded` returns `409`, any other status `422`. Without stored `itemTransactions` it refuses and tells the operator to refund from the iyzico panel. |
 | Reconcile | `/api/seller/marketplace_reconcile.php` (`PARAM_RECONCILE_SECRET`) | Asks the provider about rows left `pending` / `payment_started` / `failed` / `unknown` in the last 7 days, max 200. Settled rows (`paid`, `refunded`) are never touched — reconciliation resolves uncertainty, it does not rewrite history. |
 | Callback | `/api/seller/parampos_callback.php` | **Inert.** iyzico's non-3DS flow sends no async notification; the handler logs and returns `200`. Kept so a stale gateway configuration cannot retry for hours. |
 

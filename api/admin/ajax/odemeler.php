@@ -8,11 +8,10 @@
  * `_guard.php`: admin oturumu + her POST'ta CSRF (başlıktaki fetch shim'i
  * X-CSRF-Token ekliyor) — `basvurular.php` ile aynı desen.
  *
- * İade, API'deki admin iade ucunun (`/api/seller/marketplace_refund.php` →
- * SellerController::refund) Hoppa satırları için çağırdığı AYNI fonksiyonla
- * yapılıyor: `hostedPlanRefund()` (kilit, ProcessQuery doğrulaması, paket
- * geri alma, admin_audit_log). Bu ekran o API ucuna istek atmıyor çünkü o uç
- * CSRF denetlemiyor; admin panelinin kuralı her POST'ta CSRF.
+ * İade `hostedPlanRefund()` ile yapılıyor (kilit, ProcessQuery doğrulaması,
+ * paket geri alma, admin_audit_log). Bu ekran iadenin TEK giriş noktası:
+ * eski API iade ucu (`/api/seller/marketplace_refund.php`) CSRF denetlemediği
+ * için kapatıldı (N-22, 410).
  *
  * Yalnızca Hoppa ile satılmış PAKET ödemeleri listelenir ve iade edilir;
  * pazaryeri ve iyzico satırları bu ekranda yok (isHostedPlanPayment).

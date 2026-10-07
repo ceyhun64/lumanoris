@@ -110,7 +110,7 @@ Kaynak: <https://developer.esnekpos.com/llms.txt>. **Hoppa sanal POS'u EsnekPOS 
 |---|---|---|---|
 | `POST /api/marketplace/createsubscription.php` | `MarketplaceController::createSubscription` | Sepetteki botları satın alır (`payment_group = PRODUCT`): ödeme satırı (`pending`), tahsilat, abonelik ve satın alma kredisi, satıcı payı satırları. Hata olursa telafi iptali. | `chargeCard`, `cancelCharge`; ham yanıta `itemTransactions` yazıyor (satır ~851) |
 | `POST /api/wallet/upgradeplan.php` | `WalletController::upgradePlan` | Üyelik paketi satın alma (`payment_group = SUBSCRIPTION`), 30 günlük tek seferlik satış (D-05). | `chargeCard`, `cancelCharge`; ham yanıta `itemTransactions` yazıyor (satır ~585) |
-| `POST /api/seller/marketplace_refund.php` | `SellerController::refund` (admin) | İade başlatır. | `processRefund` |
+| `POST /api/seller/marketplace_refund.php` | `SellerController::refund` (admin) | İade başlatır. **2026-10-07'den beri kapalı (410, N-22: CSRF yoktu);** iade yalnızca admin paneli "Paket Ödemeleri" ekranından. | `processRefund` (kodda duruyor, giriş noktası yok) |
 | `GET/POST /api/seller/marketplace_reconcile.php` | `SellerController::reconcile` (paylaşılan sır `PARAM_RECONCILE_SECRET`) | Belirsiz kalan ödemelerin mutabakatı (cron için). | `reconcilePayments` |
 | `POST /api/seller/parampos_callback.php` | `SellerController::paramposCallback` (`PARAM_CALLBACK_SECRET`) | Sağlayıcı bildirimi; bugün etkisiz. | `handleParamCallback` |
 
