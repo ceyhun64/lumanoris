@@ -68,11 +68,22 @@ Aşağıdaki konularda net bir talimat olmadığı için biz karar verdik. Farkl
 19. 750 ₺'lik ayrı "Üretici" paketi, yeni paketlerle çakıştığı için kaldırıldı.
 20. Ana sayfadaki "yıllık ödeme / %20 indirim" seçeneği, sistemde yıllık satış bulunmadığı için kaldırıldı.
 
-## C) Ödeme altyapısı tamamlanınca çalışacak olanlar
+## C) Ödeme altyapısı: Hoppa
 
-Aşağıdakilerin ekranları ve kuralları hazır. Ancak ödeme altyapısı tamamlanmadan gerçek para hareketi gerektiren adımlar çalışmayacak:
+Ödeme altyapısı **Hoppa** (Elekse Elektronik Para ve Ödeme Kuruluşu A.Ş.) ile kurulacak. Aşağıdakilerin ekranları ve kuralları hazır; Hoppa entegrasyonu tamamlandıktan sonra açılacaklar:
 
-- **Pazaryerinde ücretli satış:** Botlara fiyat verilmesi, satın alma ve satıcı kazançları.
+- **Pazaryerinde ücretli satış:** Botlara fiyat verilmesi ve satın alma.
 - **Paket satın alma:** Gümüş, Altın ve Elmas paketlerinin ödemesi.
+- **Satıcı ödemeleri:** Satıcıların kazançlarının kendilerine aktarılması.
 - **Satın Aldıklarım:** Satın alma yapılabildiğinde bu menü kullanıcılarda görünmeye başlayacak.
-- **Onaylı satıcılara sınırsız herkese açık bot hakkı:** Satıcı onayı ödeme altyapısına bağlı.
+- **Onaylı satıcılara sınırsız herkese açık bot hakkı:** Satıcı onayı da Hoppa üzerinden yapılacak.
+
+Bu süre içinde gerçek ödeme alınmıyor; kimseden yanlışlıkla para çekilmiyor.
+
+**Entegrasyona başlayabilmemiz için sizden gerekenler:**
+
+1. **Hoppa ile işyeri sözleşmesi.** Pazaryeri yapısı için satıcı paylarının doğrudan satıcılara aktarıldığı (alt üye işyeri) bir ürün olması önemli.
+2. **API bilgileri.** Hoppa'nın teknik dokümanı ve canlı ortam erişim bilgileri.
+3. **Test ortamı erişimi.** Test hesabı ve test kartları; canlıya geçmeden önce tüm ödeme ve iade adımlarını burada deneyeceğiz.
+
+Hoppa ile görüşmede iletebilmeniz için teknik soruların listesini ayrıca hazırladık; isterseniz paylaşırız.
