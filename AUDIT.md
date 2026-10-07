@@ -1482,6 +1482,7 @@ Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının **yerine geçer**. T
 | 0 | Canlı veritabanı yedeği | — |
 | 1 | `php api/database/migrate.php --status` | **009 (`009_user_list_color.sql`) `bekliyor` görünüyorsa** M0-3'teki Liste sayfası 500'ünün nedeni büyük olasılıkla budur (N-03 / K-01). 009 saf `ADD COLUMN`, adım 6'da diğerleriyle uygulanır. Çıktıyı not edin. |
 | 2 | **GK-22 kontrolü** (aşağıdaki sorgu) | **Satır dönerse DURUN.** Bu kullanıcılar yeni kurala göre artık "pazaryeri kaydı var" sayılmayacak (Bakiyem kapısı kapanır) ama bakiyeleri ya da bekleyen çekim talepleri var. Karar verilmeden deploy edilmemeli. |
+| 2b | **iyzico ödeme kontrolü** (aşağıdaki "iyzico kaynaklı ödeme sorgusu") | Bilgi amaçlı, deploy'u durdurmaz. `kaynak = iyzico` ve durumu `paid` / `partial_refund` / `unknown` / `pending` olan satır varsa: bu ödemelerin iadesi ya da mutabakatı yalnızca iyzico ile yapılabilir → Hoppa geçişinde iyzico kodu "yalnızca iade/sorgulama" modunda tutulmalı (keşif raporu §5.4). Satır yoksa iyzico kodu tamamen kapalı kalabilir. `IYZICO_BASE_URL` sandbox iken alınmış satırlar test ödemesidir (gerçek para yok). |
 | 3 | Faz 4 kontrol A (AUDIT "Faz 4 — kontrol A ve B") | Satır dönerse ve taslaksa `pending/014_…` → `migrations/`, **koddan önce** `--apply`; kontrol `kalan = 0`. |
 | 4 | 015 öncesi not: `SELECT id, ucret_haftalik, ucret_aylik FROM chatbotlar WHERE UPPER(TRIM(isim)) = 'LUMANORIS AI'` | Geri alma için saklayın. |
 | 5 | **Kod deploy** (`faz5-tamam` etiketi) | Kod 012/016/017 yokken de çalışır (eksik tablolar için fail-safe / 503). |
@@ -1524,3 +1525,48 @@ HAVING bakiye <> 0 OR bekleyen_cekim > 0
 ORDER BY k.id
 ;
 ```
+
+### iyzico kaynaklı ödeme sorgusu (salt okunur — canlı sırası adım 2b)
+
+`param_*` tabloları sağlayıcıdan bağımsız adlandırılmış; iyzico satırı, ham yanıtta (`param_response_json`) iyzico'nun `paymentId` alanının bulunmasıyla ayırt ediliyor. Sağlayıcı kimliği hiç olmayan satırlar iyzico öncesi, simüle ödeme döneminden kalma. Yerelde (2026-10-07): 1 iyzico `paid` satırı (35 ₺, 2026-09-01 — sandbox denemesi) ve 16 sağlayıcısız eski `paid` satırı. `param_marketplace_payments` canlıda hiç oluşturulmamışsa sorgu "tablo yok" hatası verir — o durumda ödeme de yoktur.
+
+Özet:
+
+```sql
+SELECT
+  CASE
+    WHEN JSON_VALID(p.param_response_json)
+         AND JSON_EXTRACT(p.param_response_json, '$.paymentId') IS NOT NULL THEN 'iyzico'
+    WHEN p.param_transaction_id IS NULL OR p.param_transaction_id = '' THEN 'saglayicisiz (eski/simule)'
+    ELSE 'diger'
+  END AS kaynak,
+  p.status,
+  COUNT(*) AS adet,
+  ROUND(SUM(p.amount), 2) AS toplam_tutar,
+  MIN(p.created_at) AS ilk,
+  MAX(p.created_at) AS son
+FROM param_marketplace_payments p
+WHERE p.status IN ('paid', 'partial_refund', 'refunded', 'unknown', 'pending')
+GROUP BY kaynak, p.status
+ORDER BY kaynak, p.status;
+```
+
+Ayrıntı (iyzico'da hâlâ iade/mutabakat gerektirebilecek satırlar):
+
+```sql
+SELECT p.id, p.order_id, p.user_id, p.status, p.amount, p.param_transaction_id AS iyzico_payment_id, p.created_at,
+       (SELECT COUNT(*) FROM param_marketplace_details d WHERE d.payment_id = p.id) AS kalem
+FROM param_marketplace_payments p
+WHERE JSON_VALID(p.param_response_json)
+  AND JSON_EXTRACT(p.param_response_json, '$.paymentId') IS NOT NULL
+  AND p.status IN ('paid', 'partial_refund', 'unknown', 'pending')
+ORDER BY p.created_at;
+```
+
+---
+
+## Hoppa geçişi — keşif sonrası bulgu (2026-10-07)
+
+| ID | Sev | Dosya | Problem | Durum |
+|---|---|---|---|---|
+| **N-17** | **P1** | `web/src/app/dashboard/checkout/page.jsx`, `web/src/features/payment/PlanPaymentModal.jsx`, `CardFields.jsx`, `web/src/shared/lib/card.js` → `api/api/marketplace/createsubscription.php` (`MarketplaceController::createSubscription`, `$data['card']`) ve `api/api/wallet/upgradeplan.php` (`WalletController::upgradePlan`) → `api/functions/checkout_payments.php::chargeCard` | **Kart verisi (numara, son kullanma tarihi, CVV) bizim sunucumuzdan geçiyor.** Tarayıcıdaki kart formu tam kart bilgisini JSON olarak Lumanoris API'sine gönderiyor; istek Express proxy'sinden (`web/server.js`, `http-proxy-middleware`) PHP'ye akıyor; PHP onu sağlayıcıya iletiyor. Bu, platformu **PCI-DSS'in tam kapsamına** sokar (kart verisini işleyen sistem; tipik olarak en ağır öz-değerlendirme). Kontrol edilenler: kart verisi veritabanına **yazılmıyor**; proxy istek gövdesini **loglamıyor** (yalnızca hata satırı); PHP tarafında kartı loglayan satır **bulunamadı**, sağlayıcı yanıtı `IyzicoClient::redact()` ile maskeleniyor. Yani sızıntı değil, **kapsam** sorunu: kart verisi bellekte bizim süreçlerimizden geçiyor. Ek risk: barındırma/TLS kararı açık (**B6**); TLS'siz bir kurulumda kart verisi ağda düz metin olurdu. | **Açık — Hoppa entegrasyonunda düzeltilecek.** Hedef mimari (keşif raporu §0.1): Hoppa ödeme sayfası / 3DS yönlendirmesi; kart verisi Lumanoris'e hiç ulaşmaz; kart formları ve `chargeCard`'daki kart doğrulaması kaldırılır. O zamana kadar ödeme zaten kapalı (iyzico anahtarı yok → `CONFIG_MISSING`), yani canlıda kart verisi gönderilse bile sağlayıcıya iletilmiyor ve tahsilat yapılmıyor — ama form hâlâ kart bilgisini sunucuya postalıyor. Geçici önlem önerisi (onay gerekir): Hoppa'ya kadar ödeme ekranlarında kart formunu gizleyip "ödeme altyapısı hazırlanıyor" göstermek (keşif raporu §5.5). |
