@@ -1592,7 +1592,7 @@ Kaynak ve servis eşlemesi: `docs/proposals/hoppa-gecis-kesif.md` §0.2. Hoppa s
 
 **Akış:** "Ödemeye geç" → `upgradeplan.php` (yalnızca `plan_name`) → `hoppa_pending` satırı → Hoppa `CommonPaymentDealer` → kullanıcı Hoppa sayfasında kartı girer → `hoppa_return.php` (BACK_URL; POST alanlarına güvenilmez) → sunucudan `ProcessQuery` → ödendiyse ve tutar tutuyorsa paket aynı transaction'da tanımlanır. Koşullu `UPDATE … WHERE status IN ('hoppa_pending','hoppa_failed')` aynı `ORDER_REF_NUMBER`'ın iki kez paket tanımlamasını engeller. Ayrıntı: README → *Plan purchases — Hoppa*; servis eşlemesi: keşif raporu §0.2.
 
-**Ayarlar:** `PAYMENT_PROVIDER` (varsayılan `none` → paket ödemesi 503, arayüzde "Ödeme altyapısı hazırlanıyor"), `HOPPA_MODE` (varsayılan `test`), `HOPPA_TEST_*` / `HOPPA_LIVE_*`, `APP_PUBLIC_URL`. Test kimlik bilgileri (dokümandaki herkese açık `TEST1234`) yalnızca yerel `api/.env`'de; `.env.example`'da boş. Canlı anahtar alanları boş.
+**Ayarlar:** `PAYMENT_PROVIDER` (varsayılan `none` → paket ödemesi 503, arayüzde "Ödeme altyapısı hazırlanıyor"), `HOPPA_MODE` (varsayılan `test`), `HOPPA_TEST_*` / `HOPPA_LIVE_*`, `APP_PUBLIC_URL`. Test kimlik bilgileri (dokümandaki herkese açık test üye işyeri) yalnızca yerel `api/.env`'de; `.env.example`'da boş. Canlı anahtar alanları boş.
 
 **Test ortamında gerçek ödeme (`php api/database/hoppa_selftest.php --e2e`, 2026-10-07, ROLLBACK):**
 

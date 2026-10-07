@@ -41,13 +41,13 @@ Bu tercih §3'teki iki seçenekten **3DS / barındırılan sayfa** yolunu hedef 
 
 ## 0.2 Gerçek dokümana göre (2026-10-07)
 
-Kaynak: <https://developer.esnekpos.com/llms.txt>. **Hoppa sanal POS'u EsnekPOS altyapısıdır**; doküman, alan adları ve test ortamı EsnekPOS'un. Aşağıdaki "test ortamında görüldü" notları Faz 7a sırasında `TEST1234` test üye işyeriyle yapılan gerçek çağrılardan.
+Kaynak: <https://developer.esnekpos.com/llms.txt>. **Hoppa sanal POS'u EsnekPOS altyapısıdır**; doküman, alan adları ve test ortamı EsnekPOS'un. Aşağıdaki "test ortamında görüldü" notları Faz 7a sırasında dokümandaki herkese açık test üye işyeriyle yapılan gerçek çağrılardan.
 
 ### Erişim
 
 - Base URL: test `https://posservicetest.esnekpos.com`, canlı `https://posservice.esnekpos.com` ("Başlangıç" sayfası). Test ortamı sayfası "test base adresi için bizimle iletişime geçiniz" diyor, ama yukarıdaki test adresi herkese açık test üye işyeriyle çalışıyor.
 - Kimlik doğrulama: her isteğin gövdesinde `MERCHANT` + `MERCHANT_KEY`. İstek imzası (HMAC vb.) yok.
-- Herkese açık test üye işyeri `TEST1234` ve başarılı/hatalı test kartları dokümanda yayımlanmış. Biz yine de bunları yalnızca `api/.env`'de tutuyoruz.
+- Herkese açık test üye işyeri bilgileri ve başarılı/hatalı test kartları dokümanda yayımlanmış. Biz yine de bunları yalnızca `api/.env`'de tutuyoruz.
 
 ### Kullanılacak servisler ve bizim akışımızla eşlemesi
 
