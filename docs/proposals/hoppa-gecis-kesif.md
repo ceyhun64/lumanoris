@@ -1,8 +1,8 @@
-# Hoppa'ya geçiş — keşif raporu (salt okuma)
+# Hoppa'ya geçiş — keşif raporu
 
-Tarih: 2026-10-07 · Dal: `revize/pazaryeri` (`faz5-tamam` sonrası) · **Kod yazılmadı.**
+Tarih: 2026-10-07 · Dal: `revize/pazaryeri`. İlk sürüm salt okuma, kodsuz. §0.2 gerçek Hoppa dokümanı ve Faz 7a test sonuçlarıyla eklendi.
 
-Ödeme sağlayıcısı iyzico yerine **Hoppa (Elekse Elektronik Para ve Ödeme Kuruluşu A.Ş.)** olacak. Hoppa'nın API dokümanı henüz yok. Bu rapor bugünkü kodun sağlayıcıya nerede bağlı olduğunu, Hoppa'yı takılabilir hâle getirmek için gereken en küçük soyutlamayı ve Hoppa'dan teyit edilmesi gerekenleri listeler.
+Ödeme sağlayıcısı iyzico yerine **Hoppa (Elekse Elektronik Para ve Ödeme Kuruluşu A.Ş.)** olacak. Hoppa'nın API dokümanı ilk sürümde yoktu; artık var (§0.2). Bu rapor bugünkü kodun sağlayıcıya nerede bağlı olduğunu, Hoppa'yı takılabilir hâle getirmek için gereken en küçük soyutlamayı ve Hoppa'dan teyit edilmesi gerekenleri listeler.
 
 ## 0. Özet
 
@@ -38,6 +38,55 @@ Bu tercih §3'teki iki seçenekten **3DS / barındırılan sayfa** yolunu hedef 
   - Ucun kimlik doğrulaması kullanıcı oturumu değil, Hoppa imzasıdır.
   - Denylist'lerin (`api/.htaccess`, `api/admin/.htaccess`, `api/router.php`) bu ucu engellemediği kontrol edilmeli.
 - **Etkilenen kısım:** §3'teki `PaymentGateway` arayüzü bu akışa göre `startCheckout(context): {redirect_url | form_token}` + `confirm(providerPaymentId): result` biçimini alır. `charge(card, …)` imzası Hoppa'da kullanılmaz.
+
+## 0.2 Gerçek dokümana göre (2026-10-07)
+
+Kaynak: <https://developer.esnekpos.com/llms.txt>. **Hoppa sanal POS'u EsnekPOS altyapısıdır**; doküman, alan adları ve test ortamı EsnekPOS'un. Aşağıdaki "test ortamında görüldü" notları Faz 7a sırasında `TEST1234` test üye işyeriyle yapılan gerçek çağrılardan.
+
+### Erişim
+
+- Base URL: test `https://posservicetest.esnekpos.com`, canlı `https://posservice.esnekpos.com` ("Başlangıç" sayfası). Test ortamı sayfası "test base adresi için bizimle iletişime geçiniz" diyor, ama yukarıdaki test adresi herkese açık test üye işyeriyle çalışıyor.
+- Kimlik doğrulama: her isteğin gövdesinde `MERCHANT` + `MERCHANT_KEY`. İstek imzası (HMAC vb.) yok.
+- Herkese açık test üye işyeri `TEST1234` ve başarılı/hatalı test kartları dokümanda yayımlanmış. Biz yine de bunları yalnızca `api/.env`'de tutuyoruz.
+
+### Kullanılacak servisler ve bizim akışımızla eşlemesi
+
+| Servis (uç nokta) | Ne yapıyor | Kart verisi bizden geçer mi? | Bizdeki karşılığı |
+|---|---|---|---|
+| **CommonPaymentDealer** (`POST /api/pay/CommonPaymentDealer`) — Ortak Ödeme Sayfası | Sipariş, müşteri ve ürün bilgisiyle ödeme oturumu açar; `URL_3DS` döner. Kullanıcı Hoppa sayfasında kartı girer; 3D doğrulamadan sonra sonuç `BACK_URL`'e **form POST** ile gelir. | **Hayır** | Paket satın alma (Faz 7a). Pazaryeri için de hedef, ama bkz. sınır (a). |
+| **EYV3DPay** (`POST /api/pay/EYV3DPay`) — Pazaryeri ödeme alma | 3D ödeme; isteğe `SubMerchantDetails` (mağaza başına tutar) eklenir. Kart alanları (`CreditCard`: numara, son kullanma, CVV) **isteğin içinde**. | **Evet** (N-17'yi geri getirir) | Pazaryeri satışı — yalnızca bu serviste bölüştürme belgelenmiş. |
+| **SubMerchantSet** (`POST /api/services/SubMerchantSet`) — Mağaza tanımlama/güncelleme | Satıcıyı alt üye işyeri olarak kaydeder: TCKN, vergi bilgisi, IBAN listesi, `TYPE`, bizim tarafımızdan atanan `EXTERNAL_ID`. Yanıt `ResultCode`/`ResultMessage`. Onay süreci ve bildirim belgelenmemiş. | — | Pazaryeri başvurusu (`marketplace_applications`) → satıcı kaydı; `ParamPosMarketplace` stub'ının yerini alır (B1). `SubMerchantQuery` ile durum sorgulanır. |
+| **PaymentConfirm** (`POST /api/services/PaymentConfirm`) — Pazaryeri ödeme onaylama | Mağazanın payının serbest bırakılması. Pazaryeri, ödemedeki tüm mağazaları onaylayınca kendi kalanını alır. | — | Bugünkü "ödeme alındı → satıcı payı defterde → elle IBAN ödemesi" (B7) yerine: teslim/iade süresi dolunca onay. |
+| **OrderReturn** (`POST /api/services/OrderReturn`) — İade/İptal | Sipariş referansı + tutarla iade ya da iptal. `SYNC_WITH_POS=false` ise talep kaydedilir, operasyon tamamlar. Pazaryeri iadesinde `SubMerchantDetails` ile mağaza belirtilir. | — | `processRefund` / `cancelCharge` karşılığı. Kalem bazlı değil, **sipariş + tutar** bazlı. |
+| **ProcessQuery** (`POST /api/services/ProcessQuery`) — dokümandaki adıyla PROCCESS_QUERY | Sipariş referansıyla ödeme durumu ve alt işlem hareketleri. Doküman: "ödeme durumundan emin olmak için bu sorgunun cevabını dikkate alın; server-to-server yapın." | — | Kesinleştirme: `BACK_URL` dönüşünde ve mutabakatta. Geri dönüş POST'una tek başına güvenilmez. |
+
+**ProcessQuery'nin test ortamında görülen yanıtları:**
+
+| Durum | Yanıt | Bizim yorumumuz |
+|---|---|---|
+| Ödeme başarılı | `STATUS=SUCCESS`, `RETURN_CODE=0`, `SUCCESS_TRANSACTION_ID>0`, hareket `STATUS_ID=3` ("Ödeme - Başarılı") | `paid` |
+| Kart reddedildi (test kartı 5100050000006661, hata 51) | `STATUS=ERROR`, `RETURN_CODE=100`, `RETURN_MESSAGE="51-Limit Yetersiz"`, son hareket `STATUS_ID=4` | `failed` |
+| Oturum açıldı ama ödenmedi (sekme kapatıldı) | `RETURN_CODE=400`, "Referans numarası bulunamadı" | `pending` — kullanıcı hâlâ ödeyebilir, **failed sayılmaz** |
+| İptal / iade (dokümandan, test edilmedi) | İptal: `STATUS=ORDER_CANCEL`, `RETURN_CODE=300`; iade: `STATUS=SUCCESS` + hareket `STATUS_ID=7` | ödenmiş sayılmaz |
+
+### Sınırlar
+
+**(a) Pazaryeri bölüştürmesi yalnızca kart verisini sunucudan isteyen EYV3DPay'de belgelenmiş.** `SubMerchantDetails` Ortak Ödeme Sayfası (CommonPaymentDealer) isteğinde yok; dokümanda bu alanı geçiren sayfalar yalnızca pazaryeri servisleri, işlem sorgulama ve listeleme. Hedef mimari (§0.1: kart bizden geçmesin) ile pazaryeri bölüştürmesi bugünkü dokümana göre **birlikte sağlanamıyor**. Hoppa'ya ilk soru bu (`docs/hoppa-sorular.md` #1). Cevap gelene kadar pazaryeri satışı Hoppa'ya bağlanmıyor ve N-17 ara önlemi (kart formu yok) pazaryeri için sürüyor.
+
+**(b) Tekrarlı ödeme (RecurringPayment) kart verisini sunucudan istiyor ve bölüştürme yok.** `RecurringPayment` ve `RecurringPaymentCardAdd` isteklerinde `CC_NUMBER`/`CC_CVV` var. Kart bizden geçmeyecekse otomatik yenileme kurulamaz. **Karar (GK-27, AUDIT.md):** otomatik yenileme yok. Her dönem Ortak Ödeme Sayfası ile **manuel yenileme** ve süre bitmeden hatırlatma. Bu, D-05'teki "30 günlük tek seferlik satış" kuralıyla zaten uyumlu.
+
+### Dokümanda olmayanlar / test ortamında görülen farklar
+
+- **Webhook yok.** Belgelenmiş tek bildirim, kullanıcının tarayıcısı üzerinden `BACK_URL`'e yapılan form POST (tekrarlı ödemede JSON POST). Kullanıcı Hoppa sayfasında sekmeyi kapatırsa bize hiçbir şey gelmez. Bu yüzden `hoppa_pending` satırları için periyodik ProcessQuery mutabakatı gerekiyor (Faz 7a'da yok; bkz. AUDIT).
+- **AUTH_HASH:** `BACK_URL` POST'unda geliyor; test ortamında **ProcessQuery yanıtında yok**. Algoritma dokümanda yok ("destek@esnekpos.com'a başvurun"). Bu yüzden geri dönüş POST'una hiç güvenmiyoruz; tek kaynak sunucudan yapılan ProcessQuery.
+- **Komisyon alıcıya yansıyor (test üye işyerinde):** 149,00 ₺'lik sipariş için Hoppa sayfası "151,25 TRY ÖDEME YAP" gösterdi; karttan 151,25 çekildi (`COMMISSION=2,25`, `COMMISSION_RATE=1,490`). Canlı üye işyerinde bunun ayarı Hoppa'ya soruldu (N-19, AUDIT.md).
+- `ORDER_REF_NUMBER` en fazla 24 karakter.
+
+### §0.1 ve §3'e etkisi
+
+- §0.1 adım 3'teki "imzalı bildirim (webhook)" Hoppa'da yok. Kesinleşme `BACK_URL` dönüşünde ve mutabakatta ProcessQuery ile yapılıyor.
+- §0.1 adım 5: vazgeçilen ödeme ProcessQuery'de "bulunamadı" döndüğü için hemen `failed` yazılamaz; zaman aşımıyla kapatılması gerekiyor (mutabakat işi).
+- §3'teki arayüz uygulandı, ama daha dar: `api/src/Domain/Interfaces/PaymentGatewayInterface.php` (`isConfigured`, `startHostedPayment`, `queryPayment`). `charge(card, …)` yok. iyzico bu arayüze taşınmadı (kullanıcı talimatı: iyzico koduna dokunma); pazaryeri hâlâ `chargeCard` (iyzico, anahtarsız → kapalı).
 
 ## 1. Envanter — sağlayıcıya bağlı her şey
 
@@ -151,6 +200,8 @@ interface PaymentGateway {
 Bu, `createSubscription` ve `upgradePlan`'ın tahsilat sonrası kısmının ayrı bir "ödeme tamamlandı" adımına taşınması, iki ödeme ekranının da kart formu yerine yönlendirme kullanması demek. Tahmini kapsam: Hoppa API'si senkron kart API'siyse küçük, değilse orta-büyük.
 
 ## 4. Hoppa'dan teyit edilmesi gerekenler
+
+> Dokümandan önce yazılmış liste; tarihsel olarak duruyor. Güncel ve kısaltılmış sorular: `docs/hoppa-sorular.md`.
 
 Akışımızın ihtiyaç duyduğu her çağrı için:
 
