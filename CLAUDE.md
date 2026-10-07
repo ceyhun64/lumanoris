@@ -105,6 +105,7 @@ php api/database/iyzico_selftest.php     # A bölümü anahtarsız da geçmeli
 php api/database/plan_limits_selftest.php --strict  # plan/kota (013 uygulanmış kurulumda tamamen yeşil)
 php api/database/access_selftest.php      # erişim/listeleme matrisi (Faz 4)
 php api/database/application_selftest.php # pazaryeri başvurusu (Faz 5)
+php api/database/hoppa_selftest.php       # Hoppa paket ödemesi (Faz 7a); --e2e: test ortamında gerçek ödeme (dosya başlığına bakın)
 ```
 
 Bir değişiklik bunlardan birini bozuyorsa geri al ve nedenini raporla.
