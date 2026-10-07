@@ -12,6 +12,33 @@ Tarih: 2026-10-07 · Dal: `revize/pazaryeri` (`faz5-tamam` sonrası) · **Kod ya
 - **En büyük bilinmeyen: 3D Secure ve kart verisinin nereden geçtiği.** Bugünkü akış 3DS'siz ve senkron, kart numarası ile CVV bizim sunucumuza geliyor. Hoppa 3DS ya da barındırılan ödeme sayfası (hosted page / iframe) zorunlu tutarsa tahsilat iki adımlı hâle gelir (başlat → yönlendir → geri dönüş/bildirim). Bu değişiklik `createSubscription`, `upgradePlan` ve iki ödeme ekranını etkiler.
 - **iyzico kodu bugün zaten kapalı:** Anahtarlar boş olduğu için `chargeCard` `CONFIG_MISSING` ile reddediyor; sahte başarı yok. Öneri: silmeden, bir sağlayıcı anahtarının arkasında kapalı tutmak (bkz. §5).
 
+## 0.1 Hedef mimari (kullanıcı tercihi, 2026-10-07)
+
+> Kart bilgilerinin bizim sunucumuzdan geçmemesini istiyoruz; Hoppa'nın ödeme sayfası (hosted payment page) veya 3D Secure yönlendirmeli akışını kullanmak istiyoruz.
+
+Bu tercih §3'teki iki seçenekten **3DS / barındırılan sayfa** yolunu hedef yapar. Sonuçları:
+
+- **Kart verisi:**
+  - Kart numarası, son kullanma tarihi ve CVV hiçbir zaman Lumanoris sunucusuna, Express proxy'sine ya da log'larına ulaşmaz.
+  - Bugün ulaşıyor: N-17, AUDIT.md.
+  - Hedef PCI-DSS yükümlülüğü: tam yönlendirmede en hafif öz-değerlendirme (SAQ A). Hoppa'nın teyidiyle kesinleşir (soru listesi #32).
+- **Akış iki adımlı olur:**
+  1. `charge` ödeme oturumu başlatır. `param_marketplace_payments` satırı `pending` yazılır; D-04'teki tasarım bunu zaten destekliyor. Yanıt yalnızca yönlendirme adresi ya da form belirtecidir.
+  2. Kullanıcı Hoppa sayfasında ödemeyi yapar ve sitemize geri döner.
+  3. Sonuç **Hoppa'nın imzalı bildirimiyle (webhook)** ya da geri dönüşte sunucudan yapılan **sorgulamayla (`retrieve`)** kesinleşir. Geri dönüş URL'sindeki parametrelere tek başına güvenilmez.
+  4. Abonelik, satın alma kredisi, satıcı payı satırları ve paket seçimi **yalnızca kesinleşme anında** yazılır. Bugün bunlar `createSubscription` / `upgradePlan` içinde tahsilatın hemen ardından yazılıyor; bu kısım ayrı bir "ödeme tamamlandı" işleyicisine taşınır ve idempotent olmalıdır (bildirim ile geri dönüş aynı ödemeyi iki kez kesinleştirmeye çalışabilir).
+  5. Kullanıcı Hoppa sayfasında vazgeçerse `pending` satır `reconcilePayments` ile `failed` olur; sepet korunur.
+- **Kaldırılacak/değişecek kod (Hoppa entegrasyonunda):**
+  - Kart formları: `checkout/page.jsx`, `PlanPaymentModal.jsx`, `CardFields.jsx`, `shared/lib/card.js`.
+  - `chargeCard`'daki kart biçim doğrulaması (Luhn/CVV — artık Hoppa'nın işi).
+  - `buildIyzicoPaymentPayload`'daki kart alanları.
+  - İki ödeme ekranı "Ödemeye geç" düğmesi + yönlendirme olur.
+- **Bildirim ucu canlanır:** Bugün etkisiz olan `handleParamCallback` / `parampos_callback.php` yerine (ya da onun yerinde) Hoppa bildirim ucu.
+  - İmza doğrulama, tekrar oynatma (replay) koruması ve idempotency şart.
+  - Ucun kimlik doğrulaması kullanıcı oturumu değil, Hoppa imzasıdır.
+  - Denylist'lerin (`api/.htaccess`, `api/admin/.htaccess`, `api/router.php`) bu ucu engellemediği kontrol edilmeli.
+- **Etkilenen kısım:** §3'teki `PaymentGateway` arayüzü bu akışa göre `startCheckout(context): {redirect_url | form_token}` + `confirm(providerPaymentId): result` biçimini alır. `charge(card, …)` imzası Hoppa'da kullanılmaz.
+
 ## 1. Envanter — sağlayıcıya bağlı her şey
 
 ### 1.1 Tahsilat çekirdeği
