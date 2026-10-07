@@ -562,6 +562,15 @@ class WalletController {
      */
     public const HOSTED_PENDING = 'hoppa_pending';
     public const HOSTED_FAILED  = 'hoppa_failed';
+    /**
+     * Faz 7a-2: mutabakat işi 24 saati geçmiş ve Hoppa'da hâlâ ödenmemiş
+     * görünen siparişi bu duruma çeker (bkz. functions/hosted_plan_payments.php).
+     * Son değil: sonradan ödeme kesinleşirse (geç dönüş) paket yine tanımlanır.
+     */
+    public const HOSTED_EXPIRED = 'hoppa_expired';
+
+    /** Kesinleştirilebilir (henüz paid olmayan) Hoppa durumları. */
+    public const HOSTED_OPEN = [self::HOSTED_PENDING, self::HOSTED_FAILED, self::HOSTED_EXPIRED];
 
     /** Sipariş referansı: Hoppa sınırı 24 karakter; tahmin edilemesin diye 16 hex. */
     public const HOSTED_ORDER_PATTERN = '/^PLN-[A-F0-9]{16}$/';
@@ -684,9 +693,9 @@ class WalletController {
      * etkilenen satır = 1) istek tarafından, aynı transaction içinde
      * tanımlanır. Diğerleri satırı `paid` bulur ve hiçbir şey yazmaz.
      *
-     * `hoppa_failed` yeniden soruluyor: reddedilen bir denemeden sonra aynı
-     * siparişte başarılı ödeme gelirse para çekilmiş ama paket verilmemiş
-     * olmasın.
+     * `hoppa_failed` ve `hoppa_expired` yeniden soruluyor: reddedilen ya da
+     * süresi dolmuş sayılan bir siparişte sonradan başarılı ödeme gelirse
+     * para çekilmiş ama paket verilmemiş olmasın.
      *
      * @return array{state: string, plan_name: ?string, message: string}
      */
@@ -710,7 +719,7 @@ class WalletController {
         if ($row['status'] === 'paid') {
             return $out('paid', $planName);
         }
-        if (!in_array($row['status'], [self::HOSTED_PENDING, self::HOSTED_FAILED], true)) {
+        if (!in_array($row['status'], self::HOSTED_OPEN, true)) {
             return $out('unknown', $planName);
         }
 
@@ -739,11 +748,11 @@ class WalletController {
                 $changed = $db->execute(
                     'UPDATE param_marketplace_payments
                         SET status = \'paid\', param_net_amount = ?, callback_json = ?
-                      WHERE id = ? AND status IN (?, ?)',
+                      WHERE id = ? AND status IN (?, ?, ?)',
                     [
                         $q['amount'] !== null && $q['commission'] !== null ? round($q['amount'] - $q['commission'], 2) : null,
                         json_encode(['query' => $q['raw']], JSON_UNESCAPED_UNICODE),
-                        $row['id'], self::HOSTED_PENDING, self::HOSTED_FAILED,
+                        $row['id'], ...self::HOSTED_OPEN,
                     ]
                 );
 
@@ -784,7 +793,11 @@ class WalletController {
         }
 
         // pending / unknown — satıra dokunma.
-        return $out($row['status'] === self::HOSTED_FAILED ? 'failed' : 'pending', $planName);
+        return $out(match ($row['status']) {
+            self::HOSTED_FAILED  => 'failed',
+            self::HOSTED_EXPIRED => 'expired',
+            default              => 'pending',
+        }, $planName);
     }
 
     /**

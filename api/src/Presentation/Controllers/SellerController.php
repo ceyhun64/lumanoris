@@ -271,7 +271,42 @@ class SellerController {
         require_once __DIR__ . '/../../../functions/checkout_payments.php';
         $data = json_decode($_POST['data'] ?? file_get_contents('php://input'), true) ?? null;
         $db   = Database::getInstance();
-        processRefund($db, $db->getConnection(), $data ?? []);
+
+        // Faz 7a-2: Hoppa ile satılmış paket ödemesi iyzico yoluna GİTMEZ
+        // (orada itemTransactions yok, iyzico'ya iade isteği anlamsız).
+        // Kendi tam iade akışına yönlenir; iyzico yolu değişmedi.
+        require_once __DIR__ . '/../../../functions/hosted_plan_payments.php';
+        $data       = is_array($data) ? $data : [];
+        $paymentId  = (int) ($data['payment_id'] ?? 0);
+        $orderId    = trim((string) ($data['order_id'] ?? ''));
+        $candidate  = $paymentId > 0
+            ? $db->selectSingle('* FROM param_marketplace_payments WHERE id = ?', [$paymentId])
+            : ($orderId !== '' ? $db->selectSingle('* FROM param_marketplace_payments WHERE order_id = ?', [$orderId]) : null);
+
+        if (isHostedPlanPayment($candidate ?: null)) {
+            if (isset($data['amount']) || isset($data['items']) || isset($data['partial'])) {
+                JsonResponse::error('Kısmi iade desteklenmiyor: iade her zaman siparişin tamamı üzerinden yapılır. Tutar/kalem göndermeyin.', 422, AppConfig::ERR_VALIDATION);
+            }
+            $gateway = PaymentGatewayFactory::make();
+            if ($gateway === null) {
+                JsonResponse::error('İade işlenemiyor: ödeme sağlayıcısı (Hoppa) yapılandırılmamış. İade yapılmadı.', 503, AppConfig::ERR_UNAVAILABLE);
+            }
+            $r = hostedPlanRefund(
+                $db,
+                $gateway,
+                $candidate,
+                mb_substr(trim((string) ($data['reason'] ?? '')), 0, 500),
+                isset($_SESSION['admin_id']) && is_numeric($_SESSION['admin_id']) ? (int) $_SESSION['admin_id'] : null,
+                (string) ($_SESSION['admin'] ?? ''),
+                clientIp()
+            );
+            if (!$r['success']) {
+                JsonResponse::error($r['message'], $r['http'], $r['code']);
+            }
+            JsonResponse::success(['message' => $r['message']] + $r['data']);
+        }
+
+        processRefund($db, $db->getConnection(), $data);
     }
 
     /**

@@ -205,6 +205,7 @@ lumanoris-dashboard/
     │   ├── hoppa_selftest.php  #  plan purchase via Hoppa (offline + rolled-back DB; --e2e test env)
 │   ├── plan_limits_selftest.php, access_selftest.php, application_selftest.php # read-only/rolled-back self-tests
     │   └── seed_contracts.*  #   seeds legal contract texts into global_vars
+    ├── cron/                 # CLI-only jobs: plan_payments.php (Hoppa reconciliation + renewal reminders)
     ├── functions/            # bootstrap, env, logging, db, rate limit, mailer, SMTP, coin engine, plans, payments
     ├── src/                  # Presentation / Application / Domain / Infrastructure / Shared
     └── admin/                # server-rendered admin panel (own composer.json + .env + .htaccess)
@@ -864,9 +865,32 @@ The card is entered on Hoppa's page; Lumanoris never receives card data (closes 
 
 Hoppa rows use their own statuses (`hoppa_pending`, `hoppa_failed`) on purpose: iyzico's
 `reconcilePayments()` scans `pending`/`failed` and would mark a Hoppa order `failed` because iyzico has
-never heard of it. Open items (AUDIT.md, Faz 7a): no reconciliation job yet for abandoned
-`hoppa_pending` rows, refunds via `OrderReturn` not implemented (the admin refund endpoint refuses
-these rows), no renewal reminder (GK-27: no automatic renewal), Hoppa does not document a webhook.
+never heard of it.
+
+**Scheduled job (Faz 7a-2)** — `api/cron/plan_payments.php`, CLI only (the `cron` directory is in all
+three denylists and the script answers `404` outside the CLI). Install on the server:
+
+```cron
+*/5 * * * * cd /path/to/lumanoris && php api/cron/plan_payments.php >> /var/log/lumanoris-plan-payments.log 2>&1
+```
+
+Each run (skipped if the previous one still holds the lock):
+
+1. **Reconciliation** — Hoppa documents no webhook, so a buyer who closes the tab after paying never
+   hits `hoppa_return.php`. `hoppa_pending` orders older than 15 min are asked via `ProcessQuery` and
+   confirmed through the same `finalizeHostedPlanPayment()` (no double activation). Still unpaid after
+   24 h → `hoppa_expired`; expired orders are re-asked at most every 6 h for 7 days, then left alone.
+   Skipped while `PAYMENT_PROVIDER=none`.
+2. **Renewal reminder** (GK-27, no automatic renewal) — in-app notification 3 days before
+   `user_plan_selection.expires_at`, once per period (`type = plan_renewal_reminder`).
+
+**Refunds** — `POST /api/seller/marketplace_refund.php` (admin session) routes Hoppa plan rows to
+`hostedPlanRefund()` (`OrderReturn`, full refund only, verified with `ProcessQuery`, plan reverted to
+the default plan, every attempt in `admin_audit_log`); all other rows still go to iyzico's
+`processRefund()`. There is no admin-panel screen for refunds yet.
+
+Still open before going live (AUDIT.md, Faz 7a-2): commission shown to the buyer (N-19), buyer address
+placeholders (N-20), `AUTH_HASH` algorithm, hosted-page lifetime.
 Provider details and observed test responses: `docs/proposals/hoppa-gecis-kesif.md` §0.2.
 
 ### Refund and reconciliation
@@ -903,8 +927,9 @@ back): `plan_limits_selftest.php --strict` (plan catalogue, free-plan regression
 `access_selftest.php` (who can list / preview / chat / read persona per bot type) and
 `application_selftest.php` (marketplace application validation, resubmission rules and the
 "has registration" rule) and `hoppa_selftest.php` (plan purchase via Hoppa: offline classification of
-real recorded `ProcessQuery` responses, confirmation and idempotency with a fake gateway; `--e2e` runs one
-successful and one declined payment on Hoppa's test environment through a headless browser, see the file header). All are listed in `CLAUDE.md` → Doğrulama komutları.
+real recorded `ProcessQuery` responses, confirmation and idempotency, reconciliation, reminders and refunds
+with a fake gateway; `--e2e` runs one successful payment + real refund, one declined payment and a real
+reconciliation on Hoppa's test environment through a headless browser, see the file header). All are listed in `CLAUDE.md` → Doğrulama komutları.
 
 In `iyzico_selftest.php`, part A runs offline and needs no keys: it proves the signature scheme, the amount formatting and the
 basket-total equality rule. Part B runs only when `IYZICO_API_KEY`/`IYZICO_SECRET_KEY` are present —

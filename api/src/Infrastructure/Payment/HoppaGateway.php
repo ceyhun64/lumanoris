@@ -170,6 +170,50 @@ final class HoppaGateway implements PaymentGatewayInterface
         return self::classifyQueryResponse($res, $orderRef);
     }
 
+    // ── İade / iptal ──────────────────────────────────────────────────────
+
+    /**
+     * OrderReturn — sipariş referansı + tutar. `SYNC_WITH_POS=true`: banka
+     * ile eşzamanlı yapılır (false olsaydı talep kaydedilip Hoppa operasyonu
+     * tarafından sonradan tamamlanırdı; sonucu bilemezdik).
+     *
+     * Test ortamında görülen (2026-10-07): ödemeyle aynı gün tam tutarda
+     * istek → `STATUS=SUCCESS, RETURN_CODE=0, "İŞLEM İPTAL EDİLDİ"`;
+     * sonrasında ProcessQuery `ORDER_CANCEL` / hareket `STATUS_ID=5`. Aynı
+     * siparişe ikinci istek → `RETURN_CODE=100`, "Referans numarası
+     * bulunamadı". Ertesi gün yapılan iadenin `STATUS_ID=7` döneceği
+     * dokümandan; test edilmedi.
+     */
+    public function refundPayment(string $orderRef, float $amount): array
+    {
+        if (!$this->isConfigured()) {
+            return ['success' => false, 'message' => 'Ödeme altyapısı yapılandırılmamış.', 'error_code' => 'CONFIG_MISSING', 'raw' => []];
+        }
+        if ($amount <= 0) {
+            return ['success' => false, 'message' => 'Geçersiz iade tutarı.', 'error_code' => 'BAD_AMOUNT', 'raw' => []];
+        }
+
+        $res = $this->post('/api/services/OrderReturn', [
+            'MERCHANT'         => $this->merchant,
+            'MERCHANT_KEY'     => $this->merchantKey,
+            'ORDER_REF_NUMBER' => $orderRef,
+            'AMOUNT'           => round($amount, 2),
+            'SYNC_WITH_POS'    => true,
+        ]);
+
+        if (isset($res['__transport_error'])) {
+            return ['success' => false, 'message' => 'Ödeme altyapısına ulaşılamadı.', 'error_code' => 'TRANSPORT', 'raw' => $res];
+        }
+
+        $ok = ($res['STATUS'] ?? '') === 'SUCCESS' && (string) ($res['RETURN_CODE'] ?? '') === '0';
+        return [
+            'success'    => $ok,
+            'message'    => (string) ($res['RETURN_MESSAGE'] ?? ''),
+            'error_code' => $ok ? null : (string) ($res['RETURN_CODE'] ?? 'UNKNOWN'),
+            'raw'        => self::redact($res),
+        ];
+    }
+
     /**
      * ProcessQuery yanıtını yorumlar. Saf fonksiyon — selftest A bölümü
      * test ortamında kaydedilmiş gerçek yanıtlarla çağırıyor.

@@ -41,4 +41,14 @@ interface PaymentGatewayInterface
      * transaction_id (?string), message (string), raw (array).
      */
     public function queryPayment(string $orderRef): array;
+
+    /**
+     * Siparişin TAMAMINI iade/iptal eder (kısmi iade yok — iş kuralı).
+     * $amount karttan çekilen tutardır (komisyon alıcıya yansıtıldıysa dahil).
+     *
+     * Dönüş: success (bool), message (string), error_code (?string),
+     * raw (array). Başarı kesin kabul edilmez; çağıran `queryPayment` ile
+     * 'refunded' / 'cancelled' durumunu doğrular.
+     */
+    public function refundPayment(string $orderRef, float $amount): array;
 }

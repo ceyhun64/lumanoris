@@ -14,11 +14,17 @@
  *    satırı, kesinleştirme, TEKRAR ÇALIŞTIRMAYA DAYANIKLILIK (aynı sipariş
  *    iki kez paket tanımlamaz, ikinci çağrı sağlayıcıyı sormaz), tutar
  *    uyuşmazlığı, reddedilen ödeme, reddedilen → ödenen geçişi.
+ * B2) Faz 7a-2 (transaction + ROLLBACK, sahte sağlayıcı): mutabakat (15 dk,
+ *    24 saat → hoppa_expired, 7 güne kadar 6 saatte bir yeniden sorgu),
+ *    yenileme hatırlatması (bitişe 3 gün, dönem başına bir kez), admin tam
+ *    iadesi (kilit, doğrulama, paket geri alma, admin_audit_log).
  * C) --e2e: Hoppa TEST ortamında gerçek ödeme. Dokümandaki herkese açık
  *    test kartlarıyla bir başarılı (9792100000000001) ve bir hatalı
  *    (5100050000006661, hata 51) ödeme. Kart, tarayıcıda Hoppa'nın
  *    sayfasında girilir (hoppa_e2e_driver.cjs); BACK_URL POST'u yakalanır,
- *    kesinleştirme ProcessQuery ile yapılır. Hepsi ROLLBACK.
+ *    kesinleştirme ProcessQuery ile yapılır. Başarılı ödeme ardından
+ *    OrderReturn ile GERÇEKTEN iade edilir; ödenmemiş bir siparişle gerçek
+ *    mutabakat denenir. Veritabanı tarafı ROLLBACK.
  *    Gereksinim: api/.env'de HOPPA_MODE=test + test kimlik bilgileri;
  *    `playwright-core` (HOPPA_E2E_NODE_PATH = onu içeren node_modules
  *    dizini); isteğe bağlı HOPPA_E2E_CHROME. Eksikse C ATLANIR (geçti
@@ -34,6 +40,7 @@ if (PHP_SAPI !== 'cli') {
 
 require_once __DIR__ . '/../src/autoload.php';
 require_once __DIR__ . '/../functions/plans.php';
+require_once __DIR__ . '/../functions/hosted_plan_payments.php';
 
 $pass = 0;
 $fail = 0;
@@ -56,6 +63,15 @@ final class FakeHostedGateway implements PaymentGatewayInterface
 {
     public int $queries = 0;
     public array $next  = ['state' => 'pending', 'amount' => null, 'commission' => null, 'transaction_id' => null, 'message' => '', 'raw' => []];
+    /** Sipariş başına sabit yanıt (mutabakat testi). */
+    public array $byOrder = [];
+    /** Sırayla tüketilen yanıtlar (iade testi: önce/sonra sorgusu). Doluysa önceliklidir. */
+    public array $queue = [];
+    /** Sorulan siparişler, sırayla. */
+    public array $asked = [];
+    public int $refunds = 0;
+    public ?float $lastRefundAmount = null;
+    public array $refundResult = ['success' => true, 'message' => 'İŞLEM İPTAL EDİLDİ', 'error_code' => null, 'raw' => ['STATUS' => 'SUCCESS']];
 
     public function isConfigured(): bool { return true; }
     public function isTest(): bool { return true; }
@@ -64,7 +80,21 @@ final class FakeHostedGateway implements PaymentGatewayInterface
         return ['success' => true, 'redirect_url' => 'https://postest.esnekpos.com/Pages/CommonPaymentNew.aspx?hash=fake',
                 'provider_ref' => '1', 'message' => '', 'error_code' => null, 'raw' => []];
     }
-    public function queryPayment(string $orderRef): array { $this->queries++; return $this->next; }
+    public function queryPayment(string $orderRef): array
+    {
+        $this->queries++;
+        $this->asked[] = $orderRef;
+        if ($this->queue !== []) {
+            return array_shift($this->queue);
+        }
+        return $this->byOrder[$orderRef] ?? $this->next;
+    }
+    public function refundPayment(string $orderRef, float $amount): array
+    {
+        $this->refunds++;
+        $this->lastRefundAmount = $amount;
+        return $this->refundResult;
+    }
 }
 
 // ── Test ortamında kaydedilmiş gerçek ProcessQuery yanıtları (2026-10-07) ──
@@ -160,7 +190,8 @@ $price = round((float) $plan['monthly_price'], 2);
 $row   = fn (string $o) => $db->selectSingle('status, amount, redirect_url, param_net_amount FROM param_marketplace_payments WHERE order_id = ?', [$o]);
 $sel   = fn () => $db->selectSingle('plan_name, selected_at, expires_at FROM user_plan_selection WHERE user_id = ?', [$uid]) ?: ['plan_name' => null, 'expires_at' => null];
 // Kullanıcının plan satırı olmayabilir: upsert (transaction içinde, ROLLBACK ile geri alınır).
-$setPlan = fn (string $name) => $db->insert('user_plan_selection', ['user_id' => $uid, 'plan_name' => $name, 'selected_at' => date('Y-m-d H:i:s')], true);
+$setPlan = fn (string $name) => $db->insert('user_plan_selection', ['user_id' => $uid, 'plan_name' => $name, 'selected_at' => date('Y-m-d H:i:s')]
+    + (planSelectionHasExpiry($db) ? ['expires_at' => null] : []), true);
 
 $conn->beginTransaction();
 try {
@@ -216,6 +247,137 @@ try {
     $conn->rollBack();
 }
 check('ROLLBACK: test siparişi kalmadı', $row($o) === false || $row($o) === null);
+
+// ═════════════════════════════════════════════════════════════════════════
+echo "\n=== B2) Faz 7a-2: mutabakat, yenileme hatırlatması, iade (transaction + ROLLBACK, sahte sağlayıcı) ===\n\n";
+
+$qr = fn (string $state, ?float $amount = null, ?float $commission = null): array => [
+    'state' => $state, 'amount' => $amount, 'commission' => $commission,
+    'transaction_id' => $state === 'paid' ? '1' : null, 'message' => '', 'raw' => ['state' => $state],
+];
+// Siparişi geçmişe taşır (oluşturma ve son güncelleme).
+$age = fn (string $o, int $minutes) => $db->execute(
+    'UPDATE param_marketplace_payments SET created_at = DATE_SUB(NOW(), INTERVAL ? MINUTE), updated_at = DATE_SUB(NOW(), INTERVAL ? MINUTE) WHERE order_id = ?',
+    [$minutes, $minutes, $o]
+);
+$payRow = fn (string $o) => $db->selectSingle('* FROM param_marketplace_payments WHERE order_id = ?', [$o]);
+$outcomes = fn (string $o) => array_column($db->selectMulti(
+    "JSON_UNQUOTE(JSON_EXTRACT(details, '$.outcome')) AS outcome FROM admin_audit_log
+      WHERE action = 'hoppa_plan_refund' AND target_id = ? ORDER BY id",
+    [(int) $payRow($o)['id']]
+), 'outcome');
+$notes = fn () => (int) $db->selectSingle(
+    'COUNT(*) AS c FROM notifications WHERE user_id = ? AND type = ?',
+    [$uid, PLAN_RENEWAL_NOTIFICATION_TYPE]
+)['c'];
+$refund = fn (FakeHostedGateway $g, string $o) => hostedPlanRefund($db, $g, $payRow($o), 'selftest', null, 'hoppa_selftest', '127.0.0.1');
+
+$conn->beginTransaction();
+try {
+    $setPlan(AppConfig::FREE_PLAN_NAME);
+    $fake  = new FakeHostedGateway();
+    $start = fn () => WalletController::startHostedPlanPayment($db, $fake, $uid, $plan, 'http://localhost:3000')['order_id'];
+
+    // ── Mutabakat ─────────────────────────────────────────────────────────
+    $oPaid = $start(); $age($oPaid, 20);      $fake->byOrder[$oPaid] = $qr('paid', $price, 0.0);
+    $oNew  = $start(); $age($oNew, 5);        $fake->byOrder[$oNew]  = $qr('paid', $price, 0.0);
+    $oFail = $start(); $age($oFail, 20);      $fake->byOrder[$oFail] = $qr('failed');
+    $oOld  = $start(); $age($oOld, 30 * 60);  $fake->byOrder[$oOld]  = $qr('pending');
+    $oWait = $start(); $age($oWait, 20);      $fake->byOrder[$oWait] = $qr('pending');
+
+    $st = hostedPlanReconcile($db, $fake);
+    check('mutabakat: 15 dk geçmiş, dönüşü gelmemiş ödenmiş sipariş → paid + paket', $row($oPaid)['status'] === 'paid' && $sel()['plan_name'] === $plan['name_tr'], json_encode($st));
+    check('mutabakat: 15 dk dolmamış sipariş sorulmaz', $row($oNew)['status'] === WalletController::HOSTED_PENDING && !in_array($oNew, $fake->asked, true));
+    check('mutabakat: reddedilen → hoppa_failed', $row($oFail)['status'] === WalletController::HOSTED_FAILED);
+    check('mutabakat: 24 saati geçmiş, hâlâ ödenmemiş → hoppa_expired', $row($oOld)['status'] === WalletController::HOSTED_EXPIRED);
+    check('mutabakat: 24 saati geçmemiş, ödenmemiş → hoppa_pending kalır', $row($oWait)['status'] === WalletController::HOSTED_PENDING);
+    check('mutabakat sayaçları', $st['paid'] === 1 && $st['failed'] === 1 && $st['expired'] === 1 && $st['pending'] === 1, json_encode($st));
+
+    $setPlan('__isaret__');
+    $fake->asked = [];
+    hostedPlanReconcile($db, $fake);
+    check('mutabakat tekrar: ödenmiş sipariş yeniden işlenmez, paket yeniden tanımlanmaz', $sel()['plan_name'] === '__isaret__' && !in_array($oPaid, $fake->asked, true));
+    check('mutabakat tekrar: süresi dolmuş sipariş 6 saat dolmadan yeniden sorulmaz', !in_array($oOld, $fake->asked, true));
+
+    // Süresi dolmuş sayılan siparişin ödemesi sonradan görünürse paket tanımlanır.
+    $db->execute('UPDATE param_marketplace_payments SET updated_at = DATE_SUB(NOW(), INTERVAL 7 HOUR) WHERE order_id = ?', [$oOld]);
+    $fake->byOrder[$oOld] = $qr('paid', $price, 0.0);
+    $setPlan(AppConfig::FREE_PLAN_NAME);
+    hostedPlanReconcile($db, $fake);
+    check('mutabakat: hoppa_expired sonradan ödenmiş çıkarsa → paid + paket', $row($oOld)['status'] === 'paid' && $sel()['plan_name'] === $plan['name_tr']);
+
+    $oAncient = $start();
+    $age($oAncient, 8 * 24 * 60);
+    $db->execute('UPDATE param_marketplace_payments SET status = ?, updated_at = DATE_SUB(NOW(), INTERVAL 7 HOUR) WHERE order_id = ?', [WalletController::HOSTED_EXPIRED, $oAncient]);
+    $fake->byOrder[$oAncient] = $qr('paid', $price, 0.0);
+    $fake->asked = [];
+    hostedPlanReconcile($db, $fake);
+    check('mutabakat: 7 günden eski hoppa_expired artık sorulmaz', !in_array($oAncient, $fake->asked, true) && $row($oAncient)['status'] === WalletController::HOSTED_EXPIRED);
+
+    // ── Yenileme hatırlatması (GK-27) ─────────────────────────────────────
+    $expireIn = fn (int $days) => $db->insert('user_plan_selection', [
+        'user_id' => $uid, 'plan_name' => $plan['name_tr'], 'selected_at' => date('Y-m-d H:i:s'),
+        'expires_at' => (string) $db->selectSingle('DATE_ADD(NOW(), INTERVAL ? DAY) AS t', [$days])['t'],
+    ], true);
+    $n0 = $notes();
+    $expireIn(10);
+    planRenewalReminders($db);
+    check('hatırlatma: bitişe 10 gün varken gönderilmez', $notes() === $n0);
+    $expireIn(2);
+    planRenewalReminders($db);
+    check('hatırlatma: bitişe 3 günden az kala bir bildirim', $notes() === $n0 + 1);
+    planRenewalReminders($db);
+    check('hatırlatma: aynı dönem için ikinci kez gönderilmez', $notes() === $n0 + 1);
+    $db->execute('UPDATE notifications SET created_at = DATE_SUB(NOW(), INTERVAL 30 DAY) WHERE user_id = ? AND type = ?', [$uid, PLAN_RENEWAL_NOTIFICATION_TYPE]);
+    planRenewalReminders($db);
+    check('hatırlatma: önceki dönemin bildirimi yeni dönemi engellemez', $notes() === $n0 + 2);
+    $setPlan(AppConfig::FREE_PLAN_NAME);
+    $expireIn(-1);
+    $n1 = $notes();
+    planRenewalReminders($db);
+    check('hatırlatma: süresi geçmiş pakete gönderilmez', $notes() === $n1);
+
+    // ── İade ──────────────────────────────────────────────────────────────
+    check('isHostedPlanPayment: Hoppa paket satırı tanınır', isHostedPlanPayment($payRow($oPaid)));
+    check('isHostedPlanPayment: iyzico satırı tanınmaz', !isHostedPlanPayment(['param_response_json' => '{"paymentId":"1"}', 'items_json' => '[{"plan_name":"Gümüş"}]']));
+
+    // $oPaid'den SONRA ödenmiş başka paket ödemesi var ($oOld) → paket geri alınmaz.
+    $setPlan($plan['name_tr']);
+    $fake->queue = [$qr('paid', $price, 0.0), $qr('cancelled', $price, 0.0)];
+    $r1 = $refund($fake, $oPaid);
+    check('iade: Hoppa iptali doğrulandı → satır refunded', $r1['success'] && $row($oPaid)['status'] === 'refunded', json_encode($r1));
+    check('iade: sonradan ödenmiş paket varken paket geri ALINMAZ (neden yanıtta)', $sel()['plan_name'] === $plan['name_tr'] && $r1['data']['plan']['revoked'] === false && $r1['data']['plan']['reason'] !== '');
+
+    $refundsBefore = $fake->refunds;
+    $r2 = $refund($fake, $oPaid);
+    check('iade tekrar: 409, Hoppa\'ya ikinci istek gitmez', $r2['http'] === 409 && $fake->refunds === $refundsBefore);
+    check('iade: her deneme admin_audit_log\'da (tamamlandi, reddedildi)', $outcomes($oPaid) === ['tamamlandi', 'reddedildi'], json_encode($outcomes($oPaid)));
+
+    // En son ödeme; komisyon alıcıya yansımış: iade edilen = karttan çekilen.
+    $fake->queue = [$qr('paid', $price + 2.25, 2.25), $qr('cancelled', $price + 2.25, 2.25)];
+    $r3 = $refund($fake, $oOld);
+    check('iade: tutar istekten değil Hoppa\'dan (karttan çekilen, komisyon dahil)', $r3['success'] && abs((float) $fake->lastRefundAmount - ($price + 2.25)) < 0.005);
+    check('iade: paket geri alındı → varsayılan plan, süresiz', $r3['data']['plan']['revoked'] === true && $sel()['plan_name'] === AppConfig::FREE_PLAN_NAME && empty($sel()['expires_at']), json_encode($sel()));
+
+    check('iade: ödenmemiş (hoppa_failed) sipariş → 422', $refund($fake, $oFail)['http'] === 422);
+
+    // Hoppa "başarılı" dedi ama sorgu iadeyi göstermiyor → satır paid kalır, paket kalır.
+    $fake->byOrder[$oNew] = $qr('paid', $price, 0.0);
+    WalletController::finalizeHostedPlanPayment($db, $fake, $oNew);
+    $fake->queue = [$qr('paid', $price, 0.0), $qr('paid', $price, 0.0)];
+    $r4 = $refund($fake, $oNew);
+    check('iade doğrulanamadı: 422, satır paid, paket duruyor', $r4['http'] === 422 && $row($oNew)['status'] === 'paid' && $sel()['plan_name'] === $plan['name_tr'], json_encode($r4));
+
+    // Hoppa panelinden zaten iade edilmiş: istek gönderilmeden yalnızca eşitlenir.
+    $refundsBefore = $fake->refunds;
+    $fake->queue = [$qr('refunded', $price, 0.0)];
+    $r5 = $refund($fake, $oNew);
+    check('Hoppa\'da zaten iade edilmiş: istek gönderilmez, satır refunded', $r5['success'] && $fake->refunds === $refundsBefore && $row($oNew)['status'] === 'refunded');
+    check('iade: admin_audit_log sonuçları (dogrulanamadi, tamamlandi)', $outcomes($oNew) === ['dogrulanamadi', 'tamamlandi'], json_encode($outcomes($oNew)));
+} finally {
+    $conn->rollBack();
+}
+check('ROLLBACK: B2 siparişleri kalmadı', !$row($oPaid));
 
 // ═════════════════════════════════════════════════════════════════════════
 echo "\n=== C) Hoppa TEST ortamı — uçtan uca ===\n\n";
@@ -287,11 +449,33 @@ try {
             $setPlan('__isaret__');
             $f2 = WalletController::finalizeHostedPlanPayment($db, $gw, $o);
             check('başarılı: aynı ORDER_REF_NUMBER ikinci kez işlenmez', $f2['state'] === 'paid' && $sel()['plan_name'] === '__isaret__');
+
+            // Faz 7a-2 — gerçek iade (OrderReturn), admin iade yoluyla aynı fonksiyon.
+            $setPlan($plan['name_tr']);
+            $rf = hostedPlanRefund($db, $gw, $payRow($o), 'hoppa_selftest --e2e', null, 'hoppa_selftest', '127.0.0.1');
+            echo "        İade (OrderReturn): " . ($rf['success'] ? 'başarılı' : 'BAŞARISIZ')
+                . ' · Hoppa durumu: ' . ($rf['data']['provider_state'] ?? '-')
+                . ' · iade edilen: ' . ($rf['data']['refunded_amount'] ?? '-') . " · {$rf['message']}\n";
+            check('iade: Hoppa\'da tam iade/iptal doğrulandı', $rf['success'] && in_array($rf['data']['provider_state'] ?? '', ['cancelled', 'refunded'], true), json_encode($rf, JSON_UNESCAPED_UNICODE));
+            check('iade: satır refunded, paket geri alındı', $row($o)['status'] === 'refunded' && $sel()['plan_name'] === AppConfig::FREE_PLAN_NAME);
+            check('iade: admin_audit_log\'da "tamamlandi"', in_array('tamamlandi', $outcomes($o), true));
+            check('iade tekrar: 409', hostedPlanRefund($db, $gw, $payRow($o), 'tekrar', null, 'hoppa_selftest', '127.0.0.1')['http'] === 409);
             $setPlan(AppConfig::FREE_PLAN_NAME);
         } else {
             check('hatalı: paket değişmedi', $sel()['plan_name'] === AppConfig::FREE_PLAN_NAME);
         }
     }
+
+    // Faz 7a-2 — gerçek mutabakat: oturumu açılmış ama ödenmemiş sipariş.
+    $s = WalletController::startHostedPlanPayment($db, $gw, $uid, $plan, $publicUrl);
+    $oAb = $s['order_id'];
+    $age($oAb, 20);
+    $st = hostedPlanReconcile($db, $gw);
+    echo "        mutabakat (20 dk): " . json_encode($st) . " · satır: {$row($oAb)['status']}\n";
+    check('mutabakat (gerçek): ödenmemiş sipariş 24 saat dolmadan hoppa_pending kalır', $row($oAb)['status'] === WalletController::HOSTED_PENDING);
+    $age($oAb, 30 * 60);
+    hostedPlanReconcile($db, $gw);
+    check('mutabakat (gerçek): 24 saati geçince hoppa_expired', $row($oAb)['status'] === WalletController::HOSTED_EXPIRED);
 } finally {
     $conn->rollBack();
 }
