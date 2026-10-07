@@ -1473,22 +1473,36 @@ Gözlem (yeni değil): admin sayfa parçaları (`/admin/parcekme.php` dahil) `ph
 
 ---
 
-# Canlı uygulama sırası — GÜNCEL (2026-10-07, `canli-2026-10`)
+# Canlı uygulama sırası — GÜNCEL (2026-10-07, `canli-2026-10b`)
 
-Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının **yerine geçer**. Tüm adımları kullanıcı çalıştırır; Claude canlıya bağlanmaz. Yerelde 010–013 ve 015–017 uygulandı.
+Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının ve önceki `canli-2026-10` sırasının **yerine geçer**. Tüm adımları kullanıcı çalıştırır; Claude canlıya bağlanmaz. Yerelde 010–013 ve 015–017 uygulandı.
+
+**`canli-2026-10b` = `canli-2026-10` + Faz 7a / 7a-2 / 7a-3 (Hoppa ile paket ödemesi, mutabakat, iade, admin "Paket Ödemeleri" ekranı) + N-21 (admin paneli göreli yollar) + N-22 (CSRF'siz iade ucu kapatıldı, 410).** Bu sürümde canlıda ödeme **AÇILMAZ**: Hoppa kodu `PAYMENT_PROVIDER=none` ile kapalı gelir.
+
+**Doğrulananlar (2026-10-07, `canli-2026-10..canli-2026-10b`):**
+
+- **Yeni migration yok.** `api/database/migrations/`, `pending/` ve `schema.sql`'de değişiklik yok; kodda yeni DDL ya da `ensureTable` yok. Faz 7a'nın kullandığı her şey mevcut şemada: `param_marketplace_payments` (yeni durum değerleri `hoppa_pending` / `hoppa_failed` / `hoppa_expired` → `varchar(32)`, şema değişikliği gerekmez), `user_plan_selection.expires_at` (011), `notifications`, `admin_audit_log` (017). Adım 6'daki liste bu yüzden `canli-2026-10` ile aynı.
+- **`PAYMENT_PROVIDER` varsayılanı `none`** — hem kodda (`PaymentGatewayFactory`: tanımsız, boş ya da tanınmayan değer → `none`) hem `api/.env.example`'da. `none` iken: paket satın alma 503 → kullanıcıya "Ödeme altyapısı hazırlanıyor"; `hoppa_return.php` hiçbir şeyi kesinleştirmez; admin "Paket Ödemeleri" ekranı boş liste gösterir, iade 503. Canlı `.env`'in içeriğini Claude göremez → adım 5a'da kullanıcı kontrol eder.
+- **Cron bu sürümde KURULMAZ** (aşağıdaki "Bu sürümde yapılmayacaklar").
 
 | Sıra | Adım | Kontrol / durma koşulu |
 |---|---|---|
 | 0 | Canlı veritabanı yedeği | — |
 | 1 | `php api/database/migrate.php --status` | **009 (`009_user_list_color.sql`) `bekliyor` görünüyorsa** M0-3'teki Liste sayfası 500'ünün nedeni büyük olasılıkla budur (N-03 / K-01). 009 saf `ADD COLUMN`, adım 6'da diğerleriyle uygulanır. Çıktıyı not edin. |
 | 2 | **GK-22 kontrolü** (aşağıdaki sorgu) | **Satır dönerse DURUN.** Bu kullanıcılar yeni kurala göre artık "pazaryeri kaydı var" sayılmayacak (Bakiyem kapısı kapanır) ama bakiyeleri ya da bekleyen çekim talepleri var. Karar verilmeden deploy edilmemeli. |
-| 2b | **iyzico ödeme kontrolü** (aşağıdaki "iyzico kaynaklı ödeme sorgusu") | Bilgi amaçlı, deploy'u durdurmaz. `kaynak = iyzico` ve durumu `paid` / `partial_refund` / `unknown` / `pending` olan satır varsa: bu ödemelerin iadesi ya da mutabakatı yalnızca iyzico ile yapılabilir → Hoppa geçişinde iyzico kodu "yalnızca iade/sorgulama" modunda tutulmalı (keşif raporu §5.4). Satır yoksa iyzico kodu tamamen kapalı kalabilir. `IYZICO_BASE_URL` sandbox iken alınmış satırlar test ödemesidir (gerçek para yok). |
+| 2b | **iyzico ödeme kontrolü** (aşağıdaki "iyzico kaynaklı ödeme sorgusu") | Bilgi amaçlı, deploy'u durdurmaz. `kaynak = iyzico` ve durumu `paid` / `partial_refund` / `unknown` / `pending` olan satır varsa: bu ödemelerin iadesi ya da mutabakatı yalnızca iyzico ile yapılabilir → Hoppa geçişinde iyzico kodu "yalnızca iade/sorgulama" modunda tutulmalı (keşif raporu §5.4). **Not (N-22):** iyzico iadesinin artık giriş noktası yok (eski API iade ucu 410); böyle satır çıkarsa iade iyzico panelinden yapılır ya da admin ekranına iyzico iadesi eklenir. `IYZICO_BASE_URL` sandbox iken alınmış satırlar test ödemesidir (gerçek para yok). |
 | 3 | Faz 4 kontrol A (AUDIT "Faz 4 — kontrol A ve B") | Satır dönerse ve taslaksa `pending/014_…` → `migrations/`, **koddan önce** `--apply`; kontrol `kalan = 0`. |
 | 4 | 015 öncesi not: `SELECT id, ucret_haftalik, ucret_aylik FROM chatbotlar WHERE UPPER(TRIM(isim)) = 'LUMANORIS AI'` | Geri alma için saklayın. |
-| 5 | **Kod deploy** (`canli-2026-10` etiketi) | Kod 012/016/017 yokken de çalışır (eksik tablolar için fail-safe / 503). |
-| 6 | `--status` → `--apply` → `--status` | Bekleyenler sırayla uygulanır: 009 (varsa), 010, 011, 012, 013, 015, 016, 017. Hiçbiri `--allow-destructive` gerektirmez; `⚠ VERİ SİLER` işareti hiçbirinde olmamalı. |
-| 7 | Öz-testler | `plan_limits_selftest.php --strict`, `access_selftest.php`, `application_selftest.php` → hepsi 0 başarısız. `iyzico_selftest.php` A bölümü. |
-| 8 | Elle kontrol | Liste sayfası (009 sonrası 500 yok), Lumanoris AI sıradan hesapla sohbet (015), Başvuru gönder → admin Başvurular → İncelendi → kullanıcının IBAN'ı ve `admin_audit_log` satırı (017). |
+| 5 | **Kod deploy** (`canli-2026-10b` etiketi) | Kod 012/016/017 yokken de çalışır (eksik tablolar için fail-safe / 503). `api/.htaccess` ve `api/admin/.htaccess` de değişti (`cron` dizini denylist'e eklendi) — deploy'a dahil olmalı. |
+| 5a | **Canlı `api/.env` kontrolü** (değerleri paylaşmadan) | `PAYMENT_PROVIDER` satırı **yok** ya da **`PAYMENT_PROVIDER=none`** olmalı. `HOPPA_TEST_*`, `HOPPA_LIVE_*`, `APP_PUBLIC_URL` **girilmez**. Yerel `.env`'den kopyalanmış bir `PAYMENT_PROVIDER=hoppa` satırı varsa **DURUN** ve silin: test anahtarı girilmiş bir kurulum canlıda kullanıcıları Hoppa TEST sayfasına yönlendirir. |
+| 6 | `--status` → `--apply` → `--status` | Bekleyenler sırayla uygulanır: 009 (varsa), 010, 011, 012, 013, 015, 016, 017. **Faz 7a yeni migration getirmedi.** Hiçbiri `--allow-destructive` gerektirmez; `⚠ VERİ SİLER` işareti hiçbirinde olmamalı. |
+| 7 | Öz-testler | `plan_limits_selftest.php --strict`, `access_selftest.php`, `application_selftest.php`, `hoppa_selftest.php` (A + B + B2: sahte sağlayıcı, ağ yok, transaction + ROLLBACK; 017 uygulanmış olmalı) → hepsi 0 başarısız. `iyzico_selftest.php` A bölümü. **`hoppa_selftest.php --e2e` canlıda ÇALIŞTIRILMAZ.** |
+| 8 | Elle kontrol | Liste sayfası (009 sonrası 500 yok), Lumanoris AI sıradan hesapla sohbet (015), Başvuru gönder → admin Başvurular → İncelendi → kullanıcının IBAN'ı ve `admin_audit_log` satırı (017). **Faz 7a:** Paketler'de ücretli paket seç → pencerede "Ödeme altyapısı hazırlanıyor" (kart alanı yok, Hoppa'ya yönlendirme yok); admin menüsü Ödeme → Paket Ödemeleri açılıyor, liste boş; `POST /api/seller/marketplace_refund.php` → `410`; `/cron/plan_payments.php` web'den erişilemiyor (403/404). |
+
+**Bu sürümde yapılmayacaklar:**
+
+- **Cron satırı kurulmaz** (`api/cron/plan_payments.php`). `PAYMENT_PROVIDER=none` iken mutabakat zaten atlanır ve Hoppa siparişi oluşamaz. Sonuç: **yenileme hatırlatması (GK-27) da çalışmaz** — canlıda süresi biten mevcut paketlere bildirim gitmez. Cron, ödeme Hoppa canlı anahtarıyla açılırken kurulur (README → *Plan purchases*).
+- Hoppa canlı anahtarı ve `PAYMENT_PROVIDER=hoppa` bu sürümde girilmez. Açılmadan önce kapanması gerekenler: N-19 (komisyon), N-20 (alıcı adresi), Hoppa soruları #1, #2, #5, #17, BLOCKERS (B1/B3).
 
 Her migration'ın geri alma notu kendi dosya başlığında.
 
