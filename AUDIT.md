@@ -1587,3 +1587,35 @@ Kaynak ve servis eşlemesi: `docs/proposals/hoppa-gecis-kesif.md` §0.2. Hoppa s
 | ID | Sev | Dosya | Problem | Durum |
 |---|---|---|---|---|
 | **N-19** | P2 | Hoppa üye işyeri ayarı (kod değil); paket fiyatının gösterildiği ekranlar | **Test üye işyerinde komisyon alıcıya yansıtılıyor.** 149,00 ₺'lik siparişte Hoppa ödeme sayfası "151,25 TRY ÖDEME YAP" gösterdi ve karttan 151,25 çekildi (`COMMISSION=2,25`, `COMMISSION_RATE=1,490`). Bizim ekranımız 149 ₺ gösteriyor. Canlı hesapta da böyle olursa kullanıcı ödeme sayfasında ilk kez daha yüksek bir tutar görür. Bu, fiyat gösterimi açısından (tüketici mevzuatı: toplam fiyat) sorun olabilir. Kod tarafında kesinleştirme her iki modeli de kabul ediyor: çekilen tutar sipariş tutarına eşitse **ya da** çekilen tutar eksi komisyon sipariş tutarına eşitse ödeme geçerli. | **Açık — Hoppa'ya soruldu** (`docs/hoppa-sorular.md` #3). Canlı ödeme açılmadan önce komisyonun kimde kalacağına müşteri karar vermeli; alıcıya yansıyacaksa fiyat ekranları bunu göstermeli. |
+
+## Faz 7a — Paket ödemesi Hoppa ile (yalnızca TEST ortamı, 2026-10-07)
+
+**Akış:** "Ödemeye geç" → `upgradeplan.php` (yalnızca `plan_name`) → `hoppa_pending` satırı → Hoppa `CommonPaymentDealer` → kullanıcı Hoppa sayfasında kartı girer → `hoppa_return.php` (BACK_URL; POST alanlarına güvenilmez) → sunucudan `ProcessQuery` → ödendiyse ve tutar tutuyorsa paket aynı transaction'da tanımlanır. Koşullu `UPDATE … WHERE status IN ('hoppa_pending','hoppa_failed')` aynı `ORDER_REF_NUMBER`'ın iki kez paket tanımlamasını engeller. Ayrıntı: README → *Plan purchases — Hoppa*; servis eşlemesi: keşif raporu §0.2.
+
+**Ayarlar:** `PAYMENT_PROVIDER` (varsayılan `none` → paket ödemesi 503, arayüzde "Ödeme altyapısı hazırlanıyor"), `HOPPA_MODE` (varsayılan `test`), `HOPPA_TEST_*` / `HOPPA_LIVE_*`, `APP_PUBLIC_URL`. Test kimlik bilgileri (dokümandaki herkese açık `TEST1234`) yalnızca yerel `api/.env`'de; `.env.example`'da boş. Canlı anahtar alanları boş.
+
+**Test ortamında gerçek ödeme (`php api/database/hoppa_selftest.php --e2e`, 2026-10-07, ROLLBACK):**
+
+| Kart | BACK_URL POST | ProcessQuery sonucu | Paket |
+|---|---|---|---|
+| 9792100000000001 (başarılı) | `STATUS=SUCCESS RETURN_CODE=0 AMOUNT=151,25 COMMISSION=2,25` | `paid` | tanımlandı; aynı sipariş ikinci kez işlenince yeniden tanımlanmadı |
+| 5100050000006661 (hata 51) | `STATUS=PAYMENT_ERROR RETURN_CODE=51` | `failed` ("51-Limit Yetersiz") | değişmedi |
+
+`hoppa_return.php` ucu ayrıca geçici `php -S` ile denendi: GET → `303 ?odeme=pending`; bozuk referans → `303 ?odeme=failed`; var olmayan siparişe `STATUS=SUCCESS` yazılmış sahte POST → `303 ?odeme=failed` (POST'a güvenilmediği görüldü).
+
+**N-17:** paket satın alma akışı için **kapandı** — kart verisi ne toplanıyor ne sunucumuza geliyor (`upgradePlan` artık `$data['card']` okumuyor, `chargeCard` çağırmıyor; selftest A bunu kaynak düzeyinde kilitliyor). **Pazaryeri için açık kalıyor:** Hoppa'da bölüştürme yalnızca kartı sunucudan isteyen EYV3DPay'de var (keşif §0.2 sınır a, Hoppa sorusu #1); orada N-17 ara önlemi (kart formu yok) sürüyor.
+
+### Yeni bulgu
+
+| ID | Sev | Dosya | Problem | Durum |
+|---|---|---|---|---|
+| **N-20** | P2 | `WalletController::startHostedPlanPayment` | **Hoppa alıcının il, ilçe ve adresini zorunlu istiyor; kayıtta bu bilgiler yok.** Şu an Hoppa'nın kendi örneğindeki gibi `"-"` gönderiliyor; telefon yoksa o da `"-"`. Doküman "fraud önleme için tüm parametrelerin eksiksiz gönderilmesi gerekir" diyor. Test ortamı `"-"`'yi kabul etti; canlıda kabul edilip edilmeyeceği ve adres toplanıp toplanmayacağı (KVKK, kayıt formu) **müşteri kararı**. | **Açık — karar bekliyor.** Canlı ödeme açılmadan önce: ya Hoppa `"-"`'yi canlıda kabul ettiğini teyit eder, ya da ödeme öncesi adres alanı eklenir. |
+
+### Faz 7a'da yapılmayanlar (açık)
+
+- **Mutabakat işi yok.** Hoppa webhook belgelemiyor. Kullanıcı Hoppa sayfasında sekmeyi kapatırsa `hoppa_pending` satırı öyle kalır; ödeme Hoppa'da başarılı olup dönüş gelmezse paket **tanımlanmaz** — ta ki aynı sipariş yeniden sorgulanana kadar. Zamanlanmış bir ProcessQuery mutabakatı gerekiyor (`hoppa_pending`/`hoppa_failed`, son 7 gün). iyzico'nun `reconcilePayments()`'ı bu satırlara bilerek dokunmuyor (ayrı durum değerleri).
+- **İade yok.** Hoppa `OrderReturn` yazılmadı. Admin iade ucu (`processRefund`, iyzico) Hoppa satırını reddediyor: iyzico anahtarı yoksa 503, varsa `itemTransactions` olmadığı için 422 — yanlış sağlayıcıya iade gitmez. Hoppa iadesi şimdilik Hoppa panelinden.
+- **Yenileme hatırlatması yok** (GK-27). Erken yenilemede kalan günler devretmiyor (her satın alma `NOW()+30`) — iş kuralı, karar verilmedi.
+- **AUTH_HASH doğrulanmıyor** (algoritma belgelenmemiş, Hoppa sorusu #2); güven yalnızca sunucudan yapılan ProcessQuery'de.
+- **Komisyon alıcıya yansıyor** (N-19) — kesinleştirme iki modeli de kabul ediyor.
+- `iyzico` kodu ve pazaryeri satışı değiştirilmedi.
