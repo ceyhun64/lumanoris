@@ -1659,3 +1659,28 @@ N-19 (komisyon) ve N-20 (adres) `musteri-ozet-2026-10.md` B bölümüne sade dil
 ### Hâlâ açık (canlıdan önce)
 
 N-19, N-20 (müşteri + Hoppa cevabı), AUTH_HASH algoritması (#2), Hoppa ödeme sayfası geçerlilik süresi (#5 — 24 saat/7 gün varsayımı), admin iade ekranı yok, erken yenilemede kalan günlerin devri (iş kuralı, karar yok), pazaryeri Hoppa entegrasyonu (bölüştürme, #1).
+
+## Faz 7a-3 — Admin "Paket Ödemeleri" ekranı ve iade (2026-10-07)
+
+**Ekran:** `/admin/odemeler` (menü: Ödeme → Paket Ödemeleri). Veri ve iade `admin/ajax/odemeler.php` üzerinden; `basvurular.php` ile aynı desen (`_guard.php`: admin oturumu + her POST'ta CSRF; DOM'a yalnızca textContent).
+
+- **Liste:** yalnızca Hoppa ile satılmış paket ödemeleri (SQL ön süzgeci + `isHostedPlanPayment()`); pazaryeri ve iyzico satırları yok. Sütunlar: kullanıcı (e-posta, ad, #id), paket, tutar, tarih, durum (Ödendi / İade edildi / Beklemede / Süresi doldu / Başarısız), sipariş; test ortamı satırlarında "TEST" etiketi. Filtre: durum + e-posta (LIKE, joker karakterler kaçışlı). En fazla 300 satır.
+- **İade:** yalnızca "Ödendi" satırında "İade et" → onay penceresi (kullanıcı, paket, tutar, sipariş, tarih, neden alanı, "geri alınamaz" uyarısı) → `hostedPlanRefund()`.
+- **İade ucu kararı:** ekran `/api/seller/marketplace_refund.php`'ye istek atmıyor, onun Hoppa satırları için çağırdığı **aynı fonksiyonu** (`hostedPlanRefund`) doğrudan çağırıyor. Neden: o API ucunda CSRF denetimi yok, admin panelinin kuralı her POST'ta CSRF. İade mantığı (kilit, doğrulama, paket geri alma, `admin_audit_log`) tek yerde kaldı.
+- **Sonuç kutusu:** iade edilen tutar, Hoppa durumu ("iptal edildi (aynı gün)" / "iade edildi"). Paket geri alınmadıysa kırmızı vurgulu ayrı satır: `DİKKAT — "<paket>" paketi geri ALINMADI: <neden>.`
+
+**Uçtan uca test (Hoppa TEST ortamı + geçici `php -S` + headless Chrome, 2026-10-07; KALICI yerel kayıt):**
+
+| Sipariş | Senaryo | Ekrandaki sonuç | Hoppa | Paket |
+|---|---|---|---|---|
+| PLN-91CC115F1676A6D6 | tek ödeme | "İade tamamlandı; paket geri alındı." · 151,25 ₺ · iptal edildi (aynı gün) | `ORDER_CANCEL` | Gümüş → Ücretsiz |
+| PLN-6EB44E85690A4EDB | sonrasında ikinci ödeme (B) var | "İade tamamlandı. Paket geri alınmadı: kullanıcının sonradan ödenmiş başka bir paket ödemesi var" + DİKKAT satırı | `ORDER_CANCEL` | Gümüş kaldı (B'ye ait) |
+| PLN-7958D8D35264F716 | B | "İade tamamlandı; paket geri alındı." | `ORDER_CANCEL` | Gümüş → Ücretsiz |
+
+Üç deneme de `admin_audit_log`'da (`tamamlandi`, admin adı, neden, paket sonucu). Ayrıca: menü bağlantısı görünüyor; iade sonrası satır "İade edildi" oldu ve düğme kalktı; e-posta filtresi çalışıyor; sayfada JS hatası yok; oturumsuz GET/POST → 403. Test kullanıcısı #6'nın önceden paket satırı yoktu (varsayılan plan); şimdi `Ücretsiz`, süresiz satırı var — davranış aynı.
+
+### Yeni bulgu
+
+| ID | Sev | Dosya | Problem | Durum |
+|---|---|---|---|---|
+| **N-21** | P3 | `api/admin/index.php:20` (ve aynı dosyadaki diğer göreli `../`/`./` yolları) | `require_once '../functions/db.php'` göreli yol; PHP `../` yollarını **çalışma dizinine** göre çözer. README'deki geliştirme komutu (`cd api && php -S 127.0.0.1:8000 router.php`, `dev:all`) ile çalışma dizini `api/` olduğundan admin girişinden sonra her sayfa **fatal error** veriyor (`Failed opening required '../functions/db.php'`). Apache'de çalışma dizini betiğin dizini olduğu için canlıyı etkilemiyor. Faz 7a-3 testinde `cd api/admin && php -S … -t .. ../router.php` ile aşıldı. | **Açık** — düzeltme: `__DIR__ . '/../functions/db.php'`. Bu turda kapsam dışı, düzeltilmedi. |
