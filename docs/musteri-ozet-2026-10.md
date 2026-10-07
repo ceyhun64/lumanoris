@@ -68,6 +68,8 @@ Aşağıdaki konularda net bir talimat olmadığı için biz karar verdik. Farkl
 19. 750 ₺'lik ayrı "Üretici" paketi, yeni paketlerle çakıştığı için kaldırıldı.
 20. Ana sayfadaki "yıllık ödeme / %20 indirim" seçeneği, sistemde yıllık satış bulunmadığı için kaldırıldı.
 
+Sorumuz: Kullanıcılarınıza 30 gün para iade garantisi veriyor musunuz?
+
 ## C) Ödeme altyapısı: Hoppa
 
 Ödeme altyapısı **Hoppa** (Elekse Elektronik Para ve Ödeme Kuruluşu A.Ş.) ile kurulacak. Aşağıdakilerin ekranları ve kuralları hazır; Hoppa entegrasyonu tamamlandıktan sonra açılacaklar:
