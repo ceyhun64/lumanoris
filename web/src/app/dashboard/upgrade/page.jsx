@@ -9,7 +9,6 @@ import PricingCard from "./components/PricingCard";
 import EnterpriseContactFooter from "./components/EnterpriseContactFooter";
 import StatusBanner from "./components/StatusBanner";
 import PlanPaymentModal from "@/features/payment/PlanPaymentModal";
-import { toCardPayload } from "@/shared/lib/card";
 
 /**
  * E-04 — burada kodlanmış dört planlık bir katalog vardı (₺149/₺299/₺599)
@@ -88,13 +87,17 @@ export default function PricingPlans() {
     }
     // Ücretsiz plan için tahsilat yok — kart istemek anlamsız olurdu.
     if (planAmount(plan) <= 0) {
-      submitPlan(plan.title, null, index);
+      submitPlan(plan.title, index);
       return;
     }
     setPendingPlan({ title: plan.title, priceLabel: plan.monthly_price, index });
   };
 
-  const submitPlan = async (planTitle, card, index) => {
+  // N-17 ara önlemi: bu fonksiyon artık HİÇBİR koşulda kart verisi
+  // göndermiyor. Yalnızca ücretsiz plana geçiş (tahsilatsız) bu yoldan
+  // gidiyor; ücretli paketler ödeme altyapısı (Hoppa) gelene kadar
+  // PlanPaymentModal'da bilgi mesajıyla kalıyor.
+  const submitPlan = async (planTitle, index) => {
     setSelectedPlan(index);
     setUpgrading(index);
     try {
@@ -102,7 +105,6 @@ export default function PricingPlans() {
       // oturumdan belirliyor. İstemciden gelen bir user_id, başka bir
       // hesabın paketini satın almaya çalışmanın açık kapısı olurdu.
       const payload = { plan_name: planTitle };
-      if (card) payload.card = toCardPayload(card);
 
       const formData = new FormData();
       formData.append("data", JSON.stringify(payload));
@@ -225,9 +227,7 @@ export default function PricingPlans() {
         open={!!pendingPlan}
         planTitle={pendingPlan?.title ?? ""}
         priceLabel={pendingPlan?.priceLabel ?? ""}
-        submitting={upgrading !== null}
         onClose={() => setPendingPlan(null)}
-        onSubmit={(card) => submitPlan(pendingPlan.title, card, pendingPlan.index)}
       />
     </div>
   );
