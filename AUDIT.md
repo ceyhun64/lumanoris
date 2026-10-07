@@ -1470,3 +1470,57 @@ Güncellendi (`429d83d`): rota tablosu (`/dashboard/pazaryeri-basvurusu`), selle
 Not: git bu dalda silinen iki üretici ucunu iki yeni seller ucuyla "yeniden adlandırma" olarak eşleştiriyor; gerçekte ayrı silme + ekleme.
 
 Gözlem (yeni değil): admin sayfa parçaları (`/admin/parcekme.php` dahil) `php -S` geliştirme sunucusunda doğrudan çağrılınca 500 veriyor ve statik HTML'in başını basıyor (veri yok). Mevcut tüm parçalarda aynı; Apache `.htaccess` altındaki davranış ayrıca kontrol edilmedi.
+
+---
+
+# Canlı uygulama sırası — GÜNCEL (2026-10-07, `faz5-tamam`)
+
+Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının **yerine geçer**. Tüm adımları kullanıcı çalıştırır; Claude canlıya bağlanmaz. Yerelde 010–013 ve 015–017 uygulandı.
+
+| Sıra | Adım | Kontrol / durma koşulu |
+|---|---|---|
+| 0 | Canlı veritabanı yedeği | — |
+| 1 | `php api/database/migrate.php --status` | **009 (`009_user_list_color.sql`) `bekliyor` görünüyorsa** M0-3'teki Liste sayfası 500'ünün nedeni büyük olasılıkla budur (N-03 / K-01). 009 saf `ADD COLUMN`, adım 6'da diğerleriyle uygulanır. Çıktıyı not edin. |
+| 2 | **GK-22 kontrolü** (aşağıdaki sorgu) | **Satır dönerse DURUN.** Bu kullanıcılar yeni kurala göre artık "pazaryeri kaydı var" sayılmayacak (Bakiyem kapısı kapanır) ama bakiyeleri ya da bekleyen çekim talepleri var. Karar verilmeden deploy edilmemeli. |
+| 3 | Faz 4 kontrol A (AUDIT "Faz 4 — kontrol A ve B") | Satır dönerse ve taslaksa `pending/014_…` → `migrations/`, **koddan önce** `--apply`; kontrol `kalan = 0`. |
+| 4 | 015 öncesi not: `SELECT id, ucret_haftalik, ucret_aylik FROM chatbotlar WHERE UPPER(TRIM(isim)) = 'LUMANORIS AI'` | Geri alma için saklayın. |
+| 5 | **Kod deploy** (`faz5-tamam` etiketi) | Kod 012/016/017 yokken de çalışır (eksik tablolar için fail-safe / 503). |
+| 6 | `--status` → `--apply` → `--status` | Bekleyenler sırayla uygulanır: 009 (varsa), 010, 011, 012, 013, 015, 016, 017. Hiçbiri `--allow-destructive` gerektirmez; `⚠ VERİ SİLER` işareti hiçbirinde olmamalı. |
+| 7 | Öz-testler | `plan_limits_selftest.php --strict`, `access_selftest.php`, `application_selftest.php` → hepsi 0 başarısız. `iyzico_selftest.php` A bölümü. |
+| 8 | Elle kontrol | Liste sayfası (009 sonrası 500 yok), Lumanoris AI sıradan hesapla sohbet (015), Başvuru gönder → admin Başvurular → İncelendi → kullanıcının IBAN'ı ve `admin_audit_log` satırı (017). |
+
+Her migration'ın geri alma notu kendi dosya başlığında.
+
+### GK-22 kontrol sorgusu (salt okunur — deploy'dan ÖNCE)
+
+Deploy'dan önce yeni başvuru tablosu (016) henüz yok; o anda yeni kurala göre "kayıtlı" olan yalnızca eski `param_marketplace_sellers`'ta `active`/`suspended` olan. Bakiye, `WalletController::computeBalanceAndTransactions()`'ın birebir SQL karşılığı (yerelde 53 kullanıcıda uygulamanın hesabıyla aynı sonuç verdiği doğrulandı; yerelde sonuç 0 satır). `param_marketplace_*` tabloları canlıda hiç oluşturulmamışsa sorgu "tablo yok" hatası verir — o durumda satış/bakiye de yoktur.
+
+```sql
+SELECT k.id AS kullanici_id, k.kullanici_adi,
+       COALESCE(pms.status, 'kayit_yok') AS eski_satici_durumu,
+       ROUND(COALESCE(inc.gelir, 0) - COALESCE(inc.iade, 0) - COALESCE(w.cekim, 0), 2) AS bakiye,
+       COALESCE(w.bekleyen, 0) AS bekleyen_cekim
+FROM kullanicilar k
+LEFT JOIN param_marketplace_sellers pms ON pms.user_id = k.id
+LEFT JOIN (
+    SELECT d.seller_user_id AS uid,
+           SUM(CASE WHEN d.status = 'approved' AND p.status = 'paid' THEN d.payable_amount ELSE 0 END) AS gelir,
+           SUM(CASE WHEN NOT (d.status = 'approved' AND p.status = 'paid')
+                     AND (d.status = 'refunded' OR p.status = 'refunded') THEN d.payable_amount ELSE 0 END) AS iade
+    FROM param_marketplace_details d
+    JOIN param_marketplace_payments p ON p.id = d.payment_id
+    WHERE p.status IN ('paid', 'refunded')
+    GROUP BY d.seller_user_id
+) inc ON inc.uid = k.id
+LEFT JOIN (
+    SELECT user_id,
+           SUM(CASE WHEN durum NOT IN ('reddedildi', 'iptal') THEN miktar ELSE 0 END) AS cekim,
+           SUM(durum = 'beklemede') AS bekleyen
+    FROM para_cekme_talepleri
+    GROUP BY user_id
+) w ON w.user_id = k.id
+WHERE COALESCE(pms.status, '') NOT IN ('active', 'suspended')
+HAVING bakiye <> 0 OR bekleyen_cekim > 0
+ORDER BY k.id
+;
+```
