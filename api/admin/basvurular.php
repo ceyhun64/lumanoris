@@ -7,8 +7,10 @@
  * kullanıcı girdisi.
  *
  * GK-9: "İncelendi" satıcıyı aktif YAPMAZ (B1).
- * GK-23: IBAN aktarımı log tablosu (017) onaylanana kadar kapalı; ekran mevcut
- * ve yeni IBAN'ı yan yana, bekleyen çekim talebini uyarı olarak gösteriyor.
+ * GK-23: "İncelendi" başvurudaki IBAN'ı kullanıcının para çekme IBAN'ı yapar
+ * (bekleyen çekim talebi varsa yapmaz) ve değişikliği admin_audit_log'a
+ * maskeli yazar. Ekran mevcut ve yeni IBAN'ı yan yana gösteriyor; aktarımı
+ * engellenmiş incelenmiş başvuruda "IBAN'ı aktar" ile yeniden denenir.
  * GK-26: tam IBAN ve doğum tarihi yalnızca bu ekranda; dışa aktarma yok.
  */
 ?>
@@ -28,9 +30,9 @@
                 <span id="msg" class="text-sm"></span>
             </div>
             <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
-                IBAN aktarımı (başvurudaki IBAN → kullanıcının para çekme IBAN'ı) şu an KAPALI:
-                değişikliklerin kalıcı kaydı için gereken admin işlem logu onay bekliyor. "İncelendi"
-                yalnızca başvuru durumunu değiştirir ve kullanıcıya bildirim gönderir.
+                "İncelendi" başvurudaki IBAN'ı kullanıcının para çekme IBAN'ı olarak kaydeder ve
+                değişikliği işlem loguna yazar. Kullanıcının bekleyen para çekme talebi varsa IBAN
+                güncellenmez; talep sonuçlandıktan sonra "IBAN'ı aktar" ile yeniden deneyin.
             </div>
             <div id="list" class="space-y-4">
                 <p class="text-sm text-gray-400">Yükleniyor…</p>
@@ -90,10 +92,20 @@
         }
         if (a.pending_withdrawals > 0) {
             c.appendChild(el('p', 'mt-1 text-xs text-red-700',
-                'Kullanıcının ' + a.pending_withdrawals + ' bekleyen para çekme talebi var — IBAN aktarımı açıldığında bu durumda IBAN güncellenmeyecek.'));
+                'Kullanıcının ' + a.pending_withdrawals + ' bekleyen para çekme talebi var — bu durumda IBAN güncellenmez.'));
         }
         if (a.review_note) {
             c.appendChild(el('p', 'mt-2 text-xs text-gray-600', 'Not: ' + a.review_note));
+        }
+
+        // İncelenmiş ama IBAN'ı aktarılamamış (bekleyen çekim vardı) başvuru:
+        // yalnızca aktarımı yeniden deneme düğmesi.
+        const needsTransfer = a.status === 'reviewed' && (a.iban_differs || !a.current_iban);
+        if (needsTransfer) {
+            const retry = el('button', 'mt-3 bg-indigo-600 text-white text-sm font-semibold px-3 py-2 rounded-lg', 'IBAN\x27ı aktar');
+            retry.type = 'button';
+            retry.addEventListener('click', () => save(a.id, 'reviewed', '', retry));
+            c.appendChild(retry);
         }
 
         if (a.status !== 'reviewed') {
@@ -134,7 +146,7 @@
     }
 
     async function save(id, status, note, button) {
-        if (status === 'reviewed' && !confirm(id + ' numaralı başvuruyu "incelendi" olarak işaretlemek istiyor musunuz?\n\nBu, satıcıyı aktif yapmaz.')) return;
+        if (status === 'reviewed' && !confirm(id + ' numaralı başvuruyu "incelendi" olarak işaretlemek istiyor musunuz?\n\nBaşvurudaki IBAN kullanıcının para çekme IBAN\'ı olarak kaydedilecek (bekleyen çekim talebi yoksa).\nBu, satıcıyı aktif yapmaz.')) return;
         if (status === 'rejected' && !note.trim()) { say('Reddetmek için açıklama yazın.', false); return; }
         button.disabled = true;
         try {

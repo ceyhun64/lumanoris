@@ -10,14 +10,15 @@
  * EKLENMEDİ — bu tek giriş noktası.
  *
  * GK-9: "incelendi" satıcıyı `active` YAPMAZ (B1).
- * GK-23: incelemede başvurudaki IBAN'ın `banka_bilgileri`'ne aktarılması,
- * kalıcı bir admin işlem logu gerektiriyor; mevcut log tablosu YOK ve yeni
- * tablo (017) onay bekliyor. O yüzden aktarım BU SÜRÜMDE YAPILMIYOR; liste
- * yine de mevcut ve yeni IBAN'ı ve bekleyen çekim talebini gösteriyor.
+ * GK-23: incelemede başvurudaki IBAN `banka_bilgileri`'ne aktarılır — bekleyen
+ * çekim talebi varsa aktarılmaz; her değişiklik `admin_audit_log`'a (017)
+ * maskeli yazılır. Kurallar `reviewMarketplaceApplication()`'da.
  * GK-25: sonuç kullanıcıya `notifications` tablosu üzerinden bildirilir.
  */
 require_once __DIR__ . '/_guard.php';
 require_once __DIR__ . '/../../functions/db.php';
+// Admin uçları autoload yüklemiyor; reviewMarketplaceApplication() bu istisnaları atıyor.
+require_once __DIR__ . '/../../src/Shared/Exceptions/AppException.php';
 require_once __DIR__ . '/../../functions/marketplace_application.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -66,7 +67,7 @@ if ($method === 'GET') {
     }
     unset($r);
 
-    basvuru_json(['success' => true, 'applications' => $rows, 'iban_transfer_enabled' => false]);
+    basvuru_json(['success' => true, 'applications' => $rows, 'iban_transfer_enabled' => true]);
 }
 
 if ($method !== 'POST') {
@@ -80,53 +81,40 @@ $note   = trim(mb_substr(strip_tags((string) ($_POST['review_note'] ?? '')), 0, 
 if ($id <= 0 || !in_array($status, ['reviewed', 'rejected'], true)) {
     basvuru_json(['success' => false, 'message' => 'Geçersiz istek.'], 400);
 }
-if ($status === 'rejected' && $note === '') {
-    basvuru_json(['success' => false, 'message' => 'Reddetmek için kullanıcıya gösterilecek bir açıklama yazın.'], 400);
-}
+$adminId   = isset($_SESSION['admin_id']) && is_numeric($_SESSION['admin_id']) ? (int) $_SESSION['admin_id'] : null;
+$adminName = (string) ($_SESSION['admin'] ?? '');
+$conn      = $database->getConnection();
 
-$app = $database->selectSingle('id, user_id, status, company_title FROM marketplace_applications WHERE id = ?', [$id]);
-if (!$app) {
-    basvuru_json(['success' => false, 'message' => 'Başvuru bulunamadı.'], 404);
-}
-
-$adminId = isset($_SESSION['admin_id']) && is_numeric($_SESSION['admin_id']) ? (int) $_SESSION['admin_id'] : null;
-$conn    = $database->getConnection();
-
+// Durum + IBAN aktarımı + işlem logu + bildirim tek transaction'da.
 $conn->beginTransaction();
 try {
-    $database->execute(
-        'UPDATE marketplace_applications
-         SET status = ?, review_note = ?, reviewed_by_admin_id = ?, reviewed_at = NOW()
-         WHERE id = ?',
-        [$status, $note !== '' ? $note : null, $adminId, $id]
+    $result = reviewMarketplaceApplication(
+        $database, $id, $status, $note, $adminId, $adminName, $_SERVER['REMOTE_ADDR'] ?? null
     );
-
-    // GK-25 — uygulama içi bildirim (mevcut altyapı). Mesajda kişisel veri yok.
-    $title = $status === 'reviewed' ? 'Pazaryeri başvurunuz incelendi' : 'Pazaryeri başvurunuz onaylanmadı';
-    $msg   = $status === 'reviewed'
-        ? 'Başvurunuz incelendi. Pazaryerinde ücretli satış, ödeme altyapısı tamamlandığında açılacaktır.'
-        : 'Başvurunuz onaylanmadı. Açıklamayı Pazaryeri Başvurusu sayfasında görebilir, düzeltip yeniden gönderebilirsiniz.';
-    $database->execute(
-        'INSERT INTO notifications (user_id, type, title_tr, title_en, message_tr, message_en, is_read)
-         VALUES (?, ?, ?, ?, ?, ?, 0)',
-        [
-            (int) $app['user_id'],
-            'marketplace_application',
-            $title,
-            $status === 'reviewed' ? 'Your marketplace application was reviewed' : 'Your marketplace application was not approved',
-            $msg,
-            $status === 'reviewed'
-                ? 'Your application was reviewed. Paid marketplace sales will open once the payment infrastructure is ready.'
-                : 'Your application was not approved. See the note on the Marketplace Application page, fix it and resubmit.',
-        ]
-    );
-
     $conn->commit();
+} catch (ValidationException $e) {
+    if ($conn->inTransaction()) $conn->rollBack();
+    basvuru_json(['success' => false, 'message' => $e->getMessage()], 400);
+} catch (NotFoundException $e) {
+    if ($conn->inTransaction()) $conn->rollBack();
+    basvuru_json(['success' => false, 'message' => $e->getMessage()], 404);
 } catch (Throwable $e) {
     if ($conn->inTransaction()) $conn->rollBack();
     error_log('[admin/basvurular] durum güncellenemedi id=' . $id . ': ' . $e->getMessage());
     basvuru_json(['success' => false, 'message' => 'Durum güncellenemedi.'], 500);
 }
 
-error_log(sprintf('[admin/basvurular] başvuru id=%d durum=%s admin_id=%s', $id, $status, $adminId ?? '-'));
-basvuru_json(['success' => true, 'message' => 'Başvuru güncellendi; kullanıcıya bildirim gönderildi.']);
+error_log(sprintf('[admin/basvurular] başvuru id=%d durum=%s iban=%s admin_id=%s', $id, $status, $result['iban'], $adminId ?? '-'));
+
+$ibanMessages = [
+    'updated'                    => " Başvurudaki IBAN, kullanıcının para çekme IBAN'ı olarak kaydedildi (işlem loglandı).",
+    'unchanged'                  => ' IBAN zaten aynıydı; değişiklik yok.',
+    'blocked_pending_withdrawal' => ' DİKKAT: kullanıcının bekleyen para çekme talebi olduğu için IBAN GÜNCELLENMEDİ. Talep sonuçlandıktan sonra başvuruyu yeniden inceleyin.',
+    'not_applicable'             => '',
+];
+
+basvuru_json([
+    'success' => true,
+    'iban'    => $result['iban'],
+    'message' => 'Başvuru güncellendi; kullanıcıya bildirim gönderildi.' . ($ibanMessages[$result['iban']] ?? ''),
+]);

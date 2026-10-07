@@ -198,3 +198,116 @@ function maskIban(?string $iban): ?string {
     $iban = preg_replace('/\s+/', '', $iban) ?? '';
     return substr($iban, 0, 2) . '** **** **** **** **** ' . substr($iban, -4);
 }
+
+/**
+ * Admin incelemesi (GK-9, GK-21, GK-23, GK-25). ÇAĞIRAN transaction açmalı:
+ * durum, IBAN aktarımı, işlem logu ve bildirim birlikte yazılır ya da hiçbiri.
+ *
+ * status = reviewed:
+ *   • Başvuru "incelendi" olur — satıcıyı `active` YAPMAZ (B1).
+ *   • GK-23: başvurudaki IBAN `banka_bilgileri.iban`'a aktarılır, ŞU ŞARTLARLA:
+ *       – kullanıcının `beklemede` para çekme talebi varsa aktarılmaz
+ *         (çekim eski IBAN'la açıldı; ödeme sırasında IBAN değişmesin);
+ *       – IBAN zaten aynıysa yazım ve log yapılmaz;
+ *       – her gerçek değişiklik `admin_audit_log`'a yazılır: kim, ne zaman,
+ *         eski ve yeni IBAN MASKELİ (tam IBAN log'a girmez).
+ * status = rejected: açıklama zorunlu; IBAN'a dokunulmaz.
+ *
+ * @return array{status:string, iban:string}  iban: updated | unchanged |
+ *         blocked_pending_withdrawal | not_applicable
+ * @throws ValidationException|NotFoundException
+ */
+function reviewMarketplaceApplication(
+    Database $db,
+    int $applicationId,
+    string $status,
+    ?string $note,
+    ?int $adminId,
+    string $adminName,
+    ?string $ip
+): array {
+    if (!in_array($status, ['reviewed', 'rejected'], true)) {
+        throw new ValidationException('Geçersiz durum.');
+    }
+    $note = trim((string) $note);
+    if ($status === 'rejected' && $note === '') {
+        throw new ValidationException('Reddetmek için kullanıcıya gösterilecek bir açıklama yazın.');
+    }
+
+    $app = $db->selectSingle('id, user_id, iban FROM ' . MARKETPLACE_APPLICATIONS_TABLE . ' WHERE id = ? FOR UPDATE', [$applicationId]);
+    if (!$app) {
+        throw new NotFoundException('Başvuru bulunamadı.');
+    }
+    $userId = (int) $app['user_id'];
+
+    $db->execute(
+        'UPDATE ' . MARKETPLACE_APPLICATIONS_TABLE . '
+         SET status = ?, review_note = ?, reviewed_by_admin_id = ?, reviewed_at = NOW()
+         WHERE id = ?',
+        [$status, $note !== '' ? mb_substr($note, 0, 1000) : null, $adminId, $applicationId]
+    );
+
+    $ibanResult = 'not_applicable';
+    if ($status === 'reviewed') {
+        $newIban = strtoupper(preg_replace('/\s+/', '', (string) $app['iban']) ?? '');
+        $oldRow  = $db->selectSingle('iban FROM banka_bilgileri WHERE user_id = ? FOR UPDATE', [$userId]);
+        $oldIban = $oldRow ? strtoupper(preg_replace('/\s+/', '', (string) $oldRow['iban']) ?? '') : '';
+
+        $pending = (int) ($db->selectSingle(
+            "COUNT(*) AS c FROM para_cekme_talepleri WHERE user_id = ? AND durum = 'beklemede'",
+            [$userId]
+        )['c'] ?? 0);
+
+        if ($oldIban === $newIban) {
+            $ibanResult = 'unchanged';
+        } elseif ($pending > 0) {
+            $ibanResult = 'blocked_pending_withdrawal';
+        } else {
+            $db->execute(
+                'INSERT INTO banka_bilgileri (user_id, iban) VALUES (?, ?)
+                 ON DUPLICATE KEY UPDATE iban = VALUES(iban)',
+                [$userId, $newIban]
+            );
+            $db->execute(
+                'INSERT INTO admin_audit_log (admin_id, admin_name, action, target_user_id, target_type, target_id, details, ip)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                [
+                    $adminId,
+                    mb_substr($adminName !== '' ? $adminName : 'bilinmiyor', 0, 64),
+                    'iban_update_from_application',
+                    $userId,
+                    'marketplace_application',
+                    $applicationId,
+                    json_encode([
+                        'application_id' => $applicationId,
+                        'old_iban'       => $oldIban !== '' ? maskIban($oldIban) : null,
+                        'new_iban'       => maskIban($newIban),
+                    ], JSON_UNESCAPED_UNICODE),
+                    $ip !== null ? mb_substr($ip, 0, 45) : null,
+                ]
+            );
+            $ibanResult = 'updated';
+        }
+    }
+
+    // GK-25 — uygulama içi bildirim (mevcut altyapı). Mesajda kişisel veri yok.
+    $reviewed = $status === 'reviewed';
+    $db->execute(
+        'INSERT INTO notifications (user_id, type, title_tr, title_en, message_tr, message_en, is_read)
+         VALUES (?, ?, ?, ?, ?, ?, 0)',
+        [
+            $userId,
+            'marketplace_application',
+            $reviewed ? 'Pazaryeri başvurunuz incelendi' : 'Pazaryeri başvurunuz onaylanmadı',
+            $reviewed ? 'Your marketplace application was reviewed' : 'Your marketplace application was not approved',
+            $reviewed
+                ? 'Başvurunuz incelendi. Pazaryerinde ücretli satış, ödeme altyapısı tamamlandığında açılacaktır.'
+                : 'Başvurunuz onaylanmadı. Açıklamayı Pazaryeri Başvurusu sayfasında görebilir, düzeltip yeniden gönderebilirsiniz.',
+            $reviewed
+                ? 'Your application was reviewed. Paid marketplace sales will open once the payment infrastructure is ready.'
+                : 'Your application was not approved. See the note on the Marketplace Application page, fix it and resubmit.',
+        ]
+    );
+
+    return ['status' => $status, 'iban' => $ibanResult];
+}

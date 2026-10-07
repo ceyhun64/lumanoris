@@ -148,4 +148,99 @@ try {
 }
 check('rollback sonrası test kullanıcısında başvuru yok', getMarketplaceApplication($db, $uid) === null);
 
+echo "\n=== D) İnceleme + IBAN aktarımı (GK-23, rollback) ===\n\n";
+
+if (!function_exists('reviewMarketplaceApplication')) {
+    check('reviewMarketplaceApplication tanımlı', false, 'fonksiyon yok');
+    finish();
+}
+$auditReady = (int) $db->selectSingle(
+    "COUNT(*) AS c FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'admin_audit_log'"
+)['c'] === 1;
+check('admin_audit_log tablosu var (017)', $auditReady);
+if (!$auditReady) finish();
+
+/** TR + kontrol hanesi + 22 haneli BBAN → geçerli (mod97) IBAN. */
+$makeIban = function (string $bban): string {
+    $num = $bban . '2927' . '00'; // T=29, R=27
+    $mod = 0;
+    foreach (str_split($num) as $d) { $mod = ($mod * 10 + (int) $d) % 97; }
+    return 'TR' . str_pad((string) (98 - $mod), 2, '0', STR_PAD_LEFT) . $bban;
+};
+$iban2 = $makeIban('0006100519786457841327');
+check('test IBAN\'ı geçerli', (function () use ($iban2) {
+    try { BankIdentity::normalizeIban($iban2); return true; } catch (Throwable $e) { return false; }
+})());
+
+$auditCount = fn(int $u) => (int) $db->selectSingle(
+    "COUNT(*) AS c FROM admin_audit_log WHERE target_user_id = ? AND action = 'iban_update_from_application'", [$u]
+)['c'];
+$bankIban = fn(int $u) => $db->selectSingle('iban FROM banka_bilgileri WHERE user_id = ?', [$u])['iban'] ?? null;
+$notifCount = fn(int $u) => (int) $db->selectSingle(
+    "COUNT(*) AS c FROM notifications WHERE user_id = ? AND type = 'marketplace_application'", [$u]
+)['c'];
+
+$u2 = $db->selectSingle(
+    "k.id FROM kullanicilar k
+     LEFT JOIN marketplace_applications m ON m.user_id = k.id
+     LEFT JOIN banka_bilgileri b ON b.user_id = k.id
+     LEFT JOIN para_cekme_talepleri t ON t.user_id = k.id AND t.durum = 'beklemede'
+     WHERE m.id IS NULL AND b.id IS NULL AND t.id IS NULL ORDER BY k.id LIMIT 1"
+);
+if (!$u2) {
+    echo "  (banka kaydı/başvurusu/bekleyen çekimi olmayan kullanıcı yok — D atlandı)\n";
+    finish();
+}
+$u2 = (int) $u2['id'];
+
+$conn->beginTransaction();
+try {
+    submitMarketplaceApplication($db, $u2, $cleanOf($valid));
+    $appId = (int) getMarketplaceApplication($db, $u2)['id'];
+    $notifBefore = $notifCount($u2);
+
+    $r = reviewMarketplaceApplication($db, $appId, 'reviewed', null, null, 'selftest', '127.0.0.1');
+    check('incelendi → durum reviewed', (getMarketplaceApplication($db, $u2)['status'] ?? '') === 'reviewed');
+    check('IBAN aktarıldı (banka kaydı yoktu)', ($r['iban'] ?? '') === 'updated', json_encode($r));
+    check('banka_bilgileri.iban = başvuru IBAN\'ı', $bankIban($u2) === 'TR330006100519786457841326');
+    check('IBAN değişikliği log\'a yazıldı', $auditCount($u2) === 1);
+    $details = (string) $db->selectSingle(
+        "details FROM admin_audit_log WHERE target_user_id = ? ORDER BY id DESC LIMIT 1", [$u2]
+    )['details'];
+    check('log\'da tam IBAN YOK (yalnızca maskeli)', !str_contains($details, 'TR330006100519786457841326') && str_contains($details, '1326'), $details);
+    check('kullanıcıya bildirim gitti (GK-25)', $notifCount($u2) === $notifBefore + 1);
+
+    // Aynı IBAN ile yeniden inceleme: yazım ve log YOK.
+    $db->execute("UPDATE marketplace_applications SET status = 'submitted' WHERE id = ?", [$appId]);
+    $r = reviewMarketplaceApplication($db, $appId, 'reviewed', null, null, 'selftest', null);
+    check('aynı IBAN → değişiklik yok', ($r['iban'] ?? '') === 'unchanged', json_encode($r));
+    check('aynı IBAN → yeni log satırı yok', $auditCount($u2) === 1);
+
+    // Bekleyen çekim talebi varken IBAN güncellenmez; başvuru yine incelenir.
+    $db->execute("UPDATE marketplace_applications SET status = 'submitted', iban = ? WHERE id = ?", [$iban2, $appId]);
+    $db->execute(
+        "INSERT INTO para_cekme_talepleri (user_id, iban, miktar, durum) VALUES (?, 'TR330006100519786457841326', 10.00, 'beklemede')",
+        [$u2]
+    );
+    $r = reviewMarketplaceApplication($db, $appId, 'reviewed', null, null, 'selftest', null);
+    check('bekleyen çekim → IBAN aktarılmadı', ($r['iban'] ?? '') === 'blocked_pending_withdrawal', json_encode($r));
+    check('bekleyen çekim → banka IBAN\'ı değişmedi', $bankIban($u2) === 'TR330006100519786457841326');
+    check('bekleyen çekim → başvuru yine incelendi', (getMarketplaceApplication($db, $u2)['status'] ?? '') === 'reviewed');
+    check('bekleyen çekim → log satırı eklenmedi', $auditCount($u2) === 1);
+
+    // Ret: IBAN'a dokunulmaz, açıklama zorunlu.
+    $db->execute("UPDATE marketplace_applications SET status = 'submitted' WHERE id = ?", [$appId]);
+    $threw = false;
+    try { reviewMarketplaceApplication($db, $appId, 'rejected', '', null, 'selftest', null); }
+    catch (ValidationException $e) { $threw = true; }
+    check('açıklamasız ret reddedilir', $threw);
+    $r = reviewMarketplaceApplication($db, $appId, 'rejected', 'Vergi levhası bilgisi eksik.', null, 'selftest', null);
+    check('ret → IBAN uygulanmaz', ($r['iban'] ?? '') === 'not_applicable', json_encode($r));
+    check('ret → durum rejected + not', (getMarketplaceApplication($db, $u2)['review_note'] ?? '') === 'Vergi levhası bilgisi eksik.');
+} finally {
+    $conn->rollBack();
+}
+check('rollback sonrası banka kaydı yok', $bankIban($u2) === null);
+check('rollback sonrası log satırı yok', $auditCount($u2) === 0);
+
 finish();
