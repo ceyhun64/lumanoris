@@ -14,7 +14,7 @@ Lumanoris, kullanıcıların yapay zekâ sohbet botları oluşturup paylaştığ
 
 ## Ödeme
 
-3. Test üye işyerinde 149,00 TL'lik siparişte ödeme sayfası 151,25 TL gösterdi; komisyon alıcıya yansıtıldı. Komisyonun alıcıya mı yansıtılacağını yoksa bizim tarafımızdan mı karşılanacağını hesap bazında seçebiliyor muyuz? Kart ödemeleri ve pazaryeri hizmeti için komisyon oranları ve ücretler nedir?
+3. Test üye işyerinde 149,00 TL'lik siparişte ödeme sayfası 151,25 TL gösterdi ve karttan 151,25 TL çekildi (COMMISSION=2,25, COMMISSION_RATE=1,490). Komisyonun alıcıya yansıtılması üye işyeri hesabına ait bir ayar mı? Canlı hesabımızda komisyonu bizim karşılayacağımız şekilde (alıcıdan yalnızca ORDER_AMOUNT çekilecek şekilde) ayarlanabilir mi; bu ayarı biz mi yapıyoruz, siz mi? Kart ödemeleri ve pazaryeri hizmeti için komisyon oranları ve ücretler nedir?
 4. Ödeme sonucu, kullanıcının tarayıcısıyla BACK_URL'e gelen form dışında, sunucudan sunucuya bir bildirimle (webhook) de iletiliyor mu?
 5. Ortak Ödeme Sayfası bağlantısı ne kadar süre geçerli kalıyor? Süresi dolan ya da kullanıcının yarıda bıraktığı ödeme, sorgulamada hangi durumla görünüyor?
 6. Aynı ORDER_REF_NUMBER ile ikinci kez ödeme başlatılırsa ne oluyor? Çift çekim engelleniyor mu?
@@ -40,3 +40,7 @@ Lumanoris, kullanıcıların yapay zekâ sohbet botları oluşturup paylaştığ
 14. Ortak Ödeme Sayfası'nı kullandığımızda kart güvenliği (PCI-DSS) açısından bizden hangi belge ya da beyan isteniyor?
 15. Kişisel verilerin işlenmesi (KVKK) için ayrıca bir sözleşme imzalanması gerekiyor mu?
 16. Sitemizde bulunması gereken yasal metinler ve şirket bilgileri için bir koşulunuz var mı?
+
+## Alıcı bilgileri
+
+17. CommonPaymentDealer isteğinde Customer altındaki CITY, STATE ve ADDRESS alanları zorunlu. Dijital ürün sattığımız için alıcıdan adres almıyoruz; şu an bu alanlara "-" gönderiyoruz ve test ortamı kabul etti. Canlı ortamda bu alanların "-" (ya da boş) gönderilmesi kabul ediliyor mu, yoksa gerçek adres zorunlu mu? Telefon numarası olmayan alıcılar için PHONE alanı da aynı şekilde "-" gidebilir mi?

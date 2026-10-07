@@ -68,7 +68,11 @@ Aşağıdaki konularda net bir talimat olmadığı için biz karar verdik. Farkl
 19. 750 ₺'lik ayrı "Üretici" paketi, yeni paketlerle çakıştığı için kaldırıldı.
 20. Ana sayfadaki "yıllık ödeme / %20 indirim" seçeneği, sistemde yıllık satış bulunmadığı için kaldırıldı.
 
-Sorumuz: Kullanıcılarınıza 30 gün para iade garantisi veriyor musunuz?
+Sorularımız:
+
+- Kullanıcılarınıza 30 gün para iade garantisi veriyor musunuz?
+- Hoppa komisyonu müşteriye mi yansısın, sizin tarafınızdan mı karşılansın? Önerimiz sizin karşılamanız; aksi hâlde ekranda gösterilen fiyatla çekilen tutar farklı olur.
+- Ödeme için alıcıdan adres bilgisi toplamamız gerekiyor mu?
 
 ## C) Ödeme altyapısı: Hoppa
 
