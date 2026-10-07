@@ -38,6 +38,23 @@ export default function PricingPlans() {
   // Ücretli bir paket seçildiğinde ödeme penceresi açılır; ücretsiz paket
   // doğrudan uygulanır (bkz. handleChoosePlan).
   const [pendingPlan, setPendingPlan] = useState(null);
+  const [startingPayment, setStartingPayment] = useState(false);
+  const [paymentUnavailable, setPaymentUnavailable] = useState(false);
+  // Hoppa ödeme sayfasından dönüşte sunucu buraya ?odeme=paid|failed|pending
+  // ile yönlendiriyor (WalletController::hoppaReturn). Sonuç sunucuda
+  // ProcessQuery ile kesinleşmiş durumda; burada yalnızca gösteriliyor.
+  const [paymentResult, setPaymentResult] = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get("odeme");
+    if (["paid", "failed", "pending"].includes(result)) {
+      setPaymentResult(result);
+      params.delete("odeme");
+      const query = params.toString();
+      window.history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : ""));
+    }
+  }, []);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -90,13 +107,43 @@ export default function PricingPlans() {
       submitPlan(plan.title, index);
       return;
     }
+    setPaymentUnavailable(false);
     setPendingPlan({ title: plan.title, priceLabel: plan.monthly_price, index });
   };
 
-  // N-17 ara önlemi: bu fonksiyon artık HİÇBİR koşulda kart verisi
-  // göndermiyor. Yalnızca ücretsiz plana geçiş (tahsilatsız) bu yoldan
-  // gidiyor; ücretli paketler ödeme altyapısı (Hoppa) gelene kadar
-  // PlanPaymentModal'da bilgi mesajıyla kalıyor.
+  // Faz 7a: ücretli paket Hoppa Ortak Ödeme Sayfası'nda ödeniyor. İstek
+  // yalnızca plan adını taşır — kart bilgisi ne toplanıyor ne gönderiliyor
+  // (N-17). Sunucu ödeme oturumu açıp Hoppa'nın sayfa adresini döner.
+  const startPlanPayment = async () => {
+    if (!pendingPlan) return;
+    setStartingPayment(true);
+    try {
+      const formData = new FormData();
+      formData.append("data", JSON.stringify({ plan_name: pendingPlan.title }));
+      const res = await fetch("/api/wallet/upgradeplan.php", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      const result = await res.json().catch(() => null);
+      if (res.ok && result?.success && result.redirect_url) {
+        window.location.assign(result.redirect_url);
+        return; // sayfa değişiyor; düğme "açılıyor" durumunda kalsın
+      }
+      if (res.status === 503) {
+        setPaymentUnavailable(true);
+      } else {
+        toast.error(result?.message || "Ödeme başlatılamadı. Lütfen tekrar deneyin.");
+      }
+    } catch (err) {
+      toast.error("Sunucuyla bağlantı kurulamadı.");
+    }
+    setStartingPayment(false);
+  };
+
+  // Yalnızca ücretsiz plana geçiş (tahsilatsız) bu yoldan gidiyor; ücretli
+  // paketler startPlanPayment → Hoppa ödeme sayfası. Kart verisi hiçbir
+  // yoldan gönderilmiyor (N-17).
   const submitPlan = async (planTitle, index) => {
     setSelectedPlan(index);
     setUpgrading(index);
@@ -195,6 +242,21 @@ export default function PricingPlans() {
               Şu anda gösterilebilecek bir paket yok.
             </StatusBanner>
           )}
+          {paymentResult === "paid" && (
+            <StatusBanner variant="success">
+              Ödemeniz alındı; paketiniz 30 gün için etkinleştirildi.
+            </StatusBanner>
+          )}
+          {paymentResult === "failed" && (
+            <StatusBanner variant="error">
+              Ödeme tamamlanamadı ve paketiniz değişmedi. Dilerseniz tekrar deneyebilirsiniz.
+            </StatusBanner>
+          )}
+          {paymentResult === "pending" && (
+            <StatusBanner variant="error">
+              Ödemeniz tamamlanmadı. Ödeme sayfasını yarıda bıraktıysanız paketi yeniden seçebilirsiniz.
+            </StatusBanner>
+          )}
           {upgradedPlan && (
             <StatusBanner variant="success">
               Tebrikler! "{upgradedPlan}" paketi başarıyla etkinleştirildi.
@@ -228,6 +290,9 @@ export default function PricingPlans() {
         planTitle={pendingPlan?.title ?? ""}
         priceLabel={pendingPlan?.priceLabel ?? ""}
         onClose={() => setPendingPlan(null)}
+        onPay={startPlanPayment}
+        starting={startingPayment}
+        unavailable={paymentUnavailable}
       />
     </div>
   );

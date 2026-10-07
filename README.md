@@ -23,6 +23,11 @@ answer on a single origin (`http://localhost:3000` by default in development).
 > live keys in `api/.env`, checkout moves real money. `IYZICO_BASE_URL` defaults to the **sandbox**
 > host, and with no keys at all every payment path fails closed. See [Payments](#payments).
 >
+> **Membership-plan purchases no longer use iyzico.** Since Faz 7a they go through **Hoppa**'s hosted
+> payment page (EsnekPOS infrastructure): card data never reaches our servers. `PAYMENT_PROVIDER`
+> defaults to `none` (plan purchase closed). Marketplace checkout is unchanged and still iyzico. See
+> [Plan purchases — Hoppa](#plan-purchases--hoppa-hosted-payment-page).
+>
 > One subsystem is still explicitly labelled a **development stub** in its own source file: the
 > Param POS marketplace client (seller KYC / sub-merchant registration). Producer-plan purchase was
 > removed (S14, 2026-10-06).
@@ -197,6 +202,7 @@ lumanoris-dashboard/
 │   ├── pending/          #   proposed migrations awaiting approval — NOT applied by migrate.php
     │   ├── migrate.php       #   runner: dry-run by default, records schema_migrations
     │   ├── iyzico_selftest.php #  payment integration self-test (offline + sandbox)
+    │   ├── hoppa_selftest.php  #  plan purchase via Hoppa (offline + rolled-back DB; --e2e test env)
 │   ├── plan_limits_selftest.php, access_selftest.php, application_selftest.php # read-only/rolled-back self-tests
     │   └── seed_contracts.*  #   seeds legal contract texts into global_vars
     ├── functions/            # bootstrap, env, logging, db, rate limit, mailer, SMTP, coin engine, plans, payments
@@ -318,8 +324,12 @@ vars are never overwritten by a stale `.env`.
 | `CONTACT_EMAIL` | No | `AppConfig::contactEmail()` | Recipient for contact-form mail. Falls back to a hard-coded address. |
 | `NOREPLY_EMAIL` | No | `AppConfig::noreplyEmail()` | Sender for password-reset mail. Falls back to a hard-coded address. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_NAME`, `SMTP_ENCRYPTION` | No | `functions/phpmailer.php` | SMTP transport. When unset, the equivalent `global_vars` rows written by the admin panel's SMTP page are used instead. |
-| `IYZICO_API_KEY`, `IYZICO_SECRET_KEY` | **For any payment** | `IyzicoClient` | Provider credentials from the iyzico merchant panel (Ayarlar → API anahtarları). With either missing, `isConfigured()` is false and charge / refund / reconcile all fail closed — no silent success. |
+| `IYZICO_API_KEY`, `IYZICO_SECRET_KEY` | **For marketplace payments** | `IyzicoClient` | Provider credentials from the iyzico merchant panel (Ayarlar → API anahtarları). With either missing, `isConfigured()` is false and charge / refund / reconcile all fail closed — no silent success. |
 | `IYZICO_BASE_URL` | No | `IyzicoClient` | `https://sandbox-api.iyzipay.com` (default, test cards) or `https://api.iyzipay.com` (**real money**). The default is deliberately sandbox. |
+| `PAYMENT_PROVIDER` | **For plan purchases** | `PaymentGatewayFactory` | `none` (default — plan purchase returns `503`, the UI shows "Ödeme altyapısı hazırlanıyor") or `hoppa`. Unknown values count as `none`. Does not affect marketplace checkout. |
+| `HOPPA_MODE` | No | `HoppaGateway` | `test` (default, `posservicetest.esnekpos.com`) or `live` (`posservice.esnekpos.com`, **real money**). |
+| `HOPPA_TEST_MERCHANT`, `HOPPA_TEST_MERCHANT_KEY`, `HOPPA_LIVE_MERCHANT`, `HOPPA_LIVE_MERCHANT_KEY` | With `PAYMENT_PROVIDER=hoppa` | `HoppaGateway` | Only the pair for the selected mode is read; if it is empty the gateway counts as unconfigured. Keep values in `api/.env` only — never in the repo. |
+| `APP_PUBLIC_URL` | With `PAYMENT_PROVIDER=hoppa` | `WalletController::startHostedPlanPayment()` | Public site origin, no trailing slash. Hoppa returns the buyer to `APP_PUBLIC_URL/api/wallet/hoppa_return.php`. Not derived from the `Host` header (spoofable). Must be `https` in live mode. |
 | `ADMIN_USERNAME` | No | `admin_env_account()` | When set, the admin panel account is read from `.env` and the `adminler` table is **not consulted at all**. Unset → legacy DB-table behaviour. See [Admins](#admins). |
 | `ADMIN_PASSWORD` | With `ADMIN_USERNAME` | `admin_env_account()` | Plain-text admin password, compared with `hash_equals`. Simplest option; anyone who can read `.env` can read the password. |
 | `ADMIN_PASSWORD_HASH` | Optional alternative | `admin_env_account()` | `password_hash()` output. Takes precedence over `ADMIN_PASSWORD` when set. A hash pasted into `ADMIN_PASSWORD` is detected and treated as a hash, not double-hashed. |
@@ -624,6 +634,7 @@ static content popups in `web/src/widgets/info/`.
 | `/api/wallet/withdraw.php`, `save_bank_info.php`, `upgradeplan.php` | POST | user |
 | `/api/wallet/getmybalance.php`, `getiban.php`, `get_bank_info.php`, `getmypayments.php`, `getmysubscriptions.php`, `getsubscription.php` | GET/POST | user |
 | `/api/wallet/getpricing.php` | GET/POST | optional |
+| `/api/wallet/hoppa_return.php` | POST | none — Hoppa `BACK_URL`; trusts only the order reference, confirms server-side via `ProcessQuery`, answers `303` to `/dashboard/upgrade?odeme=…` |
 | `/api/wallet/list_withdrawals.php` | GET/POST | admin |
 | `/api/wallet/update_withdrawal_status.php` | POST | admin |
 
@@ -839,6 +850,25 @@ The buyer object iyzico requires (`registrationAddress`, `city`, `country`, `ema
 `identityNumber`, `ip`) has no natural value for a digital product; a consistent placeholder derived
 from the user's account is sent because the provider's schema rejects empty fields.
 
+### Plan purchases — Hoppa hosted payment page
+
+Membership plans (Faz 7a) are sold through Hoppa's **Ortak Ödeme Sayfası** (`CommonPaymentDealer`).
+The card is entered on Hoppa's page; Lumanoris never receives card data (closes N-17 for this flow).
+
+| Step | Where | What happens |
+| --- | --- | --- |
+| 1. Start | `POST /api/wallet/upgradeplan.php` → `WalletController::startHostedPlanPayment()` | Price read from `plans`. A `param_marketplace_payments` row is written **before** the provider call with status `hoppa_pending`, then `CommonPaymentDealer` returns the `URL_3DS` (must be `https` on `*.esnekpos.com`). The client only sends `plan_name`. |
+| 2. Pay | Hoppa's page | Card + 3-D Secure on Hoppa's side. |
+| 3. Return | `POST /api/wallet/hoppa_return.php` | Cross-site form POST, so no session cookie arrives (`SameSite=Lax`). Only `ORDER_REF_NUMBER` is read; the posted status is ignored. |
+| 4. Confirm | `WalletController::finalizeHostedPlanPayment()` | Server-to-server `ProcessQuery`. Paid only if the success transaction has `STATUS_ID=3` and the charged amount covers the order (amount = price, or amount − commission = price). A conditional `UPDATE … WHERE status IN ('hoppa_pending','hoppa_failed')` decides which request activates the plan, in the same transaction — the same order can never activate twice. |
+
+Hoppa rows use their own statuses (`hoppa_pending`, `hoppa_failed`) on purpose: iyzico's
+`reconcilePayments()` scans `pending`/`failed` and would mark a Hoppa order `failed` because iyzico has
+never heard of it. Open items (AUDIT.md, Faz 7a): no reconciliation job yet for abandoned
+`hoppa_pending` rows, refunds via `OrderReturn` not implemented (the admin refund endpoint refuses
+these rows), no renewal reminder (GK-27: no automatic renewal), Hoppa does not document a webhook.
+Provider details and observed test responses: `docs/proposals/hoppa-gecis-kesif.md` §0.2.
+
 ### Refund and reconciliation
 
 | Operation | Endpoint | Notes |
@@ -872,7 +902,9 @@ Other self-tests (no persistent writes — scenario data is created inside a tra
 back): `plan_limits_selftest.php --strict` (plan catalogue, free-plan regression, make-private rights),
 `access_selftest.php` (who can list / preview / chat / read persona per bot type) and
 `application_selftest.php` (marketplace application validation, resubmission rules and the
-"has registration" rule). All are listed in `CLAUDE.md` → Doğrulama komutları.
+"has registration" rule) and `hoppa_selftest.php` (plan purchase via Hoppa: offline classification of
+real recorded `ProcessQuery` responses, confirmation and idempotency with a fake gateway; `--e2e` runs one
+successful and one declined payment on Hoppa's test environment through a headless browser, see the file header). All are listed in `CLAUDE.md` → Doğrulama komutları.
 
 In `iyzico_selftest.php`, part A runs offline and needs no keys: it proves the signature scheme, the amount formatting and the
 basket-total equality rule. Part B runs only when `IYZICO_API_KEY`/`IYZICO_SECRET_KEY` are present —
