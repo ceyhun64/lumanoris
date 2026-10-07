@@ -1,7 +1,7 @@
 -- 017 — Admin işlem logu (GK-23: başvuru IBAN'ının banka_bilgileri'ne aktarımı)
 --
--- DURUM: ÖNERİ, ONAY BEKLİYOR — UYGULANMADI. Şema tasarımı. Onaya kadar
--- `api/database/pending/` altında.
+-- DURUM: ONAYLANDI (kullanıcı, 2026-10-07).
+--
 --
 -- Neden: GK-23, admin "incelendi" dediğinde başvurudaki IBAN'ın kullanıcının
 -- para çekme IBAN'ına (banka_bilgileri.iban) yazılmasını ve bu değişikliğin
