@@ -729,6 +729,10 @@ const generateReply = async (userText, filePayloads = []) => {
             // was lost on both sides.
             if (gData.error) {
               upstreamError = gData.error;
+              // N-33 — ilk `meta` karesi çipi tüketim SONRASI değere (ör. 9)
+              // çekmişti; sunucu hatada hakkı iade ediyor. Tahmin etmek yerine
+              // gerçek değeri sunucudan yeniden oku.
+              if (gData.error.refunded) checkMessageAllowance(userId, botId);
               continue;
             }
             // N-30 — sunucu cevabı kendisi kaydedip kimliğini son karede
