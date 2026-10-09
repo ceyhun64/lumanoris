@@ -381,6 +381,8 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
         if (!$isOwner) {
             unset($row['style_prompt']);
         }
+        // N-24 — istemci satın alma düğmesini sahibe göstermemek için okur.
+        $row['is_owner'] = $isOwner;
 
         return $row;
     }

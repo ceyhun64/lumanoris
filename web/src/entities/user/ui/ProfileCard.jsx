@@ -365,6 +365,11 @@ export default function ProfileCard({bot, comments}) {
         Number(bot.is_independent) === 0 &&
         !(Number(bot.ucret_haftalik) > 0) &&
         !(Number(bot.ucret_aylik) > 0);
+    // N-24 — "Sepete Ekle" yalnızca başkasının herkese açık, FİYATLI botunda.
+    // Sahibin kendi botu ve özel (bağımsız) bot satın alınamaz; sunucu da
+    // addToCart'ta reddediyordu ama düğme görünüp 422 hatası veriyordu.
+    const canAddToCart =
+        !bot.is_owner && Number(bot.is_independent) === 0 && !isFreePublic;
 
     const followToggle = async () => {
         if (!requireLogin(userId, router)) return;
@@ -503,7 +508,7 @@ export default function ProfileCard({bot, comments}) {
                     <ActionPill icon={MessageCircle} label="Yorumlar" count={commentCount} onClick={() => setCommentOpen(true)} />
                     <ActionPill icon={Share2} label="Paylaş" onClick={() => setShareOpen(true)} />
                     <ActionPill icon={ListPlus} label="Listeye Ekle" onClick={() => setModalVisible(true)} />
-                    {!isFreePublic && (
+                    {canAddToCart && (
                         <ActionPill
                             icon={ShoppingCart}
                             label={isInCart ? "Sepette" : "Sepete Ekle"}

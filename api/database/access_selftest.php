@@ -95,6 +95,9 @@ try {
         check("ücretsiz #$id: getDetail has_access", ($d['has_access'] ?? false) === true);
         check("ücretsiz #$id: getDetail persona YOK", !$persona($d));
         check("ücretsiz #$id: sahibine persona döner", $persona($repo->getDetail($id, (int) $freeCandidate['author_user_id'])));
+        // N-24: istemci "Sepete Ekle"yi sahibe göstermemek için bunu okur.
+        check("ücretsiz #$id: getDetail is_owner false (U)", ($d['is_owner'] ?? null) === false);
+        check("ücretsiz #$id: getDetail is_owner true (sahip)", ($repo->getDetail($id, (int) $freeCandidate['author_user_id'])['is_owner'] ?? null) === true);
     } else {
         echo "  (satıcı olmayan yazarın özel botu yok — ücretsiz senaryo atlandı)\n";
     }
@@ -107,6 +110,7 @@ try {
     $d = $repo->getDetail($id, $U);
     check("fiyatlı-aktif #$id: getDetail has_access false", ($d['has_access'] ?? null) === false);
     check("fiyatlı-aktif #$id: getDetail persona YOK", !$persona($d));
+    check("fiyatlı-aktif #$id: getDetail is_owner false (U)", ($d['is_owner'] ?? null) === false);
 
     // Fiyatlı + pasif satıcı
     $other = $db->selectSingle(
