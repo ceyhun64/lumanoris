@@ -330,6 +330,13 @@ export default function Chat() {
         return;
     }
 
+    // N-32 — bu yükleme bitmeden sohbet değişirse (ana sayfadan ?prompt= ile
+    // gelindiğinde: önce id=0 sohbeti, hemen ardından yeni sohbet + ilk mesaj)
+    // geç dönen eski sonuç, o arada eklenen mesajı ve cevabı ekrandan
+    // siliyordu — kullanıcının bu botla geçmişi varsa yalnızca karşılama
+    // mesajı kalıyordu. Effect yeniden çalışınca eski yükleme yok sayılır.
+    let cancelled = false;
+
     const loadHistory = async () => {
       try {
         // Gerçek geçmişi artık HER ZAMAN çekiyoruz — sadece "kullanıcı
@@ -342,6 +349,7 @@ export default function Chat() {
         const historyResult = await (
           await fetch(`/api/chat/getchat.php?chatbot_id=${bot.id}&user_id=${userId}`)
         ).json();
+        if (cancelled) return; // N-32: sohbet bu arada değişti
         const historyData = Array.isArray(historyResult?.messages) ? historyResult.messages : [];
         const hasHistory = historyData.length > 0;
         const shouldRestoreHistory = conversationId >= 1;
@@ -396,6 +404,9 @@ export default function Chat() {
     };
 
     loadHistory();
+    return () => {
+      cancelled = true;
+    };
   }, [conversation, bot]); // bot'u da bağımlılığa ekledik
 
   useEffect(() => {
