@@ -173,6 +173,15 @@ foreach (['features/payment/PlanPaymentModal.jsx', 'app/dashboard/upgrade/page.j
     check("N-17: $f kart alanı/gönderimi içermiyor", $src !== '' && !preg_match('/import\s+CardFields|<CardFields|toCardPayload\(|cardInfo|\bcard:\s/', $src));
 }
 
+// N-31 kilidi: BACK_URL çapraz-site POST'unda oturum başlatılmaz (yeni
+// PHPSESSID kullanıcının oturum çerezinin üstüne yazıyordu).
+$ret  = (string) file_get_contents(__DIR__ . '/../api/wallet/hoppa_return.php');
+$boot = (string) file_get_contents(__DIR__ . '/../functions/bootstrap.php');
+$def  = strpos($ret, "define('LUMANORIS_STATELESS_ENDPOINT', true)");
+$req  = strpos($ret, 'autoload.php');
+check('N-31: hoppa_return.php autoload\'dan ÖNCE stateless işaretliyor', $def !== false && $req !== false && $def < $req);
+check('N-31: bootstrap stateless uçta session_start() yapmıyor', str_contains($boot, "!defined('LUMANORIS_STATELESS_ENDPOINT') && session_status() === PHP_SESSION_NONE"));
+
 // ═════════════════════════════════════════════════════════════════════════
 echo "\n=== B) Kesinleştirme ve tekrar çalıştırma (transaction + ROLLBACK, sahte sağlayıcı) ===\n\n";
 
