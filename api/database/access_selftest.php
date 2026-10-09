@@ -213,6 +213,68 @@ if ($missing30 !== []) {
     }
 }
 
+echo "\n--- N-34: bot yorumu istemciden user_id göndermez (kimlik oturumdan) ---\n";
+// Sunucu (SocialController::addComment) izin listesi dışındaki anahtarı reddediyor ve user_id'yi
+// oturumdan alıyor; bu doğru. Hata istemcideydi. Kilit: addcomment.php'ye istek tek yardımcıdan
+// gider ve o yardımcı user_id içermez.
+$webSrc = realpath(__DIR__ . '/../../web/src');
+$callers = [];
+$it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($webSrc, FilesystemIterator::SKIP_DOTS));
+foreach ($it as $file) {
+    if (!preg_match('/\.(jsx?|tsx?)$/', $file->getFilename())) continue;
+    if (str_contains((string) file_get_contents($file->getPathname()), '/api/social/addcomment.php')) {
+        $callers[] = str_replace('\\', '/', substr($file->getPathname(), strlen($webSrc) + 1));
+    }
+}
+check('N-34: addcomment.php yalnızca features/comments/api.js\'ten çağrılıyor', $callers === ['features/comments/api.js'], implode(', ', $callers));
+$helper = (string) @file_get_contents($webSrc . '/features/comments/api.js');
+$helperCode = (string) preg_replace(['~/\*.*?\*/~s', '~//[^\n]*~'], '', $helper); // yorumlar değil, kod
+check('N-34: yorum yardımcısı user_id göndermiyor', $helper !== '' && !str_contains($helperCode, 'user_id') && str_contains($helperCode, 'chatbot_id: chatbotId, comment'));
+$ctrl = (string) file_get_contents(__DIR__ . '/../src/Presentation/Controllers/SocialController.php');
+check('N-34: sunucu izin listesi gevşetilmedi (chatbot_id, comment)', str_contains($ctrl, "pickAllowed(\$data, ['chatbot_id', 'comment'])"));
+check('N-34: sunucu yorumu oturumdaki kullanıcıyla yazıyor', (bool) preg_match("/'chatbot_comments',\s*\[\s*'chatbot_id'\s*=>\s*\\\$chatbotId,\s*'user_id'\s*=>\s*\\\$userId,/", $ctrl));
+
+echo "\n--- N-35: takip/beğeni açık eylemle (idempotent), liste beğeni durumunu taşıyor ---\n";
+$relLib = __DIR__ . '/../functions/social_relations.php';
+if (is_file($relLib)) require_once $relLib;
+if (!function_exists('chatbotRelationSet')) {
+    check('N-35: chatbotRelationSet tanımlı (functions/social_relations.php)', false, 'fonksiyon yok');
+} else {
+    $botForRel = (int) ($repo->getPublished(['limit' => 1, 'offset' => 0])[0]['id'] ?? 0);
+    $has = fn(string $t) => (bool) $db->selectSingle("id FROM $t WHERE user_id = ? AND chatbot_id = ?", [$U, $botForRel]);
+    $conn->beginTransaction();
+    try {
+        $db->execute('DELETE FROM chatbot_follows WHERE user_id = ? AND chatbot_id = ?', [$U, $botForRel]);
+        $r = chatbotRelationSet($db, 'chatbot_follows', 'followed_at', $U, $botForRel, 'unfollow');
+        check('N-35: takip yokken "unfollow" → değişmez, YENİDEN TAKİP ETMEZ', $r['action'] === 'unchanged' && !$has('chatbot_follows'), json_encode($r));
+        $r = chatbotRelationSet($db, 'chatbot_follows', 'followed_at', $U, $botForRel, 'follow');
+        check('N-35: "follow" → takip edildi', $r['action'] === 'followed' && $has('chatbot_follows'), json_encode($r));
+        $r = chatbotRelationSet($db, 'chatbot_follows', 'followed_at', $U, $botForRel, 'follow');
+        check('N-35: ikinci "follow" → değişmez (idempotent)', $r['action'] === 'unchanged' && $has('chatbot_follows'), json_encode($r));
+        $r = chatbotRelationSet($db, 'chatbot_follows', 'followed_at', $U, $botForRel, 'unfollow');
+        check('N-35: "unfollow" → kaldırıldı ve kalıcı', $r['action'] === 'unfollowed' && !$has('chatbot_follows'), json_encode($r));
+        $r1 = chatbotRelationSet($db, 'chatbot_follows', 'followed_at', $U, $botForRel, null);
+        $r2 = chatbotRelationSet($db, 'chatbot_follows', 'followed_at', $U, $botForRel, null);
+        check('N-35: eylemsiz çağrı eskisi gibi toggle (sohbet sayfası değişmedi)', $r1['action'] === 'followed' && $r2['action'] === 'unfollowed', json_encode([$r1, $r2]));
+
+        $db->execute('DELETE FROM chatbot_likes WHERE user_id = ? AND chatbot_id = ?', [$U, $botForRel]);
+        $r = chatbotRelationSet($db, 'chatbot_likes', 'liked_at', $U, $botForRel, 'like');
+        check('N-35: "like" → beğenildi', $r['action'] === 'liked' && $has('chatbot_likes'), json_encode($r));
+        $row = null;
+        foreach ($repo->getPublished(['limit' => 200, 'offset' => 0], $U) as $b) { if ((int) $b['id'] === $botForRel) $row = $b; }
+        check('N-35: vitrin satırı liked_by_me=1 (beğenen kullanıcı için)', (int) ($row['liked_by_me'] ?? -1) === 1, json_encode($row['liked_by_me'] ?? null));
+        $row0 = null;
+        foreach ($repo->getPublished(['limit' => 200, 'offset' => 0], 0) as $b) { if ((int) $b['id'] === $botForRel) $row0 = $b; }
+        check('N-35: oturumsuz liste liked_by_me=0', (int) ($row0['liked_by_me'] ?? -1) === 0, json_encode($row0['liked_by_me'] ?? null));
+        $r = chatbotRelationSet($db, 'chatbot_likes', 'liked_at', $U, $botForRel, 'unlike');
+        check('N-35: "unlike" → kaldırıldı', $r['action'] === 'unliked' && !$has('chatbot_likes'), json_encode($r));
+        $threw = false; try { chatbotRelationSet($db, 'chatbot_follows', 'followed_at', $U, $botForRel, 'like'); } catch (ValidationException $e) { $threw = true; }
+        check('N-35: tabloya uymayan eylem reddedilir', $threw);
+    } finally {
+        $conn->rollBack();
+    }
+}
+
 echo "\n--- N-26: \"Daha Önce Satıldı\" yalnızca gerçek satış kaydıyla ---\n";
 // Eskiden getPublished `1 AS durum` döndürüyordu; arayüz her bota rozet basıyordu.
 $rows = $repo->getPublished(['limit' => 200, 'offset' => 0]);

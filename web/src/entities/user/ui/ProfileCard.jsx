@@ -21,6 +21,7 @@ const ReportModal = dynamic(() => import('@/features/moderation/ReportModal'), {
 const AddToListModal = dynamic(() => import('@/features/lists/AddToListModal'), { ssr: false });
 const BlockModal = dynamic(() => import('@/features/moderation/BlockModal'), { ssr: false });
 const CommentModal = dynamic(() => import('@/features/comments/CommentModal'), { ssr: false });
+import { postBotComment } from '@/features/comments/api';
 const DeleteConfirmModal = dynamic(() => import('@/shared/ui/DeleteConfirmModal'), { ssr: false });
 
 function formatCompact(n) {
@@ -580,32 +581,16 @@ export default function ProfileCard({bot, comments}) {
                 onClose={() => setCommentOpen(false)}
                 comments={comments}
                 onSend={async (commentText) => {
-                    if (!requireLogin(userId, router)) return;
-                    const payload = {
-                    user_id: userId,      // giriş yapan kullanıcı id'si
-                    chatbot_id: profile.id,   // yorum yapılan chatbot id'si
-                    comment: commentText
-                    };
-
-                    try {
-                    const formData = new FormData();
-                    formData.append("data", JSON.stringify(payload));
-
-                    const res = await fetch("/api/social/addcomment.php", {
-                        method: "POST",
-                        body: formData
-                    });
-                    const resultText = await res.text();
-                    const result = JSON.parse(resultText);
-                    if (result.success) {
-                        // yorum listesini güncelle
+                    if (!requireLogin(userId, router)) return { ok: false, message: "Yorum için giriş yapın." };
+                    // N-34: kimlik gönderilmez (sunucu oturumdan alır); sonuç
+                    // CommentModal'a döner, satırı o kesinleştirir ya da geri alır.
+                    const result = await postBotComment(profile.id, commentText);
+                    if (result.ok) {
                         setCommentCount(prev => prev + 1);
                     } else {
                         toast({ variant: "destructive", title: "Yorum eklenemedi", description: result.message });
                     }
-                    } catch (err) {
-                    toast({ variant: "destructive", title: "Yorum eklenemedi", description: err.message });
-                    }
+                    return result;
                 }}
                 />
 
