@@ -1775,3 +1775,90 @@ SELECT COUNT(*) AS toplam,
   LEFT JOIN chatbotlar c ON c.id = udb.chatbot_id
   LEFT JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id AND pms.status = 'active';
 ```
+
+### N-33 — sohbet coin çipi iade sonrası güncellenmiyor (2026-10-09)
+
+| ID | Sev | Dosya | Problem | Durum |
+|---|---|---|---|---|
+| **N-33** | P3 | `web/src/app/dashboard/chat/page.jsx` (`generateReply`, SSE `error` karesi) | Model hatasında sunucu hakkı iade edip `error {refunded:true}` gönderiyor, ama ilk `meta` karesinin çipe yazdığı tüketim sonrası değer (ör. 9) kalıyordu: "Bugün kalan Lumacoin: 9" ↔ kenar çubuğu 10/10. S-02 yeniden koşusunda görüldü. | **Kapandı** (`3f2959d`): `refunded:true` gelince değer sunucudan (`checkmessageallowance.php`) yeniden okunuyor. Tarayıcı (yeniden oynatılan SSE, Gemini'siz): önce çip 9 / sunucu 10 → sonra 10 / 10; N-23 kontrolleri yeşil kaldı. `canli-2026-10c` etiketinde **yok** (görsel, P3); bir sonraki etikette gelir. |
+
+## Hoppa canlıya açma (2026-10-09)
+
+Hoppa canlı hesabı açıldı (merchant: lumanoris.net). **Bu bölümde hiçbir anahtar değeri yok;** değerleri sunucuya kullanıcı girer. Claude canlı `.env`'i görmez, canlıya bağlanmaz, ödeme komutu çalıştırmaz.
+
+### 1. Canlı `api/.env` satırları
+
+Kodun okuduğu adlar (`HoppaGateway.php:51-54`, `PaymentGatewayFactory.php:22`, `WalletController.php:547`). Okuma kuralı: `HOPPA_MODE=live` iken **yalnızca** `HOPPA_LIVE_*` okunur; mod `test` ise `HOPPA_TEST_*`.
+
+| Satır | Ne | Not |
+|---|---|---|
+| `PAYMENT_PROVIDER=hoppa` | Paket ödemesini Hoppa'ya açan anahtar. | Bugün `none` (ya da satır yok). Ödeme açma gününün **son** değişikliği bu; geri dönüş de bu satırı `none` yapmak. |
+| `HOPPA_MODE=live` | Canlı Hoppa servisi (`https://posservice.esnekpos.com`, GERÇEK PARA). | Yalnızca `test` ve `live` geçerli; başka değer → ödeme kapalı. |
+| `HOPPA_LIVE_MERCHANT=` | Hoppa üye işyeri kimliği (panelde "Merchant"). | İstek gövdesinde `MERCHANT` olarak gider. |
+| `HOPPA_LIVE_MERCHANT_KEY=` | Üye işyeri gizli anahtarı (panelde "Merchant Key"). | İstek gövdesinde `MERCHANT_KEY`; **log'a hiç yazılmaz** (gövde log'lanmaz, saklanan yanıttan `MERCHANT_KEY` ve `CUSTOMER_*` ayıklanır — `HoppaGateway.php:18, 335`). **Yenilenmiş anahtar girilmeli** (B3 notu). |
+| `APP_PUBLIC_URL=https://…` | Sitenin dışarıdan açılan adresi, sonda `/` yok. Hoppa sonucu `APP_PUBLIC_URL/api/wallet/hoppa_return.php`'ye döndürür. | **Canlı modda `https` zorunlu** — değilse ödeme başlatılmaz (`WalletController.php:604-607`, log: "APP_PUBLIC_URL tanımsız/geçersiz"). Kullanıcıların siteyi açtığı alan adıyla **aynı** olmalı; farklıysa dönüşte oturum çerezi gelmez. |
+
+Gerekmeyenler:
+- **Canlı API base URL** — `.env`'de yok, kodda sabit (`HoppaGateway::LIVE_BASE_URL`).
+- **Merchant Public Token** — kod **kullanmıyor** (`api/` ve `web/src`'de hiçbir referans yok; Ortak Ödeme Sayfası akışı yalnızca Merchant + Merchant Key ile çalışıyor). **Eklenmesine gerek yok.**
+- `HOPPA_TEST_MERCHANT` / `HOPPA_TEST_MERCHANT_KEY` — canlıda boş kalır (test ortamı canlıda kullanılmaz).
+- `HOPPA_E2E_*` — yalnızca yerel `--e2e` testi; canlıda yok.
+
+Dikkat: `functions/env.php` **gerçek ortam değişkenini `.env`'e tercih eder.** Barındırma panelinde/servis tanımında `PAYMENT_PROVIDER` ya da `HOPPA_*` ortam değişkeni olarak tanımlıysa `.env` değişikliği etkisiz kalır. Değişiklikten sonra PHP sürecini (php-fpm / Apache) yeniden başlatın.
+
+### 2. `PAYMENT_PROVIDER=hoppa`'dan önce kapanması gerekenler (tek liste)
+
+| # | Madde | Tür | Durum (2026-10-09) |
+|---|---|---|---|
+| 1 | **Merchant Key yenilemesi** — anahtar sohbette paylaşıldı; Hoppa'dan yenileme, yeni anahtar canlıya girilir, eski anahtar geçersiz. | Kullanıcı / Hoppa | Bekliyor |
+| 2 | **Sürüm** — canlıda en az `canli-2026-10c` (N-31: dönüşte oturum düşmesi bu sürümde kapandı; daha eski sürümle ödeme açılmamalı). N-33 (görsel) sonraki etikette. | Deploy | `canli-2026-10c` hazır |
+| 3 | **N-19 komisyon** — test hesabında komisyon alıcıya yansıyor (149 ₺ → karttan 151,25 ₺). Canlı hesapta komisyonu kim ödeyecek? Ya Hoppa panelinde/üye işyeri ayarında "komisyon üye işyerinde" yapılır, ya da ekranlarda "+ komisyon" açıkça yazılır. | Müşteri kararı + Hoppa #3 | Açık |
+| 4 | **N-20 alıcı adresi** — `CITY/STATE/ADDRESS` (ve telefon yoksa `PHONE`) `"-"` gidiyor; canlıda kabul ediliyor mu? | Hoppa #17 (+ müşteri: adres toplanacak mı) | Açık |
+| 5 | **HTTPS ve alan adı** — `APP_PUBLIC_URL` https; TLS sertifikası; ters vekil `X-Forwarded-Proto: https` iletiyor (oturum çerezi `Secure` ancak öyle alır — J-02). | Altyapı (B6) | Açık |
+| 6 | **Cron** — `*/5 * * * * cd /path/to/lumanoris && php api/cron/plan_payments.php >> /var/log/lumanoris-plan-payments.log 2>&1`. Hoppa webhook belgelemiyor; sekmesini kapatan alıcının ödemesi yalnızca bu mutabakatla kesinleşir. Yenileme hatırlatması (GK-27) da bu işte. | Sunucu | Kurulmadı (`canli-2026-10c`'de bilerek yok) |
+| 7 | **Hoppa soruları** — #2 AUTH_HASH (bugün güven yalnızca sunucudan `ProcessQuery`'de; kabul edilebilir ama teyit iyi olur), #4 webhook (yoksa 6. madde şart), #5 ödeme sayfası geçerlilik süresi (kod 24 saat / 7 gün varsayıyor), #6 aynı ORDER_REF ile ikinci ödeme, #12 iade süre sınırı, #13 canlıya geçiş onayı, #14-16 PCI/KVKK/yasal metin koşulları. | Hoppa | Açık (`docs/hoppa-sorular.md`) |
+| 8 | **Yasal metinler / şirket bilgileri** — mesafeli satış sözleşmesi, iade koşulları, ticari unvan/adres/vergi no sitede (B3 2026-09-05 notu; Hoppa #16). | Müşteri | Kontrol edilmeli |
+| 9 | **Erken yenileme** — süre bitmeden ikinci paket alınırsa kalan günler devretmiyor (her ödeme `NOW()+30`). | İş kuralı | Karar yok (ekranda "30 gün, otomatik yenilenmez" yazıyor) |
+| 10 | **Sohbet (B4)** — paketler günlük coin satıyor; canlıda Gemini çalışmıyorsa ödeyen kullanıcı hizmeti kullanamaz. | Hesap | Açık — ödeme açmadan önce kapanması **önerilir** |
+| 11 | Kapsam notu — bu yalnızca **paket** ödemesini açar. Pazaryeri ücretli satışı (B1) kapalı kalır; iyzico kodu yalnızca eski satırlar için (canlı sırası adım 2b). | — | — |
+
+Faz 8 bulguları (N-23…N-32) kapandı; ödeme yolunu doğrudan etkileyen N-31 `canli-2026-10c`'de.
+
+### 3. Ödeme açma günü — sıra
+
+Ön koşul: 2. bölümdeki 1-6 kapanmış, sürüm ≥ `canli-2026-10c`, canlı veritabanı yedeği alınmış.
+
+| Adım | Ne | Kontrol / durma koşulu |
+|---|---|---|
+| 1 | **Anahtar yenileme** (Hoppa) | Yeni Merchant Key elde; eski anahtarın geçersiz olduğu Hoppa'dan teyitli. |
+| 2 | **Anahtarları girme** — canlı `api/.env`: `HOPPA_MODE=live`, `HOPPA_LIVE_MERCHANT`, `HOPPA_LIVE_MERCHANT_KEY`, `APP_PUBLIC_URL=https://…`. `PAYMENT_PROVIDER` **henüz `none`**. PHP sürecini yeniden başlat. | `php api/database/hoppa_selftest.php` (A + B; **`--e2e` canlıda çalıştırılmaz**) 0 başarısız. `.env` dosya izinleri yalnızca web kullanıcısı. |
+| 3 | **Cron kurulumu** (2. bölüm #6) | Bir çalıştırma elle: `php api/cron/plan_payments.php` → hata yok (provider `none` iken mutabakat atlanır, normal). |
+| 4 | **Açma** — `PAYMENT_PROVIDER=hoppa`, PHP yeniden başlat. | Paketler'de ücretli paket → "Ödemeye geç" görünür ("Ödeme altyapısı hazırlanıyor" gitmeli). |
+| 5 | **Küçük tutarlı gerçek test ödemesi** — kendi hesabınızla **Gümüş** (en düşük tutar, 149 ₺; N-19'a göre karttan komisyonlu tutar çekilebilir). Hoppa sayfasının adresi `posservice.esnekpos.com` olmalı (`posservicetest` değil). | Dönüş: `/dashboard/upgrade?odeme=paid`, oturum açık, "Ödemeniz alındı…", kenar çubuğu Gümüş. Admin → Ödeme → Paket Ödemeleri: satır **Ödendi**, "TEST" etiketi **yok**. `?odeme=pending` görürseniz 5 dk bekleyin (cron); `failed` ise DURUN. |
+| 6 | **Aynı gün iade** — **bizim** admin ekranımızdan: Paket Ödemeleri → satır → "İade et" → neden yaz → onayla. | Sonuç kutusu: "İade tamamlandı; paket geri alındı", Hoppa durumu **"iptal edildi (aynı gün)"**; kullanıcı Ücretsiz'e döndü. **Hoppa panelinden iade yapmayın:** orada yapılan iade bizim veritabanımıza yazılmaz, paket geri alınmaz ve satır "Ödendi" kalır. |
+| 7 | **Kontrol** | Hoppa panelinde işlem iptal görünüyor; kartta provizyon iptali (banka ekstresi 1-2 gün); `admin_audit_log`'da iade satırı; PHP log'unda `[hoppaFinalize] paket tanımlandı` + `[admin/odemeler] iade … sonuc=ok`; cron log'unda hata yok. |
+| 8 | **Geri dönüş** (herhangi bir adımda sorun) | `PAYMENT_PROVIDER=none` + PHP yeniden başlat → ödeme anında kapanır; mevcut paketler etkilenmez, admin iade ekranı `none` iken 503 verir (iade gerekirse önce sorunu çözüp tekrar açın ya da Hoppa ile görüşün). |
+
+### 4. Yerelde canlı anahtarla deneme (isteğe bağlı)
+
+**Bu deneme sırasında Claude `.env` okumaz, ödeme/iade komutu ya da tarayıcı ödemesi çalıştırmaz.** Gerçek para hareket eder; aynı gün iade edin.
+
+**Önemli kısıt:** canlı modda `APP_PUBLIC_URL` **https olmak zorunda** (kod `http://localhost:3000`'u reddeder, "Ödemeye geç" hata verir). Yerel deneme için siteyi **https bir tünel** üzerinden açmanız gerekir (ör. bir HTTPS tünel aracıyla `localhost:3000`'a). Tarayıcıda da siteyi **o tünel adresinden** açın (localhost'tan değil); yoksa dönüşte oturum çerezi gelmez. Hoppa, BACK_URL'in kayıtlı alan adınızda (lumanoris.net) olmasını şart koşuyor olabilir — bilinmiyor; şart koşuyorsa yerel deneme dönüşte başarısız olur ve tek doğru deneme canlı alan adındadır (3. bölüm). Bu soruyu Hoppa'ya sormak iyi olur.
+
+Yerel `api/.env`'de değişecek satırlar (önce mevcut hallerini not edin; bugün yerelde `PAYMENT_PROVIDER=hoppa` + `HOPPA_MODE=test` + test üye işyeri kullanılıyor):
+
+| Satır | Deneme sırasında |
+|---|---|
+| `PAYMENT_PROVIDER` | `hoppa` |
+| `HOPPA_MODE` | `live` |
+| `HOPPA_LIVE_MERCHANT`, `HOPPA_LIVE_MERCHANT_KEY` | canlı değerler (yenilenmiş anahtar) |
+| `APP_PUBLIC_URL` | tünelin `https://…` adresi (sonda `/` yok) |
+
+Sonra `php -S` (API) sürecini yeniden başlatın. Akış 3. bölümün 5-6. adımlarıyla aynı; ödeme ve iade **yerel** veritabanına yazılır, iade yerel admin ekranından (Paket Ödemeleri) yapılır ve canlı Hoppa'da gerçekten iptal eder. Sekme kapanır ve `?odeme=pending` kalırsa: `php api/cron/plan_payments.php`'yi siz elle bir kez çalıştırın.
+
+**Geri alma** (deneme biter bitmez):
+1. `HOPPA_LIVE_MERCHANT` ve `HOPPA_LIVE_MERCHANT_KEY` satırlarını **boşaltın** (yerelde canlı anahtar kalmasın).
+2. `HOPPA_MODE=test`, `APP_PUBLIC_URL=http://localhost:3000`, `PAYMENT_PROVIDER` eski değerine (ya da `none`).
+3. `php -S`'i yeniden başlatın; tüneli kapatın.
+4. Kontrol: Paketler → "Ödemeye geç" → açılan sayfa `posservicetest.esnekpos.com` (test) ya da "Ödeme altyapısı hazırlanıyor" (`none`) olmalı; `posservice.esnekpos.com` açılıyorsa canlı anahtar hâlâ okunuyor demektir.
+5. Hoppa panelinde deneme işleminin iptal göründüğünü kontrol edin. Canlı anahtarı içeren bir `.env` kopyası (yedek, `.env.bak-*`) bırakmayın.
