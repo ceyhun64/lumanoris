@@ -33,6 +33,7 @@ if (PHP_SAPI !== 'cli') {
 
 require_once __DIR__ . '/../functions/env.php';
 require_once __DIR__ . '/../functions/db.php';
+require_once __DIR__ . '/migration_lib.php';
 
 $args             = array_slice($argv, 1);
 $apply            = in_array('--apply', $args, true);
@@ -79,7 +80,7 @@ $failed  = 0;
 foreach ($files as $file) {
     $name = basename($file);
     $sql  = (string) file_get_contents($file);
-    $hash = hash('sha256', $sql);
+    $hash = migrationChecksum($sql); // N-25: satır sonundan bağımsız
 
     if (isset($applied[$name])) {
         $note = $applied[$name]['checksum'] === $hash
