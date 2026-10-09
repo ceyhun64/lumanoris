@@ -316,9 +316,16 @@ export default function Chat() {
     if (!conversation || !userId || !bot) return;
     
 
-    // Eğer zaten mesaj varsa ve bu var olan bir sohbetse tekrar yükleme
-    if (messages.length > 0 && conversationIdRef.current > 0) {
-        return; 
+    // Eğer zaten mesaj varsa ve bu var olan bir sohbetse tekrar yükleme.
+    //
+    // N-23 — bu kontrol `conversationIdRef.current` ile yapılıyordu. Ref, AŞAĞIDAKİ
+    // bir effect'te güncellendiği için yeni sohbet oluşturan ilk mesajdan sonra
+    // (handleSendMessage sonunda setConversationId + setConversation) bu effect
+    // çalışırken ref hâlâ -1'di: kontrol kaçıyor, geçmiş DB'den yeniden
+    // yükleniyor ve DB'ye yazılmayan hata balonu ("…ulaşılamıyor", "Tekrar Dene")
+    // siliniyordu. Aynı render'ın `conversationId` state'i zaten güncel.
+    if (messages.length > 0 && conversationId > 0) {
+        return;
     }
 
     const loadHistory = async () => {
