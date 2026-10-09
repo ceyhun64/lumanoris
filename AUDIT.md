@@ -1473,13 +1473,15 @@ Gözlem (yeni değil): admin sayfa parçaları (`/admin/parcekme.php` dahil) `ph
 
 ---
 
-# Canlı uygulama sırası — GÜNCEL (2026-10-09, `canli-2026-10c`)
+# Canlı uygulama sırası — GÜNCEL (2026-10-09, `canli-2026-10d`)
 
-Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının ve önceki `canli-2026-10` / `canli-2026-10b` sıralarının **yerine geçer**. Tüm adımları kullanıcı çalıştırır; Claude canlıya bağlanmaz. Yerelde 010–013 ve 015–017 uygulandı.
+Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının ve önceki `canli-2026-10` / `canli-2026-10b` / `canli-2026-10c` sıralarının **yerine geçer**. Tüm adımları kullanıcı çalıştırır; Claude canlıya bağlanmaz. Yerelde 010–013 ve 015–017 uygulandı.
 
-**`canli-2026-10c` = `canli-2026-10b` + Faz 8 (12 — uçtan uca doğrulama bulguları N-23…N-32 kapatıldı; ayrıntı: aşağıda "Faz 8").** `canli-2026-10b` = `canli-2026-10` + Faz 7a / 7a-2 / 7a-3 (Hoppa ile paket ödemesi, mutabakat, iade, admin "Paket Ödemeleri" ekranı) + N-21 (admin paneli göreli yollar) + N-22 (CSRF'siz iade ucu kapatıldı, 410). Bu sürümde canlıda ödeme **AÇILMAZ**: Hoppa kodu `PAYMENT_PROVIDER=none` ile kapalı gelir.
+**`canli-2026-10d` = `canli-2026-10c` + N-33 (sohbetteki "Bugün kalan Lumacoin" göstergesi iade sonrası güncelleniyor; tek ön yüz değişikliği) + belgeler ("Hoppa canlıya açma", BLOCKERS B3 notu, görev metni).** `canli-2026-10c` = `canli-2026-10b` + Faz 8 (12 — uçtan uca doğrulama bulguları N-23…N-32 kapatıldı; ayrıntı: aşağıda "Faz 8"). `canli-2026-10b` = `canli-2026-10` + Faz 7a / 7a-2 / 7a-3 (Hoppa ile paket ödemesi, mutabakat, iade, admin "Paket Ödemeleri" ekranı) + N-21 (admin paneli göreli yollar) + N-22 (CSRF'siz iade ucu kapatıldı, 410). Bu sürümde canlıda ödeme **AÇILMAZ**: Hoppa kodu `PAYMENT_PROVIDER=none` ile kapalı gelir.
 
-**Doğrulananlar (2026-10-09, `canli-2026-10..canli-2026-10c`):**
+**Doğrulananlar (2026-10-09, `canli-2026-10..canli-2026-10d`):**
+
+- **`canli-2026-10c..canli-2026-10d` kodda yalnızca `web/src/app/dashboard/chat/page.jsx` (+4 satır, N-33).** `api/database/` (migration, pending, şema, selftest), `.htaccess`/`router.php` denylist'leri ve tüm PHP kodu değişmedi; adım 6'daki migration listesi aynı. N-33 tarayıcıda (geliştirme sunucusu, yeniden oynatılan SSE) önce/sonra doğrulandı; lint + verify build + `php -l` yeşil. 10d için ayrı bir production yeniden koşusu yapılmadı — 10c'nin uçtan uca sonuçları geçerli, değişen tek dosya o.
 
 - **Faz 8 yeni migration getirmedi** (`canli-2026-10b..canli-2026-10c`: `migrations/`, `pending/`, `schema.sql` değişmedi). N-25: `migrate.php` checksum'ı artık satır sonundan bağımsız; LF dosyada değer eskisiyle aynı, yani canlıdaki `schema_migrations` kayıtları geçerli kalır (migrate_selftest B: 17 kaydın LF ve CRLF hali eşleşiyor). Kopya Windows'ta alınmışsa da `--status` artık yanlışlıkla "DOSYA DEĞİŞMİŞ" demez.
 - **N-30 API sözleşmesi değişti:** `adddialogbook.php` yalnızca `{message_id, name}` alıyor; `addchat.php` istemciden üretilmiş bot cevabı kabul etmiyor (sunucu kaydediyor). Web ve API **aynı anda** deploy edilmeli; deploy anında açık eski bir sekme bir defter kaydı ya da bot cevabı kaydı için 400 alır (veri bozulmaz).
@@ -1497,7 +1499,7 @@ Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının ve önceki `canli-20
 | 3 | Faz 4 kontrol A (AUDIT "Faz 4 — kontrol A ve B") | Satır dönerse ve taslaksa `pending/014_…` → `migrations/`, **koddan önce** `--apply`; kontrol `kalan = 0`. |
 | 4 | 015 öncesi not: `SELECT id, ucret_haftalik, ucret_aylik FROM chatbotlar WHERE UPPER(TRIM(isim)) = 'LUMANORIS AI'` | Geri alma için saklayın. |
 | 4b | **Diyalog Defteri ölçümü** (aşağıdaki "N-30 mevcut kayıt sorgusu", salt okunur) | Bilgi amaçlı, deploy'u durdurmaz. Yeni görünürlük kuralı özel/bağımsız botların kayıtlarını deploy anında başkalarından gizler (veri değişmez). Sayıları not edin. |
-| 5 | **Kod deploy** (`canli-2026-10c` etiketi; web + api birlikte) | Kod 012/016/017 yokken de çalışır (eksik tablolar için fail-safe / 503). `api/.htaccess` ve `api/admin/.htaccess` de değişti (`cron` dizini denylist'e eklendi) — deploy'a dahil olmalı. |
+| 5 | **Kod deploy** (`canli-2026-10d` etiketi; web + api birlikte) | Kod 012/016/017 yokken de çalışır (eksik tablolar için fail-safe / 503). `api/.htaccess` ve `api/admin/.htaccess` de değişti (`cron` dizini denylist'e eklendi) — deploy'a dahil olmalı. |
 | 5a | **Canlı `api/.env` kontrolü** (değerleri paylaşmadan) | `PAYMENT_PROVIDER` satırı **yok** ya da **`PAYMENT_PROVIDER=none`** olmalı. `HOPPA_TEST_*`, `HOPPA_LIVE_*`, `APP_PUBLIC_URL` **girilmez**. Yerel `.env`'den kopyalanmış bir `PAYMENT_PROVIDER=hoppa` satırı varsa **DURUN** ve silin: test anahtarı girilmiş bir kurulum canlıda kullanıcıları Hoppa TEST sayfasına yönlendirir. |
 | 6 | `--status` → `--apply` → `--status` | Bekleyenler sırayla uygulanır: 009 (varsa), 010, 011, 012, 013, 015, 016, 017. **Faz 7a yeni migration getirmedi.** Hiçbiri `--allow-destructive` gerektirmez; `⚠ VERİ SİLER` işareti hiçbirinde olmamalı. |
 | 7 | Öz-testler | `plan_limits_selftest.php --strict`, `access_selftest.php`, `application_selftest.php`, `hoppa_selftest.php` (A + B + B2: sahte sağlayıcı, ağ yok, transaction + ROLLBACK; 017 uygulanmış olmalı), `migrate_selftest.php` (salt okunur) → hepsi 0 başarısız. `iyzico_selftest.php` A bölümü. **`hoppa_selftest.php --e2e` canlıda ÇALIŞTIRILMAZ.** |
@@ -1780,7 +1782,7 @@ SELECT COUNT(*) AS toplam,
 
 | ID | Sev | Dosya | Problem | Durum |
 |---|---|---|---|---|
-| **N-33** | P3 | `web/src/app/dashboard/chat/page.jsx` (`generateReply`, SSE `error` karesi) | Model hatasında sunucu hakkı iade edip `error {refunded:true}` gönderiyor, ama ilk `meta` karesinin çipe yazdığı tüketim sonrası değer (ör. 9) kalıyordu: "Bugün kalan Lumacoin: 9" ↔ kenar çubuğu 10/10. S-02 yeniden koşusunda görüldü. | **Kapandı** (`3f2959d`): `refunded:true` gelince değer sunucudan (`checkmessageallowance.php`) yeniden okunuyor. Tarayıcı (yeniden oynatılan SSE, Gemini'siz): önce çip 9 / sunucu 10 → sonra 10 / 10; N-23 kontrolleri yeşil kaldı. `canli-2026-10c` etiketinde **yok** (görsel, P3); bir sonraki etikette gelir. |
+| **N-33** | P3 | `web/src/app/dashboard/chat/page.jsx` (`generateReply`, SSE `error` karesi) | Model hatasında sunucu hakkı iade edip `error {refunded:true}` gönderiyor, ama ilk `meta` karesinin çipe yazdığı tüketim sonrası değer (ör. 9) kalıyordu: "Bugün kalan Lumacoin: 9" ↔ kenar çubuğu 10/10. S-02 yeniden koşusunda görüldü. | **Kapandı** (`3f2959d`): `refunded:true` gelince değer sunucudan (`checkmessageallowance.php`) yeniden okunuyor. Tarayıcı (yeniden oynatılan SSE, Gemini'siz): önce çip 9 / sunucu 10 → sonra 10 / 10; N-23 kontrolleri yeşil kaldı. `canli-2026-10c`'de yok, **`canli-2026-10d`'de var**. |
 
 ## Hoppa canlıya açma (2026-10-09)
 
@@ -1811,7 +1813,7 @@ Dikkat: `functions/env.php` **gerçek ortam değişkenini `.env`'e tercih eder.*
 | # | Madde | Tür | Durum (2026-10-09) |
 |---|---|---|---|
 | 1 | **Merchant Key yenilemesi** — anahtar sohbette paylaşıldı; Hoppa'dan yenileme, yeni anahtar canlıya girilir, eski anahtar geçersiz. | Kullanıcı / Hoppa | Bekliyor |
-| 2 | **Sürüm** — canlıda en az `canli-2026-10c` (N-31: dönüşte oturum düşmesi bu sürümde kapandı; daha eski sürümle ödeme açılmamalı). N-33 (görsel) sonraki etikette. | Deploy | `canli-2026-10c` hazır |
+| 2 | **Sürüm** — canlıda `canli-2026-10d` (asgari `canli-2026-10c`: N-31, dönüşte oturum düşmesi orada kapandı; daha eski sürümle ödeme açılmamalı). 10d, N-33'ü de içerir. | Deploy | `canli-2026-10d` hazır |
 | 3 | **N-19 komisyon** — test hesabında komisyon alıcıya yansıyor (149 ₺ → karttan 151,25 ₺). Canlı hesapta komisyonu kim ödeyecek? Ya Hoppa panelinde/üye işyeri ayarında "komisyon üye işyerinde" yapılır, ya da ekranlarda "+ komisyon" açıkça yazılır. | Müşteri kararı + Hoppa #3 | Açık |
 | 4 | **N-20 alıcı adresi** — `CITY/STATE/ADDRESS` (ve telefon yoksa `PHONE`) `"-"` gidiyor; canlıda kabul ediliyor mu? | Hoppa #17 (+ müşteri: adres toplanacak mı) | Açık |
 | 5 | **HTTPS ve alan adı** — `APP_PUBLIC_URL` https; TLS sertifikası; ters vekil `X-Forwarded-Proto: https` iletiyor (oturum çerezi `Secure` ancak öyle alır — J-02). | Altyapı (B6) | Açık |
@@ -1826,7 +1828,7 @@ Faz 8 bulguları (N-23…N-32) kapandı; ödeme yolunu doğrudan etkileyen N-31 
 
 ### 3. Ödeme açma günü — sıra
 
-Ön koşul: 2. bölümdeki 1-6 kapanmış, sürüm ≥ `canli-2026-10c`, canlı veritabanı yedeği alınmış.
+Ön koşul: 2. bölümdeki 1-6 kapanmış, sürüm `canli-2026-10d` (asgari `canli-2026-10c`), canlı veritabanı yedeği alınmış.
 
 | Adım | Ne | Kontrol / durma koşulu |
 |---|---|---|
