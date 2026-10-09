@@ -112,6 +112,19 @@ try {
     check("fiyatlı-aktif #$id: getDetail persona YOK", !$persona($d));
     check("fiyatlı-aktif #$id: getDetail is_owner false (U)", ($d['is_owner'] ?? null) === false);
 
+    // N-27 — ana sayfa bot seçicisinin kilidi sohbet kuralıyla AYNI kaynaktan.
+    if (!method_exists($repo, 'chatAccessibleIds')) {
+        check('N-27: ChatbotRepository::chatAccessibleIds tanımlı', false, 'metot yok');
+    } else {
+        $ids = array_values(array_filter([$freeCandidate ? (int) $freeCandidate['id'] : 0, $id]));
+        $got = $repo->chatAccessibleIds($ids, $U);
+        $want = array_values(array_filter($ids, fn($x) => $repo->userHasAccess($x, $U, 'chat')));
+        sort($got); sort($want);
+        check('N-27: seçici erişimi = userHasAccess(chat) [' . implode(',', $ids) . ']', $got === $want, json_encode(['got' => $got, 'want' => $want]));
+        if ($freeCandidate) check('N-27: ücretsiz herkese açık bot seçicide açık', in_array((int) $freeCandidate['id'], $got, true));
+        check("N-27: fiyatlı #$id (abonelik yok) seçicide kilitli", !in_array($id, $got, true));
+    }
+
     // Fiyatlı + pasif satıcı
     $other = $db->selectSingle(
         'c.id, c.author_user_id FROM chatbotlar c WHERE c.is_independent = 0 AND c.ucret_haftalik > 0 AND c.author_user_id <> ? ORDER BY c.id LIMIT 1',

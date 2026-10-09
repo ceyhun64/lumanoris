@@ -380,6 +380,13 @@ class SocialController {
             [$userId, $userId]
         );
 
+        // N-27 — seçicinin kilidi sohbet kapısıyla aynı kuraldan (eklemeli alan).
+        $canChat = array_flip((new ChatbotRepository())->chatAccessibleIds(array_column($bots, 'id'), $userId));
+        foreach ($bots as &$bot) {
+            $bot['can_chat'] = isset($canChat[(int) $bot['id']]);
+        }
+        unset($bot);
+
         JsonResponse::success(['bots' => $bots]);
     }
 

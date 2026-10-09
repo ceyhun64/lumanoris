@@ -201,6 +201,26 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
     public function getPublishedV2(int $userId, array $filters = []): array {
         return $this->getPublished($filters + ['exclude_uninterested' => true], $userId);
     }
+    /**
+     * N-27 — verilen botlardan kullanıcının SOHBET edebildikleri; karar
+     * generateReply'ın kapısıyla aynı: userHasAccess($id, $userId, 'chat')
+     * (sahip / aktif abone / ücretsiz herkese açık). Ana sayfa bot seçicisi
+     * kilidi buradan alır; eskiden getMenuItems (yalnızca sahip + abone)
+     * kullanıldığı için takip edilen ücretsiz bot kilitli görünüyordu.
+     *
+     * @param int[] $ids
+     * @return int[]
+     */
+    public function chatAccessibleIds(array $ids, int $userId): array {
+        $out = [];
+        foreach (array_unique(array_map('intval', $ids)) as $id) {
+            if ($id > 0 && $this->userHasAccess($id, $userId, 'chat')) {
+                $out[] = $id;
+            }
+        }
+        return $out;
+    }
+
     /** Returns bots the user owns or has active subscriptions for. */
     public function getMenuItems(int $userId): array {
         return self::all(

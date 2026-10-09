@@ -935,12 +935,11 @@ export function MainDashboard2026() {
   /* Madde 6 / GK-13 — çipin açılır listesi TAKİP EDİLEN botlar.
      • getfollowedbots.php: takip edilenler (+ platform botu Lumanoris AI,
        sunucu onu her hesaba örtük takip olarak ekliyor).
-     • getchatbotsmenu.php: kullanıcının sohbet ERİŞİMİ olan botlar (sahibi
-       olduğu + aktif aboneliği olan) — sunucudaki userHasAccess('full')
-       ile aynı küme. Takip edilen ama bu kümede olmayan bot kilitli
-       gösterilir: seçilebilir bırakmak kullanıcıyı 403 alacak bir sohbete
-       sokardı. Ücretsiz herkese açık botlar (GK-2) Faz 4'te erişime
-       eklendiğinde bu küme sunucudan genişleyecek.
+     • Kilit: her botun `can_chat` alanı. N-27 — sunucu onu sohbet kapısıyla
+       (generatereply) AYNI kuraldan, userHasAccess('chat') ile hesaplıyor:
+       sahip, aktif abone ve ücretsiz herkese açık bot (GK-2). Eskiden kilit
+       getchatbotsmenu.php'den (yalnızca sahip + abone) türetiliyordu; takip
+       edilen ücretsiz bot, sohbet edilebildiği halde kilitli görünüyordu.
      • Lumanoris AI varsayılan bot olarak her zaman seçilebilir. */
   useEffect(() => {
     if (!userId) {
@@ -955,18 +954,12 @@ export function MainDashboard2026() {
     const getJson = (url) =>
       fetch(url, { credentials: "include" }).then((res) => res.json());
 
-    Promise.all([
-      getJson("/api/social/getfollowedbots.php"),
-      getJson("/api/chatbot/getchatbotsmenu.php"),
-    ])
-      .then(([followed, menu]) => {
+    getJson("/api/social/getfollowedbots.php")
+      .then((followed) => {
         if (cancelled) return;
         if (!followed?.success || !Array.isArray(followed.bots)) {
           throw new Error(followed?.message || "Takip edilen botlar yüklenemedi.");
         }
-        const accessibleIds = new Set(
-          (Array.isArray(menu?.bots) ? menu.bots : []).map((b) => Number(b.id)),
-        );
         setPickerBots(
           followed.bots.map((b) => {
             const isHouse =
@@ -976,7 +969,7 @@ export function MainDashboard2026() {
               title: b.isim,
               avatar: b.profil_fotografi,
               isHouse,
-              accessible: isHouse || accessibleIds.has(Number(b.id)),
+              accessible: isHouse || b.can_chat === true,
             };
           }),
         );
