@@ -4,7 +4,6 @@ import { toast } from "@/shared/hooks/use-toast";
 import { UserContext } from "@/shared/contexts/UserContext";
 import PricingPageHeader from "./components/PricingPageHeader";
 import PricingLoadingState from "./components/PricingLoadingState";
-import BillingCycleToggle from "./components/BillingCycleToggle";
 import PricingCard from "./components/PricingCard";
 import EnterpriseContactFooter from "./components/EnterpriseContactFooter";
 import StatusBanner from "./components/StatusBanner";
@@ -32,7 +31,6 @@ export default function PricingPlans() {
   const [error, setError] = useState(null);
   const [upgrading, setUpgrading] = useState(null);
   const [upgradedPlan, setUpgradedPlan] = useState(null);
-  const [billingCycle, setBillingCycle] = useState("monthly");
   const [salesContactSending, setSalesContactSending] = useState(false);
   const [salesContactSent, setSalesContactSent] = useState(false);
   // Ücretli bir paket seçildiğinde ödeme penceresi açılır; ücretsiz paket
@@ -229,7 +227,8 @@ export default function PricingPlans() {
           title="Geleceğin Yapay Zeka Altyapısı"
         />
 
-        <BillingCycleToggle value={billingCycle} onChange={setBillingCycle} />
+        {/* N-28 — "Yıllık Faturalandırma · %20 İndirim" anahtarı kaldırıldı:
+            yıllık ürün ve indirim yok, anahtar yalnızca etiketi değiştiriyordu. */}
 
         <div>
           {error && (
@@ -271,7 +270,6 @@ export default function PricingPlans() {
                 plan={plan}
                 isSelected={selectedPlan === index}
                 isUpgrading={upgrading === index}
-                billingCycle={billingCycle}
                 onChoose={() => handleChoosePlan(plan, index)}
               />
             ))}

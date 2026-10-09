@@ -337,23 +337,20 @@ export default function Explore() {
           </div>
         </header>
 
-        {/* Real Metrics Grid */}
+        {/* Real Metrics Grid — N-28: sabit trend yüzdeleri ("+12% bu ay",
+            "+24%") kaldırıldı; geçmişe dönük sayı tutulmuyor, gerçek veri yok. */}
         <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard2026
             icon={Bot}
             label="Toplam Chatbot"
             value={loading ? "—" : formatCompactNumber(mappedBots.length)}
             subtext="Aktif pazar asistanı"
-            badgeText="+12% bu ay"
-            badgeColor="violet"
           />
           <StatCard2026
             icon={MessageSquare}
             label="Toplam Diyalog"
             value={loading ? "—" : formatCompactNumber(totalDialogues)}
             subtext="Geliştirici Etkileşimi"
-            badgeText="+24%"
-            badgeColor="emerald"
           />
           <StatCard2026
             icon={Users}
