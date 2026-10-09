@@ -222,10 +222,11 @@ export default function Explore() {
     // Ortak kartin bekledigi alanlar — anasayfadaki mapping ile ayni.
     author:
       (bot.owner_name === "SYSTEM" ? "Lumanoris" : bot.owner_name) || "Anonim",
-    badge: {
-      type: bot.durum == 0 ? "sold" : "produced",
-      label: bot.durum == 1 ? "Daha Önce Satıldı" : "Doğrulanmış Üretim",
-    },
+    // N-26: rozet yalnızca gerçek satış kaydı varsa (sunucu `has_sales`);
+    // eskiden sabit `durum = 1` yüzünden her bota basılıyordu.
+    badge: Number(bot.has_sales) === 1
+      ? { type: "sold", label: "Daha Önce Satıldı" }
+      : null,
     // N-15: puan verisi yok (API döndürmüyor); sabit 4.9 uydurmaydı.
     rating: null,
   }));

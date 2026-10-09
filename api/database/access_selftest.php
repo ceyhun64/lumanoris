@@ -133,5 +133,39 @@ try {
 check('rollback sonrası senaryo verisi geri alındı',
     !$freeCandidate || (int) $db->selectSingle('is_independent FROM chatbotlar WHERE id = ?', [$freeCandidate['id']])['is_independent'] === 1);
 
+echo "\n--- N-26: \"Daha Önce Satıldı\" yalnızca gerçek satış kaydıyla ---\n";
+// Eskiden getPublished `1 AS durum` döndürüyordu; arayüz her bota rozet basıyordu.
+$rows = $repo->getPublished(['limit' => 200, 'offset' => 0]);
+$mismatch = [];
+$withSales = 0;
+foreach ($rows as $row) {
+    if (!array_key_exists('has_sales', $row)) { $mismatch[] = "#{$row['id']} has_sales yok"; continue; }
+    $real = (int) $db->selectSingle(
+        '((SELECT COUNT(*) FROM user_subscriptions WHERE chatbot_id = ?) + (SELECT COUNT(*) FROM chatbot_purchase_credits WHERE chatbot_id = ?)) AS n',
+        [$row['id'], $row['id']]
+    )['n'] > 0;
+    if ((bool) (int) $row['has_sales'] !== $real) $mismatch[] = "#{$row['id']} has_sales={$row['has_sales']} gerçek=" . (int) $real;
+    $withSales += $real ? 1 : 0;
+}
+check('vitrin satırlarında has_sales gerçek satış kaydıyla aynı (' . count($rows) . " bot, $withSales satışlı)", $mismatch === [], implode('; ', array_slice($mismatch, 0, 5)));
+
+// Olumlu durum: satış kaydı eklenince (rollback) rozet bayrağı açılır.
+$probe = null;
+foreach ($rows as $row) { if (!(int) ($row['has_sales'] ?? 0)) { $probe = (int) $row['id']; break; } }
+if ($probe) {
+    $conn->beginTransaction();
+    try {
+        $db->execute(
+            'INSERT INTO user_subscriptions (user_id, chatbot_id, duration_weeks, expiry_date, status) VALUES (?, ?, 1, NOW() - INTERVAL 1 DAY, 0)',
+            [$U, $probe]
+        );
+        $after = null;
+        foreach ($repo->getPublished(['limit' => 200, 'offset' => 0]) as $row) { if ((int) $row['id'] === $probe) $after = $row; }
+        check("satış kaydı eklenen #$probe: has_sales 1 (süresi dolmuş abonelik de satıştır)", (int) ($after['has_sales'] ?? 0) === 1);
+    } finally {
+        $conn->rollBack();
+    }
+}
+
 echo "\n=== SONUÇ: $pass geçti, $fail başarısız ===\n\n";
 exit($fail > 0 ? 1 : 0);

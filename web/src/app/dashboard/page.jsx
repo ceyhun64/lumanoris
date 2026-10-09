@@ -908,11 +908,10 @@ export function MainDashboard2026() {
               comments: bot.toplam_comments,
               saves: bot.toplam_lists,
               weeklyPrice: Number(bot.ucret_haftalik) || 0,
-              badge: {
-                type: bot.durum == 0 ? "sold" : "produced",
-                label:
-                  bot.durum == 1 ? "Daha Önce Satıldı" : "Doğrulanmış Üretim",
-              },
+              // N-26: yalnızca gerçek satış kaydı varsa (sunucu `has_sales`).
+              badge: Number(bot.has_sales) === 1
+                ? { type: "sold", label: "Daha Önce Satıldı" }
+                : null,
               // N-15: puan verisi yok; sabit 4.9 uydurmaydı.
               rating: null,
               userLists: Array.isArray(listsData?.lists) ? listsData.lists : [],

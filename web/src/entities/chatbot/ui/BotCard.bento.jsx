@@ -107,16 +107,22 @@ export default function BotCard({
 
         {/* Top Badges overlay */}
         <div className="absolute left-3.5 top-3.5 right-3.5 z-10 flex min-w-0 items-center justify-between gap-2">
-          <span
-            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-caption font-bold tracking-wide backdrop-blur-md shadow-xl border ${
-              bot.badge?.type === "sold"
-                ? "border-amber-500/30 bg-amber-500/20 text-amber-300"
-                : "border-violet-500/30 bg-violet-500/20 text-violet-200"
-            }`}
-          >
-            <Tag className="h-3 w-3" />
-            {bot.badge?.label || "Doğrulanmış"}
-          </span>
+          {/* N-26: rozet yoksa hiçbir şey çizilmez (eski "Doğrulanmış" yedeği de
+              bir beyandı). Boş span sağdaki düğmeleri sağa yaslı tutar. */}
+          {bot.badge ? (
+            <span
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-caption font-bold tracking-wide backdrop-blur-md shadow-xl border ${
+                bot.badge.type === "sold"
+                  ? "border-amber-500/30 bg-amber-500/20 text-amber-300"
+                  : "border-violet-500/30 bg-violet-500/20 text-violet-200"
+              }`}
+            >
+              <Tag className="h-3 w-3" />
+              {bot.badge.label}
+            </span>
+          ) : (
+            <span />
+          )}
 
 
           <div className="flex items-center gap-1.5">

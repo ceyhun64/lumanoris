@@ -134,7 +134,12 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
                     (SELECT COUNT(*) FROM chatbot_in_list   WHERE chatbot_id = c.id) AS toplam_lists,
                     (SELECT COUNT(*) FROM chatbot_likes     WHERE chatbot_id = c.id) AS toplam_likes,
                     (SELECT COUNT(*) FROM chatbot_dislikes  WHERE chatbot_id = c.id) AS toplam_dislikes,
-                    (SELECT COUNT(*) FROM chatbot_comments  WHERE chatbot_id = c.id) AS toplam_comments
+                    (SELECT COUNT(*) FROM chatbot_comments  WHERE chatbot_id = c.id) AS toplam_comments,
+                    -- N-26: `durum` sabit 1 (geriye dönük uyum için duruyor); \"Daha Önce
+                    -- Satıldı\" rozeti yalnızca bu bayrağa bakar. Satış kaydı =
+                    -- deleteChatbot'un saydığı iki tablo (süresi dolmuş abonelik dahil).
+                    (EXISTS (SELECT 1 FROM user_subscriptions       WHERE chatbot_id = c.id)
+                     OR EXISTS (SELECT 1 FROM chatbot_purchase_credits WHERE chatbot_id = c.id)) AS has_sales
              FROM `" . self::T . "` c
              LEFT JOIN param_marketplace_sellers pms
                      ON pms.user_id = c.author_user_id AND pms.status = 'active'
