@@ -1,5 +1,7 @@
 # Uçtan uca doğrulama — `canli-2026-10b` (2026-10-09)
 
+> **Güncel durum (2026-10-09, Faz 8 sonrası):** bulgular kapatıldı, BAŞARISIZ senaryolar yeniden koşuldu ve geçti → **`canli-2026-10c` canlıya alınabilir.** Ayrıntı: bölüm 7 "Yeniden koşu". Bölüm 1–6 ilk koşunun (`canli-2026-10b`) kaydıdır.
+
 Görev: `docs/prompts/12-uctan-uca-dogrulama.md`. Gerçek tarayıcıda, gerçek kullanıcı akışlarıyla 14 senaryo. Bu turda **kod değiştirilmedi**; bulunan her sorun `AUDIT.md`'ye N ID'siyle yazıldı ("12 — Uçtan uca doğrulama" bölümü).
 
 Ekran görüntüleri `docs/verification/2026-10/` altında (git'e girmez, `.gitignore`). Tarayıcı betikleri repo dışında: `C:\tmp\qa-pw\e2e12\` (`lib.js`, `s01.js` … `s14.js`, `cleanup.js`; her koşunun konsol/ağ kaydı `logs/*.json`).
@@ -162,3 +164,54 @@ Worktree `C:\PROJECTS\lumanoris-e2e` kaldırıldı (içindeki `.env` kopyalarıy
 ## 6. Hüküm
 
 **`canli-2026-10b` şu bulgular kapanmadan canlıya alınmamalı: N-26, N-28 (yanıltıcı satış/fiyat beyanı), N-27 (madde 6'nın ana davranışı), N-30 (herkese açık defterde başkasının botu adına uydurma yanıt).** N-31 bu etiketi engellemiyor (ödeme kapalı), ama ödeme açılmadan önce kapanmalı. N-23 önerilir. "Engeller" ayrımı benim önerim; karar sizin.
+
+---
+
+## 7. Yeniden koşu — Faz 8 sonrası (2026-10-09) → `canli-2026-10c`
+
+Faz 8'de N-23…N-31 kapatıldı (her madde ayrı commit; ayrıntı ve commit listesi `AUDIT.md` → "Faz 8"). Yeniden koşu sırasında yeni bir bulgu çıktı (**N-32**); o da kapatıldı ve ilgili senaryolar yeniden koşuldu.
+
+### Ortam
+
+| | |
+|---|---|
+| Worktree | `C:\PROJECTS\lumanoris-e2e` (detached), production build, `php -S … router.php`. Sırasıyla `8861665` → `540486b` (N-32) → `77eb463` (son: N-28 başlık metni) commit'lerinde yeniden derlendi; hangi senaryonun hangi commit'te koştuğu tabloda. |
+| `--status` | Yeni Windows checkout'unda (`core.autocrlf=true`) `.sql`/`.php` artık LF geliyor (`.gitattributes`); 17 migration'ın hepsi düz **"uygulanmış"**, "DOSYA DEĞİŞMİŞ" yok → N-25 gerçek ortamda da doğrulandı. Bekleyen yok; `014` hâlâ `pending/`'de. |
+| `PAYMENT_PROVIDER` | `none`; S-12'de geçici `hoppa` (TEST1234), sonra `none` + S-07 ödeme kısmı tekrar. |
+| Gemini | Anahtar hâlâ askıda (403 `CONSUMER_SUSPENDED`). **1 gerçek istek** daha gönderildi (S-02; toplam 2/3). Cevap üretimi B4 olduğu için S-11'de bot cevabı, sunucunun kayıt fonksiyonu (`chatSaveBotReply`) ile yazılmış bir **fixture** satırı; tarayıcı SSE'yi yeniden oynatıp son karede o satırın kimliğini (`event: saved`) aldı. |
+| Kullanıcılar | e2e-a #108, e2e-b #109 (round 1'den). Botlar yeniden: A1 **#53** (bağımsız, PDF), A2 **#54** (herkese açık), A3 **#55** (özel, S-13 için). e2e-a'nın başvurusu incelenmiş olduğu için (GK-21 değişiklik yok) S-09'da başvuran **e2e-b**. |
+
+### Sonuçlar
+
+| ID | Kapatan | Commit | Sonuç | Not | Ekran görüntüsü |
+|---|---|---|---|---|---|
+| S-01 (kurulum) | — | `8861665` | **GEÇTİ** | Botlar round 1 temizliğinde silindiği için yeniden: A1 #53, PDF 164 karakter, 6 MB red (istemci + sunucu 413), kapasite 0/1 → 1/1. | `S-01-*` |
+| S-02 | N-23, N-24 | `8861665` | **GEÇTİ** | Kart başlığı/görseli → `botId=53`. "Satın Al" yok. Gerçek Gemini 403'te **ilk mesajda** "Yapay zeka servisine şu anda ulaşılamıyor…" + "Tekrar Dene" görünüyor. Sahibin özel botunda "Sepete Ekle" **yok** (0 düğme). Gözlem: "Bugün kalan Lumacoin: 9" çipi iade sonrası güncellenmiyor (kenar çubuğu doğru 10/10). | `S-02r-b, c, f` |
+| S-03 | N-26, N-28 | `8861665` | **GEÇTİ** | Yayınla → 200 `free:true`; e2e-b Keşfet'te "Ücretsiz" rozetli, sohbet açık, Sepete Ekle yok; `getchatbot`'ta persona/eğitim yok, sahibinde var. A1 kartında **"Daha Önce Satıldı" yok**; Keşfet'te 6 rozet = gerçek satış kaydı olan 6 seed bot. **"+12% / +24%" yok.** A2 #54 oluşturuldu, kapasite 2/2. | `S-03r-*` |
+| S-06 | N-27 (+N-32) | `540486b` | **GEÇTİ** | Takipsiz: boş durum + "Keşfet'te bot bul". Takipli: seçilebilir `["LUMANORIS AI","E2E Bot A2"]`, ücretli Fitness Koçu kilitli + "Profili gör"; A2 seçilince çip "E2E Bot A2". Lumanoris AI ile sohbet: mesaj ve cevap (REPLAY) görünüyor. Uydurma puan/takipçi yok; "Daha Önce Satıldı" 6 (gerçek satış). İlk deneme (`8861665`) **BAŞARISIZ**: ana sayfadan başlatılan sohbette mesaj ve cevap ekrandan silindi → **N-32**, düzeltildi, yeniden koşuldu. | `S-06r-b, d, e, f, g` |
+| S-07 | N-28 | `540486b`, `77eb463` | **GEÇTİ** | Yıllık/%20 anahtarı yok (0 düğme, "%20" metni yok); fiyatlar 149/299/849; başlık "Paketler 30 gün geçerlidir ve otomatik yenilenmez"; Gümüş → 503 "Ödeme altyapısı hazırlanıyor"; kart alanı 0, kart alanlı istek 0. | `S-07r-*`, `S-07r2-*` |
+| S-09 | N-29 | `540486b` | **GEÇTİ** | e2e-b: hatalı alanlar → 400 + alan bazında mesaj; geçerli → "Başvurunuz alındı, inceleniyor", Bakiyem açıldı. Admin: başvuru #63, IBAN yeni/mevcut yan yana, "İncelendi" → bildirim #88, satıcı `not_started`. Durum ucunda tam IBAN/doğum tarihi/vergi no yok. **Gönderim zamanı inceleme öncesi ve sonrası aynı: 15:34:06.** | `S-09r-*` |
+| S-11 | N-30 | `540486b` | **GEÇTİ** | Liste #18, A2 eklendi, detayda görünüyor. Defter: modalın isteği yalnızca `{"message_id":196,"name":"…"}`; kayıt #17'nin soru/cevabı DB satırlarından (195/196) kopyalandı. Popup'taki "E2E Bot A2 ile sohbet et" → `botId=54` (e2e-b ve e2e-a); paylaşan "@e2e-b" 13 px link. | `S-11r-*` |
+| S-12 | N-31 | `540486b` | **GEÇTİ** | Hoppa TEST: Gümüş (9792…0001) → dönüşte **Set-Cookie yok**, `?odeme=paid`, aynı oturum çerezi, `authenticated:true`, "Ödemeniz alındı; paketiniz 30 gün için etkinleştirildi.", kenar Gümüş. Altın (5100…6661) → `?odeme=failed`, oturum açık, paket Gümüş kaldı. Admin iadesi `PLN-1FA5DC370E71EDB3` → 151,25 ₺, iptal (aynı gün), paket geri alındı. `none`'a dönüş → 503 (S-07r2). | `S-12r-*` |
+| S-13 | N-30 | `77eb463` | **GEÇTİ** | 12/13 sayfa → `/login/` (`/dashboard` misafire açık, tasarım); 20/21 API → 401, `getchatbot` → 404. e2e-b → özel A3 #55: 404/403 (getchatbot, training, update, updatechatbot, generatereply); yabancı `user_id` yok sayılıyor. cron 404, eski iade 410, admin giriş ekranı + CSRF'siz 403. **Round 1'deki N-30 sömürüsü (`adddialogbook` metinli yük, özel bot) → 400 "Bu alanlar gönderilemez", akışta kayıt yok.** | `S-13r-*` |
+| S-14 | (gerileme kontrolü) | `77eb463` | **GEÇTİ** | 10 ekran, 390 px: yatay kaydırma yok, taşan öğe yok; küçük metin yalnızca landing dekoratif önizlemeleri (24) ve bir 10 px rozet — round 1 ile aynı. | `S-14r-*` |
+
+Koşulmayanlar: S-04, S-05, S-08, S-10 round 1'de geçti; Faz 8 bu ekranların koduna dokunmadı.
+
+Yeniden koşuda ek konsol hatası ya da beklenmeyen 4xx/5xx yok. Görülenler beklenenler: 413 (kasıtlı 6 MB), 503 (ödeme kapalı), 400 (kasıtlı hatalı başvuru), S-13'teki 401/403/404/410, Hoppa test sayfasının kendi 404'leri.
+
+### Yeni bulgu
+
+| ID | Önem | Ne oldu | Durum |
+|---|---|---|---|
+| **N-32** | P2 | Ana sayfadan sohbet başlatınca (`?prompt=`), kullanıcının o botla geçmişi varsa ilk yüklemenin geç dönen sonucu mesaj listesini yalnızca karşılama mesajıyla değiştiriyordu; kullanıcı kendi mesajını ve cevabı göremiyordu. `canli-2026-10b`'de de var (round 1'de e2e-b'nin o botla geçmişi olmadığı için görünmemişti). | **Kapandı** (`540486b`), S-06 ile doğrulandı. |
+
+### Temizlik (yeniden koşu)
+
+Silinen (uygulamanın uçlarıyla, hepsi 200): sohbetler e2e-b #41–45, #47–52, e2e-a #46 (mesajları ve fixture satırları 187/188, 195/196 dahil); takipler e2e-b → #27, #54; liste #18; botlar #53, #54, #55 (defter #17 FK ile gitti). Hoppa TEST'te ödenen iki sipariş (`PLN-0161FFD9214AE123`, `PLN-1FA5DC370E71EDB3`) iade/iptal edildi.
+
+Silme ucu olmadığı için kalanlar (round 1 listesine ek): defter kaydı #16 (e2e-b, Lumanoris AI — canlı HTTP kontrolünden); başvuru #63 (e2e-b, incelendi) ve e2e-b'nin `banka_bilgileri` satırı (test IBAN `TR25…4321`); bildirim #88; `admin_audit_log` 3 satır daha; `param_marketplace_payments` 5 satır daha (TEST: 2 `refunded`, 2 `hoppa_failed`, 1 `hoppa_pending` — kart girilmeden bırakılan sipariş). e2e-b'nin paketi Ücretsiz.
+
+### Hüküm (yeniden koşu)
+
+**`canli-2026-10c` canlıya alınabilir** (ödeme kapalı, `PAYMENT_PROVIDER=none`): round 1'de BAŞARISIZ olan 8 senaryonun hepsi ve yeniden koşuda bulunan N-32 kapandı. Açık kalanlar canlıyı engellemiyor ama bilinmeli: **B4** (Gemini anahtarı yok/askıda — canlıda sohbet cevabı için gerçek anahtar gerekir; N-30'un sunucu kaydı yolu gerçek modelle bir kez denenmeli), N-30 mevcut kayıtlar için karar (canlı sorgusu, AUDIT adım 4b), ödeme açılmadan önce N-19 / N-20 / B1 / B3.

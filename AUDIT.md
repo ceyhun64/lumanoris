@@ -1473,13 +1473,16 @@ Gözlem (yeni değil): admin sayfa parçaları (`/admin/parcekme.php` dahil) `ph
 
 ---
 
-# Canlı uygulama sırası — GÜNCEL (2026-10-07, `canli-2026-10b`)
+# Canlı uygulama sırası — GÜNCEL (2026-10-09, `canli-2026-10c`)
 
-Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının ve önceki `canli-2026-10` sırasının **yerine geçer**. Tüm adımları kullanıcı çalıştırır; Claude canlıya bağlanmaz. Yerelde 010–013 ve 015–017 uygulandı.
+Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının ve önceki `canli-2026-10` / `canli-2026-10b` sıralarının **yerine geçer**. Tüm adımları kullanıcı çalıştırır; Claude canlıya bağlanmaz. Yerelde 010–013 ve 015–017 uygulandı.
 
-**`canli-2026-10b` = `canli-2026-10` + Faz 7a / 7a-2 / 7a-3 (Hoppa ile paket ödemesi, mutabakat, iade, admin "Paket Ödemeleri" ekranı) + N-21 (admin paneli göreli yollar) + N-22 (CSRF'siz iade ucu kapatıldı, 410).** Bu sürümde canlıda ödeme **AÇILMAZ**: Hoppa kodu `PAYMENT_PROVIDER=none` ile kapalı gelir.
+**`canli-2026-10c` = `canli-2026-10b` + Faz 8 (12 — uçtan uca doğrulama bulguları N-23…N-32 kapatıldı; ayrıntı: aşağıda "Faz 8").** `canli-2026-10b` = `canli-2026-10` + Faz 7a / 7a-2 / 7a-3 (Hoppa ile paket ödemesi, mutabakat, iade, admin "Paket Ödemeleri" ekranı) + N-21 (admin paneli göreli yollar) + N-22 (CSRF'siz iade ucu kapatıldı, 410). Bu sürümde canlıda ödeme **AÇILMAZ**: Hoppa kodu `PAYMENT_PROVIDER=none` ile kapalı gelir.
 
-**Doğrulananlar (2026-10-07, `canli-2026-10..canli-2026-10b`):**
+**Doğrulananlar (2026-10-09, `canli-2026-10..canli-2026-10c`):**
+
+- **Faz 8 yeni migration getirmedi** (`canli-2026-10b..canli-2026-10c`: `migrations/`, `pending/`, `schema.sql` değişmedi). N-25: `migrate.php` checksum'ı artık satır sonundan bağımsız; LF dosyada değer eskisiyle aynı, yani canlıdaki `schema_migrations` kayıtları geçerli kalır (migrate_selftest B: 17 kaydın LF ve CRLF hali eşleşiyor). Kopya Windows'ta alınmışsa da `--status` artık yanlışlıkla "DOSYA DEĞİŞMİŞ" demez.
+- **N-30 API sözleşmesi değişti:** `adddialogbook.php` yalnızca `{message_id, name}` alıyor; `addchat.php` istemciden üretilmiş bot cevabı kabul etmiyor (sunucu kaydediyor). Web ve API **aynı anda** deploy edilmeli; deploy anında açık eski bir sekme bir defter kaydı ya da bot cevabı kaydı için 400 alır (veri bozulmaz).
 
 - **Yeni migration yok.** `api/database/migrations/`, `pending/` ve `schema.sql`'de değişiklik yok; kodda yeni DDL ya da `ensureTable` yok. Faz 7a'nın kullandığı her şey mevcut şemada: `param_marketplace_payments` (yeni durum değerleri `hoppa_pending` / `hoppa_failed` / `hoppa_expired` → `varchar(32)`, şema değişikliği gerekmez), `user_plan_selection.expires_at` (011), `notifications`, `admin_audit_log` (017). Adım 6'daki liste bu yüzden `canli-2026-10` ile aynı.
 - **`PAYMENT_PROVIDER` varsayılanı `none`** — hem kodda (`PaymentGatewayFactory`: tanımsız, boş ya da tanınmayan değer → `none`) hem `api/.env.example`'da. `none` iken: paket satın alma 503 → kullanıcıya "Ödeme altyapısı hazırlanıyor"; `hoppa_return.php` hiçbir şeyi kesinleştirmez; admin "Paket Ödemeleri" ekranı boş liste gösterir, iade 503. Canlı `.env`'in içeriğini Claude göremez → adım 5a'da kullanıcı kontrol eder.
@@ -1493,11 +1496,12 @@ Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının ve önceki `canli-20
 | 2b | **iyzico ödeme kontrolü** (aşağıdaki "iyzico kaynaklı ödeme sorgusu") | Bilgi amaçlı, deploy'u durdurmaz. `kaynak = iyzico` ve durumu `paid` / `partial_refund` / `unknown` / `pending` olan satır varsa: bu ödemelerin iadesi ya da mutabakatı yalnızca iyzico ile yapılabilir → Hoppa geçişinde iyzico kodu "yalnızca iade/sorgulama" modunda tutulmalı (keşif raporu §5.4). **Not (N-22):** iyzico iadesinin artık giriş noktası yok (eski API iade ucu 410); böyle satır çıkarsa iade iyzico panelinden yapılır ya da admin ekranına iyzico iadesi eklenir. `IYZICO_BASE_URL` sandbox iken alınmış satırlar test ödemesidir (gerçek para yok). |
 | 3 | Faz 4 kontrol A (AUDIT "Faz 4 — kontrol A ve B") | Satır dönerse ve taslaksa `pending/014_…` → `migrations/`, **koddan önce** `--apply`; kontrol `kalan = 0`. |
 | 4 | 015 öncesi not: `SELECT id, ucret_haftalik, ucret_aylik FROM chatbotlar WHERE UPPER(TRIM(isim)) = 'LUMANORIS AI'` | Geri alma için saklayın. |
-| 5 | **Kod deploy** (`canli-2026-10b` etiketi) | Kod 012/016/017 yokken de çalışır (eksik tablolar için fail-safe / 503). `api/.htaccess` ve `api/admin/.htaccess` de değişti (`cron` dizini denylist'e eklendi) — deploy'a dahil olmalı. |
+| 4b | **Diyalog Defteri ölçümü** (aşağıdaki "N-30 mevcut kayıt sorgusu", salt okunur) | Bilgi amaçlı, deploy'u durdurmaz. Yeni görünürlük kuralı özel/bağımsız botların kayıtlarını deploy anında başkalarından gizler (veri değişmez). Sayıları not edin. |
+| 5 | **Kod deploy** (`canli-2026-10c` etiketi; web + api birlikte) | Kod 012/016/017 yokken de çalışır (eksik tablolar için fail-safe / 503). `api/.htaccess` ve `api/admin/.htaccess` de değişti (`cron` dizini denylist'e eklendi) — deploy'a dahil olmalı. |
 | 5a | **Canlı `api/.env` kontrolü** (değerleri paylaşmadan) | `PAYMENT_PROVIDER` satırı **yok** ya da **`PAYMENT_PROVIDER=none`** olmalı. `HOPPA_TEST_*`, `HOPPA_LIVE_*`, `APP_PUBLIC_URL` **girilmez**. Yerel `.env`'den kopyalanmış bir `PAYMENT_PROVIDER=hoppa` satırı varsa **DURUN** ve silin: test anahtarı girilmiş bir kurulum canlıda kullanıcıları Hoppa TEST sayfasına yönlendirir. |
 | 6 | `--status` → `--apply` → `--status` | Bekleyenler sırayla uygulanır: 009 (varsa), 010, 011, 012, 013, 015, 016, 017. **Faz 7a yeni migration getirmedi.** Hiçbiri `--allow-destructive` gerektirmez; `⚠ VERİ SİLER` işareti hiçbirinde olmamalı. |
-| 7 | Öz-testler | `plan_limits_selftest.php --strict`, `access_selftest.php`, `application_selftest.php`, `hoppa_selftest.php` (A + B + B2: sahte sağlayıcı, ağ yok, transaction + ROLLBACK; 017 uygulanmış olmalı) → hepsi 0 başarısız. `iyzico_selftest.php` A bölümü. **`hoppa_selftest.php --e2e` canlıda ÇALIŞTIRILMAZ.** |
-| 8 | Elle kontrol | Liste sayfası (009 sonrası 500 yok), Lumanoris AI sıradan hesapla sohbet (015), Başvuru gönder → admin Başvurular → İncelendi → kullanıcının IBAN'ı ve `admin_audit_log` satırı (017). **Faz 7a:** Paketler'de ücretli paket seç → pencerede "Ödeme altyapısı hazırlanıyor" (kart alanı yok, Hoppa'ya yönlendirme yok); admin menüsü Ödeme → Paket Ödemeleri açılıyor, liste boş; `POST /api/seller/marketplace_refund.php` → `410`; `/cron/plan_payments.php` web'den erişilemiyor (403/404). |
+| 7 | Öz-testler | `plan_limits_selftest.php --strict`, `access_selftest.php`, `application_selftest.php`, `hoppa_selftest.php` (A + B + B2: sahte sağlayıcı, ağ yok, transaction + ROLLBACK; 017 uygulanmış olmalı), `migrate_selftest.php` (salt okunur) → hepsi 0 başarısız. `iyzico_selftest.php` A bölümü. **`hoppa_selftest.php --e2e` canlıda ÇALIŞTIRILMAZ.** |
+| 8 | Elle kontrol | Liste sayfası (009 sonrası 500 yok), Lumanoris AI sıradan hesapla sohbet (015), Başvuru gönder → admin Başvurular → İncelendi → kullanıcının IBAN'ı ve `admin_audit_log` satırı (017). **Faz 7a:** Paketler'de ücretli paket seç → pencerede "Ödeme altyapısı hazırlanıyor" (kart alanı yok, Hoppa'ya yönlendirme yok); admin menüsü Ödeme → Paket Ödemeleri açılıyor, liste boş; `POST /api/seller/marketplace_refund.php` → `410`; `/cron/plan_payments.php` web'den erişilemiyor (403/404). **Faz 8:** Keşfet'te yeni bir ücretsiz botta "Daha Önce Satıldı" yok, "+12% / +24%" yok; Paketler'de yıllık/%20 anahtarı yok; takip edilen ücretsiz bot ana sayfa seçicisinde seçilebiliyor; sohbette "Diyalog Defterine Ekle" → kayıt akışta görünüyor. |
 
 **Bu sürümde yapılmayacaklar:**
 
@@ -1722,3 +1726,52 @@ Gerçek tarayıcıda (playwright-core, headless Chromium), ayrı worktree'de, ye
 | **N-31** | P1 (ödeme açılmadan önce; `canli-2026-10b`'yi engellemez, orada `PAYMENT_PROVIDER=none`) | `api/api/wallet/hoppa_return.php` → `WalletController::hoppaReturn`; oturum `src/autoload.php` → `functions/bootstrap.php:34` ile her istekte `session_start()` | **Hoppa'dan dönüş kullanıcıyı oturumdan düşürüyor.** BACK_URL çapraz-site bir form POST'u; `SameSite=Lax` oturum çerezi bu istekte gelmiyor, PHP yeni bir oturum başlatıp `Set-Cookie: PHPSESSID=<yeni>` gönderiyor ve tarayıcıdaki oturum çerezinin üstüne yazıyor. 303 → `/dashboard/upgrade?odeme=…` → giriş yok → `/login/`; ödeme sonucu da kayboluyor. Ödeme (`paid`) ve paket tanımı doğru çalışıyor. Kanıt: Hoppa TEST'te gerçek ödeme `PLN-4EC28FD239F538C4` (başarılı) ve `PLN-C732473EF5F50FA2` (hata 51) — ikisinde de dönüşte `sessioncheck` → `authenticated:false`; ayrıca ödeme yapmadan deterministik yeniden üretim (127.0.0.1'den `hoppa_return.php`'ye sahte referanslı form POST). Faz 7a e2e'si BACK_URL'i `route.fulfill` ile kestiği için görülmemişti. | Açık |
 
 Not (bulgu değil, gözlem): `user_plan_selection.selected_at` (11:34:08) ile `expires_at` (14:34:08 + 30 gün) arasında 3 saatlik fark — DB `NOW()` (UTC) ile PHP saat dilimi karışıyor olabilir; etkisi doğrulanmadı. Bir kez "Page crashed" (Listeye Ekle → Kaydet) görüldü, 3 denemede tekrarlanmadı.
+
+## Faz 8 — 12 doğrulama bulgularının kapatılması (2026-10-09) → `canli-2026-10c`
+
+Her madde ayrı commit; her commit'ten önce lint + verify build + `php -l` yeşil. Yeniden koşu: ayrı worktree, production build, `PAYMENT_PROVIDER=none` (S-12'de geçici `hoppa`/TEST1234), rapor `docs/verification/2026-10-dogrulama.md` → "Yeniden koşu".
+
+| ID | Commit | Ne yapıldı | Doğrulama | Durum |
+|---|---|---|---|---|
+| **N-23** | `e27dcfd` | Geçmiş yükleme effect'i "mesaj var + sohbet var" kontrolünü bir sonraki effect'te güncellenen ref yerine aynı render'ın `conversationId` state'iyle yapıyor; ilk mesajdan sonra geçmiş yeniden yüklenip hata balonunu silmiyor. | Tarayıcı: yeniden oynatılan SSE ile önce kırmızı / sonra yeşil (hata yolu + başarılı yol); S-02 yeniden koşusunda gerçek Gemini 403 ile "…ulaşılamıyor" + "Tekrar Dene" ilk mesajda görünüyor. | **Kapandı** |
+| **N-24** | `afa6c20` | `getDetail` yanıtına `is_owner` (eklemeli). "Sepete Ekle" yalnızca başkasının herkese açık, fiyatlı botunda. | access_selftest (`is_owner`, 3 kontrol); S-02: sahibin özel botunda düğme yok. | **Kapandı** |
+| **N-25** | `bd6ba22` | `migrationChecksum()` (CRLF/CR → LF, sonra sha256); `.gitattributes`: `*.sql`, `*.php` `eol=lf`. | `migrate_selftest.php` (A: satır sonu bağımsızlığı; B: 17 kaydın LF ve CRLF hali kayıtlı checksum'la eşleşiyor, salt okunur); yeni Windows worktree'sinde `.sql`/`.php` LF geldi, `--status` 17/17 "uygulanmış". | **Kapandı** |
+| **N-26** | `d41456b` | `getPublished` → `has_sales` (user_subscriptions — süresi dolmuş dahil — veya chatbot_purchase_credits). Rozet yalnızca `has_sales`; bento kartın "Doğrulanmış" yedeği kaldırıldı. `durum` sütunu geriye dönük uyum için duruyor. | access_selftest N-26 (vitrindeki 9 botta bayrak = gerçek satış; eklenen satışla olumlu durum); S-03/S-06: yeni botlarda rozet yok, gerçek satışı olan 6 seed botta var. | **Kapandı** |
+| **N-27** | `423774f` | `ChatbotRepository::chatAccessibleIds()` = `userHasAccess(…, 'chat')`; `getfollowedbots` her bota `can_chat` ekliyor (eklemeli); ana sayfa seçicisi kilidi buradan alıyor (getchatbotsmenu değil). | access_selftest N-27; S-06: takip edilen ücretsiz A2 seçilebilir ve çipe geliyor, ücretli bot kilitli + "Profili gör". | **Kapandı** |
+| **N-28** | `9e9e3f6`, `77eb463` | Keşfet'teki sabit "+12% bu ay / +24%" kaldırıldı; yükseltme sayfasındaki yıllık/%20 anahtarı ve `BillingCycleToggle` kaldırıldı; başlıktaki "İstediğiniz zaman … iptal edin" → "Paketler 30 gün geçerlidir ve otomatik yenilenmez". | S-03 / S-07 yeniden koşusu. | **Kapandı** |
+| **N-29** | `33f124f` | Gönderim zamanı `updated_at` (ON UPDATE) yerine `created_at`; yeniden gönderim (GK-20) `created_at`'i günceller. Tek kaynak `marketplaceApplicationSubmittedAt()`. | application_selftest E (önce kırmızı); S-09: inceleme öncesi/sonrası 15:34:06 = 15:34:06. | **Kapandı** |
+| **N-30** | `8861665` | Aşağıdaki tablo. | access_selftest N-30 (16 senaryo); canlı HTTP denemeleri; S-11 + S-13 yeniden koşusu. | **Kapandı** |
+| **N-31** | `92c10ba` | `hoppa_return.php` `LUMANORIS_STATELESS_ENDPOINT` tanımlıyor; `bootstrap.php` o uçta `session_start()` yapmıyor → Set-Cookie yok, kullanıcının oturum çerezi korunuyor. Çerez ayarı değişmedi; uç zaten oturumsuz ProcessQuery ile kesinleştirip 303 GET yapıyordu. | hoppa_selftest A: N-31 kilidi; curl: Set-Cookie yok (diğer uçlar oturum açmaya devam ediyor); Hoppa TEST gerçek ödeme, ana ağaçta 2 + yeniden koşuda 2: başarılı → `?odeme=paid`, aynı çerez, oturum açık, paket tanımlı; hata kartı → `?odeme=failed`, oturum açık, paket değişmedi; admin iadesi → paket geri alındı. | **Kapandı** |
+| **N-32** | `540486b` | **Yeni (S-06 yeniden koşusunda bulundu; `canli-2026-10b`'de de var).** Ana sayfadan `?prompt=` ile sohbet başlatınca, kullanıcının o botla geçmişi varsa ilk (id=0) sohbetin geç dönen geçmiş yüklemesi bayat `conversationId` ile mesaj listesini "yalnızca karşılama mesajı"na çeviriyor; kullanıcının mesajı ve cevap ekrandan siliniyordu. Effect yeniden çalışınca eski yükleme iptal ediliyor. | S-06: geçmişi olan kullanıcıyla önce kırmızı (yalnızca karşılama mesajı), sonra yeşil (mesaj + cevap görünür); N-23 kontrolleri yeşil kaldı. | **Kapandı** |
+
+### N-30 — etkilenen uçlar, önce / sonra
+
+| Uç | Önce | Sonra |
+|---|---|---|
+| `POST /api/note/adddialogbook.php` | `{chatbot_id, name, input_message, output_message}` aynen kaydediliyor; bot erişimi denetlenmiyor. | Yalnızca `{message_id, name}` (`user_id` yok sayılır; başka alan → 400). Mesaj, çağıranın kendi geçmişindeki bir **bot** mesajı olmalı (değilse 404); o bota sohbet erişimi yoksa 403; önünde kullanıcı sorusu yoksa 422. Soru ve cevap DB'den kopyalanır. |
+| `POST /api/chat/addchat.php` | `sent_by:"bot"` ile serbest metin, erişim kontrolü yok ("Diyalog" sayacı şişirilebiliyordu). | Sohbet erişimi zorunlu (403). `bot` yalnızca botun `sohbet_basi_mesaj`'ı birebir ise; aksi 400. |
+| `POST /api/chat/generatereply.php` | Cevabı istemci `addchat` ile kaydediyordu. | Sunucu akışı biriktirip cevabı kendisi kaydediyor; son karede `event: saved` `{"saved":{"message_id":N}}` (eklemeli). |
+| `GET /api/chat/getchat.php` | `message, sent_by` | `id, message, sent_by` (`ORDER BY id`) — eklemeli. |
+| `GET /api/note/getdialogues.php` | Tüm kayıtlar (özel bot adı/sahibi dahil). | Yalnızca botu vitrin kuralını (`ChatbotRepository::publicVisibleSql()`) geçen kayıtlar + izleyenin kendi paylaştıkları. |
+| `getdialoginteracts.php`, `addcomment2.php`, `likedialog.php`, `dislikedialog.php`, `diduserlike2.php`, `diduserdislike2.php` | Kimlikle herhangi bir kayda erişim. | Aynı görünürlük kuralı; görünmeyen kayıt → 404. |
+| İstemci (`chat/page.jsx`, `DialogNotebookModal.jsx`) | Bot cevabını kendisi kaydediyor; deftere metin gönderiyor. | `saved` kimliğini mesajda tutuyor; "Diyalog Defterine Ekle" yalnızca kimliği olan (sunucunun kaydettiği) cevapta; modal `{message_id, name}` gönderiyor. |
+
+Çağıran araması (`web/src`, `api/admin`, `api/router.php`): `adddialogbook` → yalnızca `DialogNotebookModal.jsx`; `addchat` → yalnızca `chat/page.jsx` (kullanıcı mesajı + karşılama); `getdialogues` ve etkileşim uçları → `notes/page.jsx`, `DialogueModal.jsx`. Admin ve router'da çağıran yok.
+
+**Sınır (B4):** Gemini anahtarı askıda olduğu için sunucunun gerçek bir cevabı kaydedip `saved` gönderdiği yol canlı modelle uçtan uca görülmedi. `geminiSseText` + `chatSaveBotReply` selftest'te kaydedilmiş SSE gövdesiyle, tarayıcı akışı ise aynı fonksiyonla yazılmış fixture satırıyla doğrulandı. Anahtar geldiğinde S-02/S-11 bir gerçek mesajla tekrarlanmalı.
+
+**Mevcut kayıtlar — öneri: dokunma (veri değiştirme yok).** Yeni görünürlük kuralı özel/bağımsız botların kayıtlarını deploy anında başkalarından gizler; adı ve sahibi sızmaz. Herkese açık botlardaki eski kayıtların cevap metni istemci kaynaklıydı ve doğrulanamaz (o günkü bot cevabı satırlarını da istemci yazıyordu, yani geçmişle eşleşmesi kanıt değil). Silmek ya da gizlemek veri değiştiren bir migration olur ve onaya tabidir. Önerim: canlıda aşağıdaki salt okunur ölçümü görmek; `cevabi_gecmiste_yok > 0` ise gizleme kararını o sayıyla vermek. Yerel ölçüm (bu sorgu, 2026-10-09): `toplam 4, botu_silinmis 0, ozel_botta_gizlenecek 0, cevabi_gecmiste_yok 1`. Bu 1 kayıt doğrulamanın test kaydı #16; temizlikte sohbeti silindiği için kaynağı kalmadı. Bu, bir durumu da gösteriyor: sohbet silinince defter kaydı kalıyor; yani `cevabi_gecmiste_yok` tek başına "uydurma" demek değildir.
+
+### N-30 mevcut kayıt sorgusu (salt okunur — canlı sırası adım 4b)
+
+```sql
+SELECT COUNT(*) AS toplam,
+       SUM(c.id IS NULL) AS botu_silinmis,
+       SUM(c.id IS NOT NULL AND NOT (c.is_independent = 0 AND (COALESCE(c.ucret_haftalik,0) = 0 AND COALESCE(c.ucret_aylik,0) = 0 OR pms.user_id IS NOT NULL))) AS ozel_botta_gizlenecek,
+       SUM(NOT EXISTS (SELECT 1 FROM chatbot_chats b
+                        WHERE b.user_id = udb.user_id AND b.chatbot_id = udb.chatbot_id
+                          AND b.sent_by = 'bot' AND b.message = udb.output_message)) AS cevabi_gecmiste_yok
+  FROM user_dialog_books udb
+  LEFT JOIN chatbotlar c ON c.id = udb.chatbot_id
+  LEFT JOIN param_marketplace_sellers pms ON pms.user_id = c.author_user_id AND pms.status = 'active';
+```
