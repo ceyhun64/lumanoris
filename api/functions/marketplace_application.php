@@ -163,13 +163,23 @@ function submitMarketplaceApplication(Database $db, int $userId, array $clean): 
         'INSERT INTO ' . MARKETPLACE_APPLICATIONS_TABLE . ' (`user_id`, `' . implode('`, `', $columns) . '`, `status`)
          VALUES (?' . str_repeat(', ?', count($columns)) . ", 'submitted')
          ON DUPLICATE KEY UPDATE $sets,
-             `status` = 'submitted', `review_note` = NULL,
+             `status` = 'submitted', `review_note` = NULL, `created_at` = NOW(),
              `reviewed_by_admin_id` = NULL, `reviewed_at` = NULL",
         array_merge([$userId], array_values($clean))
     );
 
     $row = getMarketplaceApplication($db, $userId);
-    return ['status' => (string) $row['status'], 'submitted_at' => (string) $row['updated_at']];
+    return ['status' => (string) $row['status'], 'submitted_at' => marketplaceApplicationSubmittedAt($row)];
+}
+
+/**
+ * N-29 — başvurunun gönderim zamanı. `updated_at` DEĞİL: o sütun ON UPDATE
+ * CURRENT_TIMESTAMP, yani admin incelemesi de onu değiştiriyor. Tek satırlık
+ * modelde (GK-20) `created_at` son gönderimin zamanıdır: yeniden gönderim
+ * onu NOW() yapar, inceleme dokunmaz.
+ */
+function marketplaceApplicationSubmittedAt(array $row): string {
+    return (string) ($row['created_at'] ?? '');
 }
 
 /**

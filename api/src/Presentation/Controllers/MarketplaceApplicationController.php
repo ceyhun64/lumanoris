@@ -63,7 +63,7 @@ class MarketplaceApplicationController {
                 'account_type'  => $app['account_type'],
                 'company_title' => $app['company_title'],
                 'iban_masked'   => maskIban($app['iban']),
-                'submitted_at'  => $app['updated_at'],
+                'submitted_at'  => marketplaceApplicationSubmittedAt($app),
                 'reviewed_at'   => $app['reviewed_at'],
                 'review_note'   => $app['status'] === 'rejected' ? $app['review_note'] : null,
             ] : null,

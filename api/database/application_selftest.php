@@ -243,4 +243,33 @@ try {
 check('rollback sonrası banka kaydı yok', $bankIban($u2) === null);
 check('rollback sonrası log satırı yok', $auditCount($u2) === 0);
 
+echo "\n=== E) Gönderim zamanı (N-29, rollback) ===\n\n";
+
+// N-29: durum ucu `submitted_at` olarak updated_at dönüyordu; admin incelemesi
+// (ON UPDATE CURRENT_TIMESTAMP) onu inceleme zamanına çeviriyordu.
+if (!function_exists('marketplaceApplicationSubmittedAt')) {
+    check('marketplaceApplicationSubmittedAt tanımlı', false, 'fonksiyon yok');
+} else {
+    $past = '2026-01-02 03:04:05';
+    $conn->beginTransaction();
+    try {
+        submitMarketplaceApplication($db, $u2, $cleanOf($valid));
+        $appId = (int) getMarketplaceApplication($db, $u2)['id'];
+        $db->execute('UPDATE marketplace_applications SET created_at = ?, updated_at = ? WHERE id = ?', [$past, $past, $appId]);
+
+        reviewMarketplaceApplication($db, $appId, 'reviewed', null, null, 'selftest', null);
+        $row = getMarketplaceApplication($db, $u2);
+        check('inceleme gönderim zamanını değiştirmez', marketplaceApplicationSubmittedAt($row) === $past, marketplaceApplicationSubmittedAt($row));
+
+        // Yeniden gönderim (GK-20) yeni bir gönderimdir: zaman güncellenir.
+        $db->execute("UPDATE marketplace_applications SET status = 'rejected', review_note = 'x' WHERE id = ?", [$appId]);
+        $r = submitMarketplaceApplication($db, $u2, $cleanOf($valid));
+        $row = getMarketplaceApplication($db, $u2);
+        check('yeniden gönderim zamanı günceller', marketplaceApplicationSubmittedAt($row) !== $past, marketplaceApplicationSubmittedAt($row));
+        check('submit dönüşü aynı alanı verir', $r['submitted_at'] === marketplaceApplicationSubmittedAt($row), json_encode($r));
+    } finally {
+        $conn->rollBack();
+    }
+}
+
 finish();
