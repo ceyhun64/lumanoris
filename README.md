@@ -18,22 +18,24 @@ request handler and proxies `/api`, `/admin` and `/assets` to the PHP backend, s
 answer on a single origin (`http://localhost:3000` by default in development).
 
 > [!IMPORTANT]
-> **Card charging is real.** The payment provider is **iyzico**, implemented in
-> `api/src/Infrastructure/Payment/IyzicoClient.php` and `api/functions/checkout_payments.php`. With
-> live keys in `api/.env`, checkout moves real money. `IYZICO_BASE_URL` defaults to the **sandbox**
-> host, and with no keys at all every payment path fails closed. See [Payments](#payments).
+> **The payment provider is Hoppa** (EsnekPOS infrastructure). Membership plans are paid on Hoppa's
+> hosted payment page, so card data never reaches our servers. `PAYMENT_PROVIDER` defaults to
+> `none` (plan purchase closed, the UI says "Ödeme altyapısı hazırlanıyor"); with `hoppa` +
+> `HOPPA_MODE=live` it moves **real money**. See
+> [Plan purchases — Hoppa](#plan-purchases--hoppa-hosted-payment-page) and AUDIT.md → "Hoppa canlıya açma".
 >
-> **Membership-plan purchases no longer use iyzico.** Since Faz 7a they go through **Hoppa**'s hosted
-> payment page (EsnekPOS infrastructure): card data never reaches our servers. `PAYMENT_PROVIDER`
-> defaults to `none` (plan purchase closed). Marketplace checkout is unchanged and still iyzico. See
-> [Plan purchases — Hoppa](#plan-purchases--hoppa-hosted-payment-page).
+> **iyzico is closed.** Its code (`IyzicoClient.php`, `checkout_payments.php`) is still in the
+> repository, but the iyzico application was rejected (BLOCKERS B3), no keys are configured (every
+> iyzico path fails closed) and nothing in the UI reaches it: the marketplace checkout page takes no
+> payment since the N-17 interim measure, and paid marketplace sales need an active seller (B1). It is
+> kept only for rows recorded under iyzico. See [Payments](#payments).
 >
 > One subsystem is still explicitly labelled a **development stub** in its own source file: the
-> Param POS marketplace client (seller KYC / sub-merchant registration). Producer-plan purchase was
-> removed (S14, 2026-10-06).
-> See [Development stubs](#development-stubs) before assuming seller onboarding works end to end.
-> Payment charging, transactional email and plan-based chatbot limits were previously stubs and are
-> now real implementations.
+> Param POS marketplace client (seller KYC / sub-merchant registration). Since Faz 4 it blocks **only
+> paid sales** — free public publishing needs no seller registration. Producer-plan purchase was
+> removed (S14, 2026-10-06). See [Development stubs](#development-stubs).
+> Transactional email and plan-based chatbot limits were previously stubs and are now real
+> implementations.
 
 ## Features
 
@@ -54,16 +56,21 @@ Each item below is backed by routes and endpoints that exist in this repository.
   read from the user's plan (see [Plans and quotas](#plans-and-quotas)).
 - **Marketplace and social graph** — explore/discover pages, categories, like, dislike, follow,
   comment, report, hide, "not interested", and user-defined bot lists.
-- **Cart, checkout and subscriptions** — cart endpoints plus
-  `/api/marketplace/createsubscription.php`, which runs inside a DB transaction guarded by an
-  idempotency key: it charges the card through iyzico, creates `user_subscriptions` rows, grants
-  purchase credits, clears the cart, and writes payment rows. Any failure rolls the whole thing
-  back, and a failure *after* a successful charge triggers a compensating cancellation. See
-  [Payments](#payments).
-- **Wallet and seller onboarding** — balance, payment history, subscriptions, IBAN/bank details,
-  withdrawal requests, and a sub-merchant registration wizard (the sub-merchant client itself is
-  still a stub — see [Development stubs](#development-stubs)).
-- **Notes / dialogue books** — saving and sharing conversation excerpts, with likes and comments.
+- **Membership plans** — four plans (see [Plans and quotas](#plans-and-quotas)) bought through Hoppa's
+  hosted payment page (`/api/wallet/upgradeplan.php` → `hoppa_return.php`); closed while
+  `PAYMENT_PROVIDER=none`. Refunds only from the admin screen *Paket Ödemeleri*.
+- **Cart, checkout and subscriptions (marketplace)** — cart endpoints plus
+  `/api/marketplace/createsubscription.php` (DB transaction, idempotency key, compensating
+  cancellation; charges through iyzico). **Not reachable today:** the checkout page takes no payment
+  (N-17 interim measure) and paid sales need an active seller (BLOCKERS B1). See [Payments](#payments).
+- **Wallet and marketplace application** — balance, payment history, subscriptions, IBAN/bank
+  details, withdrawal requests. Paid selling starts with a company application
+  (`/dashboard/pazaryeri-basvurusu`, reviewed at `/admin/basvurular`); the old sub-merchant
+  registration wizard was removed in Faz 4. The sub-merchant client itself is still a stub — see
+  [Development stubs](#development-stubs).
+- **Notes / dialogue books** — sharing a question/answer pair from your own chat history, with likes
+  and comments. The server copies both texts from the database by message id and checks chat access
+  (N-30); entries for private bots are visible only to the person who shared them.
 - **Admin panel** — a separate server-rendered PHP UI at `/admin` for users, chatbots, categories,
   SEO, SMTP, API keys, withdrawals, and content pages.
 
@@ -325,10 +332,10 @@ vars are never overwritten by a stale `.env`.
 | `CONTACT_EMAIL` | No | `AppConfig::contactEmail()` | Recipient for contact-form mail. Falls back to a hard-coded address. |
 | `NOREPLY_EMAIL` | No | `AppConfig::noreplyEmail()` | Sender for password-reset mail. Falls back to a hard-coded address. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_NAME`, `SMTP_ENCRYPTION` | No | `functions/phpmailer.php` | SMTP transport. When unset, the equivalent `global_vars` rows written by the admin panel's SMTP page are used instead. |
-| `IYZICO_API_KEY`, `IYZICO_SECRET_KEY` | **For marketplace payments** | `IyzicoClient` | Provider credentials from the iyzico merchant panel (Ayarlar → API anahtarları). With either missing, `isConfigured()` is false and charge / refund / reconcile all fail closed — no silent success. |
+| `IYZICO_API_KEY`, `IYZICO_SECRET_KEY` | No (iyzico is closed) | `IyzicoClient` | Provider credentials from the iyzico merchant panel (Ayarlar → API anahtarları). With either missing, `isConfigured()` is false and charge / refund / reconcile all fail closed — no silent success. |
 | `IYZICO_BASE_URL` | No | `IyzicoClient` | `https://sandbox-api.iyzipay.com` (default, test cards) or `https://api.iyzipay.com` (**real money**). The default is deliberately sandbox. |
-| `PAYMENT_PROVIDER` | **For plan purchases** | `PaymentGatewayFactory` | `none` (default — plan purchase returns `503`, the UI shows "Ödeme altyapısı hazırlanıyor") or `hoppa`. Unknown values count as `none`. Does not affect marketplace checkout. |
-| `HOPPA_MODE` | No | `HoppaGateway` | `test` (default, `posservicetest.esnekpos.com`) or `live` (`posservice.esnekpos.com`, **real money**). |
+| `PAYMENT_PROVIDER` | **For plan purchases** | `PaymentGatewayFactory` | `none` (default — plan purchase returns `503`, the UI shows "Ödeme altyapısı hazırlanıyor") or `hoppa`. Unknown values count as `none`. Does not affect marketplace checkout. A real environment variable of the same name overrides `.env` (`functions/env.php`). |
+| `HOPPA_MODE` | No | `HoppaGateway` | `test` (default, `posservicetest.esnekpos.com`) or `live` (`posservice.esnekpos.com`, **real money**). The base URLs are constants in `HoppaGateway`; there is no base-URL variable, and the Merchant Public Token is not used by the code. |
 | `HOPPA_TEST_MERCHANT`, `HOPPA_TEST_MERCHANT_KEY`, `HOPPA_LIVE_MERCHANT`, `HOPPA_LIVE_MERCHANT_KEY` | With `PAYMENT_PROVIDER=hoppa` | `HoppaGateway` | Only the pair for the selected mode is read; if it is empty the gateway counts as unconfigured. Keep values in `api/.env` only — never in the repo. |
 | `APP_PUBLIC_URL` | With `PAYMENT_PROVIDER=hoppa` | `WalletController::startHostedPlanPayment()` | Public site origin, no trailing slash. Hoppa returns the buyer to `APP_PUBLIC_URL/api/wallet/hoppa_return.php`. Not derived from the `Host` header (spoofable). Must be `https` in live mode. |
 | `ADMIN_USERNAME` | No | `admin_env_account()` | When set, the admin panel account is read from `.env` and the `adminler` table is **not consulted at all**. Unset → legacy DB-table behaviour. See [Admins](#admins). |
@@ -345,8 +352,8 @@ vars are never overwritten by a stale `.env`.
 > `PARAM_CLIENT_PASSWORD`, `PARAM_GUID`, `PARAM_MARKETPLACE_GUID`, `PARAM_PAYMENT_WSDL`,
 > `PARAM_MARKETPLACE_WSDL`, `PARAM_PAYMENT_SECURITY_TYPE`, `PARAM_REF_URL`, `PARAM_SUCCESS_URL` and
 > `PARAM_FAIL_URL`. A search of the whole repository finds **no code that reads any of them** — the
-> provider is iyzico now, and `ParamPosMarketplace.php` (which those keys belonged to) is still a
-> stub. They are kept in the example file only as a marker; nothing breaks if you delete them.
+> provider is Hoppa now (iyzico before it, closed), and `ParamPosMarketplace.php` (which those keys
+> belonged to) is still a stub. They are kept in the example file only as a marker; nothing breaks if you delete them.
 
 ### `api/admin/.env` — loaded by `vlucas/phpdotenv` in `admin/api.php`
 
@@ -536,9 +543,11 @@ be verified from the repository.
   `405 {"success":false,"message":"Method not allowed"}` for a wrong verb, `429` from the rate
   limiter, `500` from the global exception/fatal handlers, `402` with `ERR_PAYMENT` when the
   provider declines a card, `503` with `FEATURE_UNAVAILABLE` when a payment path is asked to run
-  without iyzico keys, and `404` for any unmatched `/api/**` path (`api/api/index.php`).
+  without a configured provider (plan purchase with `PAYMENT_PROVIDER=none`, or iyzico without keys), and `404` for any unmatched `/api/**` path (`api/api/index.php`).
 - `/api/chat/generatereply.php` is the one non-JSON endpoint: it sets
-  `Content-Type: text/event-stream` and streams Gemini's SSE response through.
+  `Content-Type: text/event-stream` and streams Gemini's SSE response through. It frames a `meta`
+  event first (remaining coins), an `error` event (`refunded: true`) on upstream failure, and, after a
+  successful reply, an `event: saved` with the id of the bot message the **server** stored (N-30).
 
 The **Auth** column is derived from the guard each controller method calls: `user` =
 `AuthMiddleware::requireAuth()`, `optional` = `optionalAuth()` (works signed-out, personalises when
@@ -803,7 +812,13 @@ Additional tables referenced directly in SQL: `chatbot_kategoriler`, `chatbot_hi
 
 ## Payments
 
-The provider is **iyzico** (iyzipay). Two files carry the whole integration:
+| Flow | Provider | State |
+| --- | --- | --- |
+| Membership plans | **Hoppa** hosted payment page | Code complete; closed while `PAYMENT_PROVIDER=none`. Opening steps: AUDIT.md → "Hoppa canlıya açma". |
+| Marketplace (bot subscriptions) | iyzico code path | **Closed.** Checkout page takes no payment (N-17), paid sales need an active seller (B1), iyzico has no keys and its application was rejected (B3). A Hoppa sub-merchant integration is the planned replacement (B1 note 2026-10-09). |
+
+The sections below up to [Plan purchases](#plan-purchases--hoppa-hosted-payment-page) describe the
+**iyzico** code as it stands, for the rows recorded under it. Two files carry that integration:
 
 | File | Responsibility |
 | --- | --- |
@@ -828,6 +843,8 @@ The `x-iyzi-rnd` header must equal the `randomKey` used in the signature; a mism
 the provider with a signature error rather than a useful message.
 
 ### Charge flow — `/api/marketplace/createsubscription.php`
+
+Not reachable from the UI today (see the table above); kept as written for a future provider swap.
 
 1. **Local validation first** — required fields, Luhn, CVV shape, expiry. Identical to the rules
    `CartConfirm`/checkout applies in the browser, so the two layers cannot contradict each other and
@@ -893,8 +910,9 @@ exists, or the user's current plan differs) the reason is shown on screen. The o
 `/api/seller/marketplace_refund.php` is retired (`410`, N-22) because it checked only the admin session
 and no CSRF token. iyzico's `processRefund()` stays in the code but currently has no entry point.
 
-Still open before going live (AUDIT.md, Faz 7a-2): commission shown to the buyer (N-19), buyer address
-placeholders (N-20), `AUTH_HASH` algorithm, hosted-page lifetime.
+Still open before going live: commission shown to the buyer (N-19), buyer address placeholders (N-20),
+`AUTH_HASH` algorithm, hosted-page lifetime, cron, HTTPS. The full list and the opening-day steps are in
+AUDIT.md → "Hoppa canlıya açma".
 Provider details and observed test responses: `docs/proposals/hoppa-gecis-kesif.md` §0.2.
 
 ### Refund and reconciliation
@@ -996,7 +1014,14 @@ author/owner or a live `user_subscriptions` row. `chat` (used by `generatereply.
 free public bot (published, both prices empty/0) — anyone signed in may chat, spending their daily
 coins. `preview` (marketplace card) = `full`, a free public bot, or a priced bot whose author is an
 active seller. Private (`is_independent = 1`) bots match no public branch. `getchatbot.php` returns
-`style_prompt` only to the bot's owner. `api/database/access_selftest.php` locks this matrix. Ownership checks are also inlined in controllers (for example
+`style_prompt` only to the bot's owner, plus `is_owner`. The home-page bot picker takes its lock from the same
+`chat` rule (`getfollowedbots.php` → `can_chat`, N-27). Chat messages: `addchat.php` requires `chat`
+access and accepts `sent_by: "bot"` only for the bot's own greeting; generated replies are saved by
+`generatereply.php`. Dialogue books (`functions/dialog_book.php`, N-30): `adddialogbook.php` takes only
+`{message_id, name}` — a bot message from the caller's own history on a bot they can chat with; question
+and answer are copied from the database. The feed and every per-dialog endpoint show an entry only if
+its bot passes the storefront rule (`ChatbotRepository::publicVisibleSql()`) or the viewer shared it.
+`api/database/access_selftest.php` locks this matrix. Ownership checks are also inlined in controllers (for example
 `ChatController::updateConversation` and `TrainingController::updateTrainingChunk`).
 
 ### Admins
@@ -1012,8 +1037,10 @@ returns `403` with `PERMISSION_DENIED` when absent.
 
 Marketplace applications are reviewed at `/admin/basvurular` (`admin/ajax/basvurular.php`, guarded as
 above). Marking one "reviewed" does **not** make the user an active seller (that depends on BLOCKERS B1)
-and notifies the user through the `notifications` table. Copying the application IBAN into
-`banka_bilgileri` is disabled until an admin audit log exists (AUDIT.md GK-23).
+and notifies the user through the `notifications` table. It also copies the application IBAN into
+`banka_bilgileri` (GK-23, enabled since migration `017_admin_audit_log.sql`): each change is written to
+`admin_audit_log` with the IBAN masked, and the copy is skipped while the user has a pending withdrawal
+(retry with "IBAN'ı aktar"). Plan refunds on *Paket Ödemeleri* (`/admin/odemeler`) are logged there too.
 
 **Where the account comes from** is decided by `ADMIN_USERNAME` in `api/.env`:
 
@@ -1071,9 +1098,10 @@ origin.
 | --- | --- | --- |
 | DB credentials | `api/.env` (`DB_*`) | All four required; `db.php` fails loudly if any is missing, and carries no fallback credentials. |
 | Gemini API key | `api/admin/.env` | Managed by the admin panel; read server-side only, never sent to the client. |
-| iyzico API keys | `api/.env` (`IYZICO_API_KEY`, `IYZICO_SECRET_KEY`) | The only credentials that can move money. Never leave the server; requests are signed with HMAC-SHA256 and provider responses are redacted before being logged or stored (`IyzicoClient::redact()`). |
+| Hoppa merchant key | `api/.env` (`HOPPA_LIVE_MERCHANT_KEY`; test pair `HOPPA_TEST_*`) | The credential that moves money today. Sent only in request bodies to Hoppa; bodies are never logged and stored provider responses drop `MERCHANT_KEY` and `CUSTOMER_*` (`HoppaGateway`). |
+| iyzico API keys | `api/.env` (`IYZICO_API_KEY`, `IYZICO_SECRET_KEY`) | Empty — iyzico is closed. If ever set: requests are signed with HMAC-SHA256 and responses redacted (`IyzicoClient::redact()`). |
 | Admin panel password | `api/.env` (`ADMIN_PASSWORD` or `ADMIN_PASSWORD_HASH`) | Only when `ADMIN_USERNAME` is set. Plain text is supported and is readable by anyone who can read the file; use `ADMIN_PASSWORD_HASH` if that matters. |
-| Param POS credentials | `api/.env` (`PARAM_*`) | Present in `.env.example` but read by no code in this repository — superseded by iyzico. |
+| Param POS credentials | `api/.env` (`PARAM_*`) | Present in `.env.example` but read by no code in this repository — superseded (iyzico, then Hoppa). |
 | SMTP | `global_vars` table, or `SMTP_*` in `api/.env` | Environment wins when set. |
 | Callback / reconcile secrets | `api/.env` | `PARAM_CALLBACK_SECRET`, `PARAM_RECONCILE_SECRET`. Both fail closed when unset. |
 
@@ -1159,13 +1187,13 @@ Each one says so in its own header comment.
 
 | File | Stubbed behaviour |
 | --- | --- |
-| `api/functions/ParamPosMarketplace.php` | Every sub-merchant and province/district method returns a failure or an empty list. This is fail-closed by design, but the practical consequence is that on a clean install **nobody can become a seller**, so no bot can be published. Personal data in call logs is redacted. Note this is *seller KYC only* — buyer-side charging does not go through this class. |
+| `api/functions/ParamPosMarketplace.php` | Every sub-merchant and province/district method returns a failure or an empty list. Fail-closed by design: nobody can become an **active** seller, so **paid** sales (priced publish, cart, subscription, seller payout) stay closed. Since Faz 4 this does **not** block free public publishing — anyone can publish a free public bot without seller registration (GK-1/GK-2). Personal data in call logs is redacted. Seller KYC only — plan payments (Hoppa) do not go through this class. |
 
 > [!NOTE]
 > `api/functions/checkout_payments.php`, `api/functions/phpmailer.php` and
 > `api/functions/chatbot_limits.php` were previously stubs and are now real implementations — iyzico
-> charging (see [Payments](#payments)), SMTP delivery via `functions/smtp_client.php`, and
-> plan-driven limits via `functions/plans.php`.
+> charging (implemented, but closed: see [Payments](#payments)), SMTP delivery via
+> `functions/smtp_client.php`, and plan-driven limits via `functions/plans.php`.
 
 ## Troubleshooting
 
@@ -1196,21 +1224,30 @@ the `smtp_host` / `smtp_email` / `smtp_pass` / `smtp_name` rows in `global_vars`
 fail-closed: with no host configured, `sendEmail()` returns `success: false` rather than pretending
 the code was sent. The code is **not** written to the error log.
 
-**Seller registration always fails / no bot can be published**
-Expected on a clean install: `ParamPosMarketplace.php` is a fail-closed stub, so sub-merchant
-creation cannot succeed without the real KYC integration. This is unrelated to buyer-side charging,
-which works.
+**Nobody can sell a bot for money / priced publish is refused**
+Expected: `ParamPosMarketplace.php` is a fail-closed stub, so no user becomes an active seller
+(BLOCKERS B1). This blocks only **paid** sales. Free public bots can be published without any seller
+registration (Faz 4), and "Pazaryerine Kaydet" leads to the company application form.
 
-**Checkout says `Ödeme altyapısı şu anda kullanılamıyor` / refunds and reconciliation return 503**
-`IYZICO_API_KEY` or `IYZICO_SECRET_KEY` is missing from `api/.env`. Every payment path fails closed
-rather than reporting a success that never happened. Run `php api/database/iyzico_selftest.php` —
-part A passes without keys, part B is skipped when they are absent.
+**Plans page says `Ödeme altyapısı hazırlanıyor`**
+`PAYMENT_PROVIDER` is `none` (the default) or unset — plan purchase is closed on purpose. The
+marketplace checkout page always shows the same notice (N-17 interim measure). See
+AUDIT.md → "Hoppa canlıya açma" before switching to `hoppa`.
 
-**A card is declined with a message you did not write**
-Decline text comes straight from iyzico ("Kart limiti yetersiz", "Geçersiz kart bilgisi"). The
-request itself succeeded. If instead every charge fails with a signature or `errorCode 5` error, the
-keys do not match the `IYZICO_BASE_URL` host (sandbox keys against production, or vice versa), or a
-basket total drifted from `price`.
+**"Ödemeye geç" fails with `PAYMENT_PROVIDER=hoppa`**
+Check the PHP log. `APP_PUBLIC_URL tanımsız/geçersiz (canlıda https zorunlu)`: `APP_PUBLIC_URL` is
+missing, malformed, or not `https` while `HOPPA_MODE=live`. Otherwise the merchant pair for the
+selected mode is empty (`HOPPA_TEST_*` for `test`, `HOPPA_LIVE_*` for `live`). A real environment
+variable overrides `.env`; restart PHP after editing it.
+
+**User lands on `/login` after paying on Hoppa**
+Fixed in N-31 (`canli-2026-10c`): `hoppa_return.php` no longer starts a session. If it happens again,
+check that the site is opened on the same host as `APP_PUBLIC_URL`; on another host the session cookie
+is not sent back.
+
+**iyzico refunds and reconciliation return 503**
+Expected — iyzico is closed and has no keys. Run `php api/database/iyzico_selftest.php` — part A passes
+without keys, part B is skipped.
 
 **Admin login says `Admin girişi yapılandırılmamış`**
 `ADMIN_USERNAME` is set in `api/.env` but neither `ADMIN_PASSWORD` nor `ADMIN_PASSWORD_HASH` is.

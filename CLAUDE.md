@@ -40,7 +40,7 @@ Yalnızca şu durumlarda dur ve sor:
 - Canlı/uzak veritabanına veya sunucuya dokunacak bir işlem
 - Git geçmişini yeniden yazma, `main`'e push/merge
 - Veri silen ya da mevcut veriyi güncelleyen migration (`UPDATE`/`DELETE`)
-- Ödeme yolu (iyzico, `upgradeplan`, checkout)
+- Ödeme yolu (Hoppa: `upgradeplan`, `hoppa_return`, iade; iyzico; checkout)
 - `AUDIT.md`'de "müşteri onayı BEKLİYOR" olan bir karara bağlı iş
 - Bir madde 3 denemede kapanmıyorsa
 
@@ -62,7 +62,9 @@ Eksik ownership/auth kontrolü bulduğunda sırayla:
 
 ### Önce raporla, onay bekle
 
-- Ödeme yolları: `IyzicoClient.php`, `checkout_payments.php`, `api/marketplace/createsubscription.php` — canlı anahtarla gerçek para hareket ediyor.
+- Ödeme yolları — canlı anahtarla gerçek para hareket ediyor:
+  - Hoppa (bugünkü sağlayıcı, paket ödemesi): `HoppaGateway.php`, `functions/hosted_plan_payments.php`, `WalletController` (`upgradePlan`, `hoppaReturn`), `api/wallet/upgradeplan.php`, `api/wallet/hoppa_return.php`, `api/cron/plan_payments.php`, `admin/ajax/odemeler.php` (iade).
+  - iyzico (kapalı, anahtarsız; yalnızca eski kayıtlar): `IyzicoClient.php`, `checkout_payments.php`, `api/marketplace/createsubscription.php`.
 - Veritabanı şeması · API contract'ında kırıcı değişiklik · bilinmeyen dış sağlayıcı entegrasyonu · iş kuralı belirsizse doğru davranışa kendin karar verme
 - Veri düzeltme migration'ları (mevcut satırı değiştiren `UPDATE`/`DELETE` içerenler, ör. N-06 onarımı) — **yerelde de** uygulamadan önce onay.
 
