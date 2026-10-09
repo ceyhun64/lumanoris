@@ -151,7 +151,9 @@ export default function Chat() {
 
     setActiveDialog({
       input: lastUserMsg,
-      output: currentBotMsg
+      output: currentBotMsg,
+      // N-30: sunucu soru/cevabı bu kimlikten DB'den kopyalıyor.
+      messageId: messages[index]?.messageId,
     });
     setIsDialogModalOpen(true);
   };
@@ -351,6 +353,8 @@ export default function Chat() {
             historyData.map((m) => ({
               type: m.sent_by === "user" ? "sent" : "received",
               text: m.message,
+              // N-30: defter kaydı bot mesajının kimliğiyle yapılıyor.
+              messageId: m.sent_by === "user" ? undefined : Number(m.id),
             })),
           );
         } else if (hasHistory) {
@@ -716,6 +720,15 @@ const generateReply = async (userText, filePayloads = []) => {
               upstreamError = gData.error;
               continue;
             }
+            // N-30 — sunucu cevabı kendisi kaydedip kimliğini son karede
+            // gönderiyor; "Diyalog Defterine Ekle" bu kimliği kullanır.
+            if (gData.saved) {
+              const savedId = Number(gData.saved.message_id);
+              setMessages((prev) =>
+                prev.map((msg) => (msg.id === placeholderId ? { ...msg, messageId: savedId } : msg))
+              );
+              continue;
+            }
             // Sunucunun ilk SSE karesi (event: meta) kalan mesaj hakkını
             // taşıyor — coin sayacı için ayrı bir istek atmaya gerek yok.
             if (typeof gData.remaining === "number" || gData.source) {
@@ -737,19 +750,9 @@ const generateReply = async (userText, filePayloads = []) => {
     clearTimeout(timeoutId);
 
     if (fullText) {
-      // Akış bittikten sonra BOT cevabını DB'ye kaydet
-      await fetch("/api/chat/addchat.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          data: JSON.stringify({
-            chatbot_id: botId,
-            user_id: userId,
-            sent_by: "bot",
-            message: fullText,
-          }),
-        }),
-      });
+      // N-30 — bot cevabını artık SUNUCU kaydediyor (generateReply sonunda
+      // `event: saved`). Buradaki addchat(sent_by:"bot") istemcinin yazdığı
+      // metni bot cevabı gibi kaydediyordu; sunucu bunu artık reddediyor.
       return;
     }
 
@@ -869,7 +872,10 @@ const handleRetryReply = (retryText) => {
                             <RotateCcw className="h-3 w-3" strokeWidth={2} />
                             <span className="text-caption font-medium">Tekrar Dene</span>
                           </button>
-                        ) : (
+                        ) : msg.messageId ? (
+                          /* N-30: yalnızca sunucunun kaydettiği cevapta (kimliği
+                             olan); karşılama mesajı ve kaydedilmemiş cevap deftere
+                             eklenemez. */
                           <button
                             className="mt-1.5 flex w-max items-center justify-center gap-1.5 rounded-md bg-luma-input px-2.5 py-1 text-white/55 transition-all duration-200 hover:-translate-y-px hover:bg-white/10 hover:text-white/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             onClick={() => openDialogModal(index)}
@@ -877,7 +883,7 @@ const handleRetryReply = (retryText) => {
                             <NotebookPen className="h-3 w-3" strokeWidth={2} />
                             <span className="text-caption font-medium">Diyalog Defterine Ekle</span>
                           </button>
-                        )}
+                        ) : null}
                       </div>
                     </>
                   ) : (
@@ -978,6 +984,7 @@ const handleRetryReply = (retryText) => {
         botId={botId}
         inputMessage={activeDialog.input}
         outputMessage={activeDialog.output}
+        messageId={activeDialog.messageId}
         isOpen={isDialogModalOpen}
         onClose={() => setIsDialogModalOpen(false)}
         onPublish={(title) => {

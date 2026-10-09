@@ -146,6 +146,73 @@ try {
 check('rollback sonrası senaryo verisi geri alındı',
     !$freeCandidate || (int) $db->selectSingle('is_independent FROM chatbotlar WHERE id = ?', [$freeCandidate['id']])['is_independent'] === 1);
 
+echo "\n--- N-30: Diyalog Defteri yalnızca gerçek mesajdan, görünürlük vitrinle aynı ---\n";
+$dbLib = __DIR__ . '/../functions/dialog_book.php';
+if (is_file($dbLib)) require_once $dbLib;
+$need30 = ['dialogBookCreateFromMessage', 'dialogBookIsVisible', 'dialogBookFeed', 'chatMessageWriteCheck', 'geminiSseText', 'chatSaveBotReply'];
+$missing30 = array_values(array_filter($need30, fn($f) => !function_exists($f)));
+if ($missing30 !== []) {
+    check('N-30: dialog_book.php fonksiyonları tanımlı', false, implode(', ', $missing30));
+} elseif (!$freeCandidate) {
+    echo "  (ücretsiz aday bot yok — N-30 atlandı)\n";
+} else {
+    $free  = (int) $freeCandidate['id'];
+    $priv  = (int) $private['id'];
+    $owner = (int) $private['author_user_id'];
+    $viewer = (int) ($db->selectSingle('k.id FROM kullanicilar k WHERE k.id NOT IN (?, ?, ?) ORDER BY k.id LIMIT 1', [$U, $owner, (int) $freeCandidate['author_user_id']])['id'] ?? 0);
+    $throws = function (callable $fn, string $class): bool { try { $fn(); } catch (Throwable $e) { return $e instanceof $class; } return false; };
+    $conn->beginTransaction();
+    try {
+        $db->execute('UPDATE chatbotlar SET is_independent = 0, ucret_haftalik = NULL, ucret_aylik = NULL WHERE id = ?', [$free]);
+
+        // Sunucu akıştan cevabı çıkarıp kendisi kaydeder (istemci addChat ile "bot" yazamaz).
+        $sse = "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"Kuruluş \"}]}}]}\r\n\r\n"
+             . "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"yılı 1987.\"}]}}]}\n\n";
+        check('N-30: geminiSseText akıştan metni birleştirir', geminiSseText($sse) === 'Kuruluş yılı 1987.', geminiSseText($sse));
+
+        check('N-30: addChat — kullanıcı mesajı (erişimli bot) kabul', !$throws(fn() => chatMessageWriteCheck($repo, $db, $U, $free, 'user', 'Soru?'), AppException::class));
+        check('N-30: addChat — istemciden serbest "bot" metni RED', $throws(fn() => chatMessageWriteCheck($repo, $db, $U, $free, 'bot', 'Uydurma cevap'), ValidationException::class));
+        $greet = (string) ($db->selectSingle('sohbet_basi_mesaj FROM chatbotlar WHERE id = ?', [$free])['sohbet_basi_mesaj'] ?? '');
+        if (trim($greet) !== '') {
+            check('N-30: addChat — botun karşılama mesajı kabul', !$throws(fn() => chatMessageWriteCheck($repo, $db, $U, $free, 'bot', $greet), AppException::class));
+        }
+        check('N-30: addChat — erişimsiz özel bot RED', $throws(fn() => chatMessageWriteCheck($repo, $db, $U, $priv, 'user', 'x'), PermissionException::class));
+
+        $qId  = (int) $db->insert('chatbot_chats', ['chatbot_id' => $free, 'user_id' => $U, 'sent_by' => 'user', 'message' => 'E2E N-30 soru']);
+        $aId  = chatSaveBotReply($db, $U, $free, 'E2E N-30 gerçek cevap');
+        $book = dialogBookCreateFromMessage($db, $repo, $U, $aId, 'N-30 başlık');
+        $row  = $db->selectSingle('chatbot_id, input_message, output_message, user_id FROM user_dialog_books WHERE id = ?', [$book]);
+        check('N-30: defter metni DB\'den kopyalandı', ($row['input_message'] ?? '') === 'E2E N-30 soru' && ($row['output_message'] ?? '') === 'E2E N-30 gerçek cevap' && (int) $row['chatbot_id'] === $free && (int) $row['user_id'] === $U, json_encode($row));
+
+        check('N-30: başkasının mesaj kimliği RED', $throws(fn() => dialogBookCreateFromMessage($db, $repo, $viewer, $aId, 'x'), NotFoundException::class));
+        check('N-30: kullanıcı mesajı kimliği RED', $throws(fn() => dialogBookCreateFromMessage($db, $repo, $U, $qId, 'x'), NotFoundException::class));
+        $lone = chatSaveBotReply($db, $owner, $priv, 'sorusuz cevap');
+        check('N-30: sorusu olmayan cevap RED', $throws(fn() => dialogBookCreateFromMessage($db, $repo, $owner, $lone, 'x'), ValidationException::class));
+
+        // Erişim kaybedilmiş bot: U'nun özel bottaki (geçmişten kalma) mesajı.
+        $db->insert('chatbot_chats', ['chatbot_id' => $priv, 'user_id' => $U, 'sent_by' => 'user', 'message' => 'eski soru']);
+        $old = chatSaveBotReply($db, $U, $priv, 'eski cevap');
+        check('N-30: erişimi olmayan bot için kayıt RED', $throws(fn() => dialogBookCreateFromMessage($db, $repo, $U, $old, 'x'), PermissionException::class));
+
+        // Özel bot kaydı (sahibi paylaştı): yalnızca sahibine görünür.
+        $db->insert('chatbot_chats', ['chatbot_id' => $priv, 'user_id' => $owner, 'sent_by' => 'user', 'message' => 'sahip sorusu']);
+        $ownA = chatSaveBotReply($db, $owner, $priv, 'sahip cevabı');
+        $privBook = dialogBookCreateFromMessage($db, $repo, $owner, $ownA, 'Özel bot kaydı');
+
+        $ids = fn(int $v) => array_map(fn($r) => (int) $r['id'], dialogBookFeed($db, $v, 1000));
+        check('N-30: herkese açık bot kaydı başkasının akışında', in_array($book, $ids($viewer), true));
+        check('N-30: özel bot kaydı başkasının akışında YOK', !in_array($privBook, $ids($viewer), true));
+        check('N-30: özel bot kaydı paylaşanın akışında', in_array($privBook, $ids($owner), true));
+        $leak = json_encode(array_values(array_filter(dialogBookFeed($db, $viewer, 1000), fn($r) => (int) $r['chatbot_id'] === $priv)));
+        check('N-30: akışta özel botun adı/sahibi sızmıyor', $leak === '[]', $leak);
+        check('N-30: gizli kayda kimlikle erişim (etkileşim/yorum) RED', !dialogBookIsVisible($db, $privBook, $viewer));
+        check('N-30: gizli kayıt paylaşana görünür', dialogBookIsVisible($db, $privBook, $owner));
+        check('N-30: açık kayıt herkese görünür', dialogBookIsVisible($db, $book, $viewer));
+    } finally {
+        $conn->rollBack();
+    }
+}
+
 echo "\n--- N-26: \"Daha Önce Satıldı\" yalnızca gerçek satış kaydıyla ---\n";
 // Eskiden getPublished `1 AS durum` döndürüyordu; arayüz her bota rozet basıyordu.
 $rows = $repo->getPublished(['limit' => 200, 'offset' => 0]);

@@ -19,6 +19,15 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
     private const PUBLIC_VISIBLE_SQL =
         '(c.is_independent = 0 AND (COALESCE(c.ucret_haftalik, 0) = 0 AND COALESCE(c.ucret_aylik, 0) = 0 OR pms.user_id IS NOT NULL))';
 
+    /**
+     * N-30 — vitrin kuralı başka sorgularda (Diyalog Defteri akışı) AYNI
+     * kaynaktan kullanılsın diye. Takma adlar: `c` = chatbotlar, `pms` = aktif
+     * satıcıya LEFT JOIN (ON pms.user_id = c.author_user_id AND pms.status = 'active').
+     */
+    public static function publicVisibleSql(): string {
+        return self::PUBLIC_VISIBLE_SQL;
+    }
+
     public function findById(int $id): ?array {
         return self::one('SELECT * FROM `' . self::T . '` WHERE id = ?', [$id]);
     }
