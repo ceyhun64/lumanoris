@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
 import { useRouter } from 'next/navigation';
 import {
-    Bell, BellOff, ThumbsUp, ThumbsDown, Share2, MessageCircle, ListPlus,
+    ThumbsUp, ThumbsDown, Share2, MessageCircle, ListPlus,
     ShoppingCart, EyeOff, Flag, ArrowRight, ChevronRight, Check,
 } from 'lucide-react';
 import CategoryBadge from '@/shared/ui/category-badge';
@@ -19,7 +19,6 @@ import { useAbortableEffect, isAbortError } from '@/shared/hooks/useAbortableEff
 const ShareModal = dynamic(() => import('@/features/sharing/ShareModal'), { ssr: false });
 const ReportModal = dynamic(() => import('@/features/moderation/ReportModal'), { ssr: false });
 const AddToListModal = dynamic(() => import('@/features/lists/AddToListModal'), { ssr: false });
-const BlockModal = dynamic(() => import('@/features/moderation/BlockModal'), { ssr: false });
 const CommentModal = dynamic(() => import('@/features/comments/CommentModal'), { ssr: false });
 import { postBotComment } from '@/features/comments/api';
 const DeleteConfirmModal = dynamic(() => import('@/shared/ui/DeleteConfirmModal'), { ssr: false });
@@ -86,9 +85,7 @@ function ActionPill({ icon: Icon, label, count, active, activeTone = 'fuchsia', 
 
 export default function ProfileCard({bot, comments}) {
     const [isFollowing, setIsFollowing] = useState(false);
-    const [notificationsEnabled, setNotificationsEnabled] = useState(true); // opsiyonel, isterseniz mantık da ekleyebiliriz
     const [shareOpen, setShareOpen] = useState(false);
-    const [blockOpen, setBlockOpen] = useState(false);
     const [reportOpen, setReportOpen] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [commentOpen, setCommentOpen] = useState(false);
@@ -302,21 +299,6 @@ export default function ProfileCard({bot, comments}) {
     }
 };
 
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            const cartString = localStorage.getItem('cart');
-            if (cartString) {
-                try {
-                    const cart = JSON.parse(cartString);
-                    const found = cart.some(item => item.id === `${profile.id}-${profile.title}-${profile.author}`);
-                    setIsInCart(found);
-                } catch (e) {
-                    setIsInCart(false);
-                }
-            }
-        }
-    }, [profile?.id, profile?.title, profile?.author, cartAdded]);
-
     const handleNotInterested = () => {
         if (!requireLogin(userId, router)) return;
         setNotInterestedConfirmOpen(true);
@@ -372,80 +354,66 @@ export default function ProfileCard({bot, comments}) {
     const canAddToCart =
         !bot.is_owner && Number(bot.is_independent) === 0 && !isFreePublic;
 
-    const followToggle = async () => {
-        if (!requireLogin(userId, router)) return;
+    // N-40 — takip/beğeni/beğenmeme isteği. Ekran yalnızca sunucu `success`
+    // dönünce değişir; eskiden başarısızlıkta hiçbir şey olmuyor, kullanıcı
+    // düğmeye bastığını sanıp hata görmüyordu. Başarısızlıkta null döner.
+    const postRelation = async (endpoint, failTitle) => {
         try {
-            const res = await fetch("/api/social/followchatbot.php", {
+            const res = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: new URLSearchParams({
                     data: JSON.stringify({ user_id: userId, chatbot_id: profile.id }),
                 }),
             });
-            const result = await res.json();
-            if (result.success) {
-                if (result.action === "follow") {
-                    setIsFollowing(true);
-                    setProfile((prev) => ({ ...prev, follows: prev.follows + 1 }));
-                } else if (result.action === "unfollowed") {
-                    setIsFollowing(false);
-                    setProfile((prev) => ({ ...prev, follows: prev.follows - 1 }));
-                }
-            }
+            const result = await res.json().catch(() => null);
+            if (res.ok && result?.success) return result;
+            toast({ variant: "destructive", title: failTitle, description: result?.message || `Sunucu hatası (HTTP ${res.status}).` });
         } catch (err) {
-            console.error("Follow API error:", err);
+            console.error("Social API error:", err);
+            toast({ variant: "destructive", title: failTitle, description: "Sunucuyla bağlantı kurulamadı." });
+        }
+        return null;
+    };
+
+    const followToggle = async () => {
+        if (!requireLogin(userId, router)) return;
+        const result = await postRelation("/api/social/followchatbot.php", "Takip güncellenemedi");
+        if (!result) return;
+        if (result.action === "follow") {
+            setIsFollowing(true);
+            setProfile((prev) => ({ ...prev, follows: prev.follows + 1 }));
+        } else if (result.action === "unfollowed") {
+            setIsFollowing(false);
+            setProfile((prev) => ({ ...prev, follows: prev.follows - 1 }));
         }
     };
 
     const toggleLike = async () => {
         if (!requireLogin(userId, router)) return;
-        try {
-            const res = await fetch("/api/social/likechatbot.php", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({
-                    data: JSON.stringify({ user_id: userId, chatbot_id: profile.id }),
-                }),
-            });
-            const result = await res.json();
-            if (result.success) {
-                if (result.action === "liked") {
-                    setLiked(true);
-                    setLikeCount((prev) => prev + 1);
-                    if (disliked) { setDisliked(false); setDislikeCount((prev) => prev - 1); }
-                } else if (result.action === "unliked") {
-                    setLiked(false);
-                    setLikeCount((prev) => prev - 1);
-                }
-            }
-        } catch (err) {
-            console.error("Like API error:", err);
+        const result = await postRelation("/api/social/likechatbot.php", "Beğeni güncellenemedi");
+        if (!result) return;
+        if (result.action === "liked") {
+            setLiked(true);
+            setLikeCount((prev) => prev + 1);
+            if (disliked) { setDisliked(false); setDislikeCount((prev) => prev - 1); }
+        } else if (result.action === "unliked") {
+            setLiked(false);
+            setLikeCount((prev) => prev - 1);
         }
     };
 
     const toggleDislike = async () => {
         if (!requireLogin(userId, router)) return;
-        try {
-            const res = await fetch("/api/social/dislikechatbot.php", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({
-                    data: JSON.stringify({ user_id: userId, chatbot_id: profile.id }),
-                }),
-            });
-            const result = await res.json();
-            if (result.success) {
-                if (result.action === "disliked") {
-                    setDisliked(true);
-                    setDislikeCount((prev) => prev + 1);
-                    if (liked) { setLiked(false); setLikeCount((prev) => prev - 1); }
-                } else if (result.action === "undisliked") {
-                    setDisliked(false);
-                    setDislikeCount((prev) => prev - 1);
-                }
-            }
-        } catch (err) {
-            console.error("Dislike API error:", err);
+        const result = await postRelation("/api/social/dislikechatbot.php", "Beğenmeme güncellenemedi");
+        if (!result) return;
+        if (result.action === "disliked") {
+            setDisliked(true);
+            setDislikeCount((prev) => prev + 1);
+            if (liked) { setLiked(false); setLikeCount((prev) => prev - 1); }
+        } else if (result.action === "undisliked") {
+            setDisliked(false);
+            setDislikeCount((prev) => prev - 1);
         }
     };
 
@@ -518,13 +486,6 @@ export default function ProfileCard({bot, comments}) {
                             onClick={handleAddToCart}
                         />
                     )}
-                    <ActionPill
-                        icon={notificationsEnabled ? Bell : BellOff}
-                        label={notificationsEnabled ? "Bildirimler Açık" : "Bildirimler Kapalı"}
-                        active={notificationsEnabled}
-                        onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                    />
-
                     <span className="mx-1 h-5 w-px shrink-0 bg-white/10" />
 
                     <ActionPill icon={EyeOff} label="İlgilenmiyorum" tone="muted" onClick={handleNotInterested} />
@@ -594,7 +555,6 @@ export default function ProfileCard({bot, comments}) {
                 }}
                 />
 
-            <BlockModal isOpen={blockOpen} onClose={() => setBlockOpen(false)} />
             <ShareModal isOpen={shareOpen} onClose={() => setShareOpen(false)} />
             <ReportModal isOpen={reportOpen} onClose={() => setReportOpen(false)} />
             <AddToListModal userId={userId} botId={profile.id}

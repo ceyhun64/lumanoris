@@ -289,6 +289,11 @@ $side = $codeOnly($web('widgets/Sidebar.jsx'));
 $logout = $codeOnly($web('shared/lib/logout.js'));
 check('N-39: çıkış yalnızca sunucu success dönünce /login\'e gidiyor', (bool) preg_match('/!result\?\.success[\s\S]{0,200}return[\s\S]{0,400}location\.href = "\/login"/', $logout));
 check('N-39: başlık ve kenar çubuğu ortak çıkışı kullanıyor, kendi logout isteği yok', str_contains($hdr, 'logoutAndRedirect()') && str_contains($side, 'logoutAndRedirect()') && !str_contains($hdr . $side, 'logout.php'));
+$pc = $codeOnly($web('entities/user/ui/ProfileCard.jsx'));
+check('N-40: takip/beğeni/beğenmeme başarısızlıkta hata gösteriyor', (bool) preg_match('/res\.ok && result\?\.success\) return result;\s*toast\(\{ variant: "destructive"/', $pc)
+    && substr_count($pc, 'await postRelation(') === 3);
+check('N-40: sunucuya bağlı olmayan "Bildirimler Açık/Kapalı" düğmesi yok', $pc !== '' && !str_contains($pc, 'notificationsEnabled'));
+check('N-40: sepet durumu localStorage\'dan okunmuyor (yalnızca getcart)', !str_contains($pc, 'localStorage'));
 
 echo "\n--- N-26: \"Daha Önce Satıldı\" yalnızca gerçek satış kaydıyla ---\n";
 // Eskiden getPublished `1 AS durum` döndürüyordu; arayüz her bota rozet basıyordu.
