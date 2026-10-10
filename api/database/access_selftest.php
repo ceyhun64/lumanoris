@@ -308,6 +308,13 @@ $maxTxt = number_format(AppConfig::MAX_TRAINING_CHARS, 0, ',', '.');
 check('N-44: web KB_MAX_CHARS = AppConfig::MAX_TRAINING_CHARS (elle senkron)', (bool) preg_match('/const KB_MAX_CHARS = ' . AppConfig::MAX_TRAINING_CHARS . ';/', $create));
 check('N-44: arayüzde RAG / vektör arama iddiası yok', $purch !== '' && $follow !== '' && !preg_match('/\bRAG\b/', $purch . $follow . $codeOnly($create)));
 check('N-44: Satın Aldıklarım eğitim sınırını doğru yazıyor', str_contains($purch, "en fazla $maxTxt karakter"), $maxTxt);
+$cta = '';
+foreach (['app/dashboard/checkout/page.jsx', 'app/dashboard/following/page.jsx', 'app/dashboard/purchased/page.jsx', 'app/components/landing/HeroSection.jsx', 'app/dashboard/page.jsx'] as $rel) {
+    $cta .= $codeOnly($web($rel));
+}
+check('N-45: Keşfet düğmeleri yalnızca "Keşfet" (Pazaryerine Git / Pazaryerini Keşfet vb. yok)', $cta !== ''
+    && !preg_match('/Pazaryerine Git|Pazaryerini Keşfet|Pazaryerinde Keşfet|Pazaryerine Göz At|Hemen Keşfet|Keşfet\'te bot bul/u', $cta));
+check('N-45: başlıkta arama kutusunun yanında "Keşfet" düğmesi yok', !preg_match('/<span>Keşfet<\/span>/u', $hdr));
 check('N-42: diyalog defterinde bot gizleme başarısızlıkta hata gösteriyor', (bool) preg_match('/addhide\.php[\s\S]{0,300}response\.ok && result\?\.success\)[\s\S]{0,500}\} else \{\s*toast\.error\(/', $notes));
 
 echo "\n--- N-26: \"Daha Önce Satıldı\" yalnızca gerçek satış kaydıyla ---\n";

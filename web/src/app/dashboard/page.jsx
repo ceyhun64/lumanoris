@@ -760,7 +760,7 @@ function NewChatHero({
                               className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-violet-300 hover:text-violet-200"
                             >
                               <Compass className="h-3.5 w-3.5" />
-                              Keşfet'te bot bul
+                              Keşfet
                             </Link>
                           </div>
                         )}

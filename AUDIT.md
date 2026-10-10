@@ -1971,6 +1971,21 @@ Bot sil (Chatbotlarım), özel yap, yayınla (PublishModal), bot oluştur/günce
 
 Başka yerde RAG/vektör/embedding/semantik arama iddiası yok (`web/src`, `api/admin`, `README.md`, müşteri özeti tarandı). Web'deki yeni `KB_MAX_CHARS` sabiti `AppConfig::MAX_TRAINING_CHARS`'ın elle kopyası; `access_selftest` "Arayüz kilitleri" eşitliği ve RAG iddiasının geri gelmemesini kilitliyor. Landing "tek tıkla hızlıca aktarın" metnine dokunulmadı (müşteri kararı).
 
+### N-45 — Keşfet düğmeleri (müşteri isteği, 2026-10-10)
+
+Keşfet'e götüren düğmelerin etiketi tek kelime "Keşfet" oldu; arama kutusunun yanındaki "Keşfet" düğmesi (yalnızca masaüstünde görünüyordu) kaldırıldı. Keşfet'e kenar çubuğundan ve aramadan (Enter / büyüteç → `/dashboard/explore/?search=…`) gidiliyor.
+
+| Dosya | Önce | Sonra |
+|---|---|---|
+| `widgets/DashboardHeader.jsx` | Arama kutusunun yanında "Keşfet" düğmesi | Kaldırıldı |
+| `app/dashboard/following/page.jsx` | "Pazaryerinde Keşfet", boş durumda "Pazaryerine Git" | "Keşfet" |
+| `app/dashboard/purchased/page.jsx` | "Pazaryerini Keşfet" (iki yer) | "Keşfet" |
+| `app/dashboard/checkout/page.jsx` | Boş sepette "Pazaryerine Göz At" → `/dashboard` | "Keşfet" → `/dashboard/explore` |
+| `app/dashboard/page.jsx` | Bot seçicide "Keşfet'te bot bul" | "Keşfet" |
+| `app/components/landing/HeroSection.jsx` | "Hemen Keşfet" → `/dashboard/` | "Keşfet" (hedef aynı: kayıt istemeden ana sayfa) |
+
+**Bilerek değiştirilmedi:** sepetteki "Pazaryerine Dön" (`checkout/page.jsx`) bir geri düğmesi (`history.back()`), Keşfet'e gitmiyor; "Keşfet" yazsaydı yanıltırdı. "Pazaryerine Kaydet" (PublishModal) gezinme değil, yayın seçeneği. Erişilemeyen `features/history/EmptyHistory.jsx` ("Keşfetmeye Başla") dokunulmadı. Doğrulama: `access_selftest` N-45 kilidi; tarayıcıda masaüstü + 390 px (başlıkta düğme yok, arama `/dashboard/explore/?search=Fitness`, Takip Edilenler ve Satın Aldıklarım "Keşfet" → `/dashboard/explore/`).
+
 ### Hiçbir rotadan erişilmeyen dosyalar (37, bu turda silinmedi)
 
 `entities/chatbot/ui/BotCard.jsx`, `ChatbotCard.jsx`, `SuggestedCard.jsx` · `entities/user/ui/AccountPoints.jsx` · `features/chatbot-mgmt/ChatbotForm.jsx` · `features/contact/ContactForm.jsx` · `features/history/EmptyHistory.jsx` · `features/lists/AddToListModalEmpty.jsx` · `features/moderation/BlockModal.jsx` (N-40 sonrası) · `features/notes/DialogueModal.jsx`, `NotesEmpty.jsx` · `features/notifications/NotificationPopup.jsx` · `features/payment/CardFields.jsx` · `features/purchasing/BuyModal.jsx` · `features/settings/EditableField.jsx`, `EmailEditor.jsx`, `PhoneEditor.jsx`, `ProfileImageEdit.jsx` · `features/user-profile/ProfilePopup.jsx` · `features/wallet/WithdrawalModal.jsx` · `shared/api/client.js` · `shared/lib/card.js` · `shared/ui/Alert.jsx`, `avatar.jsx`, `separator.jsx`, `stat-card.jsx`, `switch.jsx` · `widgets/info/*` (8 dosya) · `widgets/LanguageSelector.jsx`, `MarketplaceToolbar.jsx`. Çoğu aynı hata sınıfını taşıyor (ör. `ChatbotCard`, `BuyModal`, `DialogueModal`); kullanılmadıkları için düzeltilmedi. Silinmeleri önerilir (CLAUDE.md'ye göre üçlü çağıran araması sonrası; `CardFields.jsx` / `card.js` N-17 kilidinin okuduğu dosyalar değil — kilit `checkout/page.jsx`, `upgrade/page.jsx` ve `features/payment/PlanPaymentModal.jsx`'e bakıyor).

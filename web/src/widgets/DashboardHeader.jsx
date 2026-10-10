@@ -515,15 +515,8 @@ export default function Header({
               <Command className="w-2.5 h-2.5" /> K
             </div>
           </div>
-
-          {/* Sadece masaüstünde görünür */}
-          <button
-            type="button"
-            onClick={goToExplore}
-            className={`hidden md:flex shrink-0 h-11 items-center gap-2 rounded-2xl border border-fuchsia-500/25 bg-fuchsia-500/10 px-4 text-xs font-semibold text-fuchsia-200 transition-all duration-200 hover:border-fuchsia-500/50 hover:bg-fuchsia-500/20 hover:text-white hover:shadow-[0_0_20px_rgba(217,70,239,0.15)] ${ICON_BTN_FOCUS}`}
-          >
-            <span>Keşfet</span>
-          </button>
+          {/* N-45: arama kutusunun yanındaki "Keşfet" düğmesi kaldırıldı
+              (müşteri isteği); Keşfet'e kenar çubuğundan ve aramadan gidiliyor. */}
         </div>
 
         {/* Action Controls & Profile Menu */}

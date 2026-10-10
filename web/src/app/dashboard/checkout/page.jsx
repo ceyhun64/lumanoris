@@ -219,10 +219,10 @@ export default function Checkout() {
               paketlerini keşfetmek için pazaryerimize göz atın.
             </p>
             <button
-              onClick={() => router.push("/dashboard")}
+              onClick={() => router.push("/dashboard/explore")}
               className="px-6 py-3 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-medium text-xs shadow-lg shadow-fuchsia-600/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
             >
-              Pazaryerine Göz At
+              Keşfet
             </button>
           </div>
         ) : step === 1 ? (

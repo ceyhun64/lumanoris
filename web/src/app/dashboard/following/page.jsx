@@ -476,7 +476,7 @@ export default function Following() {
             className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-btn px-5 py-3 text-xs font-semibold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer shrink-0"
           >
             <Sparkles className="w-4 h-4" />
-            <span>Pazaryerinde Keşfet</span>
+            <span>Keşfet</span>
             <ArrowUpRight className="w-4 h-4 opacity-70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </button>
         </div>
@@ -639,7 +639,7 @@ export default function Following() {
                 onClick={() => router.push("/dashboard/explore")}
                 className="px-6 py-3 rounded-xl bg-gradient-btn text-xs font-bold text-white shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
               >
-                Pazaryerine Git
+                Keşfet
               </button>
             )}
           </div>
