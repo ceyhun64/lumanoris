@@ -1473,13 +1473,15 @@ Gözlem (yeni değil): admin sayfa parçaları (`/admin/parcekme.php` dahil) `ph
 
 ---
 
-# Canlı uygulama sırası — GÜNCEL (2026-10-10, `canli-2026-10e`)
+# Canlı uygulama sırası — GÜNCEL (2026-10-10, `canli-2026-10f`)
 
-Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının ve önceki `canli-2026-10` / `canli-2026-10b` / `canli-2026-10c` / `canli-2026-10d` sıralarının **yerine geçer**. Tüm adımları kullanıcı çalıştırır; Claude canlıya bağlanmaz. Yerelde 010–013 ve 015–017 uygulandı.
+Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının ve önceki `canli-2026-10` / `canli-2026-10b` / `canli-2026-10c` / `canli-2026-10d` / `canli-2026-10e` sıralarının **yerine geçer**. Tüm adımları kullanıcı çalıştırır; Claude canlıya bağlanmaz. Yerelde 010–013 ve 015–017 uygulandı.
 
-**`canli-2026-10e` = `canli-2026-10d` + N-34 (bot yorumu kaydedilmiyordu) + N-35 (Takip Edilenler'de takibi bırakma, kart beğenisi ve liste kaydı sunucuya yazılmıyordu) + `hoppa_selftest` yalıtım düzeltmesi; ayrıntı: aşağıda "Canlıdan gelen hatalar — N-34, N-35".** `canli-2026-10d` = `canli-2026-10c` + N-33 (sohbetteki "Bugün kalan Lumacoin" göstergesi iade sonrası güncelleniyor; tek ön yüz değişikliği) + belgeler ("Hoppa canlıya açma", BLOCKERS B3 notu, görev metni). `canli-2026-10c` = `canli-2026-10b` + Faz 8 (12 — uçtan uca doğrulama bulguları N-23…N-32 kapatıldı; ayrıntı: aşağıda "Faz 8"). `canli-2026-10b` = `canli-2026-10` + Faz 7a / 7a-2 / 7a-3 (Hoppa ile paket ödemesi, mutabakat, iade, admin "Paket Ödemeleri" ekranı) + N-21 (admin paneli göreli yollar) + N-22 (CSRF'siz iade ucu kapatıldı, 410). Bu sürümde canlıda ödeme **AÇILMAZ**: Hoppa kodu `PAYMENT_PROVIDER=none` ile kapalı gelir.
+**`canli-2026-10f` = `canli-2026-10e` + N-36 (ölü kod: Keşfet `?from=list` modu, `MarketCard`, `MarketplaceListCard`) + N-37…N-42 (arayüz taraması: sunucuya gitmeden ya da yanıta bakmadan "başarılı" görünen yerler — Geçmişim, "tümünü okundu", çıkış, sohbet başlığı takip/beğeni, paylaş/kopyala, Diyalog Defteri gizleme) + N-43 (390 px bildirim paneli taşması) + `scripts/verify.sh`; ayrıntı: aşağıda "Arayüz taraması".** **`canli-2026-10e` = `canli-2026-10d` + N-34 (bot yorumu kaydedilmiyordu) + N-35 (Takip Edilenler'de takibi bırakma, kart beğenisi ve liste kaydı sunucuya yazılmıyordu) + `hoppa_selftest` yalıtım düzeltmesi; ayrıntı: aşağıda "Canlıdan gelen hatalar — N-34, N-35".** `canli-2026-10d` = `canli-2026-10c` + N-33 (sohbetteki "Bugün kalan Lumacoin" göstergesi iade sonrası güncelleniyor; tek ön yüz değişikliği) + belgeler ("Hoppa canlıya açma", BLOCKERS B3 notu, görev metni). `canli-2026-10c` = `canli-2026-10b` + Faz 8 (12 — uçtan uca doğrulama bulguları N-23…N-32 kapatıldı; ayrıntı: aşağıda "Faz 8"). `canli-2026-10b` = `canli-2026-10` + Faz 7a / 7a-2 / 7a-3 (Hoppa ile paket ödemesi, mutabakat, iade, admin "Paket Ödemeleri" ekranı) + N-21 (admin paneli göreli yollar) + N-22 (CSRF'siz iade ucu kapatıldı, 410). Bu sürümde canlıda ödeme **AÇILMAZ**: Hoppa kodu `PAYMENT_PROVIDER=none` ile kapalı gelir.
 
-**Doğrulananlar (2026-10-10, `canli-2026-10..canli-2026-10e`):**
+**Doğrulananlar (2026-10-10, `canli-2026-10..canli-2026-10f`):**
+
+- **`canli-2026-10e..canli-2026-10f` yalnızca ön yüz:** PHP kodu, API sözleşmesi, migration, `pending`, `schema.sql`, `.htaccess`/`router.php` değişmedi (api tarafında tek değişen `access_selftest.php`, kaynak kilitleri). Yalnızca web deploy'u yeterli; adım 6'daki migration listesi aynı. Production build'inde (`d1f5ac5`; N-43 için `3f0d172` ile aynı dosya) N-37…N-43 tarayıcıda (zorlanmış 500) masaüstü + 390 px doğrulandı; `scripts/verify.sh` yeşil.
 
 - **`canli-2026-10d..canli-2026-10e`: yeni migration yok**, şema/denylist değişmedi (`api/database/migrations`, `pending`, `schema.sql`, `.htaccess`, `router.php` aynı). PHP: `SocialController` (follow/like isteğe bağlı `action`), `ChatbotController::getChatbots` + `ChatbotRepository::getPublished` (`liked_by_me`, eklemeli), yeni `functions/social_relations.php`. API sözleşmesi geriye dönük uyumlu: eylemsiz follow/like eski toggle ve eski yanıt adları; `addcomment.php` aynı (sıkı izin listesi korunuyor). Web ve API **birlikte** deploy edilmeli (eski bir sekme yorumda yine 403 alır, veri bozulmaz). `ee04666` production build'inde N-34/N-35 tarayıcıda (masaüstü + 390 px) ve tüm doğrulama komutları yeşil.
 
@@ -1501,11 +1503,11 @@ Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının ve önceki `canli-20
 | 3 | Faz 4 kontrol A (AUDIT "Faz 4 — kontrol A ve B") | Satır dönerse ve taslaksa `pending/014_…` → `migrations/`, **koddan önce** `--apply`; kontrol `kalan = 0`. |
 | 4 | 015 öncesi not: `SELECT id, ucret_haftalik, ucret_aylik FROM chatbotlar WHERE UPPER(TRIM(isim)) = 'LUMANORIS AI'` | Geri alma için saklayın. |
 | 4b | **Diyalog Defteri ölçümü** (aşağıdaki "N-30 mevcut kayıt sorgusu", salt okunur) | Bilgi amaçlı, deploy'u durdurmaz. Yeni görünürlük kuralı özel/bağımsız botların kayıtlarını deploy anında başkalarından gizler (veri değişmez). Sayıları not edin. |
-| 5 | **Kod deploy** (`canli-2026-10e` etiketi; web + api birlikte) | Kod 012/016/017 yokken de çalışır (eksik tablolar için fail-safe / 503). `api/.htaccess` ve `api/admin/.htaccess` de değişti (`cron` dizini denylist'e eklendi) — deploy'a dahil olmalı. |
+| 5 | **Kod deploy** (`canli-2026-10f` etiketi; web + api birlikte) | Kod 012/016/017 yokken de çalışır (eksik tablolar için fail-safe / 503). `api/.htaccess` ve `api/admin/.htaccess` de değişti (`cron` dizini denylist'e eklendi) — deploy'a dahil olmalı. |
 | 5a | **Canlı `api/.env` kontrolü** (değerleri paylaşmadan) | `PAYMENT_PROVIDER` satırı **yok** ya da **`PAYMENT_PROVIDER=none`** olmalı. `HOPPA_TEST_*`, `HOPPA_LIVE_*`, `APP_PUBLIC_URL` **girilmez**. Yerel `.env`'den kopyalanmış bir `PAYMENT_PROVIDER=hoppa` satırı varsa **DURUN** ve silin: test anahtarı girilmiş bir kurulum canlıda kullanıcıları Hoppa TEST sayfasına yönlendirir. |
 | 6 | `--status` → `--apply` → `--status` | Bekleyenler sırayla uygulanır: 009 (varsa), 010, 011, 012, 013, 015, 016, 017. **Faz 7a yeni migration getirmedi.** Hiçbiri `--allow-destructive` gerektirmez; `⚠ VERİ SİLER` işareti hiçbirinde olmamalı. |
 | 7 | Öz-testler | `plan_limits_selftest.php --strict`, `access_selftest.php`, `application_selftest.php`, `hoppa_selftest.php` (A + B + B2: sahte sağlayıcı, ağ yok, transaction + ROLLBACK; 017 uygulanmış olmalı), `migrate_selftest.php` (salt okunur) → hepsi 0 başarısız. `iyzico_selftest.php` A bölümü. **`hoppa_selftest.php --e2e` canlıda ÇALIŞTIRILMAZ.** |
-| 8 | Elle kontrol | Liste sayfası (009 sonrası 500 yok), Lumanoris AI sıradan hesapla sohbet (015), Başvuru gönder → admin Başvurular → İncelendi → kullanıcının IBAN'ı ve `admin_audit_log` satırı (017). **Faz 7a:** Paketler'de ücretli paket seç → pencerede "Ödeme altyapısı hazırlanıyor" (kart alanı yok, Hoppa'ya yönlendirme yok); admin menüsü Ödeme → Paket Ödemeleri açılıyor, liste boş; `POST /api/seller/marketplace_refund.php` → `410`; `/cron/plan_payments.php` web'den erişilemiyor (403/404). **10e:** sohbet sayfasında bir bota yorum yaz → hata yok, sayfa yenilenince yorum duruyor; Takip Edilenler'de kalple takibi bırak → yenile → bot geri gelmiyor; Keşfet'te kalp → yenile → basılı. **Faz 8:** Keşfet'te yeni bir ücretsiz botta "Daha Önce Satıldı" yok, "+12% / +24%" yok; Paketler'de yıllık/%20 anahtarı yok; takip edilen ücretsiz bot ana sayfa seçicisinde seçilebiliyor; sohbette "Diyalog Defterine Ekle" → kayıt akışta görünüyor. |
+| 8 | Elle kontrol | Liste sayfası (009 sonrası 500 yok), Lumanoris AI sıradan hesapla sohbet (015), Başvuru gönder → admin Başvurular → İncelendi → kullanıcının IBAN'ı ve `admin_audit_log` satırı (017). **Faz 7a:** Paketler'de ücretli paket seç → pencerede "Ödeme altyapısı hazırlanıyor" (kart alanı yok, Hoppa'ya yönlendirme yok); admin menüsü Ödeme → Paket Ödemeleri açılıyor, liste boş; `POST /api/seller/marketplace_refund.php` → `410`; `/cron/plan_payments.php` web'den erişilemiyor (403/404). **10e:** sohbet sayfasında bir bota yorum yaz → hata yok, sayfa yenilenince yorum duruyor; Takip Edilenler'de kalple takibi bırak → yenile → bot geri gelmiyor; Keşfet'te kalp → yenile → basılı. **10f:** Geçmişim'de uydurma sohbet yok; çıkış → `/login`, geri gelince oturum kapalı; sohbet başlığında "Bildirimler Açık/Kapalı" düğmesi yok, takip/beğeni çalışıyor; Paylaş → Kopyala → "Kopyalandı" ve bağlantı botu açıyor. **Faz 8:** Keşfet'te yeni bir ücretsiz botta "Daha Önce Satıldı" yok, "+12% / +24%" yok; Paketler'de yıllık/%20 anahtarı yok; takip edilen ücretsiz bot ana sayfa seçicisinde seçilebiliyor; sohbette "Diyalog Defterine Ekle" → kayıt akışta görünüyor. |
 
 **Bu sürümde yapılmayacaklar:**
 
@@ -1815,7 +1817,7 @@ Dikkat: `functions/env.php` **gerçek ortam değişkenini `.env`'e tercih eder.*
 | # | Madde | Tür | Durum (2026-10-09) |
 |---|---|---|---|
 | 1 | **Merchant Key yenilemesi** — anahtar sohbette paylaşıldı; Hoppa'dan yenileme, yeni anahtar canlıya girilir, eski anahtar geçersiz. | Kullanıcı / Hoppa | Bekliyor |
-| 2 | **Sürüm** — canlıda `canli-2026-10e` (asgari `canli-2026-10c`: N-31, dönüşte oturum düşmesi orada kapandı; daha eski sürümle ödeme açılmamalı). 10e, N-33/N-34/N-35'i de içerir. | Deploy | `canli-2026-10e` hazır |
+| 2 | **Sürüm** — canlıda `canli-2026-10f` ya da `canli-2026-10e` (asgari `canli-2026-10c`: N-31, dönüşte oturum düşmesi orada kapandı; daha eski sürümle ödeme açılmamalı). 10e, N-33/N-34/N-35'i de içerir; 10f yalnızca ön yüz düzeltmeleri ekler, ödeme yoluna dokunmaz. | Deploy | `canli-2026-10e` hazır |
 | 3 | **N-19 komisyon** — test hesabında komisyon alıcıya yansıyor (149 ₺ → karttan 151,25 ₺). Canlı hesapta komisyonu kim ödeyecek? Ya Hoppa panelinde/üye işyeri ayarında "komisyon üye işyerinde" yapılır, ya da ekranlarda "+ komisyon" açıkça yazılır. | Müşteri kararı + Hoppa #3 | Açık |
 | 4 | **N-20 alıcı adresi** — `CITY/STATE/ADDRESS` (ve telefon yoksa `PHONE`) `"-"` gidiyor; canlıda kabul ediliyor mu? | Hoppa #17 (+ müşteri: adres toplanacak mı) | Açık |
 | 5 | **HTTPS ve alan adı** — `APP_PUBLIC_URL` https; TLS sertifikası; ters vekil `X-Forwarded-Proto: https` iletiyor (oturum çerezi `Secure` ancak öyle alır — J-02). | Altyapı (B6) | Açık |
@@ -1830,7 +1832,7 @@ Faz 8 bulguları (N-23…N-32) kapandı; ödeme yolunu doğrudan etkileyen N-31 
 
 ### 3. Ödeme açma günü — sıra
 
-Ön koşul: 2. bölümdeki 1-6 kapanmış, sürüm `canli-2026-10e` (asgari `canli-2026-10c`), canlı veritabanı yedeği alınmış.
+Ön koşul: 2. bölümdeki 1-6 kapanmış, sürüm `canli-2026-10f` ya da `canli-2026-10e` (asgari `canli-2026-10c`), canlı veritabanı yedeği alınmış.
 
 | Adım | Ne | Kontrol / durma koşulu |
 |---|---|---|
@@ -1905,11 +1907,11 @@ Müşteri lumanoris.net'te bildirdi. İkisi de **`canli-2026-10d`'de var** (ayr�
 
 Silme ucu olmadığı için kalan test verisi: seed bot #27'de e2e-b'nin 6 yorumu (#16–#21). Takip, beğeni ve listeler temiz.
 
-## Arayüz taraması — "sunucuya gitmeden ya da yanıta bakmadan başarılı görünen" düğme/formlar (2026-10-10)
+## Arayüz taraması (→ `canli-2026-10f`) — "sunucuya gitmeden ya da yanıta bakmadan başarılı görünen" düğme/formlar (2026-10-10)
 
 Yöntem: rotalardan (`app/**/page.jsx`, `layout.jsx`) başlayıp statik + `dynamic()` import grafiği izlendi → **151 canlı dosya**. Bunlardaki durum değiştiren **56 istek** tek tek okundu; ayrıca istek atmadan durum değiştiren yerel aç/kapa'lar ve başarı mesajı gösteren her satır (toast, "Kaydedildi/eklendi/silindi/alındı", `setShowFeedback`) çevresindeki istek ve yanıt kontrolüyle tarandı. Hiçbir rotadan erişilmeyen 36 dosya ayrıca listelendi (aşağıda).
 
-### Bulgular (düzeltilecek)
+### Bulgular (hepsi düzeltildi — bkz. Kapanış)
 
 | ID | Dosya | Ne yapıyor | Sunucuya gidiyor mu | Yanıta bakıyor mu | Sonuç |
 |---|---|---|---|---|---|
@@ -1922,9 +1924,28 @@ Yöntem: rotalardan (`app/**/page.jsx`, `layout.jsx`) başlayıp statik + `dynam
 | **N-40** | aynı — "Bildirimler Açık/Kapalı" | Bot bildirimi ayarı gibi görünüyor | **Hayır** — sunucuda karşılığı yok | — | Sahte ayar |
 | **N-40** | aynı — sepet durumu | "Sepette" göstergesi | `getcart` ile sunucudan okunuyor; ayrıca **`localStorage` `cart`** anahtarından okuyan eski bir etki onu ezebiliyor (bu anahtara artık kimse yazmıyor) | — | Yanıltıcı yerel durum |
 | **N-40** | aynı — `BlockModal` | "Engelle" penceresi | Hayır | — | Hiçbir yerden açılmıyor (erişilemeyen arayüz) |
-| **N-41** | `features/sharing/ShareModal.jsx` — bot paylaş | Bağlantı üretip kopyalar | — | Pano işlemini **beklemeden** "Kopyalandı" | Ayrıca bağlantı `?botid=` (küçük harf) üretiyor; sohbet sayfası `botId` okuyor → **paylaşılan her bot bağlantısı botu açmıyor** |
+| **N-41** | `features/sharing/ShareModal.jsx` — bot paylaş | Bağlantı üretip kopyalar | — | Pano işlemini **beklemeden** "Kopyalandı" | Ayrıca `urlId` verilince bağlantı `?botid=` (küçük harf) üretiyor; sohbet sayfası `botId` okuyor. **Düzeltme notu:** bu dal bugün gizli — `urlId`'yi yalnızca erişilemeyen bileşenler (`entities` `BotCard`, `ChatbotCard`, `DialogueModal`) veriyor; canlı sohbet sayfası `window.location.href` kullanıyor ve tarayıcıda `/dashboard/chat/?botId=27` üretip botu açtı. Yine de düzeltildi |
 | **N-41** | `app/dashboard/notes/page.jsx` — diyalog paylaş | Bağlantıyı kopyalar | — | Pano işlemini beklemeden "Kopyalandı" | |
 | **N-42** | `app/dashboard/notes/page.jsx` — "bu botu gizle" | Botun kayıtlarını gizler | Evet | Bakıyor (yalnızca başarıda) ama **hata sessiz** | |
+
+### Kapanış (N-37…N-42)
+
+Her madde ayrı commit; her commit `bash scripts/verify.sh` geçtikten sonra ayrı komutla atıldı. Kaynak düzeyindeki gerileme kilitleri `api/database/access_selftest.php` "Arayüz kilitleri" bölümünde (eski koda karşı kırmızı, yeniye karşı yeşil). Tarayıcı: Playwright, ilgili istek `page.route` ile 500'e zorlanarak; masaüstü + 390 px.
+
+| ID | Commit | Değişiklik | Tarayıcı — önce | Tarayıcı — sonra |
+|---|---|---|---|---|
+| **N-37** | `b34d454` | Uydurma sohbetler kaldırıldı (ilk durum boş + yükleme hatası mesajı); silme yalnızca `success`'te; başlık iyimser ama başarısızlıkta eski ada döner | Başarısız silmede satır kayboldu; yeni başlık ekranda kaldı; istek hatasında üç uydurma sohbet | Satır kalıyor + hata; eski başlık geri + hata; uydurma yok, "yüklenemedi" mesajı |
+| **N-38** | `9fa24be` | "Tümünü okundu" yalnızca sunucunun onayladığı bildirimleri işaretler; başarısızlıkta toast | Rozet temizlendi, sunucuda okunmamış kaldı, mesaj yok | Rozet duruyor, "Bazı bildirimler okundu olarak işaretlenemedi" |
+| **N-39** | `cdac00f` | Başlık ve kenar çubuğu ortak `shared/lib/logout.js` (`logoutAndRedirect`) kullanıyor; `/login`'e yalnızca `success`'te gider | `/login`'e gitti, oturum sunucuda açık kaldı, mesaj yok | Sayfada kalıyor, hata mesajı, oturum açık (doğru: çıkış olmadı). Başarılı çıkış ayrıca denendi: `/login/`, oturum kapalı |
+| **N-40** | `c863842` | Takip/beğeni/beğenmeme ortak `postRelation()`: başarısızlıkta toast. "Bildirimler Açık/Kapalı" düğmesi, `localStorage` `cart` etkisi ve açılmayan `BlockModal` kaldırıldı | Takip 500 → mesaj yok; sahte bildirim düğmesi vardı | "Takip güncellenemedi", "Beğeni güncellenemedi"; sayaç değişmiyor; düğme yok. Başarı yolu: takip/bırak ve beğen/geri al ikişer kez → sayaç ve durum doğru |
+| **N-41** | `691a770` | `shared/lib/clipboard.js` (`copyText`) yazmayı bekler; "Kopyalandı" yalnızca başarıda, aksi hâlde satır içi uyarı (bot paylaş + diyalog paylaş). Instagram paylaşımında pencere tıklamayla aynı anda açılır, kopyalama sonucu sonra gösterilir. `?botid=` → `?botId=` | Pano reddedilse de "Kopyalandı" | Pano reddedildi → düğme "Kopyala", uyarı görünür; pano başarılı → "Kopyalandı", panoda doğru bağlantı (`?botId=27`, `?dialog=16`) |
+| **N-42** | `d1f5ac5` | Diyalog Defteri "Bu Profili Önermeyin": başarısızlıkta toast | Mesaj yok | Kart sayısı aynı (4→4), hata görünüyor. Başarı yolu veri değiştirdiği için tarayıcıda denenmedi (kod yolu değişmedi) |
+
+**N-43 (son doğrulamada bulundu, 10e'de de vardı):** 390 px'te bildirim paneli (`widgets/DashboardHeader.jsx`) zile göre sağa hizalı 320 px genişliğindeydi; sol kenarı ekranın dışına (−26 px) taşıp başlık ve metin kesiliyordu. 10e..10f arasında bu dosyada yerleşim değişmedi (yalnızca N-38/N-39 mantığı). Düzeltme: sarmalayıcı yalnızca `sm` üstünde `relative`; dar ekranda panel başlığa göre `inset-x-4`. Doğrulama: production build, 390 px panel 16–374 px (ekran içinde), dışarı tıklayınca kapanıyor; 390 px tarama (aşağıda) yeniden.
+
+**390 px tarama (production, değişen ekranlar):** Geçmişim, Diyalog Defteri, Keşfet, sohbet, sohbet + Paylaş, bildirim paneli, profil menüsü — yatay kaydırma yok, taşan öğe yok (bildirim paneli N-43 sonrası). Küçük metin uyarıları (Paylaş penceresindeki 10 px uygulama adları, profil menüsü) bu turda değişmedi.
+
+Ekran görüntüleri (yerel, `.gitignore`'da): `docs/verification/2026-10/N-37…N-43-*.png`, `S-14-10f-*.png`. `features/moderation/BlockModal.jsx` N-40 ile tek importerini kaybetti; aşağıdaki erişilemeyen dosyalar listesine eklendi (37).
 
 ### Doğru çalışanlar (yalnızca sunucu başarısında değişiyor)
 
@@ -1934,10 +1955,10 @@ Bot sil (Chatbotlarım), özel yap, yayınla (PublishModal), bot oluştur/günce
 
 | Yer | Ne | Durum |
 |---|---|---|
-| `app/dashboard/history/page.jsx` | Üç uydurma sohbet (ilk durum) | **N-37 ile kaldırılıyor** |
+| `app/dashboard/history/page.jsx` | Üç uydurma sohbet (ilk durum) | **N-37 ile kaldırıldı** (`b34d454`) |
 | `app/dashboard/purchased/page.jsx` | "Koruma Tipi: Gelişmiş RAG" — veriden gelmiyor, sabit pazarlama metni | Listelendi (Satın Aldıklarım menüde gizli; adres elle yazılırsa görünür) |
 | `app/components/landing/previews/*` | Landing'deki ürün önizlemeleri sabit örnek veri kullanıyor (ör. "1.000 ₺ — Hesabınıza Aktarın", "Bakiyeni Çek … tek tıkla hesabınıza güvenle hızlıca aktarın", önizleme içinde "Satın Al") | Listelendi — dekoratif önizleme, gerçek kullanıcı verisi gibi sunulmuyor; ama "tek tıkla hızlıca aktarın" iddiası bugünkü süreçle (B7: para çekme elle onaylanıyor) uyuşmuyor, metin müşteriyle gözden geçirilmeli |
 
-### Hiçbir rotadan erişilmeyen dosyalar (36, bu turda silinmedi)
+### Hiçbir rotadan erişilmeyen dosyalar (37, bu turda silinmedi)
 
-`entities/chatbot/ui/BotCard.jsx`, `ChatbotCard.jsx`, `SuggestedCard.jsx` · `entities/user/ui/AccountPoints.jsx` · `features/chatbot-mgmt/ChatbotForm.jsx` · `features/contact/ContactForm.jsx` · `features/history/EmptyHistory.jsx` · `features/lists/AddToListModalEmpty.jsx` · `features/notes/DialogueModal.jsx`, `NotesEmpty.jsx` · `features/notifications/NotificationPopup.jsx` · `features/payment/CardFields.jsx` · `features/purchasing/BuyModal.jsx` · `features/settings/EditableField.jsx`, `EmailEditor.jsx`, `PhoneEditor.jsx`, `ProfileImageEdit.jsx` · `features/user-profile/ProfilePopup.jsx` · `features/wallet/WithdrawalModal.jsx` · `shared/api/client.js` · `shared/lib/card.js` · `shared/ui/Alert.jsx`, `avatar.jsx`, `separator.jsx`, `stat-card.jsx`, `switch.jsx` · `widgets/info/*` (8 dosya) · `widgets/LanguageSelector.jsx`, `MarketplaceToolbar.jsx`. Çoğu aynı hata sınıfını taşıyor (ör. `ChatbotCard`, `BuyModal`, `DialogueModal`); kullanılmadıkları için düzeltilmedi. Silinmeleri önerilir (CLAUDE.md'ye göre üçlü çağıran araması sonrası; `CardFields.jsx` / `card.js` N-17 kilidinin okuduğu dosyalar değil — kilit `checkout/page.jsx`, `upgrade/page.jsx` ve `features/payment/PlanPaymentModal.jsx`'e bakıyor).
+`entities/chatbot/ui/BotCard.jsx`, `ChatbotCard.jsx`, `SuggestedCard.jsx` · `entities/user/ui/AccountPoints.jsx` · `features/chatbot-mgmt/ChatbotForm.jsx` · `features/contact/ContactForm.jsx` · `features/history/EmptyHistory.jsx` · `features/lists/AddToListModalEmpty.jsx` · `features/moderation/BlockModal.jsx` (N-40 sonrası) · `features/notes/DialogueModal.jsx`, `NotesEmpty.jsx` · `features/notifications/NotificationPopup.jsx` · `features/payment/CardFields.jsx` · `features/purchasing/BuyModal.jsx` · `features/settings/EditableField.jsx`, `EmailEditor.jsx`, `PhoneEditor.jsx`, `ProfileImageEdit.jsx` · `features/user-profile/ProfilePopup.jsx` · `features/wallet/WithdrawalModal.jsx` · `shared/api/client.js` · `shared/lib/card.js` · `shared/ui/Alert.jsx`, `avatar.jsx`, `separator.jsx`, `stat-card.jsx`, `switch.jsx` · `widgets/info/*` (8 dosya) · `widgets/LanguageSelector.jsx`, `MarketplaceToolbar.jsx`. Çoğu aynı hata sınıfını taşıyor (ör. `ChatbotCard`, `BuyModal`, `DialogueModal`); kullanılmadıkları için düzeltilmedi. Silinmeleri önerilir (CLAUDE.md'ye göre üçlü çağıran araması sonrası; `CardFields.jsx` / `card.js` N-17 kilidinin okuduğu dosyalar değil — kilit `checkout/page.jsx`, `upgrade/page.jsx` ve `features/payment/PlanPaymentModal.jsx`'e bakıyor).
