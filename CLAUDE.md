@@ -72,7 +72,8 @@ Eksik ownership/auth kontrolü bulduğunda sırayla:
 
 - Commit edebilirsin, yalnızca `revize/pazaryeri` branch'inde. `main` üzerindeysen önce o branch'e geç; `main`'e commit atma.
 - Her madde/AUDIT ID'si için ayrı commit; mesaj ID ile başlar (ör. `N-02: …`).
-- Commit'ten önce üçü de geçmiş olmalı: `npm run lint`, verify build, `php -l` (bkz. Doğrulama komutları). Biri kırmızıysa commit yok.
+- Commit'ten önce **tek doğrulama betiği** geçmiş olmalı: `bash scripts/verify.sh` (lint + verify build + `php -l` + tüm selftest'ler). Çıkışı 0 ve son satırı `DOĞRULAMA: GEÇTİ` değilse commit yok.
+- Commit **ayrı bir komutla** atılır, betik geçtikten sonra. Dosya kırpma, test, `cp`/`sed`/`node -e` gibi adımları commit ile aynı komut zincirine koyma; bir adım başarısız olursa zincir commit'e ulaşmamalı.
 - Dosyaları adıyla ekle (`git add -A` / `git add .` değil); senin değiştirmediğin, çalışma ağacında bekleyen dosyalar commit'e girmez.
 - Push yalnızca `git push origin revize/pazaryeri`. `main`'e push, merge ve force push **asla**.
 
@@ -98,6 +99,8 @@ Repo kökünde `BLOCKERS.md` var: senin kod yazarak çözemeyeceğin, dışarıd
 - Bir blocker'ı stub/mock/varsayılan değerle doldurup üstünü örtme.
 
 ## Doğrulama komutları
+
+Hepsini sırayla çalıştıran tek kapı: `bash scripts/verify.sh` (kayıtlar `storage/logs/verify/`). Tek tek:
 
 ```bash
 cd web && NEXT_DIST_DIR=.next-verify npm run build
