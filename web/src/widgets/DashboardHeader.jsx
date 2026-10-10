@@ -58,7 +58,7 @@ function NotificationPopup({ onClose, notifications, loading, onMarkAllRead }) {
   };
 
   return (
-    <div className="absolute right-0 top-full mt-3 z-40 w-80 sm:w-96 rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-150">
+    <div className="absolute right-0 top-full mt-3 z-40 w-80 sm:w-96 max-sm:inset-x-4 max-sm:w-auto rounded-2xl border border-white/10 bg-[#09090E]/95 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-white/5 animate-in fade-in slide-in-from-top-3 duration-150">
       <div className="flex items-center justify-between pb-3.5 border-b border-white/5">
         <div className="flex items-center gap-2.5">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400">
@@ -543,7 +543,10 @@ export default function Header({
           ) : (
             <>
               {/* Notifications Trigger */}
-              <div className="relative" ref={notificationMenuRef}>
+              {/* N-43: dar ekranda `relative` yalnızca sm üstünde — panel o
+                  zaman başlığa göre konumlanır (inset-x-4); zile göre
+                  konumlanınca 390 px'te sola taşıp kesiliyordu. */}
+              <div className="sm:relative" ref={notificationMenuRef}>
                 <Tooltip content="Bildirimler">
                   <button
                     ref={notificationBtnRef}
