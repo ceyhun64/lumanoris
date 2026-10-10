@@ -301,6 +301,7 @@ check('N-41: paylaşım bağlantısı sohbet sayfasının okuduğu botId paramet
 check('N-41: "Kopyalandı" yalnızca pano yazması tamamlanınca (paylaş + diyalog paylaş)', str_contains($clip, 'await navigator.clipboard.writeText')
     && !preg_match('/navigator\.clipboard/', $share . $notes)
     && preg_match_all('/if \(!ok\) return;\s*setCopied\(true\)/', $share . $notes) === 2);
+check('N-42: diyalog defterinde bot gizleme başarısızlıkta hata gösteriyor', (bool) preg_match('/addhide\.php[\s\S]{0,300}response\.ok && result\?\.success\)[\s\S]{0,500}\} else \{\s*toast\.error\(/', $notes));
 
 echo "\n--- N-26: \"Daha Önce Satıldı\" yalnızca gerçek satış kaydıyla ---\n";
 // Eskiden getPublished `1 AS durum` döndürüyordu; arayüz her bota rozet basıyordu.

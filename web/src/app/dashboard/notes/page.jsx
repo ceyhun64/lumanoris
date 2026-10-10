@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { UserContext } from "@/shared/contexts/UserContext";
 import CategoryFilter from "@/widgets/CategoryFilter";
 import { copyText } from "@/shared/lib/clipboard";
+import { toast } from "@/shared/hooks/use-toast";
 import {
   Dialog,
   DialogContentBare,
@@ -431,18 +432,23 @@ export default function DialoguePage() {
         method: "POST",
         body: formData,
       });
-      const result = JSON.parse(await response.text());
+      const result = await response.json().catch(() => null);
 
-      if (result.success) {
+      // N-42: kart yalnızca sunucu gizlemeyi onaylarsa kalkar; eskiden
+      // başarısızlıkta hiçbir şey olmuyor, kullanıcı hata görmüyordu.
+      if (response.ok && result?.success) {
         setHiddenBotIds((prev) => [...prev, targetChatbotId]);
         setHistories((prev) =>
           prev.filter((h) => h.conversation_chatbot_id !== targetChatbotId),
         );
         setShowFeedbackBadge(true);
         setTimeout(() => setShowFeedbackBadge(false), 2000);
+      } else {
+        toast.error(result?.message || `Bot gizlenemedi (HTTP ${response.status}). Lütfen tekrar deneyin.`);
       }
     } catch (error) {
       console.error("Hata:", error);
+      toast.error("Sunucuya ulaşılamadı. Bot gizlenemedi.");
     }
   };
 
