@@ -294,6 +294,13 @@ check('N-40: takip/beğeni/beğenmeme başarısızlıkta hata gösteriyor', (boo
     && substr_count($pc, 'await postRelation(') === 3);
 check('N-40: sunucuya bağlı olmayan "Bildirimler Açık/Kapalı" düğmesi yok', $pc !== '' && !str_contains($pc, 'notificationsEnabled'));
 check('N-40: sepet durumu localStorage\'dan okunmuyor (yalnızca getcart)', !str_contains($pc, 'localStorage'));
+$share = $codeOnly($web('features/sharing/ShareModal.jsx'));
+$notes = $codeOnly($web('app/dashboard/notes/page.jsx'));
+$clip = $codeOnly($web('shared/lib/clipboard.js'));
+check('N-41: paylaşım bağlantısı sohbet sayfasının okuduğu botId parametresini kullanıyor', str_contains($share, '/dashboard/chat/?botId=') && !str_contains($share, '?botid='));
+check('N-41: "Kopyalandı" yalnızca pano yazması tamamlanınca (paylaş + diyalog paylaş)', str_contains($clip, 'await navigator.clipboard.writeText')
+    && !preg_match('/navigator\.clipboard/', $share . $notes)
+    && preg_match_all('/if \(!ok\) return;\s*setCopied\(true\)/', $share . $notes) === 2);
 
 echo "\n--- N-26: \"Daha Önce Satıldı\" yalnızca gerçek satış kaydıyla ---\n";
 // Eskiden getPublished `1 AS durum` döndürüyordu; arayüz her bota rozet basıyordu.

@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo, useContext } from "react";
 import dynamic from "next/dynamic";
 import { UserContext } from "@/shared/contexts/UserContext";
 import CategoryFilter from "@/widgets/CategoryFilter";
+import { copyText } from "@/shared/lib/clipboard";
 import {
   Dialog,
   DialogContentBare,
@@ -180,12 +181,16 @@ function DialogueModal({ isOpen, onClose, selectedHistory, onShare }) {
 
 function ShareModal({ isOpen, dialogId, onClose }) {
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   if (!isOpen) return null;
 
   const shareUrl = dialogueShareUrl(dialogId);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(shareUrl);
+  // N-41: "Kopyalandı" yalnızca pano yazması gerçekten tamamlanınca.
+  const handleCopy = async () => {
+    const ok = await copyText(shareUrl);
+    setCopyFailed(!ok);
+    if (!ok) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -220,6 +225,11 @@ function ShareModal({ isOpen, dialogId, onClose }) {
             {copied ? "Kopyalandı!" : "Kopyala"}
           </button>
         </div>
+        {copyFailed && (
+          <p role="alert" className="-mt-2 text-xs text-rose-300">
+            Bağlantı kopyalanamadı. Bağlantıyı seçip elle kopyalayın.
+          </p>
+        )}
         </div>
       </DialogContentBare>
     </Dialog>
