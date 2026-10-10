@@ -275,6 +275,15 @@ if (!function_exists('chatbotRelationSet')) {
     }
 }
 
+echo "\n--- Arayüz kilitleri (N-37…): durum yalnızca sunucu başarısında, uydurma veri yok ---\n";
+// Kaynak düzeyinde gerileme kilitleri; davranış tarayıcıda (zorlanmış 500) doğrulandı.
+$web = fn(string $rel) => (string) @file_get_contents(realpath(__DIR__ . '/../../web/src') . '/' . $rel);
+$codeOnly = fn(string $src) => (string) preg_replace(['~/\*.*?\*/~s', '~//[^\n]*~', '~\{/\*.*?\*/\}~s'], '', $src);
+$hist = $codeOnly($web('app/dashboard/history/page.jsx'));
+check('N-37: Geçmişim\'de uydurma sohbet yok', $hist !== '' && !preg_match('/Stripe Entegrasyon|Mimari Analiz|App Router Yeniden/', $hist));
+check('N-37: Geçmişim silme başarısızlıkta satırı silmiyor', (bool) preg_match('/if \(res\.ok && result\?\.success\) \{\s*setHistoryItems/', $hist));
+check('N-37: başlık değişikliği sunucu yanıtını okuyor ve geri alıyor', str_contains($hist, 'updateconversation.php') && str_contains($hist, 'revert('));
+
 echo "\n--- N-26: \"Daha Önce Satıldı\" yalnızca gerçek satış kaydıyla ---\n";
 // Eskiden getPublished `1 AS durum` döndürüyordu; arayüz her bota rozet basıyordu.
 $rows = $repo->getPublished(['limit' => 200, 'offset' => 0]);
