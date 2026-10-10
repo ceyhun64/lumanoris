@@ -300,7 +300,20 @@ try {
     check('mutabakat: reddedilen → hoppa_failed', $row($oFail)['status'] === WalletController::HOSTED_FAILED);
     check('mutabakat: 24 saati geçmiş, hâlâ ödenmemiş → hoppa_expired', $row($oOld)['status'] === WalletController::HOSTED_EXPIRED);
     check('mutabakat: 24 saati geçmemiş, ödenmemiş → hoppa_pending kalır', $row($oWait)['status'] === WalletController::HOSTED_PENDING);
-    check('mutabakat sayaçları', $st['paid'] === 1 && $st['failed'] === 1 && $st['expired'] === 1 && $st['pending'] === 1, json_encode($st));
+    // Sayaçlar mutabakatın gördüğü TÜM satırları sayar. Yerel veritabanında
+    // senaryo dışında yarım kalmış gerçek bir TEST siparişi varsa (ör. kart
+    // girilmeden bırakılan ödeme) o da sayılır; test eskiden bunu varsaymıyor
+    // ve kırmızıya düşüyordu (2026-10-10). Beklenen değer: senaryo (1/1/1/1)
+    // + senaryo dışı satırların bu transaction sonundaki durumu.
+    $expect = ['paid' => 1, 'failed' => 1, 'expired' => 1, 'pending' => 1];
+    $statusKey = ['paid' => 'paid', WalletController::HOSTED_FAILED => 'failed', WalletController::HOSTED_EXPIRED => 'expired', WalletController::HOSTED_PENDING => 'pending'];
+    $foreign = array_diff(array_unique($fake->asked), [$oPaid, $oFail, $oOld, $oWait]);
+    foreach ($foreign as $fo) {
+        $k = $statusKey[$row($fo)['status'] ?? ''] ?? null;
+        if ($k !== null) $expect[$k]++;
+    }
+    if ($foreign !== []) echo '        (senaryo dışı ' . count($foreign) . " sipariş de sayıldı)\n";
+    check('mutabakat sayaçları', $st['paid'] === $expect['paid'] && $st['failed'] === $expect['failed'] && $st['expired'] === $expect['expired'] && $st['pending'] === $expect['pending'], json_encode(['sayac' => $st, 'beklenen' => $expect]));
 
     $setPlan('__isaret__');
     $fake->asked = [];
