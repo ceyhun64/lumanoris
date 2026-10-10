@@ -283,6 +283,8 @@ $hist = $codeOnly($web('app/dashboard/history/page.jsx'));
 check('N-37: Geçmişim\'de uydurma sohbet yok', $hist !== '' && !preg_match('/Stripe Entegrasyon|Mimari Analiz|App Router Yeniden/', $hist));
 check('N-37: Geçmişim silme başarısızlıkta satırı silmiyor', (bool) preg_match('/if \(res\.ok && result\?\.success\) \{\s*setHistoryItems/', $hist));
 check('N-37: başlık değişikliği sunucu yanıtını okuyor ve geri alıyor', str_contains($hist, 'updateconversation.php') && str_contains($hist, 'revert('));
+$hdr = $codeOnly($web('widgets/DashboardHeader.jsx'));
+check('N-38: "tümünü okundu" yalnızca sunucunun onayladıklarını işaretliyor', (bool) preg_match('/readnotification\.php[\s\S]{0,400}result\?\.success[\s\S]{0,600}done\.has\(n\.id\)/', $hdr));
 
 echo "\n--- N-26: \"Daha Önce Satıldı\" yalnızca gerçek satış kaydıyla ---\n";
 // Eskiden getPublished `1 AS durum` döndürüyordu; arayüz her bota rozet basıyordu.

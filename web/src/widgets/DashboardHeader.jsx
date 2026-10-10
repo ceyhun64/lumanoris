@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import QuitModal from "@/features/auth/QuitModal";
 import { formatCurrency } from "@/shared/lib/format";
+import { toast } from "@/shared/hooks/use-toast";
 import { isPaidPlan } from "@/shared/lib/pricing";
 import useMarketplaceRegistration from "@/shared/hooks/useMarketplaceRegistration";
 import {
@@ -333,19 +334,40 @@ export default function Header({
     (n) => !n.is_read,
   ).length;
 
-  const markAllNotificationsRead = () => {
+  /* N-38 — eskiden rozet hemen sıfırlanıyor, istekler yanıtına bakılmadan
+     gönderiliyordu; sunucu reddederse yenilemede bildirimler yine "okunmamış"
+     çıkıyordu. Şimdi yalnızca sunucunun onayladığı bildirimler okundu olur;
+     biri başarısızsa mesaj gösterilir. */
+  const markAllNotificationsRead = async () => {
     const unread = notifications.filter((n) => !n.is_read);
     if (unread.length === 0) return;
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    unread.forEach((n) => {
-      const formData = new FormData();
-      formData.append("data", JSON.stringify({ id: n.id }));
-      fetch("/api/notification/readnotification.php", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      }).catch((err) => console.error("Bildirim okundu işaretlenemedi:", err));
-    });
+    const results = await Promise.all(
+      unread.map(async (n) => {
+        try {
+          const formData = new FormData();
+          formData.append("data", JSON.stringify({ id: n.id }));
+          const res = await fetch("/api/notification/readnotification.php", {
+            method: "POST",
+            body: formData,
+            credentials: "include",
+          });
+          const result = await res.json().catch(() => null);
+          return res.ok && result?.success ? n.id : null;
+        } catch (err) {
+          console.error("Bildirim okundu işaretlenemedi:", err);
+          return null;
+        }
+      }),
+    );
+    const done = new Set(results.filter((id) => id !== null));
+    if (done.size > 0) {
+      setNotifications((prev) =>
+        prev.map((n) => (done.has(n.id) ? { ...n, is_read: true } : n)),
+      );
+    }
+    if (done.size < unread.length) {
+      toast.error("Bazı bildirimler okundu olarak işaretlenemedi. Lütfen tekrar deneyin.");
+    }
   };
 
   useEffect(() => {
