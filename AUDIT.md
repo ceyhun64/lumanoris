@@ -1473,13 +1473,15 @@ Gözlem (yeni değil): admin sayfa parçaları (`/admin/parcekme.php` dahil) `ph
 
 ---
 
-# Canlı uygulama sırası — GÜNCEL (2026-10-09, `canli-2026-10d`)
+# Canlı uygulama sırası — GÜNCEL (2026-10-10, `canli-2026-10e`)
 
-Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının ve önceki `canli-2026-10` / `canli-2026-10b` / `canli-2026-10c` sıralarının **yerine geçer**. Tüm adımları kullanıcı çalıştırır; Claude canlıya bağlanmaz. Yerelde 010–013 ve 015–017 uygulandı.
+Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının ve önceki `canli-2026-10` / `canli-2026-10b` / `canli-2026-10c` / `canli-2026-10d` sıralarının **yerine geçer**. Tüm adımları kullanıcı çalıştırır; Claude canlıya bağlanmaz. Yerelde 010–013 ve 015–017 uygulandı.
 
-**`canli-2026-10d` = `canli-2026-10c` + N-33 (sohbetteki "Bugün kalan Lumacoin" göstergesi iade sonrası güncelleniyor; tek ön yüz değişikliği) + belgeler ("Hoppa canlıya açma", BLOCKERS B3 notu, görev metni).** `canli-2026-10c` = `canli-2026-10b` + Faz 8 (12 — uçtan uca doğrulama bulguları N-23…N-32 kapatıldı; ayrıntı: aşağıda "Faz 8"). `canli-2026-10b` = `canli-2026-10` + Faz 7a / 7a-2 / 7a-3 (Hoppa ile paket ödemesi, mutabakat, iade, admin "Paket Ödemeleri" ekranı) + N-21 (admin paneli göreli yollar) + N-22 (CSRF'siz iade ucu kapatıldı, 410). Bu sürümde canlıda ödeme **AÇILMAZ**: Hoppa kodu `PAYMENT_PROVIDER=none` ile kapalı gelir.
+**`canli-2026-10e` = `canli-2026-10d` + N-34 (bot yorumu kaydedilmiyordu) + N-35 (Takip Edilenler'de takibi bırakma, kart beğenisi ve liste kaydı sunucuya yazılmıyordu) + `hoppa_selftest` yalıtım düzeltmesi; ayrıntı: aşağıda "Canlıdan gelen hatalar — N-34, N-35".** `canli-2026-10d` = `canli-2026-10c` + N-33 (sohbetteki "Bugün kalan Lumacoin" göstergesi iade sonrası güncelleniyor; tek ön yüz değişikliği) + belgeler ("Hoppa canlıya açma", BLOCKERS B3 notu, görev metni). `canli-2026-10c` = `canli-2026-10b` + Faz 8 (12 — uçtan uca doğrulama bulguları N-23…N-32 kapatıldı; ayrıntı: aşağıda "Faz 8"). `canli-2026-10b` = `canli-2026-10` + Faz 7a / 7a-2 / 7a-3 (Hoppa ile paket ödemesi, mutabakat, iade, admin "Paket Ödemeleri" ekranı) + N-21 (admin paneli göreli yollar) + N-22 (CSRF'siz iade ucu kapatıldı, 410). Bu sürümde canlıda ödeme **AÇILMAZ**: Hoppa kodu `PAYMENT_PROVIDER=none` ile kapalı gelir.
 
-**Doğrulananlar (2026-10-09, `canli-2026-10..canli-2026-10d`):**
+**Doğrulananlar (2026-10-10, `canli-2026-10..canli-2026-10e`):**
+
+- **`canli-2026-10d..canli-2026-10e`: yeni migration yok**, şema/denylist değişmedi (`api/database/migrations`, `pending`, `schema.sql`, `.htaccess`, `router.php` aynı). PHP: `SocialController` (follow/like isteğe bağlı `action`), `ChatbotController::getChatbots` + `ChatbotRepository::getPublished` (`liked_by_me`, eklemeli), yeni `functions/social_relations.php`. API sözleşmesi geriye dönük uyumlu: eylemsiz follow/like eski toggle ve eski yanıt adları; `addcomment.php` aynı (sıkı izin listesi korunuyor). Web ve API **birlikte** deploy edilmeli (eski bir sekme yorumda yine 403 alır, veri bozulmaz). `ee04666` production build'inde N-34/N-35 tarayıcıda (masaüstü + 390 px) ve tüm doğrulama komutları yeşil.
 
 - **`canli-2026-10c..canli-2026-10d` kodda yalnızca `web/src/app/dashboard/chat/page.jsx` (+4 satır, N-33).** `api/database/` (migration, pending, şema, selftest), `.htaccess`/`router.php` denylist'leri ve tüm PHP kodu değişmedi; adım 6'daki migration listesi aynı. N-33 tarayıcıda (geliştirme sunucusu, yeniden oynatılan SSE) önce/sonra doğrulandı; lint + verify build + `php -l` yeşil. 10d için ayrı bir production yeniden koşusu yapılmadı — 10c'nin uçtan uca sonuçları geçerli, değişen tek dosya o.
 
@@ -1499,11 +1501,11 @@ Bu bölüm Faz 3, Faz 4 ve Faz 6'daki canlı sıralarının ve önceki `canli-20
 | 3 | Faz 4 kontrol A (AUDIT "Faz 4 — kontrol A ve B") | Satır dönerse ve taslaksa `pending/014_…` → `migrations/`, **koddan önce** `--apply`; kontrol `kalan = 0`. |
 | 4 | 015 öncesi not: `SELECT id, ucret_haftalik, ucret_aylik FROM chatbotlar WHERE UPPER(TRIM(isim)) = 'LUMANORIS AI'` | Geri alma için saklayın. |
 | 4b | **Diyalog Defteri ölçümü** (aşağıdaki "N-30 mevcut kayıt sorgusu", salt okunur) | Bilgi amaçlı, deploy'u durdurmaz. Yeni görünürlük kuralı özel/bağımsız botların kayıtlarını deploy anında başkalarından gizler (veri değişmez). Sayıları not edin. |
-| 5 | **Kod deploy** (`canli-2026-10d` etiketi; web + api birlikte) | Kod 012/016/017 yokken de çalışır (eksik tablolar için fail-safe / 503). `api/.htaccess` ve `api/admin/.htaccess` de değişti (`cron` dizini denylist'e eklendi) — deploy'a dahil olmalı. |
+| 5 | **Kod deploy** (`canli-2026-10e` etiketi; web + api birlikte) | Kod 012/016/017 yokken de çalışır (eksik tablolar için fail-safe / 503). `api/.htaccess` ve `api/admin/.htaccess` de değişti (`cron` dizini denylist'e eklendi) — deploy'a dahil olmalı. |
 | 5a | **Canlı `api/.env` kontrolü** (değerleri paylaşmadan) | `PAYMENT_PROVIDER` satırı **yok** ya da **`PAYMENT_PROVIDER=none`** olmalı. `HOPPA_TEST_*`, `HOPPA_LIVE_*`, `APP_PUBLIC_URL` **girilmez**. Yerel `.env`'den kopyalanmış bir `PAYMENT_PROVIDER=hoppa` satırı varsa **DURUN** ve silin: test anahtarı girilmiş bir kurulum canlıda kullanıcıları Hoppa TEST sayfasına yönlendirir. |
 | 6 | `--status` → `--apply` → `--status` | Bekleyenler sırayla uygulanır: 009 (varsa), 010, 011, 012, 013, 015, 016, 017. **Faz 7a yeni migration getirmedi.** Hiçbiri `--allow-destructive` gerektirmez; `⚠ VERİ SİLER` işareti hiçbirinde olmamalı. |
 | 7 | Öz-testler | `plan_limits_selftest.php --strict`, `access_selftest.php`, `application_selftest.php`, `hoppa_selftest.php` (A + B + B2: sahte sağlayıcı, ağ yok, transaction + ROLLBACK; 017 uygulanmış olmalı), `migrate_selftest.php` (salt okunur) → hepsi 0 başarısız. `iyzico_selftest.php` A bölümü. **`hoppa_selftest.php --e2e` canlıda ÇALIŞTIRILMAZ.** |
-| 8 | Elle kontrol | Liste sayfası (009 sonrası 500 yok), Lumanoris AI sıradan hesapla sohbet (015), Başvuru gönder → admin Başvurular → İncelendi → kullanıcının IBAN'ı ve `admin_audit_log` satırı (017). **Faz 7a:** Paketler'de ücretli paket seç → pencerede "Ödeme altyapısı hazırlanıyor" (kart alanı yok, Hoppa'ya yönlendirme yok); admin menüsü Ödeme → Paket Ödemeleri açılıyor, liste boş; `POST /api/seller/marketplace_refund.php` → `410`; `/cron/plan_payments.php` web'den erişilemiyor (403/404). **Faz 8:** Keşfet'te yeni bir ücretsiz botta "Daha Önce Satıldı" yok, "+12% / +24%" yok; Paketler'de yıllık/%20 anahtarı yok; takip edilen ücretsiz bot ana sayfa seçicisinde seçilebiliyor; sohbette "Diyalog Defterine Ekle" → kayıt akışta görünüyor. |
+| 8 | Elle kontrol | Liste sayfası (009 sonrası 500 yok), Lumanoris AI sıradan hesapla sohbet (015), Başvuru gönder → admin Başvurular → İncelendi → kullanıcının IBAN'ı ve `admin_audit_log` satırı (017). **Faz 7a:** Paketler'de ücretli paket seç → pencerede "Ödeme altyapısı hazırlanıyor" (kart alanı yok, Hoppa'ya yönlendirme yok); admin menüsü Ödeme → Paket Ödemeleri açılıyor, liste boş; `POST /api/seller/marketplace_refund.php` → `410`; `/cron/plan_payments.php` web'den erişilemiyor (403/404). **10e:** sohbet sayfasında bir bota yorum yaz → hata yok, sayfa yenilenince yorum duruyor; Takip Edilenler'de kalple takibi bırak → yenile → bot geri gelmiyor; Keşfet'te kalp → yenile → basılı. **Faz 8:** Keşfet'te yeni bir ücretsiz botta "Daha Önce Satıldı" yok, "+12% / +24%" yok; Paketler'de yıllık/%20 anahtarı yok; takip edilen ücretsiz bot ana sayfa seçicisinde seçilebiliyor; sohbette "Diyalog Defterine Ekle" → kayıt akışta görünüyor. |
 
 **Bu sürümde yapılmayacaklar:**
 
@@ -1813,7 +1815,7 @@ Dikkat: `functions/env.php` **gerçek ortam değişkenini `.env`'e tercih eder.*
 | # | Madde | Tür | Durum (2026-10-09) |
 |---|---|---|---|
 | 1 | **Merchant Key yenilemesi** — anahtar sohbette paylaşıldı; Hoppa'dan yenileme, yeni anahtar canlıya girilir, eski anahtar geçersiz. | Kullanıcı / Hoppa | Bekliyor |
-| 2 | **Sürüm** — canlıda `canli-2026-10d` (asgari `canli-2026-10c`: N-31, dönüşte oturum düşmesi orada kapandı; daha eski sürümle ödeme açılmamalı). 10d, N-33'ü de içerir. | Deploy | `canli-2026-10d` hazır |
+| 2 | **Sürüm** — canlıda `canli-2026-10e` (asgari `canli-2026-10c`: N-31, dönüşte oturum düşmesi orada kapandı; daha eski sürümle ödeme açılmamalı). 10e, N-33/N-34/N-35'i de içerir. | Deploy | `canli-2026-10e` hazır |
 | 3 | **N-19 komisyon** — test hesabında komisyon alıcıya yansıyor (149 ₺ → karttan 151,25 ₺). Canlı hesapta komisyonu kim ödeyecek? Ya Hoppa panelinde/üye işyeri ayarında "komisyon üye işyerinde" yapılır, ya da ekranlarda "+ komisyon" açıkça yazılır. | Müşteri kararı + Hoppa #3 | Açık |
 | 4 | **N-20 alıcı adresi** — `CITY/STATE/ADDRESS` (ve telefon yoksa `PHONE`) `"-"` gidiyor; canlıda kabul ediliyor mu? | Hoppa #17 (+ müşteri: adres toplanacak mı) | Açık |
 | 5 | **HTTPS ve alan adı** — `APP_PUBLIC_URL` https; TLS sertifikası; ters vekil `X-Forwarded-Proto: https` iletiyor (oturum çerezi `Secure` ancak öyle alır — J-02). | Altyapı (B6) | Açık |
@@ -1828,7 +1830,7 @@ Faz 8 bulguları (N-23…N-32) kapandı; ödeme yolunu doğrudan etkileyen N-31 
 
 ### 3. Ödeme açma günü — sıra
 
-Ön koşul: 2. bölümdeki 1-6 kapanmış, sürüm `canli-2026-10d` (asgari `canli-2026-10c`), canlı veritabanı yedeği alınmış.
+Ön koşul: 2. bölümdeki 1-6 kapanmış, sürüm `canli-2026-10e` (asgari `canli-2026-10c`), canlı veritabanı yedeği alınmış.
 
 | Adım | Ne | Kontrol / durma koşulu |
 |---|---|---|
@@ -1864,3 +1866,41 @@ Sonra `php -S` (API) sürecini yeniden başlatın. Akış 3. bölümün 5-6. ad�
 3. `php -S`'i yeniden başlatın; tüneli kapatın.
 4. Kontrol: Paketler → "Ödemeye geç" → açılan sayfa `posservicetest.esnekpos.com` (test) ya da "Ödeme altyapısı hazırlanıyor" (`none`) olmalı; `posservice.esnekpos.com` açılıyorsa canlı anahtar hâlâ okunuyor demektir.
 5. Hoppa panelinde deneme işleminin iptal göründüğünü kontrol edin. Canlı anahtarı içeren bir `.env` kopyası (yedek, `.env.bak-*`) bırakmayın.
+
+## Canlıdan gelen hatalar — N-34, N-35 (2026-10-10) → `canli-2026-10e`
+
+Müşteri lumanoris.net'te bildirdi. İkisi de **`canli-2026-10d`'de var** (ayrıca `canli-2026-10` ve `canli-2026-10b`'de; N-34'ün sunucu tarafındaki sıkı izin listesi 2026-08-26'dan, Takip Edilenler'deki istek hiç yazılmamıştı). Canlıya hangi sürümün gittiğini kullanıcı kontrol edecek.
+
+| ID | Sev | Dosya | Problem | Durum |
+|---|---|---|---|---|
+| **N-34** | P2 | `web/src/entities/user/ui/ProfileCard.jsx` (sohbet sayfası "Yorumlar"), `web/src/features/comments/CommentModal.jsx` | **Bot yorumu eklenemiyor ama listede görünüyor.** İstemci gövdeye `user_id` koyuyordu; `SocialController::addComment` yalnızca `chatbot_id` + `comment` kabul edip başka anahtarı 403 "Bu alanlar gönderilemez: user_id" ile reddediyor ve yazarı oturumdan alıyor (**sunucu doğru; izin listesi gevşetilmedi**). Ayrıca `CommentModal` yorumu sonuca bakmadan "Siz · Şimdi" olarak listeye ekliyordu. | **Kapandı** (`42998bb`): `features/comments/api.js` (`postBotComment`) `addcomment.php`'nin tek istemci yolu, kimlik göndermez. `CommentModal` satırı "Gönderiliyor…" olarak ekler; `onSend` `{ok:true}` dönmezse satırı geri alır, metni girişe geri koyar, hata mesajı pencerede kalır. |
+| **N-35** | P2 | `web/src/app/dashboard/following/page.jsx` (`handleUnfollow`) | **Takip Edilenler'de takibi bırakma kalıcı değil.** İki sayfa karşılaştırıldı: sohbet sayfası `followchatbot.php`'ye `{chatbot_id}` (toggle) gönderiyor ve çalışıyor; Takip Edilenler **hiç istek göndermiyordu** — kartı yalnızca ekrandan siliyor ve "çıkarıldı" diyordu; sayfa yenilenince bot geri geliyordu. | **Kapandı** (`ee04666`): açık eylem `{chatbot_id, action:"unfollow"}` (toggle değil — bayat bir sayfa botu yeniden takip edemez); kart yalnızca sunucu başarı dönünce kalkar, hata olursa yerinde kalır ve mesaj gösterilir. Sunucu: `functions/social_relations.php` → `chatbotRelationSet()` (açık eylem idempotent; eylemsiz çağrı eski toggle, sohbet sayfası değişmedi; yanıt adları aynı + `following`/`liked` bayrağı + `unchanged`). |
+
+### Tarama sonuçları
+
+**N-34 sınıfı — sunucunun izin listesinin reddettiği alan gönderen istekler.** Sıkı izin listesi olan uçlar: `addcomment` (SocialController), `addchat`, `addconversation`, `updateconversation` (ChatController), `savechatbot`, `updatechatbot`, `updatecart`, `updatesubscription`, `adddialogbook`, pazaryeri başvurusu. Bunlardan **yalnızca `addcomment`** `user_id`'yi kontrolden önce düşürmüyordu; diğerleri düşürüyor ya da istemci izinli alan gönderiyor. Bu uca giden istemciler: `ProfileCard.jsx` (canlı) ve `entities/chatbot/ui/ChatbotCard.jsx` (hiçbir yerden import edilmiyor) — ikisi de düzeltildi. `web/src`'te `user_id` gönderen diğer ~20 istek, kimliği oturumdan alan ve `user_id`'yi yok sayan uçlara gidiyor (zararsız; sunucu kodunda gövdeden `user_id` okuyan tek yer admin'e özel `SellerController` satıcı silme). `features/notes/DialogueModal.jsx` (import edilmiyor, defter yorumu) de aynı sözleşmeye getirildi.
+
+**N-35 sınıfı — sunucuya yazmadan "başarılı" görünen takip/beğeni/listeye ekle düğmeleri:**
+
+| Yer | Durum (önce) | Sonuç |
+|---|---|---|
+| Takip Edilenler → kalp (takibi bırak) | İstek yok | Düzeltildi (N-35) |
+| Keşfet + ana sayfa kartı (`BotCard.bento.jsx`) → kalp | Yalnızca yerel state; başlangıç durumu her zaman "beğenilmemiş" | Düzeltildi: `{chatbot_id, action:"like"/"unlike"}`, başlangıç `getchatbots.php` → `liked_by_me` (eklemeli, `optionalAuth`); arayüz yalnızca başarıda değişir |
+| Aynı kart → yer imi ("Listeme Kaydet") | Yalnızca yerel state | Düzeltildi: gerçek "Listeye Ekle" penceresini açar |
+| `AddToListModal` (sohbet sayfası + kart) | İsteklerin yanıtına bakmadan "Kaydedildi" | Düzeltildi: her yanıt kontrol edilir; hata varsa pencere açık kalır, mesaj gösterilir, durum sunucudan yeniden okunur |
+| Sohbet sayfası takip/beğeni (`ProfileCard`) | Doğru çalışıyor | Değişmedi (eylemsiz toggle); regresyon kontrolü yeşil |
+| Keşfet `?from=list` seçim modu | `localStorage`'a "liste" yazıyor, sunucuya değil | **Düzeltilmedi:** uygulamada bu adrese giden bağlantı yok (yalnızca adres elle yazılırsa açılıyor). Kaldırılması ya da gerçek listelere bağlanması önerilir. |
+| `widgets/MarketCard.jsx` | Sabit (uydurma) yorumlar gösteriyor | **Düzeltilmedi:** hiçbir yerden import edilmiyor (ölü kod). Kaldırılması önerilir. |
+
+### Doğrulama
+
+- `access_selftest`: N-34 (tek çağıran + kimlik yok + sunucu izin listesi ve oturum kimliği kilitli), N-35 (10 kontrol: takip yokken "unfollow" yeniden takip etmez, idempotent follow, kalıcı unfollow, eylemsiz toggle korunuyor, like/unlike, `liked_by_me` beğenen/oturumsuz, geçersiz eylem reddi). Önce kırmızı, sonra yeşil.
+- Tarayıcı, e2e-b + seed bot #27, masaüstü ve 390 px: **önce** (ana ağaç, dev): N-34 → 403 "Bu alanlar gönderilemez: user_id", yorum kayıtsız ama listede; N-35 → 0 istek, yenilemede bot geri geldi. **Sonra** (dev ve `ee04666` production build): N-34 → istek `{"chatbot_id":27,"comment":…}`, 200, kayıtlı; zorlanmış 500'de satır geri alındı, metin ve mesaj kaldı. N-35 → istek `{chatbot_id:27, action:"unfollow"}`, yenilemede gelmiyor, sunucuda takip yok. Kart kalbi yenileme sonrası basılı ve sunucuda kayıtlı; yer imi liste penceresini açıyor (detay penceresi açılmıyor); liste penceresi zorlanmış 500'de açık kalıp mesaj gösteriyor. Sohbet sayfası takip/beğeni regresyonu yeşil. 390 px: Takip Edilenler, Keşfet, ana sayfa, yorum ve liste pencereleri — yatay kaydırma/taşma yok.
+- Tam doğrulama (`ee04666`): lint, verify build, `php -l`, iyzico 77/77, plan_limits --strict 44/44, access 59/59, application 52/52, hoppa 83/83, migrate 21/21; S-13 güvenlik smoke öncekiyle aynı.
+
+### Not — kurala aykırı bir commit ve test yalıtımı
+
+- `42998bb` (N-34) commit'i, N-35'in henüz kırmızı olan test bölümünü içeren `access_selftest.php` ile girdi: dosyayı N-34 bölümüne indirecek adım başarısız oldu ve zincir durmadı. lint/build/`php -l` yeşildi ama CLAUDE.md "doğrulamalardan biri başarısızsa commit atılmaz" diyor. Geçmiş yeniden yazılmadı; `ee04666` (N-35) ile test yeşil.
+- `9b86d6b`: `hoppa_selftest`'in mutabakat sayaç kontrolü, yerel veritabanında kart girilmeden bırakılmış gerçek bir TEST siparişi (`PLN-7F32C6492C3C4534`, N-31 doğrulamasından) yüzünden kırmızıya düştü. Kod regresyonu değil, test yalıtım hatası: beklenen sayaç artık senaryo + senaryo dışı satırların son durumu. Veriye dokunulmadı.
+
+Silme ucu olmadığı için kalan test verisi: seed bot #27'de e2e-b'nin 6 yorumu (#16–#21). Takip, beğeni ve listeler temiz.
