@@ -228,8 +228,9 @@ function BotQuickDetailModal({ bot, isOpen, onClose, router }) {
               Hakkında
             </h4>
             <p className="text-xs text-zinc-300 leading-relaxed bg-zinc-950/60 p-3.5 rounded-xl border border-white/5">
-              {bot.aciklama ||
-                "Bu yapay zeka asistanı, özel veri kaynakları ve gelişmiş RAG altyapısı ile donatılmıştır."}
+              {/* Açıklaması olmayan botta eskiden "özel veri kaynakları ve
+                  gelişmiş RAG altyapısı" iddiası çıkıyordu; ürün RAG yapmıyor. */}
+              {bot.aciklama || "Bu asistan için açıklama eklenmemiş."}
             </p>
           </div>
   

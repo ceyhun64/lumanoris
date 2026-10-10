@@ -225,6 +225,10 @@ function capacityLabel(used, limit, unlimited) {
 }
 
 const KB_MAX_PDF_MB = 5;
+/* Eğitim metni tavanı — AppConfig::MAX_TRAINING_CHARS ile ELLE senkron.
+   Sunucu bu sınırı aşan kısmı keser, dolunca 413 döner; sohbette metnin
+   tamamı (en fazla bu kadar) olduğu gibi modele verilir — arama/vektör yok. */
+const KB_MAX_CHARS = 60000;
 const KB_MAX_PDF_BYTES = KB_MAX_PDF_MB * 1024 * 1024;
 
 /* Sekmeler tek kaynakta: hem üstteki sekme çubuğu hem alttaki "Devam Et"
@@ -341,7 +345,8 @@ function ChatbotForm({
 
   // Secilen dosyayi dogrula ve onizlemesini uret. Sunucu tarafi da ayni
   // kontrolleri yapiyor (MIME + 5MB); burasi kullaniciya aninda geri bildirim.
-  // --- Bilgi Bankasi (RAG) -------------------------------------------
+  // --- Bilgi Bankasi (RAG degil: metin training_prompt'a eklenir, sohbette
+  // tamami modele verilir; bkz. KB_MAX_CHARS) ---------------------------
   // Backend zaten hazirdi ve hic cagrilmiyordu:
   //   POST /api/training/readpdf.php            -> PDF metni cikarir
   //   POST /api/training/readurl.php            -> sayfa metni cikarir (yeni)
@@ -903,7 +908,7 @@ function ChatbotForm({
           </div>
         )}
 
-        {/* Tab 3: RAG Knowledge */}
+        {/* Tab 3: Bilgi Bankası (eğitim metni) */}
         {activeTab === "knowledge" && (
           <div className="space-y-4 animate-in fade-in duration-200">
             {!isSavedBot ? (
@@ -940,9 +945,16 @@ function ChatbotForm({
                   <span className="font-mono text-xs font-semibold text-white">
                     {corpusLength === null
                       ? "—"
-                      : `${corpusLength.toLocaleString("tr-TR")} karakter`}
+                      : `${corpusLength.toLocaleString("tr-TR")} / ${KB_MAX_CHARS.toLocaleString("tr-TR")} karakter`}
                   </span>
                 </div>
+                <p className="px-1 text-caption leading-relaxed text-zinc-500">
+                  Eklediğiniz belge ve sayfaların metni botun eğitim metnine
+                  eklenir ve her mesajda olduğu gibi modele verilir; ayrı bir
+                  arama ya da vektör dizini yoktur. En fazla{" "}
+                  {KB_MAX_CHARS.toLocaleString("tr-TR")} karakter saklanır,
+                  fazlası eklenmez.
+                </p>
 
                 {/* PDF */}
                 <button

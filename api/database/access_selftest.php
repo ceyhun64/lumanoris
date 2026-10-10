@@ -301,6 +301,13 @@ check('N-41: paylaşım bağlantısı sohbet sayfasının okuduğu botId paramet
 check('N-41: "Kopyalandı" yalnızca pano yazması tamamlanınca (paylaş + diyalog paylaş)', str_contains($clip, 'await navigator.clipboard.writeText')
     && !preg_match('/navigator\.clipboard/', $share . $notes)
     && preg_match_all('/if \(!ok\) return;\s*setCopied\(true\)/', $share . $notes) === 2);
+$create = $web('app/dashboard/chatbots/create/page.jsx');
+$purch  = $codeOnly($web('app/dashboard/purchased/page.jsx'));
+$follow = $codeOnly($web('app/dashboard/following/page.jsx'));
+$maxTxt = number_format(AppConfig::MAX_TRAINING_CHARS, 0, ',', '.');
+check('N-44: web KB_MAX_CHARS = AppConfig::MAX_TRAINING_CHARS (elle senkron)', (bool) preg_match('/const KB_MAX_CHARS = ' . AppConfig::MAX_TRAINING_CHARS . ';/', $create));
+check('N-44: arayüzde RAG / vektör arama iddiası yok', $purch !== '' && $follow !== '' && !preg_match('/\bRAG\b/', $purch . $follow . $codeOnly($create)));
+check('N-44: Satın Aldıklarım eğitim sınırını doğru yazıyor', str_contains($purch, "en fazla $maxTxt karakter"), $maxTxt);
 check('N-42: diyalog defterinde bot gizleme başarısızlıkta hata gösteriyor', (bool) preg_match('/addhide\.php[\s\S]{0,300}response\.ok && result\?\.success\)[\s\S]{0,500}\} else \{\s*toast\.error\(/', $notes));
 
 echo "\n--- N-26: \"Daha Önce Satıldı\" yalnızca gerçek satış kaydıyla ---\n";

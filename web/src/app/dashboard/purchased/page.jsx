@@ -19,7 +19,7 @@ import {
   ChevronRight,
   ExternalLink,
   MessageSquare,
-  ShieldCheck,
+  FileText,
   Filter,
 } from "lucide-react";
 import { FilterPopover2026 } from "@/shared/ui/filter-popover";
@@ -288,12 +288,15 @@ export default function SatinAldiklarim() {
           </div>
 
           <div className="rounded-2xl border border-white/[0.08] bg-zinc-900/60 backdrop-blur-xl p-4 space-y-1">
+            {/* Eskiden sabit "Koruma Tipi: Gelişmiş RAG" yazıyordu; ürün RAG ya
+                da vektör arama yapmıyor. Gerçek: botun belge/URL metni
+                (AppConfig::MAX_TRAINING_CHARS = 60.000 karakter) her mesajda
+                olduğu gibi modele veriliyor (ChatController). */}
             <p className="text-caption font-mono text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-violet-400" /> Koruma
-              Tipi
+              <FileText className="w-3.5 h-3.5 text-violet-400" /> Bot Eğitimi
             </p>
-            <p className="text-sm font-semibold text-zinc-200 mt-1">
-              Gelişmiş RAG
+            <p className="text-xs font-medium leading-snug text-zinc-200 mt-1">
+              Belge ve URL metni modele verilir (en fazla 60.000 karakter)
             </p>
           </div>
         </div>

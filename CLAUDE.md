@@ -9,7 +9,7 @@ Monorepo: `web/` (Next.js 15 App Router, React 19, Tailwind 3) + `api/` (PHP 8.1
 ## Bu repoda bilmen gereken tuzaklar
 
 - `.history/`, `node_modules/`, `vendor/`, `web/src/.next-verify/`: okuma, yazma, arama sonuçlarından çıkar.
-- **Sabitler üç yerde kopyalanmış, elle senkronize ediliyor:** `api/src/Shared/Constants/AppConfig.php`, `api/functions/coin_engine.php`, `web/src/shared/lib/pricing.js`. Senkron tutan hiçbir mekanizma yok; uyuşmazlık doğrudan para kaybı.
+- **Sabitler üç yerde kopyalanmış, elle senkronize ediliyor:** `api/src/Shared/Constants/AppConfig.php`, `api/functions/coin_engine.php`, `web/src/shared/lib/pricing.js`. Senkron tutan hiçbir mekanizma yok; uyuşmazlık doğrudan para kaybı. Ayrıca eğitim metni tavanı `AppConfig::MAX_TRAINING_CHARS` web'de `KB_MAX_CHARS` (`app/dashboard/chatbots/create/page.jsx`) olarak kopyalı; bu eşitliği `access_selftest` kilitliyor.
 - **Denylist üç yerde:** `api/.htaccess`, `api/admin/.htaccess`, `api/router.php`. Üçü üç farklı deployment şeklini kapsar; birine eklenip diğerine eklenmeyen kural sessizce hiçbir şey yapmaz.
 - **Bir endpoint'in `web/src`'te çağıranı olmaması, kullanılmadığı anlamına GELMEZ.** Admin paneli (`api/admin/`) kendi endpoint'lerini çağırır. Çağıran araması üç yerde birden yapılır: `web/src`, `api/admin`, `api/router.php`.
 - DB ve payload alan adları Türkçe (`kullanicilar`, `chatbotlar`, `eposta`, `sifre`, `ucret_haftalik`). Yeniden adlandırma. `AppConfig`'in `TABLE_*` sabitleri haritadır.

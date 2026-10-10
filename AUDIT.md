@@ -1956,8 +1956,20 @@ Bot sil (Chatbotlarım), özel yap, yayınla (PublishModal), bot oluştur/günce
 | Yer | Ne | Durum |
 |---|---|---|
 | `app/dashboard/history/page.jsx` | Üç uydurma sohbet (ilk durum) | **N-37 ile kaldırıldı** (`b34d454`) |
-| `app/dashboard/purchased/page.jsx` | "Koruma Tipi: Gelişmiş RAG" — veriden gelmiyor, sabit pazarlama metni | Listelendi (Satın Aldıklarım menüde gizli; adres elle yazılırsa görünür) |
-| `app/components/landing/previews/*` | Landing'deki ürün önizlemeleri sabit örnek veri kullanıyor (ör. "1.000 ₺ — Hesabınıza Aktarın", "Bakiyeni Çek … tek tıkla hesabınıza güvenle hızlıca aktarın", önizleme içinde "Satın Al") | Listelendi — dekoratif önizleme, gerçek kullanıcı verisi gibi sunulmuyor; ama "tek tıkla hızlıca aktarın" iddiası bugünkü süreçle (B7: para çekme elle onaylanıyor) uyuşmuyor, metin müşteriyle gözden geçirilmeli |
+| `app/dashboard/purchased/page.jsx` | "Koruma Tipi: Gelişmiş RAG" — veriden gelmiyor, sabit pazarlama metni | **N-44 ile düzeltildi** — "Bot Eğitimi: Belge ve URL metni modele verilir (en fazla 60.000 karakter)" |
+| `app/components/landing/previews/*` | Landing'deki ürün önizlemeleri sabit örnek veri kullanıyor (ör. "1.000 ₺ — Hesabınıza Aktarın", "Bakiyeni Çek … tek tıkla hesabınıza güvenle hızlıca aktarın", önizleme içinde "Satın Al") | Listelendi — dekoratif önizleme, gerçek kullanıcı verisi gibi sunulmuyor; ama "tek tıkla hızlıca aktarın" iddiası bugünkü süreçle (B7: para çekme elle onaylanıyor) uyuşmuyor, metin müşteriyle gözden geçirilmeli. **Dokunulmadı:** soru `docs/musteri-ozet-2026-10.md` B) "Sorularımız"a eklendi (müşteri kararı BEKLİYOR) |
+
+### N-44 — "RAG" iddiası (2026-10-10)
+
+**Gerçek:** Ürün RAG ya da vektör arama yapmıyor. PDF/URL'den çıkarılan metin `chatbotlar.training_prompt`'a eklenir (`TrainingController`: `AppConfig::MAX_TRAINING_CHARS` = 60.000 karakter; aşan kısım kesilir, dolunca 413). Sohbette `ChatController` bu metnin tamamını (`LEFT(training_prompt, 60000)`) `[BİLGİ KAYNAĞI]` olarak sistem talimatına koyar; arama, parçalama, gömme (embedding) yok.
+
+| Yer | Önce | Sonra |
+|---|---|---|
+| `app/dashboard/purchased/page.jsx` | Sabit kart "Koruma Tipi: Gelişmiş RAG" | "Bot Eğitimi: Belge ve URL metni modele verilir (en fazla 60.000 karakter)" |
+| `app/dashboard/following/page.jsx` | Açıklaması olmayan botta "özel veri kaynakları ve gelişmiş RAG altyapısı ile donatılmıştır" | "Bu asistan için açıklama eklenmemiş." |
+| `app/dashboard/chatbots/create/page.jsx` (Bilgi Bankası sekmesi) | Boyut yalnızca "N karakter"; kodda "(RAG)" yorumları | "N / 60.000 karakter" + çalışma biçimini anlatan kısa not (her mesajda olduğu gibi modele verilir, arama/vektör dizini yok, fazlası eklenmez); yorumlar düzeltildi |
+
+Başka yerde RAG/vektör/embedding/semantik arama iddiası yok (`web/src`, `api/admin`, `README.md`, müşteri özeti tarandı). Web'deki yeni `KB_MAX_CHARS` sabiti `AppConfig::MAX_TRAINING_CHARS`'ın elle kopyası; `access_selftest` "Arayüz kilitleri" eşitliği ve RAG iddiasının geri gelmemesini kilitliyor. Landing "tek tıkla hızlıca aktarın" metnine dokunulmadı (müşteri kararı).
 
 ### Hiçbir rotadan erişilmeyen dosyalar (37, bu turda silinmedi)
 

@@ -73,6 +73,7 @@ Sorularımız:
 - Kullanıcılarınıza 30 gün para iade garantisi veriyor musunuz?
 - Hoppa komisyonu müşteriye mi yansısın, sizin tarafınızdan mı karşılansın? Önerimiz sizin karşılamanız; aksi hâlde ekranda gösterilen fiyatla çekilen tutar farklı olur.
 - Ödeme için alıcıdan adres bilgisi toplamamız gerekiyor mu?
+- Ana sayfadaki "Bakiyeni Çek" tanıtımında "tek tıkla hesabınıza güvenle hızlıca aktarın" yazıyor. Bugün süreç şöyle: satıcı çekim talebini tek tıkla gönderiyor, ama parayı ekibiniz talebi panelden onaylayıp banka havalesiyle elle gönderiyor; otomatik ve anlık bir aktarım yok. Bu metin kalsın mı, yoksa süreci anlatan bir metinle değiştirelim mi (ör. "Çekim talebinizi tek tıkla oluşturun; ekibimiz onayladıktan sonra tutar banka hesabınıza gönderilir")? Siz karar verene kadar metne dokunmuyoruz.
 
 ## C) Ödeme altyapısı: Hoppa
 
