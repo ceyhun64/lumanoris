@@ -285,6 +285,10 @@ check('N-37: Geçmişim silme başarısızlıkta satırı silmiyor', (bool) preg
 check('N-37: başlık değişikliği sunucu yanıtını okuyor ve geri alıyor', str_contains($hist, 'updateconversation.php') && str_contains($hist, 'revert('));
 $hdr = $codeOnly($web('widgets/DashboardHeader.jsx'));
 check('N-38: "tümünü okundu" yalnızca sunucunun onayladıklarını işaretliyor', (bool) preg_match('/readnotification\.php[\s\S]{0,400}result\?\.success[\s\S]{0,600}done\.has\(n\.id\)/', $hdr));
+$side = $codeOnly($web('widgets/Sidebar.jsx'));
+$logout = $codeOnly($web('shared/lib/logout.js'));
+check('N-39: çıkış yalnızca sunucu success dönünce /login\'e gidiyor', (bool) preg_match('/!result\?\.success[\s\S]{0,200}return[\s\S]{0,400}location\.href = "\/login"/', $logout));
+check('N-39: başlık ve kenar çubuğu ortak çıkışı kullanıyor, kendi logout isteği yok', str_contains($hdr, 'logoutAndRedirect()') && str_contains($side, 'logoutAndRedirect()') && !str_contains($hdr . $side, 'logout.php'));
 
 echo "\n--- N-26: \"Daha Önce Satıldı\" yalnızca gerçek satış kaydıyla ---\n";
 // Eskiden getPublished `1 AS durum` döndürüyordu; arayüz her bota rozet basıyordu.

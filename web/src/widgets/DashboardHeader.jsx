@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import QuitModal from "@/features/auth/QuitModal";
 import { formatCurrency } from "@/shared/lib/format";
 import { toast } from "@/shared/hooks/use-toast";
+import { logoutAndRedirect } from "@/shared/lib/logout";
 import { isPaidPlan } from "@/shared/lib/pricing";
 import useMarketplaceRegistration from "@/shared/hooks/useMarketplaceRegistration";
 import {
@@ -479,17 +480,9 @@ export default function Header({
 
   const handleConfirmLogout = async () => {
     setQuitOpen(false);
-    try {
-      await fetch("/api/auth/logout.php", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (err) {
-      console.error("Logout error:", err);
-    }
-    if (typeof window !== "undefined") {
-      window.location.href = "/login";
-    }
+    // N-39: yalnızca sunucu çıkışı onaylarsa /login'e gider.
+    const result = await logoutAndRedirect();
+    if (!result.ok) toast.error(result.message);
   };
 
   return (

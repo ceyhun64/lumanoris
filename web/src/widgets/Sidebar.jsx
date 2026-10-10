@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import QuitModal from "@/features/auth/QuitModal";
+import { toast } from "@/shared/hooks/use-toast";
+import { logoutAndRedirect } from "@/shared/lib/logout";
 import logo from "@/images/header-logo-icon.png";
 import { Lumacoin } from "@/shared/ui/lumacoin";
 import { FREE_PLAN_NAME, isPaidPlan } from "@/shared/lib/pricing";
@@ -493,17 +495,9 @@ export function Sidebar({
         onClose={() => setIsQuitModalOpen(false)}
         onConfirm={async () => {
           setIsQuitModalOpen(false);
-          try {
-            await fetch("/api/auth/logout.php", {
-              method: "POST",
-              credentials: "include",
-            });
-          } catch (err) {
-            console.error("Logout error:", err);
-          }
-          if (typeof window !== "undefined") {
-            window.location.href = "/login";
-          }
+          // N-39: yalnızca sunucu çıkışı onaylarsa /login'e gider.
+          const result = await logoutAndRedirect();
+          if (!result.ok) toast.error(result.message);
         }}
       />
     </div>
