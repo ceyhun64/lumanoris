@@ -1904,3 +1904,40 @@ Müşteri lumanoris.net'te bildirdi. İkisi de **`canli-2026-10d`'de var** (ayr�
 - `9b86d6b`: `hoppa_selftest`'in mutabakat sayaç kontrolü, yerel veritabanında kart girilmeden bırakılmış gerçek bir TEST siparişi (`PLN-7F32C6492C3C4534`, N-31 doğrulamasından) yüzünden kırmızıya düştü. Kod regresyonu değil, test yalıtım hatası: beklenen sayaç artık senaryo + senaryo dışı satırların son durumu. Veriye dokunulmadı.
 
 Silme ucu olmadığı için kalan test verisi: seed bot #27'de e2e-b'nin 6 yorumu (#16–#21). Takip, beğeni ve listeler temiz.
+
+## Arayüz taraması — "sunucuya gitmeden ya da yanıta bakmadan başarılı görünen" düğme/formlar (2026-10-10)
+
+Yöntem: rotalardan (`app/**/page.jsx`, `layout.jsx`) başlayıp statik + `dynamic()` import grafiği izlendi → **151 canlı dosya**. Bunlardaki durum değiştiren **56 istek** tek tek okundu; ayrıca istek atmadan durum değiştiren yerel aç/kapa'lar ve başarı mesajı gösteren her satır (toast, "Kaydedildi/eklendi/silindi/alındı", `setShowFeedback`) çevresindeki istek ve yanıt kontrolüyle tarandı. Hiçbir rotadan erişilmeyen 36 dosya ayrıca listelendi (aşağıda).
+
+### Bulgular (düzeltilecek)
+
+| ID | Dosya | Ne yapıyor | Sunucuya gidiyor mu | Yanıta bakıyor mu | Sonuç |
+|---|---|---|---|---|---|
+| **N-37** | `app/dashboard/history/page.jsx` — sil | Sohbeti siler | Evet | Bakıyor ama **başarısızlıkta da** satırı ekrandan siliyor ("Fallback UI deletion for preview resilience") | Yenilemede geri geliyor |
+| **N-37** | aynı — yeniden adlandır | Başlığı değiştirir | Evet | **Hayır** (iyimser, geri alma yok) | Hata olursa yeni başlık yalnızca ekranda |
+| **N-37** | aynı — ilk durum | Geçmiş listesi | Evet | `gethistory` başarısızsa | **Üç uydurma sohbet** ("Yapay Zeka Mimari Analiz", "Stripe Entegrasyon Kılavuzu", "Next.js App Router…") ilk durum olarak duruyor; istek başarısızsa kullanıcının geçmişi gibi gösteriliyor, başarılıysa da yüklenene kadar görünüyor |
+| **N-38** | `widgets/DashboardHeader.jsx` — "tümünü okundu say" | Bildirimleri okundu yapar | Evet | **Hayır** (rozet hemen temizleniyor, istekler ateşle-unut) | Hata olursa yenilemede okunmamış geri geliyor |
+| **N-39** | `widgets/DashboardHeader.jsx`, `widgets/Sidebar.jsx` — çıkış | Oturumu kapatır | Evet | **Hayır** (her durumda `/login`'e yönlendiriyor) | Çıkış başarısızsa kullanıcı çıktığını sanıyor (paylaşılan bilgisayarda risk) |
+| **N-40** | `entities/user/ui/ProfileCard.jsx` (sohbet sayfası) — takip / beğen / beğenme | İlişkiyi değiştirir | Evet | Bakıyor (yalnızca başarıda değişiyor) ama **hata sessiz** | Kullanıcı neden olmadığını görmüyor |
+| **N-40** | aynı — "Bildirimler Açık/Kapalı" | Bot bildirimi ayarı gibi görünüyor | **Hayır** — sunucuda karşılığı yok | — | Sahte ayar |
+| **N-40** | aynı — sepet durumu | "Sepette" göstergesi | `getcart` ile sunucudan okunuyor; ayrıca **`localStorage` `cart`** anahtarından okuyan eski bir etki onu ezebiliyor (bu anahtara artık kimse yazmıyor) | — | Yanıltıcı yerel durum |
+| **N-40** | aynı — `BlockModal` | "Engelle" penceresi | Hayır | — | Hiçbir yerden açılmıyor (erişilemeyen arayüz) |
+| **N-41** | `features/sharing/ShareModal.jsx` — bot paylaş | Bağlantı üretip kopyalar | — | Pano işlemini **beklemeden** "Kopyalandı" | Ayrıca bağlantı `?botid=` (küçük harf) üretiyor; sohbet sayfası `botId` okuyor → **paylaşılan her bot bağlantısı botu açmıyor** |
+| **N-41** | `app/dashboard/notes/page.jsx` — diyalog paylaş | Bağlantıyı kopyalar | — | Pano işlemini beklemeden "Kopyalandı" | |
+| **N-42** | `app/dashboard/notes/page.jsx` — "bu botu gizle" | Botun kayıtlarını gizler | Evet | Bakıyor (yalnızca başarıda) ama **hata sessiz** | |
+
+### Doğru çalışanlar (yalnızca sunucu başarısında değişiyor)
+
+Bot sil (Chatbotlarım), özel yap, yayınla (PublishModal), bot oluştur/güncelle, bilgi bankası (PDF/URL), fiyat (AddToSaleListModal), sepetten çıkar, liste oluştur/sil (Liste sayfası), listeye ekle/çıkar (AddToListModal — N-35), takibi bırak (Takip Edilenler — N-35), kart kalbi (N-35), yorum (N-34), diyalog defterine ekle (N-30), bildir (ReportModal), ilgilenmiyorum, sepete ekle, profil fotoğrafı, e-posta, telefon, ad/kullanıcı adı, iletişim formu (SMTP yoksa — B5 — hata döner, sahte başarı yok), Kurumsal Satışla Görüş, para çekme talebi, pazaryeri başvurusu, paket ödemesi, giriş/kayıt, şifre sıfırlama (iki adım).
+
+### Uydurma / sabit veri (yalnızca liste)
+
+| Yer | Ne | Durum |
+|---|---|---|
+| `app/dashboard/history/page.jsx` | Üç uydurma sohbet (ilk durum) | **N-37 ile kaldırılıyor** |
+| `app/dashboard/purchased/page.jsx` | "Koruma Tipi: Gelişmiş RAG" — veriden gelmiyor, sabit pazarlama metni | Listelendi (Satın Aldıklarım menüde gizli; adres elle yazılırsa görünür) |
+| `app/components/landing/previews/*` | Landing'deki ürün önizlemeleri sabit örnek veri kullanıyor (ör. "1.000 ₺ — Hesabınıza Aktarın", "Bakiyeni Çek … tek tıkla hesabınıza güvenle hızlıca aktarın", önizleme içinde "Satın Al") | Listelendi — dekoratif önizleme, gerçek kullanıcı verisi gibi sunulmuyor; ama "tek tıkla hızlıca aktarın" iddiası bugünkü süreçle (B7: para çekme elle onaylanıyor) uyuşmuyor, metin müşteriyle gözden geçirilmeli |
+
+### Hiçbir rotadan erişilmeyen dosyalar (36, bu turda silinmedi)
+
+`entities/chatbot/ui/BotCard.jsx`, `ChatbotCard.jsx`, `SuggestedCard.jsx` · `entities/user/ui/AccountPoints.jsx` · `features/chatbot-mgmt/ChatbotForm.jsx` · `features/contact/ContactForm.jsx` · `features/history/EmptyHistory.jsx` · `features/lists/AddToListModalEmpty.jsx` · `features/notes/DialogueModal.jsx`, `NotesEmpty.jsx` · `features/notifications/NotificationPopup.jsx` · `features/payment/CardFields.jsx` · `features/purchasing/BuyModal.jsx` · `features/settings/EditableField.jsx`, `EmailEditor.jsx`, `PhoneEditor.jsx`, `ProfileImageEdit.jsx` · `features/user-profile/ProfilePopup.jsx` · `features/wallet/WithdrawalModal.jsx` · `shared/api/client.js` · `shared/lib/card.js` · `shared/ui/Alert.jsx`, `avatar.jsx`, `separator.jsx`, `stat-card.jsx`, `switch.jsx` · `widgets/info/*` (8 dosya) · `widgets/LanguageSelector.jsx`, `MarketplaceToolbar.jsx`. Çoğu aynı hata sınıfını taşıyor (ör. `ChatbotCard`, `BuyModal`, `DialogueModal`); kullanılmadıkları için düzeltilmedi. Silinmeleri önerilir (CLAUDE.md'ye göre üçlü çağıran araması sonrası; `CardFields.jsx` / `card.js` N-17 kilidinin okuduğu dosyalar değil — kilit `checkout/page.jsx`, `upgrade/page.jsx` ve `features/payment/PlanPaymentModal.jsx`'e bakıyor).
