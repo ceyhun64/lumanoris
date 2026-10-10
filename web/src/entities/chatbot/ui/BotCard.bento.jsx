@@ -1,6 +1,8 @@
 "use client";
 import { useContext, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import { toast } from "@/shared/hooks/use-toast";
 import { UserContext } from "@/shared/contexts/UserContext";
 import { requireLogin } from "@/shared/lib/auth-guard";
 import {
@@ -14,6 +16,8 @@ import {
 } from "lucide-react";
 import CategoryBadge from "@/shared/ui/category-badge";
 import { resolveCategory } from "@/shared/lib/categories";
+
+const AddToListModal = dynamic(() => import("@/features/lists/AddToListModal"), { ssr: false });
 
 function formatCompactNumber(n) {
   const num = Number(n) || 0;
@@ -49,35 +53,55 @@ export default function BotCard({
 }) {
   const { userId } = useContext(UserContext) || {};
   const router = useRouter();
-  const [isLiked, setIsLiked] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+  // N-35: başlangıç durumu sunucudan (getchatbots.php → liked_by_me).
+  const [isLiked, setIsLiked] = useState(Boolean(bot.likedByMe));
+  const [likeBusy, setLikeBusy] = useState(false);
+  const [listOpen, setListOpen] = useState(false);
   const [likesCount, setLikesCount] = useState(bot.likes || 0);
   const category = resolveCategory(bot.kategori_id);
 
-  /* Beğenme ve kaydetme oturum ister: misafir artık panelde gezinebiliyor ve
-     bu düğmeler onun için sessizce hiçbir şey yapmamalı — girişe götürmeli.
-     (Bu iki eylem bugün yalnızca yerel state değiştiriyor, sunucuya hiç
-     yazmıyor; kapıyı yine de buraya koyuyoruz ki kalıcı hâle geldiğinde
-     misafir yolu zaten kapalı olsun.) */
-  const toggleLike = (e) => {
+  /* N-35 — kalp ve yer imi eskiden yalnızca yerel state değiştiriyordu
+     (sunucuya hiç yazmıyordu; sayfa yenilenince her şey sıfırlanıyordu).
+     Kalp: açık "like"/"unlike" eylemi (idempotent); arayüz yalnızca sunucu
+     başarı dönünce değişir, hata olursa mesaj gösterilir. Yer imi: gerçek
+     listelere yazan "Listeye Ekle" penceresini açar. İkisi de oturum ister. */
+  const toggleLike = async (e) => {
     e.stopPropagation();
-    if (!requireLogin(userId, router)) return;
-    if (isLiked) {
-      setIsLiked(false);
-      setLikesCount((prev) => prev - 1);
-    } else {
-      setIsLiked(true);
-      setLikesCount((prev) => prev + 1);
+    if (!requireLogin(userId, router) || likeBusy) return;
+    const want = isLiked ? "unlike" : "like";
+    setLikeBusy(true);
+    try {
+      const res = await fetch("/api/social/likechatbot.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ data: JSON.stringify({ chatbot_id: bot.id, action: want }) }),
+        credentials: "include",
+      });
+      const result = await res.json().catch(() => null);
+      if (!res.ok || !result?.success) {
+        toast.error(result?.message || `Beğeni kaydedilemedi (HTTP ${res.status}).`);
+        return;
+      }
+      const nowLiked = Boolean(result.liked);
+      if (result.action !== "unchanged") {
+        setLikesCount((prev) => Math.max(0, prev + (nowLiked ? 1 : -1)));
+      }
+      setIsLiked(nowLiked);
+    } catch {
+      toast.error("Sunucuya ulaşılamadı. Beğeni kaydedilemedi.");
+    } finally {
+      setLikeBusy(false);
     }
   };
 
-  const toggleSave = (e) => {
+  const openListModal = (e) => {
     e.stopPropagation();
     if (!requireLogin(userId, router)) return;
-    setIsSaved(!isSaved);
+    setListOpen(true);
   };
 
   return (
+    <>
     <div
       onClick={() => (selectable ? onToggleSelect?.(bot.id) : onOpenDetails?.(bot))}
       onKeyDown={(event) => {
@@ -127,21 +151,18 @@ export default function BotCard({
 
           <div className="flex items-center gap-1.5">
             <button
-              onClick={toggleSave}
-              className={`flex h-8 w-8 items-center justify-center rounded-full border backdrop-blur-md transition-all ${
-                isSaved
-                  ? "border-violet-500/60 bg-violet-600 text-white shadow-lg shadow-violet-600/40 scale-105"
-                  : "border-white/10 bg-zinc-950/70 text-zinc-300 hover:bg-zinc-900 hover:text-white"
-              }`}
-              title="Listeme Kaydet"
+              onClick={openListModal}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-zinc-950/70 text-zinc-300 backdrop-blur-md transition-all hover:bg-zinc-900 hover:text-white"
+              title="Listeye Ekle"
+              aria-label="Listeye Ekle"
             >
-              <Bookmark
-                className="h-3.5 w-3.5"
-                fill={isSaved ? "currentColor" : "none"}
-              />
+              <Bookmark className="h-3.5 w-3.5" fill="none" />
             </button>
             <button
               onClick={toggleLike}
+              disabled={likeBusy}
+              aria-label={isLiked ? "Beğeniyi kaldır" : "Beğen"}
+              aria-pressed={isLiked}
               className={`flex h-8 w-8 items-center justify-center rounded-full border backdrop-blur-md transition-all ${
                 isLiked
                   ? "border-rose-500/60 bg-rose-600 text-white shadow-lg shadow-rose-600/40 scale-105"
@@ -241,5 +262,10 @@ export default function BotCard({
         </div>
       </div>
     </div>
+    {/* N-35: kartın DIŞINDA — portal içi tıklamalar React ağacında karta kabarcıklanıp detayı açmasın. */}
+    {listOpen && (
+      <AddToListModal userId={userId} botId={bot.id} isOpen={listOpen} onClose={() => setListOpen(false)} />
+    )}
+    </>
   );
 }

@@ -226,9 +226,12 @@ class ChatbotController {
         $search  = InputSanitizer::string($_GET['search'] ?? '');
         $filters = self::paginationFromQuery() + ['search' => $search !== '' ? $search : null];
         $repo    = new ChatbotRepository();
+        // N-35: yalnızca `liked_by_me` için; oturum yoksa 0 (uç misafire açık kalır).
+        // Filtre olarak kullanılmaz — `exclude_uninterested` istenmediği sürece liste aynı.
+        $userId  = AuthMiddleware::optionalAuth();
 
         JsonResponse::success([
-            'bots'   => $repo->getPublished($filters),
+            'bots'   => $repo->getPublished($filters, $userId),
             'total'  => $repo->countPublished($filters),
             'limit'  => $filters['limit'],
             'offset' => $filters['offset'],

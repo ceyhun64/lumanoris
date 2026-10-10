@@ -148,7 +148,9 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
                     -- Satıldı\" rozeti yalnızca bu bayrağa bakar. Satış kaydı =
                     -- deleteChatbot'un saydığı iki tablo (süresi dolmuş abonelik dahil).
                     (EXISTS (SELECT 1 FROM user_subscriptions       WHERE chatbot_id = c.id)
-                     OR EXISTS (SELECT 1 FROM chatbot_purchase_credits WHERE chatbot_id = c.id)) AS has_sales
+                     OR EXISTS (SELECT 1 FROM chatbot_purchase_credits WHERE chatbot_id = c.id)) AS has_sales,
+                    -- N-35: kartlardaki kalp başlangıç durumunu sunucudan alsın (oturumsuz → 0).
+                    (? > 0 AND EXISTS (SELECT 1 FROM chatbot_likes cl WHERE cl.chatbot_id = c.id AND cl.user_id = ?)) AS liked_by_me
              FROM `" . self::T . "` c
              LEFT JOIN param_marketplace_sellers pms
                      ON pms.user_id = c.author_user_id AND pms.status = 'active'
@@ -156,7 +158,7 @@ class ChatbotRepository extends BaseRepository implements ChatbotRepositoryInter
              $where
              ORDER BY c.id DESC
              LIMIT $limit OFFSET $offset",
-            $params
+            array_merge([$userId, $userId], $params)
         );
     }
 

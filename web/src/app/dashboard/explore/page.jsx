@@ -216,6 +216,8 @@ export default function Explore() {
     kategori_id: bot.kategori_id,
     followers: bot.toplam_follows,
     likes: bot.toplam_likes,
+    // N-35: kalbin başlangıç durumu sunucudan (oturumsuz → false).
+    likedByMe: Number(bot.liked_by_me) === 1,
     comments: bot.toplam_comments,
     saves: bot.toplam_lists,
     weeklyPrice: Number(bot.ucret_haftalik) || 0,

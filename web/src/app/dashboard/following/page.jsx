@@ -373,9 +373,31 @@ export default function Following() {
     },
   });
 
-  const handleUnfollow = (botId) => {
-    setFollowedBots((prev) => prev.filter((b) => b.id !== botId));
-    toast.success("Bot takip edilenler listenizden çıkarıldı.");
+  /* N-35 — eskiden bu işlev sunucuya HİÇ istek atmıyordu: kart yalnızca
+     ekrandan siliniyor ve "çıkarıldı" deniyordu, sayfa yenilenince bot geri
+     geliyordu. Şimdi açık "unfollow" eylemi gönderiliyor (toggle değil: bayat
+     bir sayfa botu yeniden takip edemez) ve kart yalnızca sunucu başarı
+     dönünce kalkıyor; hata olursa kart yerinde kalır, mesaj gösterilir. */
+  const handleUnfollow = async (botId) => {
+    try {
+      const res = await fetch("/api/social/followchatbot.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          data: JSON.stringify({ chatbot_id: botId, action: "unfollow" }),
+        }),
+        credentials: "include",
+      });
+      const result = await res.json().catch(() => null);
+      if (!res.ok || !result?.success || result.following !== false) {
+        toast.error(result?.message || `Takip bırakılamadı (HTTP ${res.status}).`);
+        return;
+      }
+      setFollowedBots((prev) => prev.filter((b) => b.id !== botId));
+      toast.success("Bot takip edilenler listenizden çıkarıldı.");
+    } catch {
+      toast.error("Sunucuya ulaşılamadı. Takip bırakılamadı.");
+    }
   };
 
   const filteredBots = useMemo(() => {
