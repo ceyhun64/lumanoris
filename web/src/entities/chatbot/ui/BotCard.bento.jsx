@@ -12,7 +12,6 @@ import {
   Star,
   MessageSquare,
   ArrowUpRight,
-  Check,
 } from "lucide-react";
 import CategoryBadge from "@/shared/ui/category-badge";
 import { resolveCategory } from "@/shared/lib/categories";
@@ -42,14 +41,10 @@ function resolveAvatarSrc(src) {
  * iki ayri bilesen vardi (BentoBotCard ve MarketplaceListCard) ve gorunumleri
  * birbirinden ayrilmisti.
  *
- * `selectable`: Kesfet'teki "listeye ekle" akisi kartlari secilebilir yapar.
  */
 export default function BotCard({
   bot,
   onOpenDetails,
-  selectable = false,
-  selected = false,
-  onToggleSelect,
 }) {
   const { userId } = useContext(UserContext) || {};
   const router = useRouter();
@@ -103,15 +98,15 @@ export default function BotCard({
   return (
     <>
     <div
-      onClick={() => (selectable ? onToggleSelect?.(bot.id) : onOpenDetails?.(bot))}
+      onClick={() => onOpenDetails?.(bot)}
       onKeyDown={(event) => {
         if (event.currentTarget !== event.target || !["Enter", " "].includes(event.key)) return;
         event.preventDefault();
-        selectable ? onToggleSelect?.(bot.id) : onOpenDetails?.(bot);
+        onOpenDetails?.(bot);
       }}
       role="button"
       tabIndex={0}
-      className={`group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-zinc-900/70 to-zinc-950/90 shadow-xl shadow-black/10 transition-[border-color,box-shadow] duration-200 focus-visible:outline-none ${category.hoverBorder} ${category.glow} cursor-pointer${selectable && selected ? " !border-fuchsia-400/50 bg-fuchsia-500/[0.06]" : ""}`}
+      className={`group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-zinc-900/70 to-zinc-950/90 shadow-xl shadow-black/10 transition-[border-color,box-shadow] duration-200 focus-visible:outline-none ${category.hoverBorder} ${category.glow} cursor-pointer`}
     >
       {/* Top Border Glow Sweep */}
       <div className={`absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-transparent ${category.sweep} to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100`} />

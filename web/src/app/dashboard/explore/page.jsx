@@ -12,7 +12,6 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { EmptyState } from "@/shared/ui/empty-state";
-import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { resolveCoverSrc } from "@/shared/lib/image";
 import BotList from "@/widgets/BotList";
@@ -88,9 +87,6 @@ export default function Explore() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("Tümü");
-  const [selectedBots, setSelectedBots] = useState([]);
-  const [isFromList, setIsFromList] = useState(false);
-  const [listName, setListName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -144,7 +140,6 @@ export default function Explore() {
         throw new Error(data.message || "Bot API'sinden hata alındı.");
 
       setApiBots(Array.isArray(data.bots) ? data.bots : []);
-      setSelectedBots([]);
     } catch (e) {
       console.error("Botlar çekilirken hata oluştu:", e);
       setError(e.message);
@@ -154,46 +149,12 @@ export default function Explore() {
     }
   }, []);
 
-  const getUserLists = () => {
-    if (typeof window !== "undefined") {
-      const lists = localStorage.getItem("userLists");
-      return lists ? JSON.parse(lists) : [];
-    }
-    return [];
-  };
-
-  const addBotsToList = (listName, botIds) => {
-    const lists = getUserLists();
-    const selectedBotData = botIds
-      .map((id) => apiBots.find((bot) => bot.id === id))
-      .filter(Boolean);
-
-    const existingListIndex = lists.findIndex((list) => list.name === listName);
-
-    if (existingListIndex >= 0) {
-      lists[existingListIndex].bots = [
-        ...lists[existingListIndex].bots,
-        ...selectedBotData,
-      ];
-    } else {
-      lists.push({
-        name: listName,
-        bots: selectedBotData,
-        createdAt: new Date().toISOString(),
-      });
-    }
-
-    localStorage.setItem("userLists", JSON.stringify(lists));
-  };
-
+  /* Eskiden burada `?from=list&name=…` "listeye ekle" modu vardı: seçilen
+     botları yalnızca tarayıcının localStorage'ına yazıyordu (sunucudaki
+     listelere değil) ve uygulamada bu adrese giden bağlantı yoktu. Kaldırıldı
+     (2026-10-10); listeye ekleme kartlardaki "Listeye Ekle" penceresinden. */
   useEffect(() => {
-    const from = searchParams.get("from");
-    const name = searchParams.get("name");
-    const urlSearchTerm = searchParams.get("search") || "";
-
-    setIsFromList(from === "list");
-    setListName(name || "");
-    setSearchTerm(urlSearchTerm);
+    setSearchTerm(searchParams.get("search") || "");
   }, [searchParams]);
 
   useEffect(() => {
@@ -280,14 +241,6 @@ export default function Explore() {
       );
       break; // 'onerilen'
   }
-
-  const toggleBotSelection = (botId) => {
-    setSelectedBots((prev) =>
-      prev.includes(botId)
-        ? prev.filter((id) => id !== botId)
-        : [...prev, botId],
-    );
-  };
 
   // Real, marketplace-wide metrics — same computation as the dashboard home
   // page's stat row (allBots.reduce over dialogues/followers), so the two
@@ -409,30 +362,11 @@ export default function Explore() {
         ) : (
           <BotList
             bots={sortedBots}
-            selectable={isFromList}
-            selectedIds={selectedBots}
-            onToggleSelect={toggleBotSelection}
             onOpenDetails={(bot) => router.push(`/dashboard/chat/?botId=${bot.id}`)}
           />
         )}
       </div>
 
-      {isFromList && selectedBots.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-xl border border-transparent bg-luma-elevated px-6 py-4 shadow-modal">
-          <p className="text-sm text-white">
-            {selectedBots.length} bot seçildi
-          </p>
-          <Button
-            onClick={() => {
-              addBotsToList(listName, selectedBots);
-              router.push("/dashboard/list");
-            }}
-            className="h-auto px-5 py-2.5"
-          >
-            Kaydet ve Listeye Ekle
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
